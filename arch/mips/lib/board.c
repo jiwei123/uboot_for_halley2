@@ -32,6 +32,7 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <spi.h>
+#include <mmc.h>
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -164,6 +165,9 @@ void board_init_f(ulong bootflag)
 	 * relocate the code and continue running from DRAM.
 	 */
 	addr = CONFIG_SYS_SDRAM_BASE + gd->ram_size;
+#ifdef CONFIG_SYS_SDRAM_MAX_TOP
+	addr = MIN(addr, CONFIG_SYS_SDRAM_MAX_TOP);
+#endif
 
 	/* We can reserve some RAM "on top" here.
 	 */
@@ -257,6 +261,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	debug("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
 
+	gd->relocaddr = dest_addr;
 	gd->reloc_off = dest_addr - CONFIG_SYS_MONITOR_BASE;
 
 	monitor_flash_len = image_copy_end() - dest_addr;
@@ -294,6 +299,11 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
+#endif
+
+#ifdef CONFIG_GENERIC_MMC
+	puts("MMC:   ");
+	mmc_initialize(bd);
 #endif
 
 	/* relocate environment function pointers etc. */

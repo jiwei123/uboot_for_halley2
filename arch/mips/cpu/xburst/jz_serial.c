@@ -22,9 +22,10 @@
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
-#include <asm/jz4740.h>
 #include <serial.h>
 #include <linux/compiler.h>
+#include <asm/arch/jzsoc.h>
+#include <asm/jz_uart.h>
 
 /*
  * serial_init - initialize a channel
@@ -35,7 +36,7 @@
  *
  * RETURNS: N/A
  */
-struct jz4740_uart *uart = (struct jz4740_uart *)CONFIG_SYS_UART_BASE;
+struct jz_uart *uart = (struct jz_uart *)CONFIG_SYS_UART_BASE;
 
 static int jz_serial_init(void)
 {

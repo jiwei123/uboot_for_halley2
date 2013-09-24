@@ -1,9 +1,8 @@
 /*
- * (C) Copyright 2002-2010
- * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ * Ingenic JZ4780 SoC support
  *
- * See file CREDITS for list of people who contributed to this
- * project.
+ * Copyright (c) 2013 Imagination Technologies
+ * Author: Paul Burton <paul.burton@imgtec.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -21,25 +20,4 @@
  * MA 02111-1307 USA
  */
 
-#ifndef	__ASM_GBL_DATA_H
-#define __ASM_GBL_DATA_H
-
-#include <asm/regdef.h>
-
-/* Architecture-specific global data */
-struct arch_global_data {
-#ifdef CONFIG_JZ4740
-	/* There are other clocks in the jz4740 */
-	unsigned long per_clk;	/* Peripheral bus clock */
-	unsigned long dev_clk;	/* Device clock */
-	unsigned long sys_clk;
-	unsigned long tbl;
-	unsigned long lastinc;
-#endif
-};
-
-#include <asm-generic/global_data.h>
-
-#define DECLARE_GLOBAL_DATA_PTR     register volatile gd_t *gd asm ("k0")
-
-#endif /* __ASM_GBL_DATA_H */
+#include <asm/arch/jz4775.h>

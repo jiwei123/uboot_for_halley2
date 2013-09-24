@@ -1,8 +1,8 @@
 #
-# Copyright (C) 2011 Xiangfu Liu <xiangfu@openmobilefree.net>
+# Ingenic JZ4780 makefile
 #
-# See file CREDITS for list of people who contributed to this
-# project.
+# Copyright (c) 2013 Imagination Technologies
+# Author: Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -22,17 +22,18 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(CPU).o
+LIB	= $(obj)lib$(SOC).o
 
-START	= start.o
 SOBJS-y	=
-COBJS-y	= cpu.o jz_serial.o
+COBJS-y	= $(SOC).o
+COBJS-y += pll_2.o
+COBJS-y += sdram.o
+COBJS-y += timer.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
-START	:= $(addprefix $(obj),$(START))
 
-all:	$(obj).depend $(START) $(LIB)
+all:	$(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
 	$(call cmd_link_o_target, $(OBJS))
