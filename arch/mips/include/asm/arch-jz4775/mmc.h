@@ -22,6 +22,8 @@
 
 #ifndef __JZ_MMC_H__
 
+#include <asm/arch/base.h>
+
 #define	MSC_STRPCL		0x000
 #define	MSC_STAT		0x004
 #define	MSC_CLKRT		0x008
@@ -153,6 +155,6 @@
 #define	MSC_IREG_PRG_DONE		(1 << 1)
 #define	MSC_IREG_DATA_TRAN_DONE		(1 << 0)
 
-void jz_mmc_init(int clock_div);
+void jz_mmc_init(void);
 
 #endif

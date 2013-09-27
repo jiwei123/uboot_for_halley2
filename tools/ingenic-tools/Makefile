@@ -1,8 +1,5 @@
 #
-# Ingenic JZ4780 makefile
-#
-# Copyright (c) 2013 Imagination Technologies
-# Author: Paul Burton <paul.burton@imgtec.com>
+# Copyright (C) 2012 Marek Vasut <marex@denx.de>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,23 +18,21 @@
 #
 
 include $(TOPDIR)/config.mk
+all:	$(obj)ddr_params_creator $(obj)ddr_params.h
 
-LIB	= $(obj)lib$(SOC).o
+HOSTCPPFLAGS = -I$(TOPDIR)/include
 
-SOBJS-y	=
-COBJS-y	= $(SOC).o
-COBJS-y += pll.o
-COBJS-y += clk.o
-COBJS-y += sdram.o
-COBJS-y += timer.o
+$(obj)ddr_params_creator:	ddr_params_creator.c
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
 
-SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj), $(SOBJS-y) $(COBJS-y))
+$(obj)ddr_params.h:	$(obj)ddr_params_creator
+	$(OBJTREE)/tools/ingenic-tools/ddr_params_creator > $(OBJTREE)/include/generated/$@
 
-all:	$(obj).depend $(LIB)
+clean:
+	rm -f $(obj)ddr_params_creator
 
-$(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+distclean:	clean
 
 #########################################################################
 

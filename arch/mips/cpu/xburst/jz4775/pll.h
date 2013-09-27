@@ -1,20 +1,18 @@
 /*
- * The file define all the common macro for the board based on the JZ4760
+ * The file define all the common macro for the board based on the JZ4770
  */
 
 
-#ifndef __JZ4775_COMMON_H__
-#define __JZ4775_COMMON_H__
+#ifndef __PLL_H__
+#define __PLL_H__
 
-#define PLL_OUT_MAX 1400		/* 1200MHz. */
+#define PLL_OUT_MAX 1400		/* 1400MHz. */
 
-//The first time boot
 
 #define __CFG_EXTAL     (CONFIG_SYS_EXTAL / 1000000)
-#define __CFG_APLL_OUT  ((CONFIG_SYS_MEM_SPEED) / 1000000)
-#define __CFG_MPLL_OUT  ((CONFIG_SYS_MEM_SPEED) / 1000000)    /* Set MPLL default: 240MHz */
 
-/*pll_0*/ 
+#if (CONFIG_SYS_APLL_FREQ > 0)
+#define __CFG_APLL_OUT  ((CONFIG_SYS_APLL_FREQ) / 1000000)
 #if (__CFG_APLL_OUT > PLL_OUT_MAX)
 	#error "PLL output can NOT more than 1000MHZ"
 #elif (__CFG_APLL_OUT > 600)
@@ -62,10 +60,10 @@
 #endif
 
 #define APLL_VALUE	((__APLL_MO << 24) | (__APLL_NO << 18) | (__APLL_OD << 16) | (__APLL_BS << 31))
+#endif /* CONFIG_SYS_APLL_FREQ > 0 */
 
-
-/**************************************************************************************************************/
-
+#if (CONFIG_SYS_MPLL_FREQ > 0)
+#define __CFG_MPLL_OUT  ((CONFIG_SYS_MPLL_FREQ) / 1000000)
 #if (__CFG_MPLL_OUT > PLL_OUT_MAX)
 	#error "MPLL output can NO1T more than 1000MHZ"
 #elif (__CFG_MPLL_OUT > 600)
@@ -113,6 +111,6 @@
 #endif
 
 #define MPLL_VALUE	((__MPLL_MO << 24) | (__MPLL_NO << 18) | (__MPLL_OD << 16) | (__MPLL_BS << 31))
+#endif /* CONFIG_SYS_MPLL_FREQ > 0 */
 
-
-#endif /* __JZ4775_COMMON_H__ */
+#endif /* __PLL_H__ */

@@ -21,11 +21,12 @@
 
 #include <config.h>
 #include <common.h>
-#include <asm/io.h>
 #include <serial.h>
 #include <linux/compiler.h>
-#include <asm/arch/jzsoc.h>
+
+#include <asm/io.h>
 #include <asm/jz_uart.h>
+#include <asm/arch/base.h>
 
 /*
  * serial_init - initialize a channel

@@ -22,14 +22,16 @@
 
 #include <common.h>
 #include <mmc.h>
-#include <asm/arch/jzsoc.h>
-#include <asm/jz_mmc.h>
+#include <asm/io.h>
+#include <asm/arch/base.h>
+#include <asm/arch/clk.h>
+#include <asm/arch/mmc.h>
 #include <asm/unaligned.h>
 
 struct jz_mmc_priv {
 	uintptr_t base;
 	uint32_t flags;
-	int clock_div;
+	int clk;
 };
 
 /* jz_mmc_priv flags */
@@ -69,10 +71,6 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	struct jz_mmc_priv *priv = mmc->priv;
 	uint32_t stat, mask, cmdat = 0;
 
-	/* stop the clock */
-	jz_mmc_writel(MSC_STRPCL_CLOCK_CONTROL_STOP, priv, MSC_STRPCL);
-	while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_CLK_EN);
-
 	/* setup command */
 	jz_mmc_writel(cmd->cmdidx, priv, MSC_CMD);
 	jz_mmc_writel(cmd->cmdarg, priv, MSC_ARG);
@@ -85,9 +83,6 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 
 		jz_mmc_writel(data->blocks, priv, MSC_NOB);
 		jz_mmc_writel(data->blocksize, priv, MSC_BLKLEN);
-	} else {
-		jz_mmc_writel(0, priv, MSC_NOB);
-		jz_mmc_writel(0, priv, MSC_BLKLEN);
 	}
 
 	/* setup response */
@@ -135,7 +130,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	jz_mmc_writel(0xffffffff, priv, MSC_IREG);
 
 	/* start the command (& the clock) */
-	jz_mmc_writel(MSC_STRPCL_START_OP | MSC_STRPCL_CLOCK_CONTROL_START, priv, MSC_STRPCL);
+	jz_mmc_writel(MSC_STRPCL_START_OP, priv, MSC_STRPCL);
 
 	/* wait for completion */
 	while (!(stat = (jz_mmc_readl(priv, MSC_IREG) & (MSC_IREG_END_CMD_RES | MSC_IREG_TIME_OUT_RES))))
@@ -207,7 +202,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 static void jz_mmc_set_ios(struct mmc *mmc)
 {
 	struct jz_mmc_priv *priv = mmc->priv;
-	uint32_t real_rate = CONFIG_SYS_MEM_SPEED / priv->clock_div;
+	uint32_t real_rate = clk_get_rate(priv->clk);
 	uint8_t clk_div = 0;
 
 	/* calculate clock divide */
@@ -245,7 +240,7 @@ static int jz_mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock_div)
+static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 {
 	struct mmc *mmc = &mmc_dev[idx];
 	struct jz_mmc_priv *priv = &mmc_priv[idx];
@@ -257,7 +252,7 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock_d
 
 	/* setup priv */
 	priv->base = base;
-	priv->clock_div = clock_div;
+	priv->clk = clock;
 	priv->flags = 0;
 
 	/* setup mmc */
@@ -273,29 +268,23 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock_d
 		MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_34_35 | MMC_VDD_35_36;
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
 
-	/*
-	 * min freq is for card identification, and is the highest
-	 *  low-speed SDIO card frequency (actually 400KHz)
-	 * max freq is highest HS eMMC clock as per the SD/MMC spec
-	 *  (actually 52MHz)
-	 */
-	mmc->f_min = 375000;
-	mmc->f_max = 48000000;
+	mmc->f_min = 200000;
+	mmc->f_max = 24000000;
 
 	mmc_register(mmc);
 }
 
-void jz_mmc_init(int clock_div)
+void jz_mmc_init(void)
 {
 	int i = 0;
 
 #if defined(CONFIG_JZ_MMC_MSC0) && (!defined(CONFIG_SPL_BUILD) || (CONFIG_JZ_MMC_SPLMSC == 0))
-	jz_mmc_init_one(i++, 0, MSC0_BASE, clock_div);
+	jz_mmc_init_one(i++, 0, MSC0_BASE, MSC0);
 #endif
 #if defined(CONFIG_JZ_MMC_MSC1) && (!defined(CONFIG_SPL_BUILD) || (CONFIG_JZ_MMC_SPLMSC == 1))
-	jz_mmc_init_one(i++, 1, MSC1_BASE, clock_div);
+	jz_mmc_init_one(i++, 1, MSC1_BASE, MSC1);
 #endif
 #if defined(CONFIG_JZ_MMC_MSC2) && (!defined(CONFIG_SPL_BUILD) || (CONFIG_JZ_MMC_SPLMSC == 2))
-	jz_mmc_init_one(i++, 2, MSC2_BASE, clock_div);
+	jz_mmc_init_one(i++, 2, MSC2_BASE, MSC2);
 #endif
 }

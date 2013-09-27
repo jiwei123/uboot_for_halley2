@@ -28,7 +28,7 @@
 #include <asm/mipsregs.h>
 #include <asm/addrspace.h>
 #include <asm/cacheops.h>
-#include <asm/arch/jzsoc.h>
+#include <asm/arch/base.h>
 
 	.set noreorder
 

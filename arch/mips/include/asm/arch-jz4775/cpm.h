@@ -6,8 +6,10 @@
  * Copyright (C) 2010 Ingenic Semiconductor Co., Ltd.
  */
 
-#ifndef __JZSOC_CPM_H__
-#define __JZSOC_CPM_H__
+#ifndef __CPM_H__
+#define __CPM_H__
+
+#include <asm/arch/base.h>
 
 #define CPM_CPCCR	(0x00)
 #define CPM_CPCSR	(0xd4)
@@ -69,14 +71,44 @@
 #define CPM_LCR_EPDS 		(0x1<<24)
 #define CPM_LCR_STATUS_MASK 	(0xf<<24)
 
+#define CPM_CLKGR_DDR		(1 << 31)
+#define CPM_CLKGR_EPDE		(1 << 27)
+#define CPM_CLKGR_EPDC		(1 << 26)
+#define CPM_CLKGR_LCD		(1 << 25)
+#define CPM_CLKGR_CIM1		(1 << 24)
+#define CPM_CLKGR_CIM0		(1 << 23)
+#define CPM_CLKGR_UHC		(1 << 22)
+#define CPM_CLKGR_GMAC		(1 << 21)
+#define CPM_CLKGR_PDMA		(1 << 20)
+#define CPM_CLKGR_VPU		(1 << 19)
+#define CPM_CLKGR_UART3		(1 << 18)
+#define CPM_CLKGR_UART2		(1 << 17)
+#define CPM_CLKGR_UART1		(1 << 16)
+#define CPM_CLKGR_UART0		(1 << 15)
+#define CPM_CLKGR_SADC		(1 << 14)
+#define CPM_CLKGR_PCM		(1 << 13)
+#define CPM_CLKGR_MSC2		(1 << 12)
+#define CPM_CLKGR_MSC1		(1 << 11)
+#define CPM_CLKGR_AHB_MON	(1 << 10)
+#define CPM_CLKGR_X2D		(1 << 9)
+#define CPM_CLKGR_AIC		(1 << 8)
+#define CPM_CLKGR_I2C2		(1 << 7)
+#define CPM_CLKGR_I2C1		(1 << 6)
+#define CPM_CLKGR_I2C0		(1 << 5)
+#define CPM_CLKGR_SSI0		(1 << 4)
+#define CPM_CLKGR_MSC0		(1 << 3)
+#define CPM_CLKGR_OTG		(1 << 2)
+#define CPM_CLKGR_BCH		(1 << 1)
+#define CPM_CLKGR_NEMC		(1 << 0)
+
 #define OPCR_ERCS		(0x1<<2)
 #define OPCR_PD			(0x1<<3)
 #define OPCR_IDLE		(0x1<<31)
 
 #define CLKGR_VPU              (0x1<<19)
 
-#define cpm_inl(off)		*(volatile unsigned int *)(CPM_IOBASE + (off))
-#define cpm_outl(val,off)	*((volatile unsigned int *)(CPM_IOBASE + (off))) = (val)
+#define cpm_inl(off)		readl(CPM_BASE + (off))
+#define cpm_outl(val,off)	writel(val, CPM_BASE + (off))
 #define cpm_test_bit(bit,off)	(cpm_inl(off) & 0x1<<(bit))
 #define cpm_set_bit(bit,off)	(cpm_outl((cpm_inl(off) | 0x1<<(bit)),off))
 #define cpm_clear_bit(bit,off)	(cpm_outl(cpm_inl(off) & ~(0x1 << bit), off))
@@ -108,4 +140,4 @@ do{					\
 	arch_enable_usb();		\
 }while(0)
 
-#endif
+#endif /* #define __CPM_H__ */

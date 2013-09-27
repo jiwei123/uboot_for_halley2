@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-TOOLSUBDIRS = kernel-doc
+TOOLSUBDIRS = kernel-doc ingenic-tools
 
 #
 # Include this after HOSTOS HOSTARCH check

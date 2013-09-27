@@ -24,7 +24,7 @@
 #include <div64.h>
 #include <asm/io.h>
 #include <asm/mipsregs.h>
-#include <asm/arch/jz4775.h>
+#include <asm/arch/base.h>
 
 #define TCU_TESR		0x14
 #define TCU_OSTCNTL		0xe4

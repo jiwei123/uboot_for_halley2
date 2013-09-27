@@ -24,9 +24,10 @@
 #include <nand.h>
 #include <net.h>
 #include <netdev.h>
-#include <asm/arch/jz4775.h>
+#include <asm/arch/cpm.h>
+#include <asm/arch/gpio.h>
 #include <asm/arch/nand.h>
-#include <asm/jz_mmc.h>
+#include <asm/arch/mmc.h>
 
 int board_early_init_f(void)
 {
@@ -51,47 +52,11 @@ int board_nand_init(struct nand_chip *nand)
 	return 0;
 }
 
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_MMC_SUPPORT)
+
+#ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
 {
-#if 0
-	uint32_t msc_cdr;
-
-	/* setup MSC1 clock */
-	msc_cdr = CONFIG_SYS_MEM_SPEED / 24000000 / 2 - 1;
-	writel(msc_cdr | CPM_MSCCDR_CE, CPM_MSCCDR1);
-	while (readl(CPM_MSCCDR1) & CPM_MSCCDR_MSC_BUSY);
-#endif
-	/* setup MSC1 pins */
-	writel(0x01fc0000, GPIO_PXINTC(0));
-	writel(0x01fc0000, GPIO_PXMASKC(0));
-	writel(0x01fc0000, GPIO_PXPAT1C(0));
-	writel(0x01fc0000, GPIO_PXPAT0S(0));
-	writel(0x01000000, GPIO_PXPENC(0));
-
-	writel(0x30f00000, GPIO_PXINTC(4));
-	writel(0x30f00000, GPIO_PXMASKC(4));
-	writel(0x30f00000, GPIO_PXPAT1C(4));
-	writel(0x30f00000, GPIO_PXPAT0S(4));
-
-	uint32_t msc_cdr;
-	
-	/* setup MSC1 clock */
-	msc_cdr = CONFIG_SYS_MEM_SPEED / 24000000 / 2 - 1;
-	jz_mmc_init((msc_cdr + 1) * 2);
-	return 0;
-}
-
-#elif defined (CONFIG_MMC)
-int board_mmc_init(bd_t *bd)
-{
-	uint32_t msc_cdr;
-	writel(readl(CPM_CLKGR0) & ~CPM_CLKGR0_MSC1, CPM_CLKGR0);
-	/* setup MSC1 clock */
-	msc_cdr = CONFIG_SYS_MEM_SPEED / 24000000 / 2 - 1;
-
-	jz_mmc_init((msc_cdr + 1) * 2);
-
+	jz_mmc_init();
 	return 0;
 }
 #endif
@@ -100,41 +65,7 @@ int board_mmc_init(bd_t *bd)
 
 int board_eth_init(bd_t *bis)
 {
-#ifdef CONFIG_NAND
-	/* setup pins (some already setup for NAND) */
-	writel(0x04030000, GPIO_PXINTC(0));
-	writel(0x04030000, GPIO_PXMASKC(0));
-	writel(0x04030000, GPIO_PXPAT1C(0));
-	writel(0x04030000, GPIO_PXPAT0C(0));
-	writel(0x04030000, GPIO_PXPENS(0));
-#else
-	/* setup pins (as above +NAND CS +RD/WE +SDx +SAx) */
-	writel(0x0dff00ff, GPIO_PXINTC(0));
-	writel(0x0dff00ff, GPIO_PXMASKC(0));
-	writel(0x0dff00ff, GPIO_PXPAT1C(0));
-	writel(0x0dff00ff, GPIO_PXPAT0C(0));
-	writel(0x0dff00ff, GPIO_PXPENS(0));
-	writel(0x00000003, GPIO_PXINTC(1));
-	writel(0x00000003, GPIO_PXMASKC(1));
-	writel(0x00000003, GPIO_PXPAT1C(1));
-	writel(0x00000003, GPIO_PXPAT0C(1));
-	writel(0x00000003, GPIO_PXPENS(1));
-#endif
-
-	/* enable clocks */
-	writel(readl(CPM_CLKGR0) & ~CPM_CLKGR0_MAC, CPM_CLKGR0);
-	writel(readl(CPM_CLKGR0) & ~CPM_CLKGR0_NEMC, CPM_CLKGR0);
-
-	/* enable power (PB25) */
-	gpio_direction_output(32 * 1 + 25, 1);
-
-	/* reset (PF12) */
-	gpio_direction_output(32 * 5 + 12, 0);
-	udelay(10000);
-	gpio_set(32 * 5 + 12, 1);
-	udelay(10000);
-
-	return dm9000_initialize(bis);
+	return 0;
 }
 
 #endif /* CONFIG_DRIVER_DM9000 */
