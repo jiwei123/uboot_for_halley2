@@ -45,13 +45,15 @@ void board_init_f(ulong dummy)
 	gd = &gdata;
 
 	gpio_init();
+	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART3, CPM_CLKGR);
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
+	preloader_console_init();
+#endif
 	timer_init();
 	pll_init();
 	clk_init();
 
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
-	preloader_console_init();
-#endif
+
 	sdram_init();
 
 	/* Clear the BSS */

@@ -39,7 +39,7 @@
 
 void pll_init(void)
 {
-	unsigned int cpccr = cpm_inl(CPM_CPCCR);
+	unsigned int cpccr = 0;
 
 	debug("pll init...");
 
@@ -54,7 +54,7 @@ void pll_init(void)
 	debug("CPM_CPMPCR %x\n", cpm_inl(CPM_CPMPCR));
 #endif
 
-	cpccr = ((CPCCR_CFG | (7 << 20)) & ~(0xff<<24)) | (cpm_inl(CPM_CPCCR) & (0xff<<24));
+	cpccr = CPCCR_CFG | (7 << 20);
 	cpm_outl(cpccr,CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
 
