@@ -118,7 +118,7 @@ void gpio_port_direction_input(int port, int pin)
 	writel(1 << pin, GPIO_PXINTC(port));
 	writel(1 << pin, GPIO_PXMSKS(port));
 	writel(1 << pin, GPIO_PXPAT1S(port));
-	writel(1 << pin, GPIO_PXPENS(port));
+	writel(1 << pin, GPIO_PXPES(port));
 }
 
 void gpio_port_direction_output(int port, int pin, int value)
@@ -137,7 +137,7 @@ void gpio_set_value(int gpio, int value)
 	gpio_port_set_value(port, pin, value);
 }
 
-int gpio_get_value(int gpio, int value)
+int gpio_get_value(int gpio)
 {
 	int port = gpio / 32;
 	int pin = gpio % 32;
@@ -167,5 +167,4 @@ void gpio_init(void)
 		struct jz_gpio_func_def *g = &gpio_func[i];
 		gpio_set_func(g->port, g->func, g->pins);
 	}
-	return 0;
 }

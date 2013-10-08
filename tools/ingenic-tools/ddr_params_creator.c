@@ -3,38 +3,41 @@
 #include <config.h>
 #include <ddr/ddr_chips.h>
 
-#define DDR_GET_VALUE(x, y)			      			\
-({						      			\
-	unsigned long value;	              				\
-	value = x * 1000 % y == 0 ? x * 1000 / y : x * 1000 / y + 1;\
-	value;					\
-})
+unsigned int tck_ps = 0, tck_ns = 0;
 
-#define MAX(tck, time)							\
-({									\
-	unsigned long value;						\
-	value = tck * ps > time ? tck * ps : time;			\
-	value = value % 1000 == 0 ? value / 1000 : value / 1000 + 1;\
-	value;								\
-})
-
-int get_ddr_clk(unsigned int *ps, unsigned int *ns)
+static inline int DDR_GET_VALUE(int x, int y)
 {
-	*ps = 1000000000000LL / CONFIG_SYS_MEM_FREQ;
-	*ns = (1000000000LL % CONFIG_SYS_MEM_FREQ == 0)
-		? (1000000000 / CONFIG_SYS_MEM_FREQ)
-		: (1000000000 / CONFIG_SYS_MEM_FREQ + 1);
+	int value;
 
-	return *ns;
+	value = x * 1000 % y == 0 ? x * 1000 / y : x * 1000 / y + 1;
+
+	return value;
 }
 
-int get_ddrc_register(unsigned int ps, unsigned int ns)
+static inline int MAX(int nck, int time)
 {
-	register unsigned int tmp = 0;
+	unsigned int value;
+	value = nck * tck_ps > time ? nck * tck_ps : time;
+	value = value % 1000 == 0 ? value / 1000 : value / 1000 + 1;
+	return value;
+}
+
+
+void caculate_tck(void)
+{
+	tck_ps = (1000000000 / (CONFIG_SYS_MEM_FREQ / 1000));
+	tck_ns = (1000000000 % CONFIG_SYS_MEM_FREQ == 0)
+		? (1000000000 / CONFIG_SYS_MEM_FREQ)
+		: (1000000000 / CONFIG_SYS_MEM_FREQ + 1);
+}
+
+void get_ddrc_register(void)
+{
+	unsigned int tmp = 0;
 	/*The timing parameters are identical to the JEDEC DDR Specification */
 	/* DTIMING1 has field such as tRTP,tWTR,tWR,tWL */
 	/* tRTP: READ to PRECHARGE command period */
-	tmp = DDR_GET_VALUE(DDR_tRTP, ps);
+	tmp = DDR_GET_VALUE(DDR_tRTP, tck_ps);
 
 	if (tmp < 1)
 		tmp = 1;
@@ -43,7 +46,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING1_tRTP		0x%x\n", tmp);
 
 	/* tWTR: WRITE to READ command delay */
-	tmp = DDR_GET_VALUE(DDR_tWTR, ps);
+	tmp = DDR_GET_VALUE(DDR_tWTR, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 6)
@@ -52,7 +55,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 			DDR_tWL + DDR_BL / 2 + tmp);
 
 	/* tWR: WRITE Recovery Time defined by register MR of DDR2 DDR3 memory */
-	tmp = DDR_GET_VALUE(DDR_tWR, ps);
+	tmp = DDR_GET_VALUE(DDR_tWR, tck_ps);
 #ifdef CONFIG_SDRAM_DDR3
 	if (tmp < 5)
 		tmp = 5;
@@ -84,7 +87,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING2_tCCD		0x%x\n", tmp);
 
 	/* tRAS: the ACTIVE to PRECHARGE command period to the same bank */
-	tmp = DDR_GET_VALUE(DDR_tRAS, ps);
+	tmp = DDR_GET_VALUE(DDR_tRAS, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 31)
@@ -92,7 +95,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING2_tRAS		0x%x\n", tmp);
 
 	/* tRCD: ACTIVE to READ or WRITE command period. */
-	tmp = DDR_GET_VALUE(DDR_tRCD, ps);
+	tmp = DDR_GET_VALUE(DDR_tRCD, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 11)
@@ -112,7 +115,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING3_ONUM		0x%x\n", 4);
 
 	/* tCKSRE: Valid clock after enter self-refresh */
-	tmp = DDR_GET_VALUE(DDR_tCKSRE, ps) / 8;
+	tmp = DDR_GET_VALUE(DDR_tCKSRE, tck_ps) / 8;
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 7)
@@ -120,7 +123,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING3_tCKSRE		0x%x\n", tmp);
 
 	/* tRP: PRECHARGE command period */
-	tmp = DDR_GET_VALUE(DDR_tRP, ps);
+	tmp = DDR_GET_VALUE(DDR_tRP, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 11)
@@ -131,7 +134,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 #if defined(CONFIG_FPGA)
 	tmp = 1;
 #else
-	tmp = DDR_GET_VALUE(DDR_tRRD, ps);
+	tmp = DDR_GET_VALUE(DDR_tRRD, tck_ps);
 #endif
 	if (tmp < 1)
 		tmp = 1;
@@ -140,7 +143,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING3_tRRD		0x%x\n", tmp);
 
 	/* tRC: ACTIVE to ACTIVE command period */
-	tmp = DDR_GET_VALUE(DDR_tRC, ps);
+	tmp = DDR_GET_VALUE(DDR_tRC, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 42)
@@ -149,7 +152,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 
 	/* DTIMING4 has field such as tRFC,tEXTRW,tRWCOV,tCKE,tMINSR,tXP,tMRD */
 	/* tRFC: AUTO-REFRESH command period. */
-	tmp = DDR_GET_VALUE(DDR_tRFC, ps) - 1;
+	tmp = DDR_GET_VALUE(DDR_tRFC, tck_ps) - 1;
 	tmp = tmp / 2;
 	if (tmp < 1)
 		tmp = 1;
@@ -162,7 +165,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING4_tRWCOV		0x%x\n", tmp);
 
 	/* tCKE: minimum CKE pulse width */
-	tmp = DDR_GET_VALUE(DDR_tCKE, ps);
+	tmp = DDR_GET_VALUE(DDR_tCKE, tck_ps);
 	if (tmp < 0)
 		tmp = 0;
 	if (tmp > 7)
@@ -215,7 +218,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 
 	/* DTIMING6 has field such as tXSRD,tFAW,tCFGW,tCFGR */
 	/* tXSRD: exit self-refresh to READ delay */
-	tmp = DDR_tXSRD / 4;	
+	tmp = DDR_tXSRD / 4;
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 63)
@@ -223,7 +226,7 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRC_TIMING6_tXSRD		0x%x\n", tmp);
 
 	/* tFAW: 4-active command window */
-	tmp = DDR_GET_VALUE(DDR_tFAW, ps);
+	tmp = DDR_GET_VALUE(DDR_tFAW, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 31)
@@ -239,12 +242,12 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 	/* DREFCNT: DDR Auto-Refresh Counter */
 	/* DREFCNT has field such as CON,CNT,CLK_DIV,REF_EN */
 	/* CON: A constant value used to compare with the CNT value */
-	tmp = DDR_tREFI / ns;
+	tmp = DDR_tREFI / tck_ns;
 	tmp = tmp / (16 * (1 << DDR_CLK_DIV)) - 1;
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 0xff)
-		tmp = 0xff;				
+		tmp = 0xff;
 	printf("#define DDRC_REFCNT_CON			0x%x\n", tmp);
 
 	/* CLK_DIV : Clock Divider */
@@ -296,11 +299,9 @@ int get_ddrc_register(unsigned int ps, unsigned int ns)
 #else
 	printf("#define DDRC_CFG_DW			0x%x\n", DDR_DW16);
 #endif
-
-	return 0;
 }
 
-int get_ddrp_register(unsigned int ps, unsigned int ns)
+void get_ddrp_register(void)
 {
 	register unsigned int tmp = 0;
 	unsigned int dinit1 = 0;
@@ -315,7 +316,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	/* MR0-2: Mode Register 0-2 */
 	/* MR0 has field such as RSVD,PD,WR,DR,TM,CL,BT,BL */
 	/* WR: the value of the write recovery in clock cycles */
-	tmp = DDR_GET_VALUE(DDR_tWR, ps);
+	tmp = DDR_GET_VALUE(DDR_tWR, tck_ps);
 	if (tmp < 5)
 		tmp = 5;
 	if (tmp > 12)
@@ -340,11 +341,11 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	/* PTR0 has field such as tITMSRST,tDLLLOCK,tDLLSRST */
 	/* PTR1 has filed such as tDINIT1, tDINIT0 */
 	/* tDINIT1: DRAM Initialization Time 1 */
-	if (((DDR_tRFC + 10) * 1000) > (5 * ps))  //ddr3 only
+	if (((DDR_tRFC + 10) * 1000) > (5 * tck_ps))  /* ddr3 only */
 		dinit1 = (DDR_tRFC + 10) * 1000;
 	else
-		dinit1 = 5 * ps;
-	tmp = DDR_GET_VALUE(dinit1 / 1000, ps);	
+		dinit1 = 5 * tck_ps;
+	tmp = DDR_GET_VALUE(dinit1 / 1000, tck_ps);
 	if (tmp > 0xff)
 		tmp = 0xff;
 	printf("#define DDRP_PTR1_tDINIT1		0x%x\n", tmp);
@@ -354,9 +355,9 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	/* tCCD: Read to read and write to write command delay */
 	printf("#define DDRP_DTPR0_tCCD			0x%x\n",
 			(DDR_tCCD > 4) ? 1 : 0);
-	
+
 	/* tRC: ACTIVE to ACTIVE command period. */
-	tmp = DDR_GET_VALUE(DDR_tRC, ps);
+	tmp = DDR_GET_VALUE(DDR_tRC, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 42)
@@ -367,7 +368,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 #if defined(CONFIG_FPGA)
 	tmp = 1;
 #else
-	tmp = DDR_GET_VALUE(DDR_tRRD, ps);
+	tmp = DDR_GET_VALUE(DDR_tRRD, tck_ps);
 #endif
 	if (tmp < 1)
 		tmp = 1;
@@ -376,7 +377,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRP_DTPR0_tRRD			0x%x\n", tmp);
 
 	/* tRAS: ACTIVE to PRECHARGE command period */
-	tmp = DDR_GET_VALUE(DDR_tRAS, ps);
+	tmp = DDR_GET_VALUE(DDR_tRAS, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 31)
@@ -384,7 +385,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRP_DTPR0_tRAS			0x%x\n", tmp);
 
 	/* tRCD: ACTIVE to READ or WRITE command period. */
-	tmp = DDR_GET_VALUE(DDR_tRCD, ps);
+	tmp = DDR_GET_VALUE(DDR_tRCD, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 11)
@@ -392,7 +393,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRP_DTPR0_tRCD			0x%x\n", tmp);
 
 	/* tRP: PRECHARGE command period. */
-	tmp = DDR_GET_VALUE(DDR_tRP, ps);
+	tmp = DDR_GET_VALUE(DDR_tRP, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 11)
@@ -400,7 +401,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRP_DTPR0_tRP			0x%x\n", tmp);
 
 	/* tWTR: Internal write to read command delay */
-	tmp = DDR_GET_VALUE(DDR_tWTR, ps);
+	tmp = DDR_GET_VALUE(DDR_tWTR, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 6)
@@ -411,14 +412,14 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 #if defined(CONFIG_FPGA)
 	tmp = 1;
 #else
-	tmp = DDR_GET_VALUE(DDR_tRTP, ps);
+	tmp = DDR_GET_VALUE(DDR_tRTP, tck_ps);
 #endif /* if defined(CONFIG_FPGA) */
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 6)
 		tmp = 6;
 	printf("#define DDRP_DTPR0_tRTP			0x%x\n", tmp);
-	
+
 	/* tMRD: Load mode cycle time */
 	printf("#define DDRP_DTPR0_tMRD			0x%x\n", DDR_tMRD - 4);
 
@@ -426,7 +427,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	 * tAOND/tAOFD
 	 */
 	/* tRFC: Refresh-to-Refresh */
-	tmp = DDR_GET_VALUE(DDR_tRFC, ps);	
+	tmp = DDR_GET_VALUE(DDR_tRFC, tck_ps);
 	if (tmp < 1)
 		tmp = 1;
 	if (tmp > 255)
@@ -437,7 +438,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRP_DTPR1_tRTODT		0x%x\n", 1);
 
 	/* tMOD: Load mode update delay (DDR3 only) */
-	tmp = DDR_GET_VALUE(DDR_tMOD, ps);	
+	tmp = DDR_GET_VALUE(DDR_tMOD, tck_ps);
 	tmp -= 12;
 	if (tmp < 0)
 		tmp = 0;
@@ -446,7 +447,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	printf("#define DDRP_DTPR1_tMOD			0x%x\n", tmp);
 
 	/* tFAW: 4-bank activate period */
-	tmp = DDR_GET_VALUE(DDR_tFAW, ps); 
+	tmp = DDR_GET_VALUE(DDR_tFAW, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 31)
@@ -472,7 +473,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 
 	/* Power down exit delay */
 	tmp = (DDR_tXP > DDR_tXPDLL) ? DDR_tXP : DDR_tXPDLL;
-	tmp = DDR_GET_VALUE(tmp, ps);	
+	tmp = DDR_GET_VALUE(tmp, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 31)
@@ -481,7 +482,7 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 
 	/* Self refresh exit delay */
 	tmp = (DDR_tXS > DDR_tXSDLL) ? DDR_tXS : DDR_tXSDLL;
-	tmp = DDR_GET_VALUE(tmp, ps);
+	tmp = DDR_GET_VALUE(tmp, tck_ps);
 	if (tmp < 2)
 		tmp = 2;
 	if (tmp > 1023)
@@ -493,23 +494,18 @@ int get_ddrp_register(unsigned int ps, unsigned int ns)
 	 * is enabled(toggling) or disabled (static value defined by CKDV) */
 	printf("#define DDRP_PGCR_CKEN			0x%x\n",
 			DDR_CS0EN | DDR_CS1EN);
-
-	return 0;
 }
 
 int main(int argc, char *argv[])
 {
-	unsigned int ps = 0;
-	unsigned int ns = 0;
-
 	printf("#ifndef DDR_CONFIG_H__\n");
 	printf("#define DDR_CONFIG_H__\n\n");
 
-	get_ddr_clk(&ps, &ns);
-	printf("#define PS				%d\n", ps);
-	printf("#define NS				%d\n", ns);
-	get_ddrc_register(ps, ns);
-	get_ddrp_register(ps, ns);
+	caculate_tck();
+	printf("#define PS				%d\n", tck_ps);
+	printf("#define NS				%d\n", tck_ns);
+	get_ddrc_register();
+	get_ddrp_register();
 
 	printf("\n#endif\n");
 
