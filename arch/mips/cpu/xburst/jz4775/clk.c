@@ -21,8 +21,8 @@
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
+#include <asm/gpio.h>
 #include <asm/arch/base.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/clk.h>
 

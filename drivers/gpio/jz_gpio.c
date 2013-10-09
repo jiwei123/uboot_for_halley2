@@ -19,11 +19,9 @@
  */
 
 #include <config.h>
-//#include <common.h>
 #include <asm/io.h>
+#include <asm/gpio.h>
 #include <asm/arch/base.h>
-#include <asm/arch/gpio.h>
-
 
 #ifdef CONFIG_JZ4775
 static struct jz_gpio_func_def gpio_func[] = {
@@ -98,12 +96,15 @@ void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 	writel(func & 0x10? 0 : pins, base + PXPES);
 }
 
-#define GPIO_PA(n) 	(0*32 + n)
-#define GPIO_PB(n) 	(1*32 + n)
-#define GPIO_PC(n) 	(2*32 + n)
-#define GPIO_PD(n) 	(3*32 + n)
-#define GPIO_PE(n) 	(4*32 + n)
-#define GPIO_PF(n) 	(5*32 + n)
+int gpio_request(unsigned gpio, const char *label)
+{
+	return 0;
+}
+
+int gpio_free(unsigned gpio)
+{
+	return 0;
+}
 
 void gpio_port_set_value(int port, int pin, int value)
 {
@@ -118,7 +119,6 @@ void gpio_port_direction_input(int port, int pin)
 	writel(1 << pin, GPIO_PXINTC(port));
 	writel(1 << pin, GPIO_PXMSKS(port));
 	writel(1 << pin, GPIO_PXPAT1S(port));
-	writel(1 << pin, GPIO_PXPES(port));
 }
 
 void gpio_port_direction_output(int port, int pin, int value)
@@ -130,33 +130,41 @@ void gpio_port_direction_output(int port, int pin, int value)
 	gpio_port_set_value(port, pin, value);
 }
 
-void gpio_set_value(int gpio, int value)
+int gpio_set_value(unsigned gpio, int value)
 {
 	int port = gpio / 32;
 	int pin = gpio % 32;
 	gpio_port_set_value(port, pin, value);
+
+	return 0;
 }
 
-int gpio_get_value(int gpio)
+int gpio_get_value(unsigned gpio)
 {
-	int port = gpio / 32;
-	int pin = gpio % 32;
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
 	
 	return !!(readl(GPIO_PXPIN(port)) & (1 << pin));
 }
 
-void gpio_direction_input(int gpio)
+int gpio_direction_input(unsigned gpio)
 {
-	int port = gpio / 32;
-	int pin = gpio % 32;
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
 	gpio_port_direction_input(port, pin);
+
+	return 0;
 }
 
-void gpio_direction_output(int gpio, int value)
+int gpio_direction_output(unsigned gpio, int value)
 {
-	int port = gpio / 32;
-	int pin = gpio % 32;
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
 	gpio_port_direction_output(port, pin, value);
+
+	return 0;
 }
 
 void gpio_init(void)

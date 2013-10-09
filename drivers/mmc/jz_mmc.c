@@ -69,7 +69,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 						struct mmc_data *data)
 {
 	struct jz_mmc_priv *priv = mmc->priv;
-	uint32_t stat, mask, cmdat = 0;
+	uint32_t stat, cmdat = 0;
 
 	/* setup command */
 	jz_mmc_writel(cmd->cmdidx, priv, MSC_CMD);
@@ -115,17 +115,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	/* write the data setup */
 	jz_mmc_writel(cmdat, priv, MSC_CMDAT);
 
-	/* unmask interrupts */
-	mask = 0xffffffff & ~(MSC_IMASK_END_CMD_RES | MSC_IMASK_TIME_OUT_RES);
-	if (data) {
-		mask &= ~MSC_IMASK_DATA_TRAN_DONE;
-		if (data->flags & MMC_DATA_WRITE)
-			mask &= ~MSC_IMASK_TXFIFO_WR_REQ;
-		else
-			mask &= ~(MSC_IMASK_RXFIFO_RD_REQ | MSC_IMASK_TIME_OUT_READ);
-	}
-	jz_mmc_writel(mask, priv, MSC_IMASK);
-
+	jz_mmc_writel(0xffffffff, priv, MSC_IMASK);
 	/* clear interrupts */
 	jz_mmc_writel(0xffffffff, priv, MSC_IREG);
 
@@ -266,8 +256,11 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	mmc->voltages = MMC_VDD_27_28 |
 		MMC_VDD_28_29 | MMC_VDD_29_30 | MMC_VDD_30_31 | MMC_VDD_31_32 |
 		MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_34_35 | MMC_VDD_35_36;
+#ifdef CONFIG_SPL_BUILD
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
-
+#else
+	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HC;
+#endif
 	mmc->f_min = 200000;
 	mmc->f_max = 24000000;
 

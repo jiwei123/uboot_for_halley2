@@ -24,8 +24,8 @@
 #include <nand.h>
 #include <net.h>
 #include <netdev.h>
+#include <asm/gpio.h>
 #include <asm/arch/cpm.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 

@@ -498,8 +498,8 @@ void get_ddrp_register(void)
 
 int main(int argc, char *argv[])
 {
-	printf("#ifndef DDR_CONFIG_H__\n");
-	printf("#define DDR_CONFIG_H__\n\n");
+	printf("#ifndef __DDR_PARAMS_H__\n");
+	printf("#define __DDR_PARAMS_H__\n\n");
 
 	caculate_tck();
 	printf("#define PS				%d\n", tck_ps);
@@ -507,7 +507,7 @@ int main(int argc, char *argv[])
 	get_ddrc_register();
 	get_ddrp_register();
 
-	printf("\n#endif\n");
+	printf("\n#endif /* __DDR_PARAMS_H__ */\n");
 
 	return 0;
 }

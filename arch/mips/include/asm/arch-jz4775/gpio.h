@@ -86,10 +86,6 @@ void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 void gpio_port_set_value(int port, int pin, int value);
 void gpio_port_direction_input(int port, int pin);
 void gpio_port_direction_output(int port, int pin, int value);
-void gpio_set_value(int gpio, int value);
-int gpio_get_value(int gpio);
-void gpio_direction_input(int gpio);
-void gpio_direction_output(int gpio, int value);
 void gpio_init(void);
 
 #endif /* __GPIO_H__ */

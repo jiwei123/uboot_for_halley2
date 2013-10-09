@@ -544,6 +544,7 @@ static int mmc_change_freq(struct mmc *mmc)
 
 static int mmc_set_capacity(struct mmc *mmc, int part_num)
 {
+#ifndef CONFIG_SPL_BUILD
 	switch (part_num) {
 	case 0:
 		mmc->capacity = mmc->capacity_user;
@@ -564,7 +565,9 @@ static int mmc_set_capacity(struct mmc *mmc, int part_num)
 	default:
 		return -1;
 	}
-
+#else
+	mmc->capacity = mmc->capacity_user;
+#endif
 	mmc->block_dev.lba = lldiv(mmc->capacity, mmc->read_bl_len);
 
 	return 0;
@@ -974,7 +977,7 @@ static int mmc_startup(struct mmc *mmc)
 			mmc->version = MMC_VERSION_4_5;
 			break;
 		}
-
+#ifndef CONFIG_SPL_BUILD
 		/*
 		 * Check whether GROUP_DEF is set, if yes, read out
 		 * group size from ext_csd directly, or calculate
@@ -1009,23 +1012,24 @@ static int mmc_startup(struct mmc *mmc)
 				ext_csd[EXT_CSD_HC_ERASE_GRP_SIZE];
 			mmc->capacity_gp[i] *= ext_csd[EXT_CSD_HC_WP_GRP_SIZE];
 		}
+#endif
 	}
 
 	err = mmc_set_capacity(mmc, mmc->part_num);
 	if (err)
 		return err;
-
+#ifndef CONFIG_SPL_BUILD
 	if (IS_SD(mmc))
 		err = sd_change_freq(mmc);
 	else
 		err = mmc_change_freq(mmc);
-
+#endif
 	if (err)
 		return err;
 
 	/* Restrict card's capabilities by what the host can do */
 	mmc->card_caps &= mmc->host_caps;
-
+#ifndef CONFIG_SPL_BUILD
 	if (IS_SD(mmc)) {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
 			cmd.cmdidx = MMC_CMD_APP_CMD;
@@ -1114,7 +1118,9 @@ static int mmc_startup(struct mmc *mmc)
 				mmc->tran_speed = 26000000;
 		}
 	}
-
+#else
+	mmc->tran_speed = 24000000;
+#endif
 	mmc_set_clock(mmc, mmc->tran_speed);
 
 	/* fill in device description */
