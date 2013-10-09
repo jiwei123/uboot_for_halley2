@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2013 Ingenic Semiconductor Inc.
+ * Jz4775 clock common interface
+ *
+ * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: sonil <ztyan@ingenic.cn>
  *
  * This program is free software; you can redistribute it and/or

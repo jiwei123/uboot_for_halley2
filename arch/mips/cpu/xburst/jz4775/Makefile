@@ -1,5 +1,5 @@
 #
-# Ingenic JZ4780 makefile
+# Ingenic JZ4775 makefile
 #
 # Copyright (c) 2013 Imagination Technologies
 # Author: Paul Burton <paul.burton@imgtec.com>

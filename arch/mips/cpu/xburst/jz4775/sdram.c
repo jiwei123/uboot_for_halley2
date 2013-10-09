@@ -1,8 +1,8 @@
 /*
- * Jz4780 ddr routines
+ * Jz4775 ddr routines
  *
- *  Copyright (c) 2006
- *  Ingenic Semiconductor, <cwjia@ingenic.cn>
+ * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
+ * Author: Justin <ptkang@ingenic.cn>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

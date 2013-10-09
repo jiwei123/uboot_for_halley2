@@ -95,21 +95,17 @@ _start:
 	li	t1, 0x00800000
 	mtc0	t1, CP0_CAUSE
 
-#ifdef CONFIG_JZ4775
 	/* enable bridge radical mode */
 	la	t0, CPM_BASE
 	lw	t1, 0x24(t0)
 	ori	t1, t1, 0x22
 	sw	t1, 0x24(t0)
-#endif
 
 	/* Set up stack */
 	li	sp, CONFIG_SPL_STACK
 
 	b		board_init_f
 	 nop
-
-#if defined(CONFIG_JZ4775) || defined(CONFIG_JZ4780)
 
 	.globl enable_caches
 	.ent enable_caches
@@ -147,5 +143,3 @@ enable_caches:
 	 nop
 
 	.end enable_caches
-
-#endif /* CONFIG_JZ4780 */

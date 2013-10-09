@@ -1,5 +1,5 @@
 /*
- * Include file for Ingenic Semiconductor's JZ4780_DDR CPU.
+ * Include file for Ingenic Semiconductor's JZ4775_DDR CPU.
  */
 #ifndef __DDR_H__
 #define __DDR_H__
