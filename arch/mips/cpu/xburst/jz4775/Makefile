@@ -32,7 +32,8 @@ COBJS-y += sdram.o
 COBJS-y += timer.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj), $(SOBJS-y) $(COBJS-y))
+OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+START	:= $(addprefix $(obj),$(START))
 
 all:	$(obj).depend $(LIB)
 

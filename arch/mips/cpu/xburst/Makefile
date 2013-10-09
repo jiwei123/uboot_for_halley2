@@ -28,6 +28,12 @@ START	= start.o
 SOBJS-y	=
 COBJS-y	= cpu.o jz_serial.o
 
+ifdef	CONFIG_SPL_BUILD
+ifdef	CONFIG_SPL_NO_CPU_SUPPORT_CODE
+START	:=
+endif
+endif
+
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
 START	:= $(addprefix $(obj),$(START))

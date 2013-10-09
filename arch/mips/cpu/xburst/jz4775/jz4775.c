@@ -53,7 +53,6 @@ void board_init_f(ulong dummy)
 	pll_init();
 	clk_init();
 
-
 	sdram_init();
 
 	/* Clear the BSS */

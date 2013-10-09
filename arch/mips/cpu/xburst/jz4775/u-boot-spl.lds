@@ -10,7 +10,7 @@ SECTIONS
 	.text      :
 	{
 		__start = .;
-		arch/mips/cpu/xburst/start.o	(.text*)
+		arch/mips/cpu/xburst/jz4775/start.o	(.text*)
 		*(.text*)
 	} >.sram
 
