@@ -37,6 +37,7 @@
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ	/* CPU clock: 1.2 GHz */
 #define CONFIG_SYS_MEM_FREQ		204000000
 
+#define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR3_H5TQ1G83DFR_H9C
 
 #define CONFIG_SYS_AUDIO_SPEED (768 * 1000000)
@@ -55,6 +56,24 @@
 
 #define CONFIG_BOOTDELAY 1
 #define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
+
+#ifdef CONFIG_MBR_CREATOR
+#define CONFIG_MBR_P0_OFF	64mb
+#define CONFIG_MBR_P0_END	556mb
+#define CONFIG_MBR_P0_TYPE 	linux
+
+#define CONFIG_MBR_P1_OFF	580mb
+#define CONFIG_MBR_P1_END 	1604mb
+#define CONFIG_MBR_P1_TYPE 	linux
+
+#define CONFIG_MBR_P2_OFF	28mb
+#define CONFIG_MBR_P2_END	58mb
+#define CONFIG_MBR_P2_TYPE 	linux
+
+#define CONFIG_MBR_P3_OFF	1609mb
+#define CONFIG_MBR_P3_END	7800mb
+#define CONFIG_MBR_P3_TYPE 	fat
+#endif
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
@@ -239,6 +258,7 @@
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
+#define CONFIG_SPL_PAD_TO		15872 /* u-boot start addr - mbr size(512) */
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */

@@ -14,7 +14,7 @@
 
 #define ARRAY_SIZE(x)		((sizeof(x))/(sizeof(x[0])))
 
-typedef unsigned long long int	uint64_t;
+typedef unsigned long long	uint64_t;
 typedef unsigned int		uint32_t;
 typedef unsigned short int	uint16_t;
 typedef unsigned char		uint8_t;
@@ -28,14 +28,15 @@ struct mbr_tab_item {
 struct mbr_tab_item	tab_item[4];
 
 static int parse_mbr_string(const char *str) {
-	/*
-	 * format:p1off=xmb,p1end=ymb,p1type=fat
-	 */
-	printf("str =%s\n", str);
 	int i1 = -1, i2 = -1, i3 = -1;
 	int items = -1;
 	uint64_t offset = 0, end = 0;
 	char type_str[100] = {0};
+
+	/*
+	 * format:p1off=xmb,p1end=ymb,p1type=fat
+	 */
+	printf("str =%s\n", str);
 	if ((items = sscanf(str, "p%doff=%lldmb,p%dend=%lldmb,p%dtype=%s", &i1, &offset, &i2, &end, &i3, type_str)) != 6) {
 		printf("itmes = %d\n", items);
 		printf("i1 = %d\n", i1);

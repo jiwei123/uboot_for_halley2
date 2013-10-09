@@ -20,3 +20,4 @@
 /gdb/gdbsend
 /kernel-doc/docproc
 /ingenic-tools/ddr_params_creator
+/ingenic-tools/mbr_creator

@@ -427,6 +427,10 @@ ALL-y += $(obj)u-boot-nodtb-tegra.bin
 endif
 endif
 
+ifeq ($(CONFIG_MBR_CREATOR),y)
+ALL-y += $(obj)u-boot-with-spl-mbr.bin
+endif
+
 all:		$(ALL-y) $(SUBDIR_EXAMPLES)
 
 $(obj)u-boot.dtb:	$(obj)u-boot
@@ -569,6 +573,9 @@ $(obj)u-boot-img-spl-at-end.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
 		dd if=$(obj)u-boot.img of=$(obj)u-boot-pad.img \
 			conv=notrunc 2>/dev/null
 		cat $(obj)u-boot-pad.img $(obj)spl/u-boot-spl.bin > $@
+
+$(obj)u-boot-with-spl-mbr.bin: $(obj)u-boot-with-spl.bin
+		cat $(obj)tools/ingenic-tools/mbr.bin $(obj)u-boot-with-spl.bin > $@
 
 ifeq ($(CONFIG_SANDBOX),y)
 GEN_UBOOT = \
