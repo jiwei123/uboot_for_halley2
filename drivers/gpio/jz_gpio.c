@@ -39,8 +39,12 @@ static struct jz_gpio_func_def gpio_func[] = {
 
 #endif  /*CONFIG_SYS_UART_BASE*/
 
-#if defined(CONFIG_JZ_MMC_MSC0_PE_4BIT)
+#if defined(CONFIG_JZ_MMC_MSC0_PA_4BIT)
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x01fc0000},
+#endif
+
+#if defined(CONFIG_JZ_MMC_MSC1_PE_4BIT)
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_1, .pins = 0x30f00000},
 #endif
 
 #if defined(CONFIG_NAND_LOADER)

@@ -151,8 +151,9 @@
 #define CONFIG_MMC			1
 #define CONFIG_JZ_MMC 1
 #define CONFIG_JZ_MMC_MSC0 1
-#define CONFIG_JZ_MMC_MSC0_PE_4BIT 1
+#define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
 #define CONFIG_JZ_MMC_MSC1 1
+#define CONFIG_JZ_MMC_MSC1_PE_4BIT 1
 #define CONFIG_JZ_MMC_SPLMSC 0
 
 /* Ethernet:  davicom DM9000 */

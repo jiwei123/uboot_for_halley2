@@ -31,8 +31,8 @@
 
 int board_early_init_f(void)
 {
-	/* SYS_POWER_IND high (LED blue, VBUS on) */
-	gpio_direction_output(32 * 5 + 15, 1);
+	/* Power on TF-card */
+	gpio_direction_output(GPIO_PB(3), 1);
 
 	return 0;
 }
