@@ -162,8 +162,8 @@
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED 50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE 0x00   /* the function is not implemented */
-#define CONFIG_SOFT_I2C_GPIO_SCL    (32 * 4 + 3) /* GPE3 ok*/
-#define CONFIG_SOFT_I2C_GPIO_SDA    (32 * 4 + 0) /* GPE0 ok*/
+#define CONFIG_SOFT_I2C_GPIO_SCL    GPIO_PE(3)
+#define CONFIG_SOFT_I2C_GPIO_SDA    GPIO_PE(0)
 
 /* Ethernet:  davicom DM9000 */
 #define CONFIG_DRIVER_DM9000		1
