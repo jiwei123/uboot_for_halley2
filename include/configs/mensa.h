@@ -1,8 +1,10 @@
 /*
- * ReliableIPTV urboard configuration
+ * Ingenic mensa configuration
  *
- * Copyright (c) 2013 Imagination Technologies
- * Author: Paul Burton <paul.burton@imgtec.com>
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Author: Zoro <ykli@ingenic.cn>
+ * Based on: include/configs/urboard.h
+ *           Written by Paul Burton <paul.burton@imgtec.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -27,7 +29,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_JZ4775		/* Jz4775 SoC */
 
-#define CONFIG_SYS_APLL_FREQ		816000000
+#define CONFIG_SYS_APLL_FREQ		1008000000
 #define CONFIG_SYS_MPLL_FREQ		-1
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
@@ -35,7 +37,7 @@
 #define CONFIG_SYS_MIPS_TIMER_FREQ	CONFIG_SYS_CPU_SPEED
 
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ	/* CPU clock: 1.2 GHz */
-#define CONFIG_SYS_MEM_FREQ		204000000
+#define CONFIG_SYS_MEM_FREQ		336000000
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR3_H5TQ1G83DFR_H9C
@@ -160,10 +162,10 @@
  * I2C
  */
 #define CONFIG_SOFT_I2C
-#define CONFIG_SYS_I2C_SPEED 50     /* the function is not implemented */
-#define CONFIG_SYS_I2C_SLAVE 0x00   /* the function is not implemented */
-#define CONFIG_SOFT_I2C_GPIO_SCL    GPIO_PE(3)
-#define CONFIG_SOFT_I2C_GPIO_SDA    GPIO_PE(0)
+#define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
+#define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(3)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(0)
 
 /* Ethernet:  davicom DM9000 */
 #define CONFIG_DRIVER_DM9000		1

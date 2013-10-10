@@ -1,8 +1,7 @@
 /*
  * Ingenic JZ MMC support
  *
- * Copyright (c) 2013 Imagination Technologies
- * Author: Paul Burton <paul.burton@imgtec.com>
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,7 +19,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __JZ_MMC_H__
+#ifndef __MMC_H__
+#define __MMC_H__
 
 #include <asm/arch/base.h>
 
@@ -157,4 +157,4 @@
 
 void jz_mmc_init(void);
 
-#endif
+#endif /* __MMC_H__ */

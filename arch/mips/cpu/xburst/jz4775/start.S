@@ -1,10 +1,7 @@
 /*
- *  Startup Code for MIPS32 XBURST CPU-core
+ * Startup Code for MIPS32 XBURST JZ4775 CPU-core
  *
- *  Copyright (c) 2010 Xiangfu Liu <xiangfu@sharism.cc>
- *
- * See file CREDITS for list of people who contributed to this
- * project.
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

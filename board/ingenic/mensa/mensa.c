@@ -1,8 +1,8 @@
 /*
- * ReliableIPTV urboard setup code
+ * Ingenic mensa setup code
  *
- * Copyright (c) 2013 Imagination Technologies
- * Author: Paul Burton <paul.burton@imgtec.com>
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Author: Zoro <ykli@ingenic.cn>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

@@ -21,7 +21,9 @@ COBJS-$(CONFIG_SPL_NAND_SUPPORT) += spl_nand.o
 COBJS-$(CONFIG_SPL_ONENAND_SUPPORT) += spl_onenand.o
 COBJS-$(CONFIG_SPL_NET_SUPPORT) += spl_net.o
 COBJS-$(CONFIG_SPL_MMC_SUPPORT) += spl_mmc.o
+ifndef CONFIG_SPL_LIBCOMMON_SUPPORT
 COBJS-y += spl_printf.o
+endif
 endif
 
 COBJS	:= $(sort $(COBJS-y))

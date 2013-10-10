@@ -23,7 +23,6 @@
 #include <common.h>
 #include <mmc.h>
 #include <asm/io.h>
-#include <asm/arch/base.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/mmc.h>
 #include <asm/unaligned.h>

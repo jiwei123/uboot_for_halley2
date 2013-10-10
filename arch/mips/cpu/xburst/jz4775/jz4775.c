@@ -1,8 +1,10 @@
 /*
  * JZ4775 common routines
  *
- * Copyright (c) 2013 Imagination Technologies
- * Author: Paul Burton <paul.burton@imgtec.com>
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Author: Zoro <ykli@ingenic.cn>
+ * Based on: arch/mips/cpu/xburst/jz4780/jz4780.c
+ *           Written by Paul Burton <paul.burton@imgtec.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -19,7 +21,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#define DEBUG
+
+/* #define DEBUG */
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -45,7 +48,20 @@ void board_init_f(ulong dummy)
 	gd = &gdata;
 
 	gpio_init();
+
+	/* Init uart first */
+#if (CONFIG_SYS_UART_BASE == UART0_BASE)
+	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART0, CPM_CLKGR);
+#endif
+#if (CONFIG_SYS_UART_BASE == UART1_BASE)
+	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART1, CPM_CLKGR);
+#endif
+#if (CONFIG_SYS_UART_BASE == UART2_BASE)
+	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART2, CPM_CLKGR);
+#endif
+#if (CONFIG_SYS_UART_BASE == UART3_BASE)
 	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART3, CPM_CLKGR);
+#endif
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif

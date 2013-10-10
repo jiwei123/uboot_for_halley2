@@ -1,11 +1,8 @@
 #
-# Ingenic mensa configuration
+# Ingenic JZ4740 makefile
 #
-#
-# Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
-# Author: Zoro <ykli@ingenic.cn>
-# Based on: board/reliableIPTV/urboard/config.mk
-#           Written by Paul Burton <paul.burton@imgtec.com>
+# Copyright (c) 2013 Imagination Technologies
+# Author: Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -23,10 +20,27 @@
 # MA 02111-1307 USA
 #
 
-ifndef TEXT_BASE
-# ROM version
-# TEXT_BASE = 0x88000000
+include $(TOPDIR)/config.mk
 
-# RAM version
-TEXT_BASE = 0x80100000
-endif
+LIB	= $(obj)lib$(SOC).o
+
+SOBJS-y	=
+COBJS-y	= $(SOC).o
+COBJS-y += timer.o
+
+SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+
+all:	$(obj).depend $(LIB)
+
+$(LIB):	$(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

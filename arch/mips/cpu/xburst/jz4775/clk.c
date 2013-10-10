@@ -2,7 +2,8 @@
  * Jz4775 clock common interface
  *
  * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
- * Author: sonil <ztyan@ingenic.cn>
+ * Author: Zoro <ykli@ingenic.cn>
+ * Based on: newxboot/modules/clk/jz4775_clk.c
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,7 +25,6 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
-#include <asm/arch/base.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/clk.h>
 
@@ -170,4 +170,3 @@ void clk_init(void)
 
 	cgu_clks_init(spl_cgu_clksel, ARRAY_SIZE(spl_cgu_clksel));
 }
-

@@ -20,8 +20,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __JZ4780_NAND_H__
-#define __JZ4780_NAND_H__
+#ifndef __NAND_H__
+#define __NAND_H__
 
 /* NEMC registers */
 #define NEMC_SMCR1  0x014
@@ -96,4 +96,4 @@
 extern int jz4780_nand_init(struct nand_chip *nand);
 extern void jz4780_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip);
 
-#endif /* __JZ4780_NAND_H__ */
+#endif /* __NAND_H__ */

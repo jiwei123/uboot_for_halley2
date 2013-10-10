@@ -26,7 +26,6 @@
 #include <generated/ddr_params.h>
 
 #include <asm/io.h>
-#include <asm/arch/base.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/ddr.h>
 

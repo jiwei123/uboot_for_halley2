@@ -1,6 +1,9 @@
 /*
- * Copyright (C) 2007 Ingenic Semiconductor Inc.
- * Author: <ztyan@ingenic.cn>
+ * JZ4775 common routines
+ *
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Author: Sonil <ztyan@ingenic.cn>
+ * Based on: newxboot/modules/gpio/jz4775_gpio.c
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -21,7 +24,6 @@
 #include <config.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
-#include <asm/arch/base.h>
 
 #ifdef CONFIG_JZ4775
 static struct jz_gpio_func_def gpio_func[] = {
