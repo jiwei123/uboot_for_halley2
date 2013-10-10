@@ -156,6 +156,15 @@
 #define CONFIG_JZ_MMC_MSC1_PE_4BIT 1
 #define CONFIG_JZ_MMC_SPLMSC 0
 
+/*
+ * I2C
+ */
+#define CONFIG_SOFT_I2C
+#define CONFIG_SYS_I2C_SPEED 50     /* the function is not implemented */
+#define CONFIG_SYS_I2C_SLAVE 0x00   /* the function is not implemented */
+#define CONFIG_SOFT_I2C_GPIO_SCL    (32 * 4 + 3) /* GPE3 ok*/
+#define CONFIG_SOFT_I2C_GPIO_SDA    (32 * 4 + 0) /* GPE0 ok*/
+
 /* Ethernet:  davicom DM9000 */
 #define CONFIG_DRIVER_DM9000		1
 #define CONFIG_DM9000_BASE		0xb6000000
@@ -271,6 +280,7 @@
 #define CONFIG_SPL_BOARD_INIT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
 #define CONFIG_SPL_GPIO_SUPPORT
+#define CONFIG_SPL_I2C_SUPPORT
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
