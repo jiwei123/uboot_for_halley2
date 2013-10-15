@@ -29,6 +29,13 @@
 
 #define CPM_DDRCDR	(0x2c)
 #define CPM_VPUCDR	(0x30)
+#define CPM_CPSPR	(0x34)
+#define CPM_CPSPPR	(0x38)
+#define CPM_USBPCR	(0x3c)
+#define CPM_USBRDT	(0x40)
+#define CPM_USBVBFIL	(0x44)
+#define CPM_USBPCR1	(0x48)
+#define CPM_USBCDR	(0x50)
 #define CPM_I2SCDR	(0x60)
 #define CPM_LPCDR	(0x64)
 #define CPM_MSC0CDR	(0x68)
@@ -152,5 +159,20 @@ do{					\
 	udelay(300);			\
 	arch_enable_usb();		\
 }while(0)
+
+/* CPM scratch pad protected register(CPSPPR) */
+#define CPSPPR_CPSPR_WRITABLE   (0x00005a5a)
+#define RECOVERY_SIGNATURE      (0x1a1a)        /* means "RECY" */
+#define RECOVERY_SIGNATURE_SEC  0x800           /* means "RECY" */
+
+#define cpm_get_scrpad()        readl(CPM_CPSPR)
+#define cpm_set_scrpad(data)                    \
+do {                                            \
+	volatile int i = 0x3fff;                \
+	writel(0x00005a5a,CPM_CPSPPR);		\
+	while(i--);				\
+	writel(data,CPM_CPSPR);			\
+	writel(0x0000a5a5,CPM_CPSPPR);      	\
+} while (0)
 
 #endif /* __CPM_H__ */

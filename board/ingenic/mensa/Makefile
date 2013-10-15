@@ -27,7 +27,9 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 COBJS	:= $(BOARD).o
-
+ifdef CONFIG_BOOT_ANDROID
+COBJS	+= boot_key.o
+endif
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 

@@ -173,6 +173,22 @@ int gpio_direction_output(unsigned gpio, int value)
 	return 0;
 }
 
+void gpio_enable_pull(unsigned gpio)
+{
+	unsigned port= gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXPEC(port));
+}
+
+void gpio_disable_pull(unsigned gpio)
+{
+	unsigned port= gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXPES(port));
+}
+
 void gpio_init(void)
 {
 	int i;

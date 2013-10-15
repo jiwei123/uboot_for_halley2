@@ -30,6 +30,7 @@
 #define GPIO_PD(n) 	(3*32 + n)
 #define GPIO_PE(n) 	(4*32 + n)
 #define GPIO_PF(n) 	(5*32 + n)
+#define GPIO_PG(n) 	(6*32 + n)
 
 enum gpio_function {
 	GPIO_FUNC_0     = 0x00,  //0000, GPIO as function 0 / device 0
@@ -105,5 +106,7 @@ void gpio_port_set_value(int port, int pin, int value);
 void gpio_port_direction_input(int port, int pin);
 void gpio_port_direction_output(int port, int pin, int value);
 void gpio_init(void);
+void gpio_enable_pull(unsigned gpio);
+void gpio_disable_pull(unsigned gpio);
 
 #endif /* __GPIO_H__ */

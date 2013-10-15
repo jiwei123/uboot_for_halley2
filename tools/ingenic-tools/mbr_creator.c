@@ -36,15 +36,10 @@
 
 #define ARRAY_SIZE(x)		((sizeof(x))/(sizeof(x[0])))
 
-typedef unsigned long long	uint64_t;
-typedef unsigned int		uint32_t;
-typedef unsigned short int	uint16_t;
-typedef unsigned char		uint8_t;
-
 struct mbr_tab_item {
-	uint32_t	offset;
-	uint32_t	size;
-	uint8_t		type;
+	unsigned int	offset;
+	unsigned int	size;
+	unsigned char	type;
 };
 
 struct mbr_tab_item	tab_item[4];
@@ -52,7 +47,7 @@ struct mbr_tab_item	tab_item[4];
 static int parse_mbr_string(const char *str) {
 	int i1 = -1, i2 = -1, i3 = -1;
 	int items = -1;
-	uint64_t offset = 0, end = 0;
+	unsigned long long offset = 0, end = 0;
 	char type_str[100] = {0};
 
 	/*
@@ -99,7 +94,7 @@ int main(int argc, char *argv[])
 {
 	int	i = 0;
 	int	fd = -1;
-	uint8_t	block[512];
+	unsigned char	block[512];
 	char	mbr_name[512] = {0};
 
 	memset(tab_item, 0, ARRAY_SIZE(tab_item));
@@ -134,20 +129,20 @@ int main(int argc, char *argv[])
 
 	block[0x1fe] = 0x55;                                                                                                             
         block[0x1ff] = 0xaa;
-	memcpy(block+0x1c6,&tab_item[0].offset,sizeof(uint32_t));
-	memcpy(block+0x1d6,&tab_item[1].offset,sizeof(uint32_t));
-	memcpy(block+0x1e6,&tab_item[2].offset,sizeof(uint32_t));
-	memcpy(block+0x1f6,&tab_item[3].offset,sizeof(uint32_t));
+	memcpy(block+0x1c6,&tab_item[0].offset,sizeof(unsigned int));
+	memcpy(block+0x1d6,&tab_item[1].offset,sizeof(unsigned int));
+	memcpy(block+0x1e6,&tab_item[2].offset,sizeof(unsigned int));
+	memcpy(block+0x1f6,&tab_item[3].offset,sizeof(unsigned int));
 
-	memcpy(block+0x1ca,&tab_item[0].size,sizeof(uint32_t));
-	memcpy(block+0x1da,&tab_item[1].size,sizeof(uint32_t));
-	memcpy(block+0x1ea,&tab_item[2].size,sizeof(uint32_t));
-	memcpy(block+0x1fa,&tab_item[3].size,sizeof(uint32_t));
+	memcpy(block+0x1ca,&tab_item[0].size,sizeof(unsigned int));
+	memcpy(block+0x1da,&tab_item[1].size,sizeof(unsigned int));
+	memcpy(block+0x1ea,&tab_item[2].size,sizeof(unsigned int));
+	memcpy(block+0x1fa,&tab_item[3].size,sizeof(unsigned int));
 
-	memcpy(block+0x1c2,&tab_item[0].type,sizeof(uint8_t));
-	memcpy(block+0x1d2,&tab_item[1].type,sizeof(uint8_t));
-	memcpy(block+0x1e2,&tab_item[2].type,sizeof(uint8_t));
-	memcpy(block+0x1f2,&tab_item[3].type,sizeof(uint8_t));
+	memcpy(block+0x1c2,&tab_item[0].type,sizeof(unsigned char));
+	memcpy(block+0x1d2,&tab_item[1].type,sizeof(unsigned char));
+	memcpy(block+0x1e2,&tab_item[2].type,sizeof(unsigned char));
+	memcpy(block+0x1f2,&tab_item[3].type,sizeof(unsigned char));
 
 	fd = open(mbr_name,O_RDWR | O_TRUNC | O_CREAT,0666);
 	if(fd < 0)

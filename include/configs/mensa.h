@@ -56,7 +56,7 @@
 
 #define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAUL)
 
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY 3
 #define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_MBR_CREATOR
@@ -77,14 +77,34 @@
 #define CONFIG_MBR_P3_TYPE 	fat
 #endif
 
+/*
+ * CONFIG_BOOT_ANDROID:uboot boot android system
+ * CONFIG_FAST_BOOT_SUPPORT:android system support fast boot mode.
+ * boot linux system need not the next two macro
+ */
+
+#define CONFIG_BOOT_ANDROID
+#define CONFIG_FAST_BOOT_SUPPORT
+
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
 /* SD/MMC card defaults */
 
 #define CONFIG_BOOTARGS \
     BOOTARGS_COMMON " root=/dev/mmcblk0p1"
+
+#ifdef CONFIG_BOOT_ANDROID
+
+/* boot android android system */
 #define CONFIG_BOOTCOMMAND \
-    "fatload mmc 1:1 0x88000000 vmlinux.ub; bootm 0x88000000"
+    "boota mmc 0 0x80f00000 6144"
+#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
+#define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
+
+#else/*!CONFIG_BOOT_ANDROID */
+#define CONFIG_BOOTCOMMAND \
+    "fatload mmc 0:4 0x88000000 vmlinux.ub; bootm 0x88000000"
+#endif/* !CONFIG_BOOT_ANDROID*/
 
 #else /* !CONFIG_SPL_MMC_SUPPORT */
 
@@ -92,10 +112,20 @@
 
 #define CONFIG_BOOTARGS \
     BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
+
+#ifdef CONFIG_BOOT_ANDROID
+
+/* boot android android system */
+#define CONFIG_BOOTCOMMAND \
+    "boota nand 0 0x80f00000 6144"
+#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
+#define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
+
+#else/*!CONFIG_BOOT_ANDROID */
 #define CONFIG_BOOTCOMMAND \
     "mtdparts default; ubi part system; ubifsmount ubi:boot; " \
     "ubifsload 0x88000000 vmlinux.ub; bootm 0x88000000"
-
+#endif/*!CONFIG_BOOT_ANDROID */
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
 
@@ -307,5 +337,18 @@
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
+
+/*
+ *key
+*/
+
+#define CONFIG_GPIO_BOOT_MENU		GPIO_PG(15)/* GPG15 ok*/
+#define CONFIG_MENU_ENLEVEL		0/* low level is valid*/
+
+#define CONFIG_GPIO_USB_DETECT		GPIO_PA(16)/* GPA16 ok*/
+#define CONFIG_USB_DETECT_ENLEVEL	1/* high level is valid*/
+
+#define CONFIG_RECOVERY_KEY		CONFIG_GPIO_BOOT_MENU  /* MENSA_SW2 = GPG15 ok*/
+#define CONFIG_RECOVERY_ENLEVEL		0/* low level is valid*/
 
 #endif /* __CONFIG_MENSA_H__ */

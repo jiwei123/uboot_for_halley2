@@ -44,6 +44,9 @@ int misc_init_r(void)
 	/* set MAC address */
 	eth_setenv_enetaddr("ethaddr", mac);
 
+#ifdef CONFIG_BOOT_ANDROID
+	boot_mode_select();
+#endif
 	return 0;
 }
 
