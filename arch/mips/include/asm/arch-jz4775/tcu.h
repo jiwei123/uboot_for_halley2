@@ -223,11 +223,6 @@ struct pwm {
 #define TCU_TSSR_STPC0		(1 << 0)
 #define TCU_TCSR_CLRZ	(1 << 10)
 
-/*pwm for lcd*/
-#define LCD_PWM_FULL            256
-#define LCD_PWM_PERIOD          10000 /* pwm period in ns */
-#define LCD_PWM_CHN             1  /* pwm channel ok*/
-
 int pwm_request(int num);
 void pwm_enable(int num);
 void pwm_disable(int num);

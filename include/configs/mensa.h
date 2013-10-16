@@ -42,6 +42,12 @@
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR3_H5TQ1G83DFR_H9C
 
+/* Pwm for lcd */
+#define CONFIG_SYS_PWM_PERIOD          10000 /* Pwm period in ns */
+#define CONFIG_SYS_PWM_CHN             1  /* Pwm channel ok*/
+#define CONFIG_SYS_PWM_FULL            256
+#define CONFIG_SYS_BACKLIGHT_LEVEL 80 /* Backlight brightness is (80 / 256) */
+
 #define CONFIG_SYS_AUDIO_SPEED (768 * 1000000)
 
 #define CONFIG_SYS_UART_BASE UART3_BASE
