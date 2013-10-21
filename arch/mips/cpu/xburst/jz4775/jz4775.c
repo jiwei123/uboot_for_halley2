@@ -29,6 +29,7 @@
 #include <asm/arch/clk.h>
 #include <asm/arch/cpm.h>
 #include <spl.h>
+#include <regulator.h>
 
 #ifdef CONFIG_SPL_BUILD
 
@@ -66,6 +67,7 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 	timer_init();
+	spl_regulator_set_voltage(REGULATOR_CORE, 1200);
 	pll_init();
 	clk_init();
 
