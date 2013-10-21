@@ -29,7 +29,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_JZ4775		/* Jz4775 SoC */
 
-#define CONFIG_SYS_APLL_FREQ		816000000
+#define CONFIG_SYS_APLL_FREQ		1200000000
 #define CONFIG_SYS_MPLL_FREQ		-1
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
@@ -37,10 +37,22 @@
 #define CONFIG_SYS_MIPS_TIMER_FREQ	CONFIG_SYS_CPU_SPEED
 
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ	/* CPU clock: 1.2 GHz */
-#define CONFIG_SYS_MEM_FREQ		204000000
+#define CONFIG_SYS_MEM_DIV		3
+#define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
 
 #define CONFIG_DDR_PARAMS_CREATOR
+#define CONFIG_DDR_HOST_CC
+#define CONFIG_DDR_TYPE_DDR3
 #define CONFIG_DDR3_H5TQ1G83DFR_H9C
+/* #define CONFIG_DDR_DLL_OFF */
+/*
+ * #define CONFIG_DDR_CHIP_ODT
+ * #define CONFIG_DDR_PHY_ODT
+ * #define CONFIG_DDR_PHY_DQ_ODT
+ * #define CONFIG_DDR_PHY_DQS_ODT
+ * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
+ * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
+ */
 
 /* Pwm for lcd */
 #define CONFIG_SYS_PWM_PERIOD          10000 /* Pwm period in ns */
@@ -62,7 +74,7 @@
 
 #define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAUL)
 
-#define CONFIG_BOOTDELAY 3
+#define CONFIG_BOOTDELAY 1
 #define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_MBR_CREATOR
@@ -109,7 +121,7 @@
 
 #else/*!CONFIG_BOOT_ANDROID */
 #define CONFIG_BOOTCOMMAND \
-    "fatload mmc 0:4 0x88000000 vmlinux.ub; bootm 0x88000000"
+    "fatload mmc 1:1 0x88000000 vmlinux.ub; bootm 0x88000000"
 #endif/* !CONFIG_BOOT_ANDROID*/
 
 #else /* !CONFIG_SPL_MMC_SUPPORT */
@@ -131,7 +143,7 @@
 #define CONFIG_BOOTCOMMAND \
     "mtdparts default; ubi part system; ubifsmount ubi:boot; " \
     "ubifsload 0x88000000 vmlinux.ub; bootm 0x88000000"
-#endif/*!CONFIG_BOOT_ANDROID */
+#endif/* CONFIG_BOOT_ANDROID */
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
 
@@ -306,9 +318,6 @@
 #define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_STACK		0x80004000 /* only max. 2KB spare! */
 
-#define CONFIG_SPL_BSS_START_ADDR	0x8f000000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x00080000 /* 512KB, arbitrary */
-
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
@@ -353,7 +362,7 @@
 
 /*
  *key
-*/
+ */
 
 #define CONFIG_GPIO_BOOT_MENU		GPIO_PG(15)/* GPG15 ok*/
 #define CONFIG_MENU_ENLEVEL		0/* low level is valid*/

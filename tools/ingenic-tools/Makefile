@@ -22,9 +22,10 @@
 
 include $(TOPDIR)/config.mk
 
+ifndef CONFIG_SPL_BUILD
 HOSTCPPFLAGS = -I$(TOPDIR)/include
 
-DDR-$(CONFIG_DDR_PARAMS_CREATOR)	+= ddr_params_creator ddr_params.h
+DDR-$(CONFIG_DDR_PARAMS_CREATOR)	+= ddr_params_creator ddr_reg_values.h
 MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
 
 TOOLS	= $(DDR-y) $(MBR-y)
@@ -36,7 +37,7 @@ $(obj)ddr_params_creator:	ddr_params_creator.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
-$(obj)ddr_params.h:	$(obj)ddr_params_creator
+$(obj)ddr_reg_values.h:	$(obj)ddr_params_creator
 	$(OBJTREE)/tools/ingenic-tools/ddr_params_creator > $(OBJTREE)/include/generated/$@
 
 $(obj)mbr_creator:	mbr_creator.c
@@ -55,6 +56,18 @@ clean:
 	rm -f $(TOOLS) $(obj).depend
 
 distclean:	clean
+
+else
+LIB	= $(obj)lib_ddr_params_creator.o
+
+COBJS	:= ddr_params_creator.o
+
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
+
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(call cmd_link_o_target, $(OBJS))
+endif
 
 #########################################################################
 

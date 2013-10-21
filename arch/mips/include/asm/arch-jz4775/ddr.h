@@ -27,132 +27,74 @@
 /*************************************************************************
  * DDRC (DDR Controller)
  *************************************************************************/
-#define DDR_MEM_PHY_BASE	0x20000000
-#define DDR_PHY_OFFSET	0x1000
+#define DDR_MEM_PHY_BASE		0x20000000
+#define DDR_PHY_OFFSET 			0x1000
 
-#define DDRC_ST		(DDRC_BASE + 0x0) /* DDR Status Register */
-#define DDRC_CFG	(DDRC_BASE + 0x4) /* DDR Configure Register */
-#define DDRC_CTRL	(DDRC_BASE + 0x8) /* DDR Control Register */
-#define DDRC_LMR	(DDRC_BASE + 0xc) /* DDR Load-Mode-Register */
-#define DDRC_REFCNT	(DDRC_BASE + 0x18) /* DDR  Auto-Refresh Counter */
-#define DDRC_DQS	(DDRC_BASE + 0x1c) /* DDR DQS Delay Control Register */
-#define DDRC_DQS_ADJ	(DDRC_BASE + 0x20) /* DDR DQS Delay Adjust Register */
-#define DDRC_MMAP0	(DDRC_BASE + 0x24) /* DDR Memory Map Config Register */
-#define DDRC_MMAP1	(DDRC_BASE + 0x28) /* DDR Memory Map Config Register */
-#define DDRC_MDELAY	(DDRC_BASE + 0x2c) /* DDR Memory Map Config Register */
-#define DDRC_CKEL	(DDRC_BASE + 0x30) /* DDR CKE Low if it was set to 0 */
-#define DDRC_PMEMCTRL0	(DDRC_BASE + 0x54)
-#define DDRC_PMEMCTRL1	(DDRC_BASE + 0x50)
-#define DDRC_PMEMCTRL2	(DDRC_BASE + 0x58)
-#define DDRC_PMEMCTRL3	(DDRC_BASE + 0x5c)
+#define CPM_DRCG			0xb00000d0
 
-#define DDRC_TIMING(n)	(DDRC_BASE + 0x60 + 4 * (n - 1)) /* DDR Timing Config Register 1-5 */
-#define DDRC_REMMAP(n)	(DDRC_BASE + 0x9c + 4 * (n - 1)) /* DDR Address Remapping Register 1-5 */
+#define DDRC_STATUS			0x0
+#define DDRC_CFG			0x4
+#define DDRC_CTRL			0x8
+#define DDRC_LMR			0xc
+#define DDRC_REFCNT			0x18
+#define DDRC_MMAP0			0x24
+#define DDRC_MMAP1			0x28
+#define DDRC_DLP			0xbc
+#define DDRC_STRB			0x34
 
-#define DDRP_PIR	(DDRC_BASE + DDR_PHY_OFFSET + 0x4) /* PHY Initialization Register */
-#define DDRP_PGCR	(DDRC_BASE + DDR_PHY_OFFSET + 0x8) /* PHY General Configuration Register*/
-#define DDRP_PGSR	(DDRC_BASE + DDR_PHY_OFFSET + 0xc) /* PHY General Status Register*/
+#define DDRC_TIMING(n)			(0x60 + 4 * (n - 1))
+#define DDRC_REMAP(n)			(0x9c + 4 * (n - 1))
 
-#define DDRP_PTR0	(DDRC_BASE + DDR_PHY_OFFSET + 0x18) /* PHY Timing Register 0 */
-#define DDRP_PTR1	(DDRC_BASE + DDR_PHY_OFFSET + 0x1c) /* PHY Timing Register 1 */
-#define DDRP_PTR2	(DDRC_BASE + DDR_PHY_OFFSET + 0x20) /* PHY Timing Register 2 */
+#define DDRP_PIR	(DDR_PHY_OFFSET + 0x4) /* PHY Initialization Register */
+#define DDRP_PGCR	(DDR_PHY_OFFSET + 0x8) /* PHY General Configuration Register*/
+#define DDRP_PGSR	(DDR_PHY_OFFSET + 0xc) /* PHY General Status Register*/
+#define DDRP_DLLGCR	(DDR_PHY_OFFSET + 0x10) /* DLL General Control Register*/
+#define DDRP_ACDLLGCR	(DDR_PHY_OFFSET + 0x10) /* AC DLL Control Register*/
 
-#define DDRP_ACIOCR	(DDRC_BASE + DDR_PHY_OFFSET + 0x24) /* AC I/O Configuration Register */
-#define DDRP_DXCCR	(DDRC_BASE + DDR_PHY_OFFSET + 0x28) /* DATX8 Common Configuration Register */
-#define DDRP_DSGCR	(DDRC_BASE + DDR_PHY_OFFSET + 0x2c) /* DDR System General Configuration Register */
-#define DDRP_DCR	(DDRC_BASE + DDR_PHY_OFFSET + 0x30) /* DRAM Configuration Register*/
+#define DDRP_PTR0	(DDR_PHY_OFFSET + 0x18) /* PHY Timing Register 0 */
+#define DDRP_PTR1	(DDR_PHY_OFFSET + 0x1c) /* PHY Timing Register 1 */
+#define DDRP_PTR2	(DDR_PHY_OFFSET + 0x20) /* PHY Timing Register 2 */
 
-#define DDRP_DTPR0	(DDRC_BASE + DDR_PHY_OFFSET + 0x34) /* DRAM Timing Parameters Register 0 */
-#define DDRP_DTPR1	(DDRC_BASE + DDR_PHY_OFFSET + 0x38) /* DRAM Timing Parameters Register 1 */
-#define DDRP_DTPR2	(DDRC_BASE + DDR_PHY_OFFSET + 0x3c) /* DRAM Timing Parameters Register 2 */
-#define DDRP_MR0	(DDRC_BASE + DDR_PHY_OFFSET + 0x40) /* Mode Register 0 */
-#define DDRP_MR1	(DDRC_BASE + DDR_PHY_OFFSET + 0x44) /* Mode Register 1 */
-#define DDRP_MR2	(DDRC_BASE + DDR_PHY_OFFSET + 0x48) /* Mode Register 2 */
-#define DDRP_MR3	(DDRC_BASE + DDR_PHY_OFFSET + 0x4c) /* Mode Register 3 */
+#define DDRP_ACIOCR	(DDR_PHY_OFFSET + 0x24) /* AC I/O Configuration Register */
+#define DDRP_DXCCR	(DDR_PHY_OFFSET + 0x28) /* DATX8 Common Configuration Register */
+#define DDRP_DSGCR	(DDR_PHY_OFFSET + 0x2c) /* DDR System General Configuration Register */
+#define DDRP_DCR	(DDR_PHY_OFFSET + 0x30) /* DRAM Configuration Register*/
 
-#define DDRP_ODTCR	(DDRC_BASE + DDR_PHY_OFFSET + 0x50) /* ODT Configure Register */
-#define DDRP_DTAR	(DDRC_BASE + DDR_PHY_OFFSET + 0x54) /* Data Training Address Register */
-#define DDRP_DTDR0	(DDRC_BASE + DDR_PHY_OFFSET + 0x58) /* Data Training Data Register 0 */
-#define DDRP_DTDR1	(DDRC_BASE + DDR_PHY_OFFSET + 0x5c) /* Data Training Data Register 1 */
+#define DDRP_DTPR0	(DDR_PHY_OFFSET + 0x34) /* DRAM Timing Parameters Register 0 */
+#define DDRP_DTPR1	(DDR_PHY_OFFSET + 0x38) /* DRAM Timing Parameters Register 1 */
+#define DDRP_DTPR2	(DDR_PHY_OFFSET + 0x3c) /* DRAM Timing Parameters Register 2 */
+#define DDRP_MR0	(DDR_PHY_OFFSET + 0x40) /* Mode Register 0 */
+#define DDRP_MR1	(DDR_PHY_OFFSET + 0x44) /* Mode Register 1 */
+#define DDRP_MR2	(DDR_PHY_OFFSET + 0x48) /* Mode Register 2 */
+#define DDRP_MR3	(DDR_PHY_OFFSET + 0x4c) /* Mode Register 3 */
 
-#define DDRP_DCUAR	(DDRC_BASE + DDR_PHY_OFFSET + 0xc0) /* DCU Address Register */
-#define DDRP_DCUDR	(DDRC_BASE + DDR_PHY_OFFSET + 0xc4) /* DCU Data Register */
-#define DDRP_DCURR	(DDRC_BASE + DDR_PHY_OFFSET + 0xc8) /* DCU Run Register */
-#define DDRP_DCULR	(DDRC_BASE + DDR_PHY_OFFSET + 0xcc) /* DCU Loop Register */
-#define DDRP_DCUGCR	(DDRC_BASE + DDR_PHY_OFFSET + 0xd0) /* DCU Gerneral Configuration Register */
-#define DDRP_DCUTPR	(DDRC_BASE + DDR_PHY_OFFSET + 0xd4) /* DCU Timing Parameters Register */
-#define DDRP_DCUSR0	(DDRC_BASE + DDR_PHY_OFFSET + 0xd8) /* DCU Status Register 0 */
-#define DDRP_DCUSR1	(DDRC_BASE + DDR_PHY_OFFSET + 0xdc) /* DCU Status Register 1 */
+#define DDRP_ODTCR	(DDR_PHY_OFFSET + 0x50) /* ODT Configure Register */
+#define DDRP_DTAR	(DDR_PHY_OFFSET + 0x54) /* Data Training Address Register */
+#define DDRP_DTDR0	(DDR_PHY_OFFSET + 0x58) /* Data Training Data Register 0 */
+#define DDRP_DTDR1	(DDR_PHY_OFFSET + 0x5c) /* Data Training Data Register 1 */
 
-#define DDRP_DXGCR(n)	(DDRC_BASE + DDR_PHY_OFFSET + 0x1c0 + n * 0x40) /* DATX8 n General Configuration Register */
-#define DDRP_DXGSR0(n)	(DDRC_BASE + DDR_PHY_OFFSET + 0x1c4 + n * 0x40) /* DATX8 n General Status Register */
-#define DDRP_DXGSR1(n)	(DDRC_BASE + DDR_PHY_OFFSET + 0x1c8 + n * 0x40) /* DATX8 n General Status Register */
-#define DDRP_DXDQSTR(n)	(DDRC_BASE + DDR_PHY_OFFSET + 0x1d4 + n * 0x40) /* DATX8 n DQS Timing Register */
+#define DDRP_DCUAR	(DDR_PHY_OFFSET + 0xc0) /* DCU Address Register */
+#define DDRP_DCUDR	(DDR_PHY_OFFSET + 0xc4) /* DCU Data Register */
+#define DDRP_DCURR	(DDR_PHY_OFFSET + 0xc8) /* DCU Run Register */
+#define DDRP_DCULR	(DDR_PHY_OFFSET + 0xcc) /* DCU Loop Register */
+#define DDRP_DCUGCR	(DDR_PHY_OFFSET + 0xd0) /* DCU Gerneral Configuration Register */
+#define DDRP_DCUTPR	(DDR_PHY_OFFSET + 0xd4) /* DCU Timing Parameters Register */
+#define DDRP_DCUSR0	(DDR_PHY_OFFSET + 0xd8) /* DCU Status Register 0 */
+#define DDRP_DCUSR1	(DDR_PHY_OFFSET + 0xdc) /* DCU Status Register 1 */
 
-/* DDRC Register */
-#define REG_DDRC_ST		*(volatile unsigned int *)(DDRC_ST)
-#define REG_DDRC_CFG		*(volatile unsigned int *)(DDRC_CFG)
-#define REG_DDRC_CTRL		*(volatile unsigned int *)(DDRC_CTRL)
-#define REG_DDRC_LMR		*(volatile unsigned int *)(DDRC_LMR)
-#define REG_DDRC_REFCNT		*(volatile unsigned int *)(DDRC_REFCNT)
-#define REG_DDRC_DQS		*(volatile unsigned int *)(DDRC_DQS)
-#define REG_DDRC_DQS_ADJ	*(volatile unsigned int *)(DDRC_DQS_ADJ)
-#define REG_DDRC_MMAP0		*(volatile unsigned int *)(DDRC_MMAP0)
-#define REG_DDRC_MMAP1		*(volatile unsigned int *)(DDRC_MMAP1)
-#define REG_DDRC_MDELAY		*(volatile unsigned int *)(DDRC_MDELAY)
-#define REG_DDRC_CKEL		*(volatile unsigned int *)(DDRC_CKEL)
-#define REG_DDRC_PMEMCTRL0	*(volatile unsigned int *)(DDRC_PMEMCTRL0)
-#define REG_DDRC_PMEMCTRL1	*(volatile unsigned int *)(DDRC_PMEMCTRL1)
-#define REG_DDRC_PMEMCTRL2	*(volatile unsigned int *)(DDRC_PMEMCTRL2)
-#define REG_DDRC_PMEMCTRL3	*(volatile unsigned int *)(DDRC_PMEMCTRL3)
-#define REG_DDRC_TIMING(n)	*(volatile unsigned int *)(DDRC_TIMING(n))
-#define REG_DDRC_REMMAP(n)	*(volatile unsigned int *)(DDRC_REMMAP(n))
-
-/* DDRP Register */
-#define REG_DDRP_PIR	*(volatile unsigned int *)(DDRP_PIR)
-#define REG_DDRP_PGCR	*(volatile unsigned int *)(DDRP_PGCR)
-#define REG_DDRP_PGSR	*(volatile unsigned int *)(DDRP_PGSR)
-#define REG_DDRP_DCR	*(volatile unsigned int *)(DDRP_DCR)
-
-#define REG_DDRP_PTR0	*(volatile unsigned int *)(DDRP_PTR0)
-#define REG_DDRP_PTR1	*(volatile unsigned int *)(DDRP_PTR1)
-#define REG_DDRP_PTR2	*(volatile unsigned int *)(DDRP_PTR2)
-
-#define REG_DDRP_ACIOCR	*(volatile unsigned int *)(DDRP_ACIOCR)
-#define REG_DDRP_DXCCR	*(volatile unsigned int *)(DDRP_DXCCR)
-#define REG_DDRP_DSGCR	*(volatile unsigned int *)(DDRP_DSGCR)
-
-#define REG_DDRP_DTPR0	*(volatile unsigned int *)(DDRP_DTPR0)
-#define REG_DDRP_DTPR1	*(volatile unsigned int *)(DDRP_DTPR1)
-#define REG_DDRP_DTPR2	*(volatile unsigned int *)(DDRP_DTPR2)
-#define REG_DDRP_MR0	*(volatile unsigned int *)(DDRP_MR0)
-#define REG_DDRP_MR1	*(volatile unsigned int *)(DDRP_MR1)
-#define REG_DDRP_MR2	*(volatile unsigned int *)(DDRP_MR2)
-#define REG_DDRP_MR3	*(volatile unsigned int *)(DDRP_MR3)
-
-#define REG_DDRP_ODTCR	*(volatile unsigned int *)(DDRP_ODTCR)
-
-#define REG_DDRP_DTAR	*(volatile unsigned int *)(DDRP_DTAR)
-#define REG_DDRP_DTDR0	*(volatile unsigned int *)(DDRP_DTDR0)
-#define REG_DDRP_DTDR1	*(volatile unsigned int *)(DDRP_DTDR1)
-
-#define REG_DDRP_DCUAR		(*(volatile unsigned int *)(DDRP_DCUAR))
-#define REG_DDRP_DCUDR		(*(volatile unsigned int *)(DDRP_DCUDR))
-#define REG_DDRP_DCURR		(*(volatile unsigned int *)(DDRP_DCURR))
-#define REG_DDRP_DCULR		(*(volatile unsigned int *)(DDRP_DCULR))
-#define REG_DDRP_DCUGCR		(*(volatile unsigned int *)(DDRP_DCUGCR))
-#define REG_DDRP_DCUTPR		(*(volatile unsigned int *)(DDRP_DCUTPR))
-#define REG_DDRP_DCUSR0		(*(volatile unsigned int *)(DDRP_DCUSR0))
-#define REG_DDRP_DCUSR1		(*(volatile unsigned int *)(DDRP_DCUSR1))
-
-#define REG_DDRP_DXGCR(n)	*(volatile unsigned int *)(DDRP_DXGCR(n))
-#define REG_DDRP_DXGSR0(n)	*(volatile unsigned int *)(DDRP_DXGSR0(n))
-#define REG_DDRP_DXGSR1(n)	*(volatile unsigned int *)(DDRP_DXGSR1(n))
-#define REG_DDRP_DXDQSTR(n)	*(volatile unsigned int *)(DDRP_DXDQSTR(n))
+#define DDRP_DXGCR(n)	(DDR_PHY_OFFSET + 0x1c0 + n * 0x40) /* DATX8 n General Configuration Register */
+#define DDRP_DXGSR0(n)	(DDR_PHY_OFFSET + 0x1c4 + n * 0x40) /* DATX8 n General Status Register */
+#define DDRP_DXGSR1(n)	(DDR_PHY_OFFSET + 0x1c8 + n * 0x40) /* DATX8 n General Status Register */
+#define DDRP_DXDQSTR(n)	(DDR_PHY_OFFSET + 0x1d4 + n * 0x40) /* DATX8 n DQS Timing Register */
+#define DDRP_ZQXCR0(n)	(DDR_PHY_OFFSET + 0x180 + n * 0x10) /* ZQ impedance Control Register 0 */
+#define DDRP_ZQXCR1(n)	(DDR_PHY_OFFSET + 0x184 + n * 0x10) /* ZQ impedance Control Register 1 */
+#define DDRP_ZQXSR0(n)	(DDR_PHY_OFFSET + 0x188 + n * 0x10) /* ZQ impedance Status Register 0 */
+#define DDRP_ZQXSR1(n)	(DDR_PHY_OFFSET + 0x18c + n * 0x10) /* ZQ impedance Status Register 1 */
 
 /* DDRC Status Register */
 #define DDRC_ST_ENDIAN	(1 << 7) /* 0 Little data endian
 					    1 Big data endian */
+#define DDRC_DSTATUS_MISS	(1 << 6)
 #define DDRC_ST_DPDN		(1 << 5) /* 0 DDR memory is NOT in deep-power-down state
 					    1 DDR memory is in deep-power-down state */
 #define DDRC_ST_PDN		(1 << 4) /* 0 DDR memory is NOT in power-down state
@@ -231,7 +173,7 @@
   #define DDRC_CTRL_PDT_32	(3 << DDRC_CTRL_PDT_BIT) /* Enter power-down after 32 tCK idle */
   #define DDRC_CTRL_PDT_64	(4 << DDRC_CTRL_PDT_BIT) /* Enter power-down after 64 tCK idle */
   #define DDRC_CTRL_PDT_128	(5 << DDRC_CTRL_PDT_BIT) /* Enter power-down after 128 tCK idle */
-
+#define DDRC_CTRL_ACTSTP	(1 << 11)
 #define DDRC_CTRL_PRET_BIT	8 /* Precharge Timer */
 #define DDRC_CTRL_PRET_MASK	(0x7 << DDRC_CTRL_PRET_BIT) /*  */
   #define DDRC_CTRL_PRET_DIS	(0 << DDRC_CTRL_PRET_BIT) /* PRET function Disabled */
@@ -498,6 +440,11 @@
 /* DDRP DATX8 n Gen#define eral Configuration Register */
 #define DDRP_DXGCR_DXEN  (1 << 0)    /* Data Byte Enable */
 
+#define DDRP_ZQXCR_ZDEN_BIT		28
+#define DDRP_ZQXCR_ZDEN			(1 << DDRP_ZQXCR_ZDEN_BIT)
+#define DDRP_ZQXCR_PULLUP_IMPED_BIT	5
+#define DDRP_ZQXCR_PULLDOWN_IMPED_BIT	0
+
 /* DDR Mode Register Set*/
 #define DDR1_MRS_OM_BIT		7        /* Operating Mode */
 #define DDR1_MRS_OM_MASK	(0x3f << DDR1_MRS_OM_BIT)
@@ -625,177 +572,22 @@
 #define DDRC_MDELAY_MAUTO_BIT (6)
 #define DDRC_MDELAY_MAUTO  (1 << DDRC_MDELAY_MAUTO_BIT)
 
-
-
-#define DDR_GET_VALUE(x, y) (((x * 1000)% y == 0) ? \
+#define DDR_GET_VALUE(x, y) (((x * 1000)% y == 0) ?	\
 		((x * 1000)/ y) : ((x * 1000) / y + 1))
+
+#define ddr_writel(value, reg)	writel((value), DDRC_BASE + reg)
+#define ddr_readl(reg)		readl(DDRC_BASE + reg)
 
 #ifdef MAX
 #undef MAX
+#endif
 #define MAX(tck, time)								\
 ({										\
 	unsigned long value;							\
-	value = (tck * ps > time) ? (tck * ps) : time;				\
+	value = (tck * tck_g.ps > time) ? (tck * tck_g.ps) : time;		\
 	value = (value % 1000 == 0) ? (value / 1000) : (value / 1000 + 1);	\
 	value;									\
 })
-#endif
-
-
-#define DDRC_CFG_VALUE_TMP	DDRC_CFG_ROW1 << DDRC_CFG_ROW1_BIT \
-				| DDRC_CFG_COL1 << DDRC_CFG_COL1_BIT \
-				| DDRC_CFG_BA1 << DDRC_CFG_BA1_BIT \
-				| DDRC_CFG_IMBA \
-				| DDRC_CFG_BL << DDRC_CFG_BL_BIT \
-				| DDRC_CFG_TYPE_DDR3 \
-				| DDRC_CFG_MISPE \
-				| DDRC_CFG_ROW0 << DDRC_CFG_ROW0_BIT \
-				| DDRC_CFG_COL0 << DDRC_CFG_COL0_BIT \
-				| DDRC_CFG_CS1EN << DDRC_CFG_CS1EN_BIT \
-				| DDRC_CFG_CS0EN << DDRC_CFG_CS0EN_BIT \
-				| DDRC_CFG_CL << DDRC_CFG_CL_BIT \
-				| DDRC_CFG_BA0 << DDRC_CFG_BA0_BIT \
-				| DDRC_CFG_DW << DDRC_CFG_DW_BIT
-
-#ifdef ENABEL_ODT
-#define DDRC_CFG_VALUE		DDRC_CFG_VALUE_TMP \
-				| DDRC_CFG_ODT_EN << DDRC_CFG_ODT_EN_BIT
-#else
-#define DDRC_CFG_VALUE		DDRC_CFG_VALUE_TMP
-#endif
-
-#define DDRC_TIMING1_VALUE	DDRC_TIMING1_tRTP << DDRC_TIMING1_tRTP_BIT \
-				| DDRC_TIMING1_tWTR << DDRC_TIMING1_tWTR_BIT \
-				| DDRC_TIMING1_tWR << DDRC_TIMING1_tWR_BIT \
-				| DDRC_TIMING1_tWL << DDRC_TIMING1_tWL_BIT
-#define DDRC_TIMING2_VALUE	DDRC_TIMING2_tCCD << DDRC_TIMING2_tCCD_BIT \
-				| DDRC_TIMING2_tRAS << DDRC_TIMING2_tRAS_BIT \
-				| DDRC_TIMING2_tRCD << DDRC_TIMING2_tRCD_BIT \
-				| DDRC_TIMING2_tRL << DDRC_TIMING2_tRL_BIT
-#define DDRC_TIMING3_VALUE	DDRC_TIMING3_ONUM << DDRC_TIMING3_ONUM_BIT \
-				| DDRC_TIMING3_tCKSRE \
-				<< DDRC_TIMING3_tCKSRE_BIT \
-				| DDRC_TIMING3_tRP << DDRC_TIMING3_tRP_BIT \
-				| DDRC_TIMING3_tRRD << DDRC_TIMING3_tRRD_BIT \
-				| DDRC_TIMING3_tRC << DDRC_TIMING3_tRC_BIT
-#define DDRC_TIMING4_VALUE	DDRC_TIMING4_tRFC << DDRC_TIMING4_tRFC_BIT \
-				| DDRC_TIMING4_tRWCOV \
-				<< DDRC_TIMING4_tRWCOV_BIT \
-				| DDRC_TIMING4_tCKE << DDRC_TIMING4_tCKE_BIT \
-				| DDRC_TIMING4_tMINSR \
-				<< DDRC_TIMING4_tMINSR_BIT \
-				| DDRC_TIMING4_tXP << DDRC_TIMING4_tXP_BIT \
-				| DDRC_TIMING4_tMRD << DDRC_TIMING4_tMRD_BIT
-#define DDRC_TIMING5_VALUE	DDRC_TIMING5_tCTLUPD \
-				<< DDRC_TIMING5_tCTLUPD_BIT \
-				| DDRC_TIMING5_tRTW << DDRC_TIMING5_tRTW_BIT \
-				| DDRC_TIMING5_tRDLAT \
-				<< DDRC_TIMING5_tRDLAT_BIT \
-				| DDRC_TIMING5_tWDLAT \
-				<< DDRC_TIMING5_tWDLAT_BIT
-#define DDRC_TIMING6_VALUE	DDRC_TIMING6_tXSRD << DDRC_TIMING6_tXSRD_BIT \
-				| DDRC_TIMING6_tFAW << DDRC_TIMING6_tFAW_BIT \
-				| DDRC_TIMING6_tCFGW << DDRC_TIMING6_tCFGW_BIT \
-				| DDRC_TIMING6_tCFGR << DDRC_TIMING6_tCFGR_BIT
-
-#define DDRC_REFCNT_VALUE	DDRC_REFCNT_CON << DDRC_REFCNT_CON_BIT \
-				| DDRC_REFCNT_CLK_DIV \
-				<< DDRC_REFCNT_CLK_DIV_BIT \
-				| DDRC_REFCNT_REF_EN
-
-
-
-
-
-
-
-
-#define DDRP_DTAR_VALUE		DDRP_DTAR_DTROW << DDRP_DTAR_DTROW_BIT \
-				| DDRP_DTAR_DTCOL << DDRP_DTAR_DTCOL_BIT
-#define DDRP_DCR_VALUE		DDRP_DCR_TYPE_DDR3 | DDRP_DCR_DDR8BNK
-#define DDRP_MR0_VALUE		DDRP_MR0_WR << DDR3_MR0_WR_BIT		\
-				| DDRP_MR0_CL << DDR3_MR0_CL4_BIT	\
-				| DDRP_MR0_BL << DDR3_MR0_BL_BIT
-#ifdef DLL_OFF
-#define DDRP_MR1_VALUE		DDR3_MR1_DIC_7 | DDR3_MR1_RTT_DIS	\
-				| DDR3_MR1_DLL_DISABLE
-#else
-#ifdef ENABEL_ODT
-#define DDRP_MR1_VALUE		DDR3_MR1_DIC_7 | DDR3_MR1_RTT_4
-#define DDRP_ODTCR_VALUE	0x84210000
-#else
-#define DDRP_MR1_VALUE		DDR3_MR1_DIC_7
-#define DDRP_ODTCR_VALUE	0
-#endif
-#endif
-
-#define DDRP_MR2_VALUE		DDRP_MR2_tCWL << DDR3_MR2_CWL_BIT
-
-#define DDRP_PTR0_tDLLSRST_TMP	DDR_GET_VALUE(DDRP_PTR0_tDLLSRST, PS)
-#if (DDRP_PTR0_tDLLSRST_TMP > 63)
-#define DDRP_PTR0_tDLLSRST_F	63
-#else
-#define DDRP_PTR0_tDLLSRST_F	DDRP_PTR0_tDLLSRST_TMP
-#endif
-
-#define DDRP_PTR0_tDLLLOCK_TMP	DDR_GET_VALUE(DDRP_PTR0_tDLLLOCK, PS)
-#if (DDRP_PTR0_tDLLLOCK_TMP > 0xfff)
-#define DDRP_PTR0_tDLLLOCK_F	0xfff
-#else
-#define DDRP_PTR0_tDLLLOCK_F	DDRP_PTR0_tDLLLOCK_TMP
-#endif
-#define DDRP_PTR0_VALUE		DDRP_PTR0_tITMSRST_8 << DDRP_PTR0_tITMSRST_BIT \
-				| DDRP_PTR0_tDLLLOCK_F << DDRP_PTR0_tDLLLOCK_BIT \
-				| DDRP_PTR0_tDLLSRST_F << DDRP_PTR0_tDLLSRST_BIT
-
-#define DDRP_PTR1_tDINIT0_TMP	DDR_GET_VALUE(DDRP_PTR1_tDINIT0_DDR3, PS)
-#if (DDRP_PTR1_tDINIT0_TMP > 0x7ffff)
-#define DDRP_PTR1_tDINIT0	0x7ffff
-#else
-#define DDRP_PTR1_tDINIT0	DDRP_PTR1_tDINIT0_TMP
-#endif
-#define	DDRP_PTR1_VALUE		DDRP_PTR1_tDINIT1 << DDRP_PTR1_tDINIT1_BIT \
-				| DDRP_PTR1_tDINIT0 << DDRP_PTR1_tDINIT0_BIT
-
-#define DDRP_PTR2_tDINIT2_TMP	DDR_GET_VALUE(DDRP_PTR2_tDINIT2_DDR3, PS)
-#if (DDRP_PTR2_tDINIT2_TMP > 0x1ffff)
-#define DDRP_PTR2_tDINIT2	0x1ffff
-#else
-#define DDRP_PTR2_tDINIT2	DDRP_PTR2_tDINIT2_TMP
-#endif
-
-#if (DDRP_PTR2_DINIT3_DDR3 > 0x3ff)
-#define DDRP_PTR2_tDINIT3	0x3ff
-#else
-#define DDRP_PTR2_tDINIT3	DDRP_PTR2_tDINIT3_DDR3
-#endif
-#define DDRP_PTR2_VALUE		DDRP_PTR2_tDINIT3 << DDRP_PTR2_tDINIT3_BIT \
-				| DDRP_PTR2_tDINIT2 << DDRP_PTR2_tDINIT2_BIT
-#define DDRP_DTPR0_VALUE	DDRP_DTPR0_tCCD << DDRP_DTPR0_tCCD_BIT	\
-				| DDRP_DTPR0_tRC << DDRP_DTPR0_tRC_BIT  \
-				| DDRP_DTPR0_tRRD << DDRP_DTPR0_tRRD_BIT \
-				| DDRP_DTPR0_tRAS << DDRP_DTPR0_tRAS_BIT \
-				| DDRP_DTPR0_tRCD << DDRP_DTPR0_tRCD_BIT \
-				| DDRP_DTPR0_tRP << DDRP_DTPR0_tRP_BIT \
-				| DDRP_DTPR0_tWTR << DDRP_DTPR0_tWTR_BIT \
-				| DDRP_DTPR0_tRTP << DDRP_DTPR0_tRTP_BIT \
-				| DDRP_DTPR0_tMRD << DDRP_DTPR0_tMRD_BIT
-#define DDRP_DTPR1_VALUE	DDRP_DTPR1_tRFC << DDRP_DTPR1_tRFC_BIT \
-				| DDRP_DTPR1_tRTODT << DDRP_DTPR1_tRTODT_BIT \
-				| DDRP_DTPR1_tMOD << DDRP_DTPR1_tMOD_BIT \
-				| DDRP_DTPR1_tFAW << DDRP_DTPR1_tFAW_BIT
-#define DDRP_DTPR2_VALUE	DDRP_DTPR2_tDLLK << DDRP_DTPR2_tDLLK_BIT \
-				| DDRP_DTPR2_tCKE << DDRP_DTPR2_tCKE_BIT \
-				| DDRP_DTPR2_tXP << DDRP_DTPR2_tXP_BIT \
-				| DDRP_DTPR2_tXS << DDRP_DTPR2_tXS_BIT
-#define DDRP_PGCR_VALUE		DDRP_PGCR_DQSCFG | 7 << DDRP_PGCR_CKEN_BIT \
-				| 2 << DDRP_PGCR_CKDV_BIT	\
-				| (DDR_CS0EN | DDR_CS1EN << 1) \
-				<< DDRP_PGCR_RANKEN_BIT \
-				| DDRP_PGCR_ZCKSEL_32 | DDRP_PGCR_PDDISDX
-
-
-//#define ENABEL_ODT
 
 #endif /* __DDR_H__ */
 

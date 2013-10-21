@@ -66,11 +66,18 @@ void board_init_f(ulong dummy)
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif
+	debug("timer init\n");
 	timer_init();
-	spl_regulator_set_voltage(REGULATOR_CORE, 1200);
+
+	spl_regulator_set_voltage(REGULATOR_CORE, 1300);
+
+	debug("pll init\n");
 	pll_init();
+
+	debug("clk init\n");
 	clk_init();
 
+	debug("sdram init\n");
 	sdram_init();
 
 	/* Clear the BSS */
@@ -107,9 +114,4 @@ void enable_interrupts(void)
 int disable_interrupts(void)
 {
 	return 0;
-}
-
-phys_size_t initdram(int board_type)
-{
-	return sdram_size(0) + sdram_size(1);
 }

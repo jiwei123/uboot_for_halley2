@@ -17,7 +17,7 @@
 #define DDR_COL     10  /* COL :  8 to 14 column address */
 #define DDR_BANK8   1 	/* Banks each chip: 0-4bank, 1-8bank */
 
-#ifdef DLL_OFF
+#ifdef CONFIG_SYS_DDR_DLL_OFF
 #define DDR_CL      6   /* dll off */
 #define DDR_tCWL    6	/* DDR3 dll off*/
 #else
@@ -36,7 +36,7 @@
 #define DDR_tRRD MAX(4, 7500) /* FIXME ACTIVE bank A to ACTIVE bank B command period. DDR3 - tCK*/
 #define DDR_tRTP MAX(4, 7500) /* FIXME READ to PRECHARGE command period. DDR3 spec no. 7.5ns*/
 #define DDR_tWTR MAX(4, 7500) /* FIXME WRITE to READ command delay. DDR3 spec no. 7.5 ns*/
-	 
+
 /*
  * DDR3 controller timing2 register
  */
@@ -50,10 +50,10 @@
 #define DDR_tAL    0	/* Additive Latency, tCK*/
 #define DDR_tCCD   4	/* CAS# to CAS# command delay , tCK. 4 or 5 */
 #define DDR_tFAW   50	/* Four bank activate period, DDR3 - tCK */
-#define DDR_tCKE   	MAX(3, 5625)	/* CKE minimum pulse width, DDR3 spec no, tCK */
+#define DDR_tCKE   	MAX(3, 7500)	/* CKE minimum pulse width, DDR3 spec no, tCK */
 #define DDR_tRL 	(DDR_tAL + DDR_CL)	/* DDR3: Read Latency = tAL + tCL */
 #define DDR_tWL 	(DDR_tAL + DDR_tCWL)	/* DDR3: Write Latency = tAL + tCWL */
-#define DDR_tRDLAT	(DDR_tRL - 2)	
+#define DDR_tRDLAT	(DDR_tRL - 2)
 #define DDR_tWDLAT	(DDR_tWL - 1)
 #define DDR_tRTW 	(DDR_tRL + DDR_tCCD + 2 - DDR_tWL)	/* Read to Write delay */
 #define DDR_tCKSRE 	MAX(5, 10000) /* Valid Clock Requirement after Self Refresh Entry or Power-Down Entry */
@@ -68,7 +68,7 @@
 /*
  * DDR3 controller refcnt register
  */
-#define DDR_tREFI   7800	/* Refresh period: 64ms / 32768 = 1.95 us , 2 ^ 15 = 32768 */  
+#define DDR_tREFI   7800	/* Refresh period: 64ms / 32768 = 1.95 us , 2 ^ 15 = 32768 */
 #define DDR_CLK_DIV 1    	/* Clock Divider. auto refresh
 			  *	cnt_clk = memclk/(16*(2^DDR_CLK_DIV))
 			  */

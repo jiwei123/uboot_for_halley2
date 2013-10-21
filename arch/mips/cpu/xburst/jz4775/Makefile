@@ -30,7 +30,7 @@ SOBJS-y	=
 COBJS-y	= $(SOC).o
 COBJS-y += pll.o
 COBJS-y += clk.o
-COBJS-y += sdram.o
+COBJS-y += ddr.o
 COBJS-y += timer.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
