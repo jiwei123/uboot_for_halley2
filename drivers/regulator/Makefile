@@ -26,7 +26,7 @@ include $(TOPDIR)/config.mk
 LIB	:= $(obj)libregulator.o
 
 ifndef CONFIG_SPL_BUILD
-COBJS-$(CONFIG_REGULATOR) += regulator.o 
+COBJS-$(CONFIG_REGULATOR) += regulator.o
 endif
 COBJS-$(CONFIG_PMU_ACT8600) += act8600.o
 

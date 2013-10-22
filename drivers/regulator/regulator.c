@@ -234,7 +234,7 @@ int regulator_get_voltage(struct regulator *regulator)
  * @max_uA: Maximum supported current in uA
  */
 int regulator_set_current_limit(struct regulator *regulator,
-			       int min_uA, int max_uA)
+		int min_uA, int max_uA)
 {
 	int val_max, val_min;
 
@@ -300,7 +300,7 @@ static int do_powerinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 }
 
 U_BOOT_CMD(
-	powerinfo,	1,	1,	do_powerinfo,
-	"show regulator output voltage and status",
-	"cmd: dpower"
-);
+		powerinfo,	1,	1,	do_powerinfo,
+		"show regulator output voltage and status",
+		"cmd: dpower"
+	  );
