@@ -1,5 +1,5 @@
 /*
- * Ingenic mensa setup code
+ * Ingenic burner setup code
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
@@ -28,27 +28,31 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
+#include <asm/jz_uart.h>
+
+#ifndef CONFIG_SPL_BUILD
+DECLARE_GLOBAL_DATA_PTR;
+struct global_info ginfo __attribute__ ((section(".data")));
+extern struct jz_uart *uart;
+#endif
 
 int board_early_init_f(void)
 {
-	/* Power on TF-card */
-	gpio_direction_output(GPIO_PB(3), 1);
-	act8600_regulator_init();
+#ifndef CONFIG_SPL_BUILD
+	ginfo.extal = CONFIG_SYS_EXTAL;
+	ginfo.cpufreq = CONFIG_SYS_CPU_FREQ;
+	ginfo.ddrfreq = CONFIG_SYS_MEM_FREQ;
+	ginfo.uart_base = CONFIG_SYS_UART_BASE;
+	ginfo.baud_rate = CONFIG_BAUDRATE;
 
+	uart = (struct jz_uart *)CONFIG_SYS_UART_BASE;
+	gd->arch.gi = &ginfo;
+#endif
 	return 0;
 }
 
 int misc_init_r(void)
 {
-#if 0 /* TO DO */
-	uint8_t mac[6] = { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc };
-
-	/* set MAC address */
-	eth_setenv_enetaddr("ethaddr", mac);
-#endif
-#ifdef CONFIG_BOOT_ANDROID
-	boot_mode_select();
-#endif
 	return 0;
 }
 
@@ -61,7 +65,6 @@ int board_nand_init(struct nand_chip *nand)
 #ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
 {
-	jz_mmc_init();
 	return 0;
 }
 #endif
@@ -78,7 +81,7 @@ int board_eth_init(bd_t *bis)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: mensa (Ingenic XBurst JZ4775 SoC)\n");
+	puts("Board: burner_jz4775 (Ingenic XBurst JZ4775 SoC)\n");
 	return 0;
 }
 

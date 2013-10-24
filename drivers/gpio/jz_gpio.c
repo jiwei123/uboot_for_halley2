@@ -21,10 +21,14 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
 #include <config.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
+#ifndef CONFIG_BURNER
 #ifdef CONFIG_JZ4775
 static struct jz_gpio_func_def gpio_func[] = {
 #if defined(CONFIG_SYS_UART_BASE)
@@ -42,7 +46,7 @@ static struct jz_gpio_func_def gpio_func[] = {
 #endif  /*CONFIG_SYS_UART_BASE*/
 
 #if defined(CONFIG_JZ_MMC_MSC0_PA_4BIT)
-	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x01fc0000},
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00fc0000},
 #endif
 
 #if defined(CONFIG_JZ_MMC_MSC1_PE_4BIT)
@@ -83,6 +87,7 @@ static struct jz_gpio_func_def gpio_func[] = {
 #endif
 };
 #endif /* CONFIG_JZ4775 */
+#endif /* CONFIG_BURNER */
 
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 {
@@ -191,10 +196,22 @@ void gpio_disable_pull(unsigned gpio)
 
 void gpio_init(void)
 {
-	int i;
+	int i, n;
 
-	for (i = 0; i < sizeof(gpio_func)/sizeof(struct jz_gpio_func_def) ; i++) {
+#ifndef CONFIG_BURNER
+	n = ARRAY_SIZE(gpio_func);
+#else
+	n = MAX_GPIO_FUNC;
+#endif
+
+	for (i = 0; i < n; i++) {
+#ifndef CONFIG_BURNER
 		struct jz_gpio_func_def *g = &gpio_func[i];
+#else
+		struct jz_gpio_func_def *g = &gd->arch.gi->gpio_func[i];
+		if (g->pins == 0)
+			break;
+#endif
 		gpio_set_func(g->port, g->func, g->pins);
 	}
 }

@@ -130,7 +130,9 @@ init_fnc_t *init_sequence[] = {
 	incaip_set_cpuclk,	/* set cpu clock according to env. variable */
 #endif
 	init_baudrate,		/* initialize baudrate settings */
+#ifndef CONFIG_BURNER
 	serial_init,		/* serial communications setup */
+#endif
 	console_init_f,
 	display_banner,		/* say that we are here */
 	checkboard,

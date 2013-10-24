@@ -27,9 +27,9 @@
 #include <div64.h>
 #include <common.h>
 #include <command.h>
-#include <configs/mensa.h>
-#include<mmc.h>
-#include<boot_img.h>
+#include <config.h>
+#include <mmc.h>
+#include <boot_img.h>
 #include <asm/gpio.h>
 #include <asm/arch/mmc.h>
 

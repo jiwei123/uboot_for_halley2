@@ -1,10 +1,8 @@
 /*
- * Ingenic mensa configuration
+ * Ingenic burner configuration
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
- * Based on: include/configs/urboard.h
- *           Written by Paul Burton <paul.burton@imgtec.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -22,8 +20,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __CONFIG_MENSA_H__
-#define __CONFIG_MENSA_H__
+#ifndef __CONFIG_BURNER_H__
+#define __CONFIG_BURNER_H__
 
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
@@ -41,9 +39,7 @@
 #define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
 
 #define CONFIG_DDR_PARAMS_CREATOR
-#define CONFIG_DDR_HOST_CC
-#define CONFIG_DDR_TYPE_DDR3
-#define CONFIG_DDR3_H5TQ1G83DFR_H9C
+#define CONFIG_DDR_TYPE_VARIABLE
 /* #define CONFIG_DDR_DLL_OFF */
 /*
  * #define CONFIG_DDR_CHIP_ODT
@@ -54,22 +50,11 @@
  * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
  */
 
-#define CONFIG_LCD
-#ifdef CONFIG_LCD
-	#define LCD_BPP				5
-	#define GPIO_LCD_PWM	 	        (32*4+1) /* GPE14 PWM4 */
-	#define CONFIG_LCD_LOGO
-	#define CONFIG_SYS_WHITE_ON_BLACK
-	#define CONFIG_SYS_PCLK_FREQ		33260000
-	#define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
-	#define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
-	#define CONFIG_SYS_PWM_FULL		256
-	#define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
-
-	#define CONFIG_VIDEO_JZ4775
-	#define CONFIG_JZ_PWM
-	#define CONFIG_VIDEO_BYD_BM8766U
-#endif
+/* Pwm for lcd */
+#define CONFIG_SYS_PWM_PERIOD          10000 /* Pwm period in ns */
+#define CONFIG_SYS_PWM_CHN             1  /* Pwm channel ok*/
+#define CONFIG_SYS_PWM_FULL            256
+#define CONFIG_SYS_BACKLIGHT_LEVEL 80 /* Backlight brightness is (80 / 256) */
 
 #define CONFIG_SYS_AUDIO_SPEED (768 * 1000000)
 
@@ -276,8 +261,8 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_MAXARGS 16
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT "mensa# "
+#define CONFIG_SYS_LONGHELP 
+#define CONFIG_SYS_PROMPT "burner_jz4775# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
@@ -327,13 +312,11 @@
 /* SPL */
 #define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_STACK		0x80003000 /* only max. 2KB spare! */
-#define CONFIG_SPL_BSS_START_ADDR	0x80003000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x1000
+#define CONFIG_SPL_STACK		0x80004000 /* only max. 2KB spare! */
 
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
-#define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
+#define CONFIG_SPL_LDSCRIPT		"$(TOPDIR)/board/$(BOARDDIR)/u-boot-spl.lds"
 #define CONFIG_SPL_PAD_TO		15872 /* u-boot start addr - mbr size(512) */
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
@@ -348,7 +331,6 @@
 #define CONFIG_SPL_GPIO_SUPPORT
 #define CONFIG_SPL_I2C_SUPPORT
 #define CONFIG_SPL_REGULATOR_SUPPORT
-#define CONFIG_SPL_CORE_VOLTAGE		1300
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
@@ -366,7 +348,7 @@
 #define CONFIG_SPL_NAND_LOAD
 
 #define CONFIG_SPL_TEXT_BASE		0xf4000800
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800 - 0x200)
 
 /* the NAND SPL is small enough to enable serial */
 #define CONFIG_SPL_SERIAL_SUPPORT
@@ -387,4 +369,8 @@
 #define CONFIG_RECOVERY_KEY		CONFIG_GPIO_BOOT_MENU  /* MENSA_SW2 = GPG15 ok*/
 #define CONFIG_RECOVERY_ENLEVEL		0/* low level is valid*/
 
-#endif /* __CONFIG_MENSA_H__ */
+#define CONFIG_BURNER
+#define CONFIG_SPL_GINFO_BASE		0xf4003800
+#define CONFIG_SPL_GINFO_SIZE		0x200
+
+#endif /* __CONFIG_BURNER_H__ */

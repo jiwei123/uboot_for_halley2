@@ -1,8 +1,7 @@
 /*
- * Ingenic mensa boot android system command
+ * Xburst u-boot global infomation structure.
  *
- * Copyright (c) 2013 Imagination Technologies
- * Author: Martin <czhu@ingenic.cn>
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,25 +19,25 @@
  * MA 02111-1307 USA
  */
 
-#include <stdarg.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <errno.h>
-#include <div64.h>
-#include <common.h>
-#include <command.h>
-#include <config.h>
+#ifndef __GLOBAL_INFO_H__
+#define __GLOBAL_INFO_H__
 
-static int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-/*fastboot*/
-	printf("Now,we are in fast boot mode.\n");
-	return 0;
-}
+#include <ddr/ddr_params.h>
+#include <asm/gpio.h>
 
-U_BOOT_CMD(
-	fastboot, 1, 1, do_fastboot,
-	"enter fastboot mode",
-	"enter fastboot mode"
-);
+#define MAX_GPIO_FUNC		12
+
+struct global_info {
+	uint32_t extal;
+	uint32_t cpufreq;
+	uint32_t ddrfreq;
+	uint32_t ddr_div;
+	uint32_t uart_base;
+	uint32_t baud_rate;
+#ifdef CONFIG_BURNER
+	struct jz_gpio_func_def gpio_func[MAX_GPIO_FUNC];
+	struct ddr_params ddr_params;
+#endif
+};
+
+#endif /* __GLOBAL_INFO_H__ */

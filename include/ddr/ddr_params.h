@@ -34,6 +34,7 @@ struct tck {
 	uint32_t ps;
 	uint32_t ns;
 };
+
 struct size {
 	uint32_t chip0;
 	uint32_t chip1;

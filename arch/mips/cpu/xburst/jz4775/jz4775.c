@@ -37,53 +37,74 @@
 DECLARE_GLOBAL_DATA_PTR;
 gd_t gdata __attribute__ ((section(".data")));
 
+#ifdef CONFIG_BURNER
+struct global_info ginfo __attribute__ ((section(".ginfo")));
+#else
+struct global_info ginfo __attribute__ ((section(".data")));
+#endif
+
 extern void pll_init(void);
 extern void sdram_init(void);
-extern void enable_caches(void);
+extern void validate_cache(void);
 
 void board_init_f(ulong dummy)
 {
-	enable_caches();
-
 	/* Set global data pointer */
 	gd = &gdata;
+
+	/* Setup global info */
+#ifndef CONFIG_BURNER
+	ginfo.extal = CONFIG_SYS_EXTAL;
+	ginfo.cpufreq = CONFIG_SYS_CPU_FREQ;
+	ginfo.ddrfreq = CONFIG_SYS_MEM_FREQ;
+	ginfo.uart_base = CONFIG_SYS_UART_BASE;
+	ginfo.baud_rate = CONFIG_BAUDRATE;
+#endif
+	ginfo.ddr_div = ((ginfo.cpufreq % ginfo.ddrfreq) == 0)
+		? (ginfo.cpufreq / ginfo.ddrfreq)
+		: (ginfo.cpufreq / ginfo.ddrfreq + 1);
+
+	gd->arch.gi = &ginfo; /* gi = (struct global_info *)CONFIG_SPL_GINFO_BASE; */
 
 	gpio_init();
 
 	/* Init uart first */
-#if (CONFIG_SYS_UART_BASE == UART0_BASE)
-	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART0, CPM_CLKGR);
-#endif
-#if (CONFIG_SYS_UART_BASE == UART1_BASE)
-	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART1, CPM_CLKGR);
-#endif
-#if (CONFIG_SYS_UART_BASE == UART2_BASE)
-	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART2, CPM_CLKGR);
-#endif
-#if (CONFIG_SYS_UART_BASE == UART3_BASE)
-	cpm_outl(cpm_inl(CPM_CLKGR) & ~CPM_CLKGR_UART3, CPM_CLKGR);
-#endif
+	enable_uart_clk();
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif
-	debug("timer init\n");
+
+	debug("Timer init\n");
 	timer_init();
 
-	spl_regulator_set_voltage(REGULATOR_CORE, 1300);
+#ifdef CONFIG_SPL_CORE_VOLTAGE
+	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
+#endif
+#ifdef CONFIG_SPL_MEM_VOLTAGE
+	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
+#endif
 
-	debug("pll init\n");
+	debug("PLL init\n");
 	pll_init();
 
-	debug("clk init\n");
+	debug("CLK init\n");
 	clk_init();
 
-	debug("sdram init\n");
+	debug("SDRAM init\n");
 	sdram_init();
 
+	debug("validate cache\n");
+	validate_cache();
+
+#ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);
 
+	debug("board_init_r\n");
 	board_init_r(NULL, 0);
+#endif
 }
 
 extern void flush_cache_all(void);

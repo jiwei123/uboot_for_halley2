@@ -28,6 +28,8 @@
 #include <asm/jz_uart.h>
 #include <asm/arch/base.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /*
  * serial_init - initialize a channel
  *
@@ -37,10 +39,17 @@
  *
  * RETURNS: N/A
  */
-struct jz_uart *uart = (struct jz_uart *)CONFIG_SYS_UART_BASE;
+
+struct jz_uart *uart __attribute__ ((section(".data")));
 
 static int jz_serial_init(void)
 {
+#ifdef CONFIG_BURNER
+	uart = (struct jz_uart *)gd->arch.gi->uart_base;
+#else
+	uart = (struct jz_uart *)CONFIG_SYS_UART_BASE;
+#endif
+
 	/* Disable port interrupts while changing hardware */
 	writeb(0, &uart->dlhr_ier);
 
@@ -70,7 +79,11 @@ static void jz_serial_setbrg(void)
 {
 	u32 baud_div, tmp;
 
+#ifdef CONFIG_BURNER
+	baud_div = gd->arch.gi->extal / 16 / gd->arch.gi->baud_rate;
+#else
 	baud_div = CONFIG_SYS_EXTAL / 16 / CONFIG_BAUDRATE;
+#endif
 
 	tmp = readb(&uart->lcr);
 	tmp |= UART_LCR_DLAB;
@@ -96,11 +109,11 @@ static void jz_serial_putc(const char c)
 	if (c == '\n')
 		serial_putc('\r');
 
+	writeb((u8)c, &uart->rbr_thr_dllr);
+
 	/* Wait for fifo to shift out some bytes */
 	while (!((readb(&uart->lsr) & (UART_LSR_TDRQ | UART_LSR_TEMT)) == 0x60))
 		;
-
-	writeb((u8)c, &uart->rbr_thr_dllr);
 }
 
 static int jz_serial_getc(void)

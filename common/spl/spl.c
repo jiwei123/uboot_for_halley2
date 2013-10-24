@@ -248,8 +248,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 void preloader_console_init(void)
 {
 	gd->bd = &bdata;
+#ifndef CONFIG_BURNER
 	gd->baudrate = CONFIG_BAUDRATE;
-
+#else
+	gd->baudrate = gd->arch.gi->baud_rate;
+#endif
 	serial_init();		/* serial communications setup */
 
 	gd->have_console = 1;

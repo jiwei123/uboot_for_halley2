@@ -20,12 +20,14 @@
  * MA 02111-1307 USA
  */
 
+/* #define DEBUG */
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/cpm.h>
+#include <asm/arch/clk.h>
 
-#include "pll.h"
+DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_SYS_CPCCR_SEL
 /**
@@ -36,9 +38,18 @@
 #define SEL_CPU			1
 #define SEL_H0			1
 #define SEL_H2			1
+#if (CONFIG_SYS_APLL_FREQ > 1000000000)
+#define DIV_PCLK		12
+#define DIV_H2			6
+#else
 #define DIV_PCLK		8
 #define DIV_H2			4
-#define DIV_H0			4
+#endif
+#ifdef CONFIG_SYS_MEM_DIV
+#define DIV_H0			CONFIG_SYS_MEM_DIV
+#else
+#define DIV_H0			gd->arch.gi->ddr_div
+#endif
 #define DIV_L2			2
 #define DIV_CPU			1
 #define CPCCR_CFG		(((SEL_SCLKA & 0x3) << 30)		\
@@ -58,22 +69,49 @@
 #define CPCCR_CFG CONFIG_SYS_CPCCR_SEL
 #endif
 
+unsigned int get_pllreg_value(int pll)
+{
+	cpm_cpapcr_t cpapcr;
+	unsigned int pll_out, ret = 0;
+
+	switch (pll) {
+	case APLL:
+		cpapcr.d32 = 0;
+		pll_out = gd->arch.gi->cpufreq / 1000000;
+		if (pll_out > 600) {
+			cpapcr.b.BS = 1;
+		} else if ((pll_out > 155) && (pll_out <= 300)) {
+			cpapcr.b.PLLOD = 1;
+		} else if (pll_out > 76) {
+			cpapcr.b.PLLOD = 2;
+		} else if (pll_out > 47) {
+			cpapcr.b.PLLOD = 3;
+		}
+		cpapcr.b.PLLN = 0;
+		cpapcr.b.PLLM = (gd->arch.gi->cpufreq / gd->arch.gi->extal)
+			* (cpapcr.b.PLLN + 1)
+			* (1 << cpapcr.b.PLLOD)
+			- 1;
+		ret = cpapcr.d32;
+	case MPLL:
+		/* MPLL is not used */
+	default:
+		break;
+	}
+
+	return ret;
+}
+
 void pll_init(void)
 {
 	unsigned int cpccr = 0;
 
 	debug("pll init...");
 
-#ifdef APLL_VALUE
-	cpm_outl(APLL_VALUE | (0x1 << 8) | 0x20,CPM_CPAPCR);
+	/* Only apll is init here */
+	cpm_outl(get_pllreg_value(APLL) | (0x1 << 8) | 0x20,CPM_CPAPCR);
 	while(!(cpm_inl(CPM_CPAPCR) & (0x1<<10)));
 	debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
-#endif
-#ifdef MPLL_VALUE
-	cpm_outl(MPLL_VALUE | (0x1 << 7),CPM_CPMPCR);
-	while(!(cpm_inl(CPM_CPMPCR) & (0x1)));
-	debug("CPM_CPMPCR %x\n", cpm_inl(CPM_CPMPCR));
-#endif
 
 	cpccr = CPCCR_CFG | (7 << 20);
 	cpm_outl(cpccr,CPM_CPCCR);

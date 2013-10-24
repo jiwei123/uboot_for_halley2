@@ -29,11 +29,8 @@
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 
-#ifndef CONFIG_DDR_HOST_CC
-struct ddrc_reg ddrc;
-struct ddrp_reg ddrp;
-struct ddr_params ddr_params;
-#endif
+DECLARE_GLOBAL_DATA_PTR;
+struct ddr_params *ddr_params_p = NULL;
 
 #ifdef DUMP_DDR
 static void dump_ddrc_register(void)
@@ -118,18 +115,33 @@ static void remap_swap(int a, int b)
 
 static void mem_remap(void)
 {
-	uint32_t start = 0;
-	int num = 0;
+	uint32_t start = 0, num = 0;
+	int row, col, dw32, bank8, cs0, cs1;
 
-	start += DDR_ROW + DDR_COL + (DDR_DW32 ? 4 : 2) / 2;
+#ifdef CONFIG_DDR_HOST_CC
+	row = DDR_ROW;
+	col = DDR_COL;
+	dw32 = DDR_DW32;
+	bank8 = DDR_BANK8;
+	cs0 = DDR_CS0EN;
+	cs1 = DDR_CS1EN;
+#else
+	row = ddr_params_p->row;
+	col = ddr_params_p->col;
+	dw32 = ddr_params_p->dw32;
+	bank8 = ddr_params_p->bank8;
+	cs0 = ddr_params_p->cs0;
+	cs1 = ddr_params_p->cs1;
+#endif
+	start += row + col + (dw32 ? 4 : 2) / 2;
 	start -= 12;
 
-	if (DDR_BANK8)
+	if (bank8)
 		num += 3;
 	else
 		num += 2;
 
-	if (DDR_CS0EN && DDR_CS1EN)
+	if (cs0 && cs1)
 		num++;
 
 	for (; num > 0; num--)
@@ -162,11 +174,6 @@ void ddr_controller_init(void)
 	ddr_writel(DDRC_CTRL_CKE | DDRC_CTRL_ALH, DDRC_CTRL);
 	ddr_writel(DDRC_REFCNT_VALUE, DDRC_REFCNT);
 	ddr_writel(DDRC_CTRL_VALUE, DDRC_CTRL);
-
-	/* DDRC address remap configure*/
-	mem_remap();
-
-	ddr_writel(ddr_readl(DDRC_STATUS) & ~DDRC_DSTATUS_MISS, DDRC_STATUS);
 }
 
 void ddr_phy_init(void)
@@ -293,19 +300,24 @@ void ddr_phy_init(void)
 void sdram_init(void)
 {
 #ifndef CONFIG_DDR_HOST_CC
-#ifdef CONFIG_DDR_TYPE_DDR3
+	struct ddrc_reg ddrc;
+	struct ddrp_reg ddrp;
+  #ifndef CONFIG_DDR_TYPE_VARIABLE
+	struct ddr_params ddr_params;
+    #ifdef CONFIG_DDR_TYPE_DDR3
 	int type = DDR3;
-#elif defined(CONFIG_DDR_TYPE_LPDDR)
+    #elif defined(CONFIG_DDR_TYPE_LPDDR)
 	int type = LPDDR;
-#elif defined(CONFIG_DDR_TYPE_LPDDR2)
+    #elif defined(CONFIG_DDR_TYPE_LPDDR2)
 	int type = LPDDR2;
-#endif /* CONFIG_DDR_TYPE_DDR3 */
-#ifndef CONFIG_DDR_TYPE_VARIABLE
-	ddr_params_creator(&ddrc, &ddrp, &ddr_params, type);
-#else
-	/* ddr params created by burning tool*/
-#endif /* CONFIG_DDR_TYPE_VARIABLE */
-	ddr_params_assign(&ddrc, &ddrp, &ddr_params);
+    #endif /* CONFIG_DDR_TYPE_DDR3 */
+	fill_in_params(&ddr_params, type);
+	ddr_params_p = &ddr_params;
+  #else
+	ddr_params_p = &gd->arch.gi->ddr_params;
+  #endif
+	ddr_params_creator(&ddrc, &ddrp, ddr_params_p);
+	ddr_params_assign(&ddrc, &ddrp, ddr_params_p);
 #endif /* CONFIG_DDR_HOST_CC */
 
 	debug("sdram init start\n");
@@ -320,6 +332,11 @@ void sdram_init(void)
 
 	/* DDR Controller init*/
 	ddr_controller_init();
+
+	/* DDRC address remap configure*/
+	mem_remap();
+
+	ddr_writel(ddr_readl(DDRC_STATUS) & ~DDRC_DSTATUS_MISS, DDRC_STATUS);
 
 	debug("sdram init finished\n");
 #ifdef DUMP_DDR

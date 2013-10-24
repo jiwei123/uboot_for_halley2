@@ -19,6 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+
 #ifndef CONFIG_SPL_BUILD
 #include <stdio.h>
 #include <stdint.h>
@@ -325,11 +326,16 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 #undef PNDEF
 }
 
-static void fill_in_params(struct ddr_params *params)
+void fill_in_params(struct ddr_params *params, int type)
 {
-	params->freq = CONFIG_SYS_MEM_FREQ;
-	caculate_tck(params);
+#ifndef CONFIG_DDR_TYPE_VARIABLE
+	memset(params, 0, sizeof(struct ddr_params));
 
+	params->type = type;
+	params->freq = CONFIG_SYS_MEM_FREQ;
+#endif
+	caculate_tck(params);
+#ifndef CONFIG_DDR_TYPE_VARIABLE
 	params->div = DDR_CLK_DIV;
 	params->cs0 = DDR_CS0EN;
 	params->cs1 = DDR_CS1EN;
@@ -370,20 +376,17 @@ static void fill_in_params(struct ddr_params *params)
 	params->tXSRD = DDR_tXSRD;
 	params->tREFI = DDR_tREFI;
 	params->tDLLSRST = 50; /* default 50ns */
+#endif
 	params->size.chip0 = sdram_size(0, params);
 	params->size.chip1 = sdram_size(1, params);
 }
 
 void ddr_params_creator(struct ddrc_reg *ddrc, struct ddrp_reg *ddrp,
-			struct ddr_params *ddr_params, int type)
+			struct ddr_params *ddr_params)
 {
-	memset(ddr_params, 0, sizeof(struct ddr_params));
 	memset(ddrc, 0, sizeof(struct ddrc_reg));
 	memset(ddrp, 0, sizeof(struct ddrp_reg));
 
-	ddr_params->type = type;
-
-	fill_in_params(ddr_params);
 	ddrc_params_creat(ddrc, ddr_params);
 	ddrp_params_creat(ddrp, ddr_params);
 }
@@ -530,8 +533,8 @@ int main(int argc, char *argv[])
 	/* params were created by burn tool. */
 #error "VARIABLE can NOT be created by ddr_params_creator"
 #endif /* CONFIG_DDR_TYPE_DDR3 */
-
-	ddr_params_creator(&ddrc, &ddrp, &ddr_params, type);
+	fill_in_params(&ddr_params, type);
+	ddr_params_creator(&ddrc, &ddrp, &ddr_params);
 #endif /* CONFIG_DDR_HOST_CC */
 
 	file_head_print();

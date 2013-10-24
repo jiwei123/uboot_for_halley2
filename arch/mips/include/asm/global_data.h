@@ -25,6 +25,7 @@
 #define __ASM_GBL_DATA_H
 
 #include <asm/regdef.h>
+#include <asm/global_info.h>
 
 /* Architecture-specific global data */
 struct arch_global_data {
@@ -35,6 +36,9 @@ struct arch_global_data {
 	unsigned long sys_clk;
 	unsigned long tbl;
 	unsigned long lastinc;
+#endif
+#ifdef CONFIG_JZ4775
+	struct global_info *gi;
 #endif
 };
 

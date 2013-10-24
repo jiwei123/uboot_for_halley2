@@ -255,11 +255,8 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	mmc->voltages = MMC_VDD_27_28 |
 		MMC_VDD_28_29 | MMC_VDD_29_30 | MMC_VDD_30_31 | MMC_VDD_31_32 |
 		MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_34_35 | MMC_VDD_35_36;
-#ifdef CONFIG_SPL_BUILD
-	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
-#else
+
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HC;
-#endif
 	mmc->f_min = 200000;
 	mmc->f_max = 24000000;
 

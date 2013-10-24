@@ -21,7 +21,7 @@
  */
 
 #include <common.h>
-#include <configs/mensa.h>
+#include <config.h>
 #include <boot_img.h>
 #include <asm/arch/cpm.h>
 #include <asm/gpio.h>
