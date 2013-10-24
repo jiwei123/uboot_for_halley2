@@ -544,7 +544,8 @@ static int act8600_charger_get_current(struct regulator *reg)
 
 static int act8600_charger_get_voltage (struct regulator *reg)
 {
-	return get_battery_voltage();
+	return 0;
+	//return get_battery_voltage();
 }
 
 static struct regulator_ops charger_ops = {
@@ -578,7 +579,6 @@ int act8600_regulator_init(void)
 		printf("probe act8600 error, i2c addr ox%x\n", ACT8600_I2C_ADDR);
 		return -EIO;
 	}
-
 	for (i = 0; i < ARRAY_SIZE(act8600_regulators); i++) {
 		ret = regulator_register(&act8600_regulators[i], NULL);
 		if(ret)
@@ -586,7 +586,7 @@ int act8600_regulator_init(void)
 					act8600_regulators[i].name);
 	}
 
-	jz4780_battery_cherger(&act8600_battery_ops);
+//	jz4780_battery_cherger(&act8600_battery_ops);
 
 	return 0;
 }

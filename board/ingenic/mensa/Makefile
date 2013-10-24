@@ -30,6 +30,9 @@ COBJS	:= $(BOARD).o
 ifdef CONFIG_BOOT_ANDROID
 COBJS	+= boot_key.o
 endif
+ifdef CONFIG_VIDEO_JZ4775
+COBJS      += lcd.o
+endif
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 

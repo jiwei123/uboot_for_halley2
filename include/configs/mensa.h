@@ -29,7 +29,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_JZ4775		/* Jz4775 SoC */
 
-#define CONFIG_SYS_APLL_FREQ		1200000000
+#define CONFIG_SYS_APLL_FREQ		816000000
 #define CONFIG_SYS_MPLL_FREQ		-1
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
@@ -37,7 +37,7 @@
 #define CONFIG_SYS_MIPS_TIMER_FREQ	CONFIG_SYS_CPU_SPEED
 
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ	/* CPU clock: 1.2 GHz */
-#define CONFIG_SYS_MEM_DIV		3
+#define CONFIG_SYS_MEM_DIV		4
 #define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
 
 #define CONFIG_DDR_PARAMS_CREATOR
@@ -54,11 +54,22 @@
  * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
  */
 
-/* Pwm for lcd */
-#define CONFIG_SYS_PWM_PERIOD          10000 /* Pwm period in ns */
-#define CONFIG_SYS_PWM_CHN             1  /* Pwm channel ok*/
-#define CONFIG_SYS_PWM_FULL            256
-#define CONFIG_SYS_BACKLIGHT_LEVEL 80 /* Backlight brightness is (80 / 256) */
+#define CONFIG_LCD
+#ifdef CONFIG_LCD
+	#define LCD_BPP				5
+	#define GPIO_LCD_PWM	 	        (32*4+1) /* GPE14 PWM4 */
+	#define CONFIG_LCD_LOGO
+	#define CONFIG_SYS_WHITE_ON_BLACK
+	#define CONFIG_SYS_PCLK_FREQ		33260000
+	#define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
+	#define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
+	#define CONFIG_SYS_PWM_FULL		256
+	#define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
+
+	#define CONFIG_VIDEO_JZ4775
+	#define CONFIG_JZ_PWM
+	#define CONFIG_VIDEO_BYD_BM8766U
+#endif
 
 #define CONFIG_SYS_AUDIO_SPEED (768 * 1000000)
 

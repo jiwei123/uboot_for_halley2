@@ -33,6 +33,7 @@ int board_early_init_f(void)
 {
 	/* Power on TF-card */
 	gpio_direction_output(GPIO_PB(3), 1);
+	act8600_regulator_init();
 
 	return 0;
 }
