@@ -65,7 +65,7 @@ void lcd_display_pin_init(void)
 
 void lcd_display_on(void)
 {
-	bm800480_8766ftgu_panel_display_on();        
+	bm800480_8766ftgu_panel_display_on();
 }
 
 void lcd_display_off(void)

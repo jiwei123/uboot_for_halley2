@@ -26,14 +26,14 @@
 
 #include <linux/types.h>
 
-void lcd_display_pin_init(void);                                
-void lcd_display_on(void);                                      
-void lcd_display_off(void);                                     
-                                                            
-#if PWM_BACKLIGHT_CHIP                                      
+void lcd_display_pin_init(void);
+void lcd_display_on(void);
+void lcd_display_off(void);
+
+#if PWM_BACKLIGHT_CHIP
 void lcd_set_backlight_level(int num);
 void lcd_close_backlight(void);
-#else                      
+#else
 void lcd_init_backlight(int num);
 void send_low_pulse(int num);
 void lcd_set_backlight_level(int num);
@@ -80,7 +80,7 @@ struct jz_fb_dma_descriptor {
 #define FB_VMODE_DOUBLE		2   /* double scan */
 #define FB_VMODE_ODD_FLD_FIRST	4   /* interlaced: top line first */
 #define FB_VMODE_MASK		255
-struct jzfb_config_info lcd_config_info;  
+struct jzfb_config_info lcd_config_info;
 enum jzfb_format_order {
 	FORMAT_X8R8G8B8 = 1,
 	FORMAT_X8B8G8R8,

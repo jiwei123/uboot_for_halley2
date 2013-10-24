@@ -70,8 +70,8 @@
  * LCDC (LCD Controller)
  *************************************************************************/
 
-#define LCDC_CFG	(LCDC0_BASE + 0x00) 
-#define LCDC_CTRL	(LCDC0_BASE + 0x30) 
+#define LCDC_CFG	(LCDC0_BASE + 0x00)
+#define LCDC_CTRL	(LCDC0_BASE + 0x30)
 #define LCDC_STATE	(LCDC0_BASE + 0x34)
 #define LCDC_OSDC	(LCDC0_BASE + 0x100)
 #define LCDC_OSDCTRL	(LCDC0_BASE + 0x104)
@@ -87,46 +87,46 @@
 #define LCDC_DAV	(LCDC0_BASE + 0x14)
 #define LCDC_XYP0	(LCDC0_BASE + 0x120)
 #define LCDC_XYP1	(LCDC0_BASE + 0x124)
-#define LCDC_SIZE0	(LCDC0_BASE + 0x128) 
+#define LCDC_SIZE0	(LCDC0_BASE + 0x128)
 #define LCDC_SIZE1	(LCDC0_BASE + 0x12C)
 #define LCDC_VSYNC	(LCDC0_BASE + 0x04)
 #define LCDC_HSYNC	(LCDC0_BASE + 0x08)
 #define LCDC_PS		(LCDC0_BASE + 0x18)
-#define LCDC_CLS		(LCDC0_BASE + 0x1c)
-#define LCDC_SPL		(LCDC0_BASE + 0x20)
-#define LCDC_REV		(LCDC0_BASE + 0x24)
-#define LCDC_IID		(LCDC0_BASE + 0x38)
-#define LCDC_DA0		(LCDC0_BASE + 0x40)
-#define LCDC_SA0		(LCDC0_BASE + 0x44)
+#define LCDC_CLS	(LCDC0_BASE + 0x1c)
+#define LCDC_SPL	(LCDC0_BASE + 0x20)
+#define LCDC_REV	(LCDC0_BASE + 0x24)
+#define LCDC_IID	(LCDC0_BASE + 0x38)
+#define LCDC_DA0	(LCDC0_BASE + 0x40)
+#define LCDC_SA0	(LCDC0_BASE + 0x44)
 #define LCDC_FID0	(LCDC0_BASE + 0x48)
 #define LCDC_CMD0	(LCDC0_BASE + 0x4c)
-#define LCDC_DA1		(LCDC0_BASE + 0x50)
-#define LCDC_SA1		(LCDC0_BASE + 0x54)
+#define LCDC_DA1	(LCDC0_BASE + 0x50)
+#define LCDC_SA1	(LCDC0_BASE + 0x54)
 #define LCDC_FID1	(LCDC0_BASE + 0x58)
 #define LCDC_CMD1	(LCDC0_BASE + 0x5c)
 #define LCDC_OFFS0	(LCDC0_BASE + 0x60)
-#define LCDC_PW0		(LCDC0_BASE + 0x64)
-#define LCDC_CNUM0	(LCDC0_BASE + 0x68) 
-#define LCDC_DESSIZE0	(LCDC0_BASE + 0x6C) 
-#define LCDC_OFFS1	(LCDC0_BASE + 0x70) 
-#define LCDC_PW1		(LCDC0_BASE + 0x74)
+#define LCDC_PW0	(LCDC0_BASE + 0x64)
+#define LCDC_CNUM0	(LCDC0_BASE + 0x68)
+#define LCDC_DESSIZE0	(LCDC0_BASE + 0x6C)
+#define LCDC_OFFS1	(LCDC0_BASE + 0x70)
+#define LCDC_PW1	(LCDC0_BASE + 0x74)
 #define LCDC_CNUM1	(LCDC0_BASE + 0x78)
 #define LCDC_DESSIZE1	(LCDC0_BASE + 0x7C)
 #define LCDC_PCFG	(LCDC0_BASE + 0x2C0)
-#define LCDC_CPOS1	(0x78)
-#define LCDC_DUAL_CTRL	(0x2c8)
-#define LCDC_ENH_CFG	(0x400)
-#define LCDC_ENH_CSCCFG	(0x404)
+#define LCDC_CPOS1		(0x78)
+#define LCDC_DUAL_CTRL		(0x2c8)
+#define LCDC_ENH_CFG		(0x400)
+#define LCDC_ENH_CSCCFG		(0x404)
 #define LCDC_ENH_LUMACFG	(0x408)
 #define LCDC_ENH_CHROCFG0	(0x40c)
 #define LCDC_ENH_CHROCFG1	(0x410)
 #define LCDC_ENH_DITHERCFG	(0x414)
-#define LCDC_ENH_STATUS	(0x418) 
-#define LCDC_ENH_GAMMA	(0x800) 
-#define LCDC_ENH_VEE	(0x1000)
+#define LCDC_ENH_STATUS		(0x418)
+#define LCDC_ENH_GAMMA		(0x800)
+#define LCDC_ENH_VEE		(0x1000)
 
 /* LCD Configure Register */
-#define LCDC_CFG_LCDPIN_BIT	31  
+#define LCDC_CFG_LCDPIN_BIT	31
 #define LCDC_CFG_LCDPIN_MASK	(0x1 << LCDC_CFG_LCDPIN_BIT)
 #define LCDC_CFG_LCDPIN_LCD	(0x0 << LCDC_CFG_LCDPIN_BIT)
 #define LCDC_CFG_LCDPIN_SLCD	(0x1 << LCDC_CFG_LCDPIN_BIT)
@@ -141,7 +141,7 @@
 #define LCDC_CFG_REVM		(1 << 20)
 #define LCDC_CFG_HSYNM		(1 << 19)
 #define LCDC_CFG_PCLKM		(1 << 18)
-#define LCDC_CFG_INVDAT		(1 << 17) 
+#define LCDC_CFG_INVDAT		(1 << 17)
 #define LCDC_CFG_SYNDIR_IN	(1 << 16)
 #define LCDC_CFG_PSP		(1 << 15)
 #define LCDC_CFG_CLSP		(1 << 14)
@@ -168,14 +168,14 @@
 #define LCDC_CTRL_PINMD		(1 << 31)
 #define LCDC_CTRL_BST_BIT	28
 #define LCDC_CTRL_BST_MASK	(0x7 << LCDC_CTRL_BST_BIT)
-#define LCDC_CTRL_BST_4		(0 << LCDC_CTRL_BST_BIT) 
+#define LCDC_CTRL_BST_4		(0 << LCDC_CTRL_BST_BIT)
 #define LCDC_CTRL_BST_8		(1 << LCDC_CTRL_BST_BIT)
 #define LCDC_CTRL_BST_16	(2 << LCDC_CTRL_BST_BIT)
 #define LCDC_CTRL_BST_32	(3 << LCDC_CTRL_BST_BIT)
 #define LCDC_CTRL_BST_64	(4 << LCDC_CTRL_BST_BIT)
-#define LCDC_CTRL_RGB565		(0 << 27) 
+#define LCDC_CTRL_RGB565		(0 << 27)
 #define LCDC_CTRL_RGB555		(1 << 27)
-#define LCDC_CTRL_OFUP		(1 << 26) 
+#define LCDC_CTRL_OFUP		(1 << 26)
 #define LCDC_CTRL_PDD_BIT	16
 #define LCDC_CTRL_PDD_MASK	(0xff << LCDC_CTRL_PDD_BIT)
 #define LCDC_CTRL_DACTE		(1 << 14)
@@ -190,7 +190,7 @@
 #define LCDC_CTRL_PEDN		(1 << 5)
 #define LCDC_CTRL_DIS		(1 << 4)
 #define LCDC_CTRL_ENA		(1 << 3)
-#define LCDC_CTRL_BPP_BIT	0 
+#define LCDC_CTRL_BPP_BIT	0
 #define LCDC_CTRL_BPP_MASK	(0x07 << LCDC_CTRL_BPP_BIT)
 #define LCDC_CTRL_BPP_1		(0 << LCDC_CTRL_BPP_BIT)
 #define LCDC_CTRL_BPP_2		(1 << LCDC_CTRL_BPP_BIT)
@@ -201,7 +201,7 @@
 #define LCDC_CTRL_BPP_CMPS_24	(6 << LCDC_CTRL_BPP_BIT)
 #define LCDC_CTRL_BPP_30	(7 << LCDC_CTRL_BPP_BIT)
 /* LCD Status Register */
-#define LCDC_STATE_QD		(1 << 7) 
+#define LCDC_STATE_QD		(1 << 7)
 #define LCDC_STATE_EOF		(1 << 5)
 #define LCDC_STATE_SOF		(1 << 4)
 #define LCDC_STATE_OFU		(1 << 3)
@@ -209,21 +209,21 @@
 #define LCDC_STATE_IFU1		(1 << 1)
 #define LCDC_STATE_LDD		(1 << 0)
 /* OSD Configure Register */
-#define LCDC_OSDC_PREMULTI1		(1 << 23) 
+#define LCDC_OSDC_PREMULTI1		(1 << 23)
 #define LCDC_OSDC_COEF_SLE1_BIT		21
-#define LCDC_OSDC_COEF_SLE1_MASK		(0x03 << LCDC_OSDC_COEF_SLE1_BIT)
+#define LCDC_OSDC_COEF_SLE1_MASK	(0x03 << LCDC_OSDC_COEF_SLE1_BIT)
 #define LCDC_OSDC_COEF_SLE1_0		(0 << LCDC_OSDC_COEF_SLE1_BIT)
 #define LCDC_OSDC_COEF_SLE1_1		(1 << LCDC_OSDC_COEF_SLE1_BIT)
 #define LCDC_OSDC_COEF_SLE1_2		(2 << LCDC_OSDC_COEF_SLE1_BIT)
 #define LCDC_OSDC_COEF_SLE1_3		(3 << LCDC_OSDC_COEF_SLE1_BIT)
 #define LCDC_OSDC_PREMULTI0		(1 << 20)
 #define LCDC_OSDC_COEF_SLE0_BIT		18
-#define LCDC_OSDC_COEF_SLE0_MASK		(0x03 << LCDC_OSDC_COEF_SLE0_BIT)
+#define LCDC_OSDC_COEF_SLE0_MASK	(0x03 << LCDC_OSDC_COEF_SLE0_BIT)
 #define LCDC_OSDC_COEF_SLE0_0		(0 << LCDC_OSDC_COEF_SLE0_BIT)
 #define LCDC_OSDC_COEF_SLE0_1		(1 << LCDC_OSDC_COEF_SLE0_BIT)
 #define LCDC_OSDC_COEF_SLE0_2		(2 << LCDC_OSDC_COEF_SLE0_BIT)
 #define LCDC_OSDC_COEF_SLE0_3		(3 << LCDC_OSDC_COEF_SLE0_BIT)
-#define LCDC_OSDC_ALPHAMD1		(1 << 17) 
+#define LCDC_OSDC_ALPHAMD1		(1 << 17)
 #define LCDC_OSDC_SOFM1		(1 << 15)
 #define LCDC_OSDC_EOFM1		(1 << 14)
 #define LCDC_OSDC_SOFM0		(1 << 11)
@@ -253,11 +253,11 @@
 #define LCDC_OSDS_EOF0		(1 << 10)
 #define LCDC_OSDS_DEND		(1 << 8)
 /* Background 0 or Background 1 Color Register */
-#define LCDC_BGC_RED_OFFSET	16 
+#define LCDC_BGC_RED_OFFSET	16
 #define LCDC_BGC_RED_MASK	(0xFF << LCDC_BGC_RED_OFFSET)
-#define LCDC_BGC_GREEN_OFFSET    8 
+#define LCDC_BGC_GREEN_OFFSET    8
 #define LCDC_BGC_GREEN_MASK	(0xFF << LCDC_BGC_GREEN_OFFSET)
-#define LCDC_BGC_BLUE_OFFSET	0 
+#define LCDC_BGC_BLUE_OFFSET	0
 #define LCDC_BGC_BLUE_MASK	(0xFF << LCDC_BGC_BLUE_OFFSET)
 /* Foreground 0 or Foreground 1 Color Key Register */
 #define LCDC_KEY_KEYEN		(1 << 31)
@@ -276,7 +276,7 @@
 #define LCDC_ALPHA0_MASK		(0xFF << LCDC_ALPHA0_OFFSET)
 /* IPU Restart Register */
 #define LCDC_IPUR_IPUREN		(1 << 31)
-#define LCDC_IPUR_IPURMASK	(0xFFFFFF)  
+#define LCDC_IPUR_IPURMASK	(0xFFFFFF)
 /* RGB Control Register */
 #define LCDC_RGBC_RGBDM		(1 << 15)
 #define LCDC_RGBC_DMM		(1 << 14)
@@ -333,9 +333,9 @@
 #define LCDC_SIZE_WIDTH_BIT	0
 #define LCDC_SIZE_WIDTH_MASK	(0xfff << LCDC_SIZE_WIDTH_BIT)
 /* PS Signal Setting */
-#define LCDC_PS_PSS_BIT		16 
+#define LCDC_PS_PSS_BIT		16
 #define LCDC_PS_PSS_MASK		(0xfff << LCDC_PS_PSS_BIT)
-#define LCDC_PS_PSE_BIT		0 
+#define LCDC_PS_PSE_BIT		0
 #define LCDC_PS_PSE_MASK		(0xfff << LCDC_PS_PSE_BIT)
 /* CLS Signal Setting */
 #define LCDC_CLS_CLSS_BIT	16
@@ -348,16 +348,16 @@
 #define LCDC_SPL_SPLE_BIT	0
 #define LCDC_SPL_SPLE_MASK	(0xfff << LCDC_SPL_SPLE_BIT)
 /* REV Signal Setting */
-#define LCDC_REV_REVS_BIT	16 
+#define LCDC_REV_REVS_BIT	16
 #define LCDC_REV_REVS_MASK	(0xfff << LCDC_REV_REVS_BIT)
 /* DMA Command 0 or 1 Register */
 #define LCDC_CMD_SOFINT		(1 << 31)
 #define LCDC_CMD_EOFINT		(1 << 30)
 #define LCDC_CMD_CMD		(1 << 29)
 #define LCDC_CMD_PAL		(1 << 28)
-#define LCDC_CMD_COMPEN		(1 << 27) 
-#define LCDC_CMD_FRM_EN		(1 << 26) 
-#define LCDC_CMD_FIELD_SEL	(1 << 25) 
+#define LCDC_CMD_COMPEN		(1 << 27)
+#define LCDC_CMD_FRM_EN		(1 << 26)
+#define LCDC_CMD_FIELD_SEL	(1 << 25)
 #define LCDC_CMD_16X16BLOCK	(1 << 24)
 #define LCDC_CMD_LEN_BIT		0
 #define LCDC_CMD_LEN_MASK	(0xffffff << LCDC_CMD_LEN_BIT)
@@ -373,7 +373,7 @@
 #define LCDC_CPOS_ALPHAMD1	(1 << 31)
 #define LCDC_CPOS_RGB_RGB565	(0 << 30)
 #define LCDC_CPOS_RGB_RGB555	(1 << 30)
-#define LCDC_CPOS_BPP_BIT	27 
+#define LCDC_CPOS_BPP_BIT	27
 #define LCDC_CPOS_BPP_MASK	(0x07 << LCDC_CPOS_BPP_BIT)
 #define LCDC_CPOS_BPP_16	(4 << LCDC_CPOS_BPP_BIT)
 #define LCDC_CPOS_BPP_18_24	(5 << LCDC_CPOS_BPP_BIT)
@@ -391,9 +391,9 @@
 #define LCDC_CPOS_XPOS_BIT	0
 #define LCDC_CPOS_XPOS_MASK	(0xfff << LCDC_CPOS_XPOS_BIT)
 /* Foreground 0,1 Size Register */
-#define LCDC_DESSIZE_ALPHA_BIT	24 
+#define LCDC_DESSIZE_ALPHA_BIT	24
 #define LCDC_DESSIZE_ALPHA_MASK	(0xff << LCDC_DESSIZE_ALPHA_BIT)
-#define LCDC_DESSIZE_HEIGHT_BIT	12 
+#define LCDC_DESSIZE_HEIGHT_BIT	12
 #define LCDC_DESSIZE_HEIGHT_MASK	(0xfff << LCDC_DESSIZE_HEIGHT_BIT)
 #define LCDC_DESSIZE_WIDTH_BIT	0
 #define LCDC_DESSIZE_WIDTH_MASK	(0xfff << LCDC_DESSIZE_WIDTH_BIT)

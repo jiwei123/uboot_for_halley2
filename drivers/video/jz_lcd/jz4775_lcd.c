@@ -25,7 +25,7 @@
 #include <serial.h>
 #include <common.h>
 #include <lcd.h>
-#include <asm/arch/lcdc.h>  
+#include <asm/arch/lcdc.h>
 #include "jz4775_lcd.h"
 #include <asm/arch/gpio.h>
 
@@ -612,17 +612,17 @@ void lcd_ctrl_init(void *lcd_base)
 	board_lcd_init();
 
 	jzfb_set_par(&lcd_config_info);
-	
+
 	lcd_display_on();
 	flush_cache_all();
-	 
+
 #ifdef DEFAULT_BACKLIGHT_LEVEL
         lcd_set_backlight_level(DEFAULT_BACKLIGHT_LEVEL);
 #else
         lcd_set_backlight_level(80);
         puts("80");
 #endif
-  	  return;
+	return;
 }
 
 void lcd_show_board_info(void)
