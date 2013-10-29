@@ -30,6 +30,27 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
+{
+	int i;
+
+	for(i = 0; i < nr_cgu_clks; i++) {
+		unsigned int xcdr = (cgu_clks[i].sel << cgu_clks[i].sel_bit);
+		unsigned int reg = CPM_BASE + cgu_clks[i].off;
+
+		writel(xcdr, reg);
+		if (cgu_clks[i].en_bit && cgu_clks[i].busy_bit) {
+			writel(xcdr | cgu_clks[i].div | (1 << cgu_clks[i].en_bit), reg);
+			while (readl(reg) & (1 << cgu_clks[i].busy_bit))
+				printf("wait cgu %08X\n",reg);
+		}
+#ifdef DUMP_CGU_SELECT
+		printf("0x%X: value=0x%X\n",
+		       reg & ~(0xa << 28), readl(reg));
+#endif
+	}
+}
+
 static unsigned int pll_get_rate(int pll)
 {
 	unsigned int cpxpcr = cpm_inl(CPM_CPAPCR);
@@ -77,14 +98,20 @@ static unsigned int get_msc_rate(unsigned int xcdr)
 #ifndef CONFIG_SPL_BUILD
 	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
 	unsigned int mscxcdr  = cpm_inl(xcdr);
+	unsigned int ret = 1;
 
 	switch ((msc0cdr >> 30) & 3) {
 	case 1:
-		return pll_get_rate(APLL) / (((mscxcdr & 0xff) + 1) * 2);
+		ret = pll_get_rate(APLL) / (((mscxcdr & 0xff) + 1) * 2);
+		break;
 	case 2:
-		return pll_get_rate(MPLL) / (((mscxcdr & 0xff) + 1) * 2);
+		ret = pll_get_rate(MPLL) / (((mscxcdr & 0xff) + 1) * 2);
+		break;
+	default:
+		break;
 	}
-	return 0;
+
+	return ret;
 #else
 	return CGU_MSC_FREQ;
 #endif
@@ -93,10 +120,12 @@ static unsigned int get_msc_rate(unsigned int xcdr)
 unsigned int clk_get_rate(int clk)
 {
 	switch (clk) {
+#ifndef CONFIG_SPL_BUILD
 	case DDR:
 		return get_ddr_rate();
 	case CPU:
 		return get_cclk_rate();
+#endif
 	case MSC0:
 		return get_msc_rate(CPM_MSC0CDR);
 	case MSC1:
@@ -104,8 +133,70 @@ unsigned int clk_get_rate(int clk)
 	case MSC2:
 		return get_msc_rate(CPM_MSC2CDR);
 	}
-	printf("clk%d is not supported\n", clk);
+
 	return 0;
+}
+
+static unsigned int set_msc_rate(int clk, unsigned long rate)
+{
+#ifndef CONFIG_SPL_BUILD
+	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
+	unsigned int xcdr_addr = 0;
+	unsigned int pll_rate = 0;
+	unsigned int cdr = 0;
+
+	switch (clk) {
+	case MSC0:
+		xcdr_addr = CPM_MSC0CDR;
+		break;
+	case MSC1:
+		xcdr_addr = CPM_MSC1CDR;
+		break;
+	case MSC2:
+		xcdr_addr = CPM_MSC2CDR;
+		break;
+	default:
+		break;
+	}
+
+	switch ((msc0cdr >> 30) & 3) {
+	case 1:
+		pll_rate = pll_get_rate(APLL);
+		break;
+	case 2:
+		pll_rate = pll_get_rate(MPLL);
+		break;
+	default:
+		break;
+	}
+
+	cdr = ((((pll_rate / rate) % 2) == 0)
+		? (pll_rate / rate / 2)
+		: (pll_rate / rate / 2 + 1)) - 1;
+	cpm_outl((cpm_inl(xcdr_addr) & ~0xff) | cdr | (1 << 29), xcdr_addr);
+
+	while (cpm_inl(xcdr_addr) & (1 << 28));
+
+	debug("%s: %d mscXcdr%x\n", __func__, rate, cpm_inl(xcdr_addr));
+#endif
+	return 0;
+}
+
+void clk_set_rate(int clk, unsigned long rate)
+{
+#ifndef CONFIG_SPL_BUILD
+	switch (clk) {
+	case MSC0:
+	case MSC1:
+	case MSC2:
+		set_msc_rate(clk, rate);
+		return;
+	default:
+		break;
+	}
+
+	printf("%s: clk%d is not supported\n", __func__, clk);
+#endif
 }
 
 struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
@@ -126,27 +217,6 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
 #endif
 };
-
-void cgu_clks_init(struct cgu *cgu_clks, int nr_cgu_clks)
-{
-	int i;
-
-	for(i = 0; i < nr_cgu_clks; i++) {
-		unsigned int xcdr = (cgu_clks[i].sel << cgu_clks[i].sel_bit);
-		unsigned int reg = CPM_BASE + cgu_clks[i].off;
-
-		writel(xcdr, reg);
-		if (cgu_clks[i].en_bit && cgu_clks[i].busy_bit) {
-			writel(xcdr | cgu_clks[i].div | (1 << cgu_clks[i].en_bit), reg);
-			while (readl(reg) & (1 << cgu_clks[i].busy_bit))
-				printf("wait cgu %08X\n",reg);
-		}
-#ifdef DUMP_CGU_SELECT
-		printf("0x%X: value=0x%X\n",
-		       reg & ~(0xa << 28), readl(reg));
-#endif
-	}
-}
 
 void clk_init(void)
 {
@@ -170,7 +240,7 @@ void clk_init(void)
 	cpm_outl(reg_clkgr,CPM_CLKGR);
 
 	spl_cgu_clksel[0].div = gd->arch.gi->ddr_div;
-	cgu_clks_init(spl_cgu_clksel, ARRAY_SIZE(spl_cgu_clksel));
+	cgu_clks_set(spl_cgu_clksel, ARRAY_SIZE(spl_cgu_clksel));
 }
 
 void enable_uart_clk(void)

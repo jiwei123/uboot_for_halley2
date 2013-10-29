@@ -75,6 +75,7 @@ typedef union cpm_cpapcr {
 #define CGU_LCD_DIV (CONFIG_SYS_APLL_FREQ / CONFIG_SYS_PCLK_FREQ - 1)
 
 unsigned int clk_get_rate(int clk);
+void clk_set_rate(int clk, unsigned long rate);
 void cgu_clks_init(struct cgu *cgu_sel, int nr_cgu_clks);
 
 #endif /* __CLK_H__ */

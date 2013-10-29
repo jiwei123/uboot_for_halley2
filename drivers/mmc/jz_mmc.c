@@ -191,15 +191,30 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 static void jz_mmc_set_ios(struct mmc *mmc)
 {
 	struct jz_mmc_priv *priv = mmc->priv;
-	uint32_t real_rate = clk_get_rate(priv->clk);
+	uint32_t real_rate = 0;
+	uint32_t lpm = LPM_LPM;
 	uint8_t clk_div = 0;
+
+	if (mmc->clock > 1000000) {
+		clk_set_rate(priv->clk, mmc->clock);
+	} else {
+		clk_set_rate(priv->clk, 24000000);
+	}
+
+	real_rate = clk_get_rate(priv->clk);
 
 	/* calculate clock divide */
 	while ((real_rate > mmc->clock) && (clk_div < 7)) {
 		real_rate >>= 1;
 		clk_div++;
 	}
+
 	jz_mmc_writel(clk_div, priv, MSC_CLKRT);
+
+	if (real_rate > 25000000)
+		lpm |= (0x2 << LPM_DRV_SEL_SHF) | LPM_SMP_SEL;
+
+	jz_mmc_writel(lpm, priv, MSC_LPM);
 
 	/* set the bus width for the next command */
 	priv->flags &= ~JZ_MMC_BUS_WIDTH_MASK;
@@ -209,22 +224,28 @@ static void jz_mmc_set_ios(struct mmc *mmc)
 		priv->flags |= JZ_MMC_BUS_WIDTH_4;
 	else
 		priv->flags |= JZ_MMC_BUS_WIDTH_1;
+
+	debug("jzmmc:clk_want:%d, clk_set:%d bus_width:%d\n",
+	      mmc->clock, clk_get_rate(priv->clk) / (1 << clk_div), mmc->bus_width);
 }
 
 static int jz_mmc_core_init(struct mmc *mmc)
 {
 	struct jz_mmc_priv *priv = mmc->priv;
+	unsigned int clkrt = jz_mmc_readl(priv, MSC_CLKRT);
 
 	/* reset */
 	jz_mmc_writel(MSC_STRPCL_RESET, priv, MSC_STRPCL);
 	while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_IS_RESETTING);
 
-	/* maximum timeouts */
-	jz_mmc_writel(0xffff, priv, MSC_RESTO);
-	jz_mmc_writel(0xffffffff, priv, MSC_RDTO);
-
 	/* enable low power mode */
 	jz_mmc_writel(0x1, priv, MSC_LPM);
+
+	/* maximum timeouts */
+	jz_mmc_writel(0xffffffff, priv, MSC_RESTO);
+	jz_mmc_writel(0xffffffff, priv, MSC_RDTO);
+
+	jz_mmc_writel(clkrt, priv, MSC_CLKRT);
 
 	return 0;
 }
@@ -235,7 +256,7 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	struct jz_mmc_priv *priv = &mmc_priv[idx];
 
 	/* fill in the name */
-	strcpy(mmc->name, "jz_mmc msc");
+	strcpy(mmc->name, "msc");
 	mmc->name[10] = '0' + controller;
 	mmc->name[11] = 0;
 
@@ -256,9 +277,14 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 		MMC_VDD_28_29 | MMC_VDD_29_30 | MMC_VDD_30_31 | MMC_VDD_31_32 |
 		MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_34_35 | MMC_VDD_35_36;
 
-	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HC;
 	mmc->f_min = 200000;
+#ifdef CONFIG_SPL_BUILD
 	mmc->f_max = 24000000;
+	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HC;
+#else
+	mmc->f_max = 52000000;
+	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+#endif
 
 	mmc_register(mmc);
 }

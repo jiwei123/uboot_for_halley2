@@ -40,7 +40,14 @@ gd_t gdata __attribute__ ((section(".data")));
 #ifdef CONFIG_BURNER
 struct global_info ginfo __attribute__ ((section(".ginfo")));
 #else
-struct global_info ginfo __attribute__ ((section(".data")));
+struct global_info ginfo __attribute__ ((section(".data"))) = {
+	.extal		= CONFIG_SYS_EXTAL,
+	.cpufreq	= CONFIG_SYS_CPU_FREQ,
+	.ddrfreq	= CONFIG_SYS_MEM_FREQ,
+	.uart_base	= CONFIG_SYS_UART_BASE,
+	.baud_rate	= CONFIG_BAUDRATE,
+};
+
 #endif
 
 extern void pll_init(void);
@@ -53,13 +60,7 @@ void board_init_f(ulong dummy)
 	gd = &gdata;
 
 	/* Setup global info */
-#ifndef CONFIG_BURNER
-	ginfo.extal = CONFIG_SYS_EXTAL;
-	ginfo.cpufreq = CONFIG_SYS_CPU_FREQ;
-	ginfo.ddrfreq = CONFIG_SYS_MEM_FREQ;
-	ginfo.uart_base = CONFIG_SYS_UART_BASE;
-	ginfo.baud_rate = CONFIG_BAUDRATE;
-#endif
+
 	ginfo.ddr_div = ((ginfo.cpufreq % ginfo.ddrfreq) == 0)
 		? (ginfo.cpufreq / ginfo.ddrfreq)
 		: (ginfo.cpufreq / ginfo.ddrfreq + 1);

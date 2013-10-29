@@ -155,6 +155,11 @@
 #define	MSC_IREG_PRG_DONE		(1 << 1)
 #define	MSC_IREG_DATA_TRAN_DONE		(1 << 0)
 
+#define	LPM_DRV_SEL_SHF			30
+#define	LPM_DRV_SEL_MASK		(0x3 << LPM_DRV_SEL_SHF)
+#define	LPM_SMP_SEL			(1 << 29)
+#define	LPM_LPM				(1 << 0)
+
 void jz_mmc_init(void);
 
 #endif /* __MMC_H__ */
