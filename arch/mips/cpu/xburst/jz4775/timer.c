@@ -25,19 +25,11 @@
 #include <div64.h>
 #include <asm/io.h>
 #include <asm/mipsregs.h>
-#include <asm/arch/base.h>
+#include <asm/arch/ost.h>
 
-#define TCU_TESR		0x14
-#define TCU_OSTCNTL		0xe4
-#define TCU_OSTCNTH		0xe8
-#define TCU_OSTCSR		0xec
-#define TCU_OSTCNTHBUF	0xfc
+DECLARE_GLOBAL_DATA_PTR;
 
-#define TER_OSTEN		(1 << 15)
-
-#define OSTCSR_SD				(1 << 9)
-#define OSTCSR_PRESCALE_16		(0x2<< 3)
-#define OSTCSR_EXT_EN			(1 << 2)
+unsigned int multiple __attribute__ ((section(".data")));
 
 static uint32_t tcu_readl(uint32_t off)
 {
@@ -56,10 +48,16 @@ static void tcu_writel(uint32_t val, uint32_t off)
 
 int timer_init(void)
 {
-	tcu_writel(OSTCSR_SD, TCU_OSTCSR);
+#ifdef CONFIG_BURNER
+	multiple = gd->arch.gi->extal / 1000000 / OST_DIV;
+#else
+	multiple = CONFIG_SYS_EXTAL / 1000000 / OST_DIV;
+#endif
+
 	reset_timer();
-	tcu_writel(OSTCSR_EXT_EN | OSTCSR_PRESCALE_16, TCU_OSTCSR);
+	tcu_writel(OSTCSR_CNT_MD | OSTCSR_PRESCALE | OSTCSR_EXT_EN, TCU_OSTCSR);
 	tcu_writew(TER_OSTEN, TCU_TESR);
+
 	return 0;
 }
 
@@ -67,6 +65,7 @@ void reset_timer(void)
 {
 	tcu_writel(0, TCU_OSTCNTH);
 	tcu_writel(0, TCU_OSTCNTL);
+	tcu_writel(0, TCU_OSTDR);
 }
 
 static uint64_t get_timer64(void)
@@ -78,13 +77,13 @@ static uint64_t get_timer64(void)
 
 ulong get_timer(ulong base)
 {
-	return lldiv(get_timer64(), 3000) - base;
+	return lldiv(get_timer64(), CONFIG_SYS_HZ * multiple) - base;
 }
 
 void __udelay(unsigned long usec)
 {
 	/* OST count increments at 3MHz */
-	uint64_t end = get_timer64() + ((uint64_t)usec * 3);
+	uint64_t end = get_timer64() + ((uint64_t)usec * multiple);
 	while (get_timer64() < end);
 }
 

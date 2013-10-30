@@ -33,7 +33,7 @@
 #define CONFIG_SYS_MPLL_FREQ		-1
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
-#define CONFIG_SYS_HZ			(CONFIG_SYS_EXTAL / 16) /* incrementer freq */
+#define CONFIG_SYS_HZ			1000 /* incrementer freq */
 #define CONFIG_SYS_MIPS_TIMER_FREQ	CONFIG_SYS_CPU_SPEED
 
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ	/* CPU clock: 1.2 GHz */
@@ -261,6 +261,7 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
+#define CONFIG_CMD_GETTIME
 
 #define CONFIG_DOS_PARTITION
 
