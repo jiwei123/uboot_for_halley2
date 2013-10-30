@@ -40,23 +40,6 @@
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_TYPE_VARIABLE
-/* #define CONFIG_DDR_DLL_OFF */
-/*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
-
-/* Pwm for lcd */
-#define CONFIG_SYS_PWM_PERIOD          10000 /* Pwm period in ns */
-#define CONFIG_SYS_PWM_CHN             1  /* Pwm channel ok*/
-#define CONFIG_SYS_PWM_FULL            256
-#define CONFIG_SYS_BACKLIGHT_LEVEL 80 /* Backlight brightness is (80 / 256) */
-
-#define CONFIG_SYS_AUDIO_SPEED (768 * 1000000)
 
 #define CONFIG_SYS_UART_BASE UART3_BASE
 #define CONFIG_BAUDRATE 115200
@@ -91,57 +74,7 @@
 #define CONFIG_MBR_P3_TYPE 	fat
 #endif
 
-/*
- * CONFIG_BOOT_ANDROID:uboot boot android system
- * CONFIG_FAST_BOOT_SUPPORT:android system support fast boot mode.
- * boot linux system need not the next two macro
- */
-
-#define CONFIG_BOOT_ANDROID
-#define CONFIG_FAST_BOOT_SUPPORT
-
-#ifdef CONFIG_SPL_MMC_SUPPORT
-
-/* SD/MMC card defaults */
-
-#define CONFIG_BOOTARGS \
-    BOOTARGS_COMMON " root=/dev/mmcblk0p1"
-
-#ifdef CONFIG_BOOT_ANDROID
-
-/* boot android android system */
-#define CONFIG_BOOTCOMMAND \
-    "boota mmc 0 0x80f00000 6144"
-#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-#define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
-
-#else/*!CONFIG_BOOT_ANDROID */
-#define CONFIG_BOOTCOMMAND \
-    "fatload mmc 1:1 0x88000000 vmlinux.ub; bootm 0x88000000"
-#endif/* !CONFIG_BOOT_ANDROID*/
-
-#else /* !CONFIG_SPL_MMC_SUPPORT */
-
-/* NAND defaults */
-
-#define CONFIG_BOOTARGS \
-    BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
-
-#ifdef CONFIG_BOOT_ANDROID
-
-/* boot android android system */
-#define CONFIG_BOOTCOMMAND \
-    "boota nand 0 0x80f00000 6144"
-#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-#define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
-
-#else/*!CONFIG_BOOT_ANDROID */
-#define CONFIG_BOOTCOMMAND \
-    "mtdparts default; ubi part system; ubifsmount ubi:boot; " \
-    "ubifsload 0x88000000 vmlinux.ub; bootm 0x88000000"
-#endif/* CONFIG_BOOT_ANDROID */
-
-#endif /* !CONFIG_SPL_MMC_SUPPORT */
+#define CONFIG_BOOTCOMMAND "burn"
 
 #define CONFIG_JZ_GPIO
 
@@ -203,27 +136,6 @@
 #define CONFIG_JZ_MMC_SPLMSC 0
 
 /*
- * I2C
- */
-#define CONFIG_SOFT_I2C
-#define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
-#define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(3)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(0)
-
-/*
- * PMU
- */
-#define CONFIG_REGULATOR
-#define CONFIG_PMU_ACT8600
-
-/* Ethernet:  davicom DM9000 */
-#define CONFIG_DRIVER_DM9000		1
-#define CONFIG_DM9000_BASE		0xb6000000
-#define DM9000_IO			CONFIG_DM9000_BASE
-#define DM9000_DATA			(CONFIG_DM9000_BASE + 2)
-
-/*
  * Command line configuration.
  */
 #define CONFIG_CMD_BOOTD	/* bootd			*/
@@ -246,6 +158,7 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
+#define CONFIG_CMD_BURN		/*ingenic usb burner support*/
 
 #define CONFIG_DOS_PARTITION
 
@@ -261,7 +174,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_MAXARGS 16
-#define CONFIG_SYS_LONGHELP 
+#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_PROMPT "burner_jz4775# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
@@ -356,6 +269,18 @@
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
 
+#ifdef CONFIG_CMD_BURN
+#define CONFIG_BURNER
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_JZ_BURNER_GADGET
+#define	CONFIG_JZ_VERDOR_BURN_FUNCTION
+#define CONFIG_USB_JZ_DWC2_UDC
+#define CONFIG_USB_PRODUCT_ID  0x18d1
+#define CONFIG_USB_VENDOR_ID   0x4775
+#define CONFIG_BURNER_CPU_INFO "BOOT4775"
+#define CONFIG_USB_GADGET_VBUS_DRAW 500
+#endif	/* !CONFIG_CMD_BURN */
+
 /*
  *key
  */
@@ -369,7 +294,6 @@
 #define CONFIG_RECOVERY_KEY		CONFIG_GPIO_BOOT_MENU  /* MENSA_SW2 = GPG15 ok*/
 #define CONFIG_RECOVERY_ENLEVEL		0/* low level is valid*/
 
-#define CONFIG_BURNER
 #define CONFIG_SPL_GINFO_BASE		0xf4003800
 #define CONFIG_SPL_GINFO_SIZE		0x200
 

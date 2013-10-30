@@ -65,13 +65,10 @@
 	#define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
 	#define CONFIG_SYS_PWM_FULL		256
 	#define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
-
 	#define CONFIG_VIDEO_JZ4775
 	#define CONFIG_JZ_PWM
 	#define CONFIG_VIDEO_BYD_BM8766U
 #endif
-
-#define CONFIG_SYS_AUDIO_SPEED (768 * 1000000)
 
 #define CONFIG_SYS_UART_BASE UART3_BASE
 #define CONFIG_BAUDRATE 115200
