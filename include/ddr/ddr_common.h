@@ -9,7 +9,8 @@
 #include <ddr/ddrc.h>
 #include <ddr/ddrp_synopsis.h>
 #elif defined(CONFIG_JZ4780)
-/* TO DO */
+#include <ddr/ddrc.h>
+#include <ddr/ddrp_synopsis.h>
 #elif defined(CONFIG_JZ4785)
 /* TO DO */
 #endif

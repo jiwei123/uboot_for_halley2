@@ -1,5 +1,5 @@
  /*
- * JZ4775 LCDC DRIVER
+ * JZ4780 LCDC DRIVER
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
@@ -26,7 +26,7 @@
 #include <common.h>
 #include <lcd.h>
 #include <asm/arch/lcdc.h>
-#include "jz4775_lcd.h"
+#include "jz4780_lcd.h"
 #include <asm/arch/gpio.h>
 
 int lcd_line_length;
@@ -466,7 +466,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	/*
 	 * configure LCDC config register
 	 * use 8words descriptor, not use palette
-	 * ! JZ4780 JZ4775 NOT SUPPORT PALETTE FUNCTION, DO NOT SET LCDC_CFG_PALBP(BIT27), IT CAUGHT BPP16 COLOR ERROR.
+	 * ! JZ4780 JZ4780 NOT SUPPORT PALETTE FUNCTION, DO NOT SET LCDC_CFG_PALBP(BIT27), IT CAUGHT BPP16 COLOR ERROR.
 	 */
 	cfg = LCDC_CFG_NEWDES | LCDC_CFG_RECOVER;
 	cfg |= info->lcd_type;

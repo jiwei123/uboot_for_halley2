@@ -37,7 +37,7 @@ struct arch_global_data {
 	unsigned long tbl;
 	unsigned long lastinc;
 #endif
-#ifdef CONFIG_JZ4775
+#if defined(CONFIG_JZ4775) || defined(CONFIG_JZ4780)
 	struct global_info *gi;
 #endif
 };

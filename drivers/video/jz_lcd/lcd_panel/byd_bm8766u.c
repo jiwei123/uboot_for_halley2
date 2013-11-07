@@ -29,7 +29,7 @@
 #include <asm/arch/lcdc.h>
 #include <asm/arch/gpio.h>
 #include <regulator.h>
-#include "../jz4775_lcd.h"
+#include "../jz4780_lcd.h"
 #include "byd_bm8766u.h"
 
 struct byd_bm8766u_data byd_bm8766u_pdata;

@@ -1,5 +1,5 @@
 /*
- * Ingenic mensa lcd code
+ * Ingenic grus lcd code
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
@@ -37,7 +37,7 @@ struct jzfb_config_info jzfb1_init_data = {
 #ifdef CONFIG_VIDEO_BYD_BM8766U
 #include <asm/byd_bm8766u.h>
 struct byd_bm8766u_data byd_bm8766u_pdata= {
-        .gpio_lcd_disp = GPIO_PB(30),
+        .gpio_lcd_disp = GPIO_PD(11),
         .gpio_lcd_de   = 0,             //GPIO_PC(9),   /* chose sync mode */
         .gpio_lcd_vsync = 0,            //GPIO_PC(19),
         .gpio_lcd_hsync = 0,            //GPIO_PC(18),

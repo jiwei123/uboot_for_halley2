@@ -1,5 +1,5 @@
 /*
- * Startup Code for MIPS32 XBURST JZ4775 CPU-core
+ * Startup Code for MIPS32 XBURST JZ4780 CPU-core
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  *
@@ -44,11 +44,6 @@ _start:
 	 * first 192 bytes of the first page of the SPL image.
 	 */
 
-#if (CONFIG_SYS_NAND_BW8 == 1)
-	.space 64, 0x55
-#else
-	.space 64, 0xaa
-#endif
 #ifdef CONFIG_SYS_NAND_TOGGLE
 	.space 64, 0xaa
 #else
@@ -160,7 +155,7 @@ validate_cache:
 #if 1
 	la	$25, 0x80000000
         ori     $2, $25, 0              // start address
-        ori     $3, $2, 0x3fe0          // end address, total 16KB spl stack space
+        ori     $3, $2, 0x3fe0          // end address, total 32(or 16)KB spl stack space
 	la      $4, 0x1ffff000          // physical address and 4KB page mask
 cache_alloc_a_line_2:
         and     $5, $2, $4		// V bit of the physical tag

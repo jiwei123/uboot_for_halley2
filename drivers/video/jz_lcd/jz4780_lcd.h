@@ -1,5 +1,5 @@
 /*
- * JZ4775 common routines
+ * JZ4780 common routines
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
@@ -21,8 +21,8 @@
  */
 
 
-#ifndef __JZ4775_LCD_H__
-#define __JZ4775_LCD_H__
+#ifndef __JZ4780_LCD_H__
+#define __JZ4780_LCD_H__
 
 #include <linux/types.h>
 
@@ -393,4 +393,4 @@ int jzfb_get_controller_bpp(unsigned int);
 extern struct jzfb_config_info lcd_config_info;
 extern struct jzfb_config_info jzfb1_init_data;
 extern struct fb_videomode jzfb1_videomode;
-#endif /*__JZ4775_LCD_H__*/
+#endif /*__JZ4780_LCD_H__*/

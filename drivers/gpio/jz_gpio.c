@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Sonil <ztyan@ingenic.cn>
- * Based on: newxboot/modules/gpio/jz4775_gpio.c
+ * Based on: newxboot/modules/gpio/jz4775_gpio.c|jz4780_gpio.c
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -30,6 +30,66 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_BURNER
 #ifdef CONFIG_JZ4775
+static struct jz_gpio_func_def gpio_func[] = {
+#if defined(CONFIG_SYS_UART_BASE)
+#if (CONFIG_SYS_UART_BASE == UART3_BASE)
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 1<<31},
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 1<<30},
+#elif (CONFIG_SYS_UART_BASE == UART2_BASE)
+	{ .port = GPIO_PORT_D, .func = GPIO_FUNC_1, .pins = 0xf<<4},
+#elif (CONFIG_SYS_UART_BASE == UART1_BASE)
+	{ .port = GPIO_PORT_D, .func = GPIO_FUNC_0, .pins = 0xf<<26},
+#elif (CONFIG_SYS_UART_BASE == UART0_BASE)
+	{ .port = GPIO_PORT_F, .func = GPIO_FUNC_0, .pins = 0x0f},
+#endif
+
+#endif  /*CONFIG_SYS_UART_BASE*/
+
+#if defined(CONFIG_JZ_MMC_MSC0_PA_4BIT)
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00fc0000},
+#endif
+#if defined(CONFIG_JZ_MMC_MSC1_PE_4BIT)
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 0x03f00000},
+#endif
+#if defined(CONFIG_JZ_MMC_MSC2_PE_4BIT)
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_1, .pins = 0x03f00000},
+#endif
+
+#if defined(CONFIG_NAND_LOADER)
+#if (CFG_NAND_BW8 == 1)
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x000c00ff, },
+	{ .port = GPIO_PORT_B, .func = GPIO_FUNC_0, .pins = 0x00000003, },
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x00200000 << ((CONFIG_NAND_CS)-1), },
+	{ .port = GPIO_PORT_A, .func = GPIO_INPUT,  .pins = 0x00100000, },
+#else
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x000c00ff, },
+	{ .port = GPIO_PORT_F, .func = GPIO_FUNC_1, .pins = 0x0003fc00, },
+	{ .port = GPIO_PORT_B, .func = GPIO_FUNC_0, .pins = 0x00000003, },
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x00200000 << ((CONFIG_NAND_CS)-1), },
+	{ .port = GPIO_PORT_A, .func = GPIO_INPUT,  .pins = 0x00100000, },
+#endif
+#endif
+
+#ifndef CONFIG_DISABLE_LVDS_FUNCTION
+#else
+	{ .port = GPIO_PORT_C, .func = GPIO_FUNC_0, .pins = 0x0fffffff, },
+#endif
+
+#ifdef CONFIG_JZ_PWM_GPIO_E0
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 0, },
+#endif
+#ifdef CONFIG_JZ_PWM_GPIO_E1
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 1, },
+#endif
+#ifdef CONFIG_JZ_PWM_GPIO_E2
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 2, },
+#endif
+#ifdef CONFIG_JZ_PWM_GPIO_E3
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 3, },
+#endif
+};
+#endif /* CONFIG_JZ4775 */
+#ifdef CONFIG_JZ4780
 static struct jz_gpio_func_def gpio_func[] = {
 #if defined(CONFIG_SYS_UART_BASE)
 #if (CONFIG_SYS_UART_BASE == UART3_BASE)
@@ -85,8 +145,20 @@ static struct jz_gpio_func_def gpio_func[] = {
 #ifdef CONFIG_JZ_PWM_GPIO_E3
 	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 3, },
 #endif
+#ifdef CONFIG_JZ_PWM_GPIO_E4
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 4, },
+#endif
+#ifdef CONFIG_JZ_PWM_GPIO_E5
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 5, },
+#endif
+#ifdef CONFIG_JZ_PWM_GPIO_D10
+	{ .port = GPIO_PORT_D, .func = GPIO_FUNC_0, .pins = 1 << 10, },
+#endif
+#ifdef CONFIG_JZ_PWM_GPIO_D11
+	{ .port = GPIO_PORT_D, .func = GPIO_FUNC_0, .pins = 1 << 11, },
+#endif
 };
-#endif /* CONFIG_JZ4775 */
+#endif /* CONFIG_JZ4780 */
 #endif /* CONFIG_BURNER */
 
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)

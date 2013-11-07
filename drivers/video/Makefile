@@ -57,7 +57,8 @@ COBJS-$(CONFIG_VIDEO_SMI_LYNXEM) += smiLynxEM.o videomodes.o
 COBJS-$(CONFIG_VIDEO_TEGRA) += tegra.o
 COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 COBJS-$(CONFIG_VIDEO_BYD_BM8766U) += jz_lcd/lcd_panel/byd_bm8766u.o
-COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4775_lcd.o
+COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4780_lcd.o
+COBJS-$(CONFIG_VIDEO_JZ4780) += jz_lcd/backlight_pwm.o jz_lcd/jz4780_lcd.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
