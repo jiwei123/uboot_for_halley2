@@ -47,9 +47,9 @@
 #define CPM_I2S1CDR		(0xa0) /* I2S1 device clock divider register	*/
 #define CPM_LPCDR1		(0x64) /* LCD1 pix clock divider register	*/
 #define CPM_LPCDR		(0x54) /* LCD pix clock divider register	*/
-#define CPM_MSCCDR		(0x68) /* MSC clock divider register		*/
-#define CPM_MSCCDR1		(0xa4) /* MSC1 clock divider register		*/
-#define CPM_MSCCDR2		(0xa8) /* MSC2 clock divider register		*/
+#define CPM_MSC0CDR		(0x68) /* MSC clock divider register		*/
+#define CPM_MSC1CDR		(0xa4) /* MSC1 clock divider register		*/
+#define CPM_MSC2CDR		(0xa8) /* MSC2 clock divider register		*/
 #define CPM_UHCCDR		(0x6C) /* UHC 48M clock divider register	*/
 #define CPM_SSICDR		(0x74) /* SSI clock divider register		*/
 #define CPM_CIMCDR		(0x7c) /* CIM MCLK clock divider register	*/

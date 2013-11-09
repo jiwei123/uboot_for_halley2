@@ -73,7 +73,7 @@ typedef union cpm_cpxpcr {
 #define CGU_MSC_FREQ 24000000
 #define CGU_MSC_DIV (CONFIG_SYS_CPU_FREQ / CGU_MSC_FREQ / 2 - 1)
 #define CGU_BCH_DIV 0
-#define CGU_LCD_DIV (CONFIG_SYS_CPU_FREQ / CONFIG_SYS_PCLK_FREQ - 1)
+#define CGU_LCD_DIV (CONFIG_SYS_VPLL_FREQ / CONFIG_SYS_PCLK_FREQ - 1)
 
 unsigned int clk_get_rate(int clk);
 void clk_set_rate(int clk, unsigned long rate);

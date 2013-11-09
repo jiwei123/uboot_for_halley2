@@ -19,6 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+
 #include <stdarg.h>
 #include <linux/types.h>
 #include <linux/string.h>
@@ -107,8 +108,7 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 	}
 
 	memcpy(&bootimginfo, bulk_data_buf, 2048);
-	if (memcmp(bootimginfo.magic, BOOT_MAGIC, BOOT_MAGIC_SIZE))
-		return 1;
+
 	for (i = 0; i < dsize; i++) {
 		bulk_data_buf[i] = bulk_data_buf[2048 + i];
 	}
@@ -186,6 +186,10 @@ void mem_boot (unsigned int mem_address)
         }
 
 	bootimginfo = (struct boot_img_hdr *)mem_address;
+
+	if (memcmp(bootimginfo->magic, BOOT_MAGIC, BOOT_MAGIC_SIZE))
+		return -1;
+
 	page_size = bootimginfo->page_size;
 	page_mask = page_size - 1;
 
@@ -194,8 +198,6 @@ void mem_boot (unsigned int mem_address)
 	size = kernel_actual + ramdisk_actual + page_size;
 	printf("Prepare kernel parameters ...\n");
 	jump_kernel(mem_address,size);
-	printf("MEM boot error...\n");
-	hang();
 }
 
 /* load .img file form mmc,analyze the header of boot.img and then jump to the kernel*/
@@ -221,6 +223,10 @@ void msc_boot(unsigned int mmc_select,unsigned int mem_address,unsigned int sect
 	}
 
 	bootimginfo = (struct boot_img_hdr *)mem_address;
+
+	if (memcmp(bootimginfo->magic, BOOT_MAGIC, BOOT_MAGIC_SIZE))
+		return;
+
 	page_size = bootimginfo->page_size;
 	page_mask = page_size - 1;
 
@@ -239,8 +245,6 @@ void msc_boot(unsigned int mmc_select,unsigned int mem_address,unsigned int sect
 
 	printf("Prepare kernel parameters ...\n");
 	jump_kernel(mem_address,size);
-	printf("MSC boot error...\n");
-	hang();
 }
 #else/* CONFIG_SPL_MMC_SUPPORT */
 /* load .img flie form nand,analyze the header of boot.img and then jump to the kernel*/
@@ -260,34 +264,32 @@ static int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	if (!strcmp("mem",argv[0])) {
 		mem_address=simple_strtoul(argv[1], NULL, 16);
-		printf("Mem start... ...\n");
+		printf("mem boot start\n");
 		mem_boot(mem_address);
-		printf("We can't come here and mem_boot() function error!");
-
+		printf("mem boot error\n");
 	} else if (!strcmp("mmc",argv[0])) {
 		mmc_select=simple_strtoul(argv[1], NULL, 10);
 		mem_address=simple_strtoul(argv[2], NULL, 16);
 		sectors=simple_strtoul(argv[3], NULL, 10);
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
-		printf("MMC start... ...\n");
+		printf("MSC boot start\n");
 		mmc_ready(mmc_select);
 		msc_boot(mmc_select,mem_address,sectors);
-		printf("We can't come here and msc_boot() function error!");
-
+		printf("MSC boot error\n");
 		return 0;
 #else /*!CONFIG_SPL_MMC_SUPPORT */
 	} else if (!strcmp("nand",argv[0])) {
 		mem_address=simple_strtoul(argv[1], NULL, 16);
 		sectors=simple_strtoul(argv[2], NULL, 10);
-		printf("Nand start... ...\n");
+		printf("Nand boot start\n");
 		nand_ready();
 		nand_boot(mem_address,sectors);
-		printf("We can't come here and nand_boot() function error!");
-
+		printf("Nand boot error\n");
 		return 0;
 #endif/*!CONFIG_SPL_MMC_SUPPORT*/
 	} else {
+		printf("%s boot unsupport\n", argv[0]);
                 return CMD_RET_USAGE;
 	}
 	return 0;

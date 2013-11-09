@@ -1029,7 +1029,7 @@ static int mmc_startup(struct mmc *mmc)
 
 	/* Restrict card's capabilities by what the host can do */
 	mmc->card_caps &= mmc->host_caps;
-#ifndef CONFIG_SPL_BUILD
+
 	if (IS_SD(mmc)) {
 		if (mmc->card_caps & MMC_MODE_4BIT) {
 			cmd.cmdidx = MMC_CMD_APP_CMD;
@@ -1055,6 +1055,7 @@ static int mmc_startup(struct mmc *mmc)
 		else
 			mmc->tran_speed = 25000000;
 	} else {
+#ifndef CONFIG_SPL_BUILD
 		int idx;
 
 		/* An array of possible bus widths in order of preference */
@@ -1117,13 +1118,14 @@ static int mmc_startup(struct mmc *mmc)
 			else
 				mmc->tran_speed = 26000000;
 		}
-	}
 #else
-	mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-		   EXT_CSD_BUS_WIDTH, EXT_CSD_BUS_WIDTH_4);
-	mmc_set_bus_width(mmc, 4);
-	mmc->tran_speed = 24000000;
+		mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+			   EXT_CSD_BUS_WIDTH, EXT_CSD_BUS_WIDTH_4);
+		mmc_set_bus_width(mmc, 4);
+		mmc->tran_speed = 24000000;
 #endif
+	}
+
 	mmc_set_clock(mmc, mmc->tran_speed);
 
 	/* fill in device description */

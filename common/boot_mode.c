@@ -1,5 +1,5 @@
 /*
- * Ingenic grus boot mode select
+ * Ingenic mensa boot mode select
  *
  * Copyright (c) 2013 Imagination Technologies
  * Author: Martin <czhu@ingenic.cn>
@@ -44,7 +44,7 @@ enum {
  *Get the status of gpio.
  *Ret: 0 or 1
  */
-static int get_key_status(unsigned pin)
+static int get_key_level(unsigned pin)
 {
 #define GPIO_DEBOUNCE  20
 	int cnt = GPIO_DEBOUNCE,v = 0, t = 0;
@@ -57,40 +57,16 @@ static int get_key_status(unsigned pin)
 		}
 		v = t;
 	}
+
 	return v;
 }
 
-/*
- * Get USB boot keys states.
- */
-#if defined(CONFIG_FAST_BOOT_SUPPORT)
-static int is_fast_boot_keys_pressed(void)
+static int get_key_status(unsigned int pin, int en_level)
 {
-	gpio_direction_input(CONFIG_RECOVERY_KEY);
-	gpio_direction_input(CONFIG_GPIO_USB_DETECT);
-	gpio_disable_pull(CONFIG_RECOVERY_KEY);
-	gpio_disable_pull(CONFIG_GPIO_USB_DETECT);
+	gpio_direction_input(pin);
+	gpio_disable_pull(pin);
 
-	if ((CONFIG_RECOVERY_ENLEVEL == get_key_status(CONFIG_RECOVERY_KEY))
-	    && (CONFIG_USB_DETECT_ENLEVEL == get_key_status(CONFIG_GPIO_USB_DETECT)))
-		return KEY_PRESS;
-	else
-		return KEY_UNPRESS;
-}
-#endif
-
-/*
- *Get the status of recovery boot key.
- */
-static int is_recovery_keys_pressed(void)
-{
-	gpio_direction_input(CONFIG_RECOVERY_KEY);
-	gpio_disable_pull(CONFIG_RECOVERY_KEY);
-
-	if (CONFIG_RECOVERY_ENLEVEL == get_key_status(CONFIG_RECOVERY_KEY))
-		return KEY_PRESS;
-	else
-		return KEY_UNPRESS;
+	return en_level == get_key_level(pin) ? KEY_PRESS : KEY_UNPRESS;
 }
 
 /*
@@ -113,28 +89,18 @@ static int get_recovery_signature(void)
 }
 
 /*
- *Get the status of usb.
- */
-static int is_usb_detected(void)
-{
-	gpio_direction_input(CONFIG_GPIO_USB_DETECT);
-	gpio_disable_pull(CONFIG_GPIO_USB_DETECT);
-
-	if (CONFIG_USB_DETECT_ENLEVEL == get_key_status(CONFIG_GPIO_USB_DETECT))
-		return KEY_PRESS;
-	else
-		return KEY_UNPRESS;
-}
-
-/*
  * Get boot keys.
  * ret: 0: USB boot  1: normal boot  2: recovery boot
  */
-static int get_boot_keys(void)
+static int get_boot_sel(void)
 {
 	/* Fast boot keys */
-#if defined(CONFIG_FAST_BOOT_SUPPORT)
-	if (is_fast_boot_keys_pressed()){
+#if defined(CONFIG_CMD_FASTBOOT)
+	if (get_key_status(CONFIG_FASTBOOT_KEY, CONFIG_FASTBOOT_ENLEVEL)
+#ifdef CONFIG_GPIO_USB_DETECT
+	    && get_key_status(CONFIG_GPIO_USB_DETECT, CONFIG_USB_DETECT_ENLEVEL)
+#endif
+	) {
 		return FASTBOOT_RECOVERY_BOOT;
 	}
 #endif
@@ -144,7 +110,7 @@ static int get_boot_keys(void)
 	}
 
 	/* Recovery boot keys */
-	if (is_recovery_keys_pressed()) {
+	if (get_key_status(CONFIG_RECOVERY_KEY, CONFIG_RECOVERY_ENLEVEL)) {
 		return RECOVERY_BOOT;
 	}
 	return NORMAL_BOOT;
@@ -153,27 +119,15 @@ static int get_boot_keys(void)
 /* Select boot mode */
 void boot_mode_select(void)
 {
-	int boot_select, rc, count = 0, flag = 0;
-#ifdef CONFIG_MSC_BURN
-	printf("Mod:   Normal boot mode.\n");
-	setenv("bootcmd", CONFIG_NORMAL_BOOT);
-	return;
-#endif
+	int boot_select, rc;
+
 	/* First, handle boot keys. */
-	boot_select = get_boot_keys();
+	boot_select = get_boot_sel();
 	switch (boot_select) {
-#if defined(CONFIG_FAST_BOOT_SUPPORT)
+#if defined(CONFIG_CMD_FASTBOOT)
 	case FASTBOOT_RECOVERY_BOOT:
-		while (!is_usb_detected()) {
-		mdelay(500);
-			if (count++ == 10) {
-				printf("Mod:   Recovery boot mode.\n");
-				setenv("bootcmd", CONFIG_RECOVERY_BOOT);
-				return;
-			}
-		}
 		printf("Mod:   Fast boot mode.\n");
-		rc = run_command("fastboot", flag);
+		rc = run_command("fastboot", 0);
 		if (rc < 0) {
 			printf("fastboot:command run error!");
 		}
@@ -183,6 +137,7 @@ void boot_mode_select(void)
 		printf("Mod:   Recovery boot mode.\n");
 		setenv("bootcmd", CONFIG_RECOVERY_BOOT);
 		return;
+	case NORMAL_BOOT:
 	default:
 		printf("Mod:   Normal boot mode.\n");
 		setenv("bootcmd", CONFIG_NORMAL_BOOT);

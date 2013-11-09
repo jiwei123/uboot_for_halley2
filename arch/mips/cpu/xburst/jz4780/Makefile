@@ -30,8 +30,7 @@ SOBJS-y	=
 COBJS-y	= $(SOC).o
 COBJS-y += pll.o
 COBJS-y += clk.o
-COBJS-y += ddr.o
-COBJS-y += timer.o
+COBJS-y += ../ddr_dwc.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))

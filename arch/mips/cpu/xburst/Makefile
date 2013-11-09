@@ -26,7 +26,7 @@ LIB	= $(obj)lib$(CPU).o
 
 START	= start.o
 SOBJS-y	=
-COBJS-y	= cpu.o jz_serial.o
+COBJS-y	= cpu.o jz_serial.o timer.o
 
 ifdef	CONFIG_SPL_BUILD
 ifdef	CONFIG_SPL_NO_CPU_SUPPORT_CODE

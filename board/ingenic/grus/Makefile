@@ -27,9 +27,6 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 COBJS	:= $(BOARD).o
-ifdef CONFIG_BOOT_ANDROID
-COBJS	+= boot_key.o
-endif
 ifdef CONFIG_VIDEO_JZ4780
 COBJS      += lcd.o
 endif

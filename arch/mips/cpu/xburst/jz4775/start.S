@@ -113,41 +113,38 @@ _start:
 	lw      t1, 0(ra)
 	move	gp, t1
 
-#if 1
 init_caches:
-	la	$25, 0x80000000
-        li      $2, 3                   // cacheable for kseg0 access
-        mtc0    $2, $16                 // CP0_CONFIG
-        nop
+	li	t0, CONF_CM_CACHABLE_NONCOHERENT
+	mtc0	t0, CP0_CONFIG
+	nop
 
-        li      $2, 0x20000000          // enable idx-store-data cache insn
-        mtc0    $2, $26                 // CP0_ERRCTL
+	/* enable idx-store-data cache insn */
+	li      t0, 0x20000000
+	mtc0    t0, CP0_ECC
 
-        ori     $2, $25, 0              // start address
-        ori     $3, $2, 0x7fe0          // end address, total 32KB
-        mtc0    $0, $28, 0              // CP0_TAGLO
-        mtc0    $0, $28, 1              // CP0_DATALO
-#endif
+	li	t1, KSEG0		/* Start address */
+#define CACHE_ALLOC_END (CONFIG_SYS_DCACHE_SIZE - CONFIG_SYS_CACHELINE_SIZE)
+
+	ori     t2, t1, CACHE_ALLOC_END	/* End address */
+	mtc0	zero, CP0_TAGLO, 0
+	mtc0	zero, CP0_TAGLO, 1
 cache_clear_a_line:
-        cache   0x8, 0($2)              // Index_Store_Tag_I
-        cache   0x9, 0($2)              // Index_Store_Tag_D
-        bne     $2, $3, cache_clear_a_line
-        addiu   $2, $2, 32              // increment CACHE_LINE_SIZE
+	cache   INDEX_STORE_TAG_I, 0(t1)
+	cache   INDEX_STORE_TAG_D, 0(t1)
+	bne     t1, t2, cache_clear_a_line
+	addiu   t1, t1, CONFIG_SYS_CACHELINE_SIZE
 
-#if 1
-        ori     $2, $25, 0              // start address
-        ori     $3, $2, 0x3fe0          // end address, total 16KB spl stack space
-        la      $4, 0x1ffff000          // physical address and 4KB page mask
+	li	t1, KSEG0		/* Start address */
+	ori     t2, t1, CACHE_ALLOC_END	/* End address */
+	la      t3, 0x1ffff000		/* Physical address and 4KB page mask */
 cache_alloc_a_line:
-        and     $5, $2, $4
-        ori     $5, $5, 1               // V bit of the physical tag
-        mtc0    $5, $28, 0              // CP0_TAGLO
-        cache   0x8, 0($2)              // Index_Store_Tag_I
-        cache   0x9, 0($2)              // Index_Store_Tag_D
-        bne     $2, $3, cache_alloc_a_line
-        addiu   $2, $2, 32              // increment CACHE_LINE_SIZE
-#endif
-
+	and     t4, t1, t3
+	ori     t4, t4, 1		/* V bit of the physical tag */
+	mtc0    t4, CP0_TAGLO, 0
+	cache   INDEX_STORE_TAG_I, 0(t1)
+	cache   INDEX_STORE_TAG_D, 0(t1)
+	bne     t1, t2, cache_alloc_a_line
+	addiu   t1, t1, CONFIG_SYS_CACHELINE_SIZE
 
 	/* Set up stack */
 	li	sp, CONFIG_SPL_STACK
@@ -157,18 +154,15 @@ cache_alloc_a_line:
 	.globl	validate_cache
 	.type	validate_cache, @function
 validate_cache:
-#if 1
-	la	$25, 0x80000000
-        ori     $2, $25, 0              // start address
-        ori     $3, $2, 0x3fe0          // end address, total 16KB spl stack space
-	la      $4, 0x1ffff000          // physical address and 4KB page mask
-cache_alloc_a_line_2:
-        and     $5, $2, $4		// V bit of the physical tag
-        mtc0    $5, $28, 0              // CP0_TAGLO
-        cache   0x8, 0($2)              // Index_Store_Tag_I
-        cache   0x9, 0($2)              // Index_Store_Tag_D
-        bne     $2, $3, cache_alloc_a_line_2
-        addiu   $2, $2, 32              // increment CACHE_LINE_SIZE
-	jr	$31
+	li	t1, KSEG0		/* Start address */
+	ori     t2, t1, CACHE_ALLOC_END	/* End address */
+	la      t3, 0x1ffff000		/* Physical address and 4KB page mask */
+cache_alloc_a_line2:
+	and     t4, t1, t3
+	mtc0    t4, CP0_TAGLO, 0
+	cache   INDEX_STORE_TAG_I, 0(t1)
+	cache   INDEX_STORE_TAG_D, 0(t1)
+	bne     t1, t2, cache_alloc_a_line2
+	addiu   t1, t1, CONFIG_SYS_CACHELINE_SIZE
+	jr	ra
 	nop
-#endif

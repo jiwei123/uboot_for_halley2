@@ -1,5 +1,6 @@
 /*
- * Jz4775 Host calculate and compile routine
+ * DDR driver for Synopsys DWC DDR PHY.
+ * Used by Jz4775, JZ4780...
  *
  * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>

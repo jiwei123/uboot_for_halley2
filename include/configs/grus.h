@@ -25,27 +25,41 @@
 #ifndef __CONFIG_GRUS_H__
 #define __CONFIG_GRUS_H__
 
+/**
+ * Basic configuration(SOC, Cache, UART, DDR).
+ */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_JZ4780		/* Jz4780 SoC */
 
-#define CONFIG_SYS_APLL_FREQ		(1200 * 1000000)
-#define CONFIG_SYS_MPLL_FREQ		(1200 * 1000000)
+#define CONFIG_SYS_APLL_FREQ		-1
+#define CONFIG_SYS_MPLL_FREQ		1200000000
+#define CONFIG_SYS_EPLL_FREQ		204000000
+#define CONFIG_SYS_VPLL_FREQ		888000000
 
-#define CONFIG_SYS_EXTAL		(48 * 1000000)	/* EXTAL freq: 48 MHz */
+#define CONFIG_SYS_EXTAL		48000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000 /* incrementer freq */
-/* this should be set together */
-#define CONFIG_SYS_CPU_SPEED		CONFIG_SYS_MPLL_FREQ
-#define CONFIG_SYS_MIPS_TIMER_FREQ	CONFIG_SYS_CPU_SPEED
 
-#define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_CPU_SPEED	/* CPU clock: 1.2 GHz */
+#define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_MPLL_FREQ
 #define CONFIG_SYS_MEM_DIV		3
-#define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_CPU_FREQ / CONFIG_SYS_MEM_DIV)
+#define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_MPLL_FREQ / CONFIG_SYS_MEM_DIV)
+
+#define CONFIG_SYS_DCACHE_SIZE		32768
+#define CONFIG_SYS_ICACHE_SIZE		32768
+#define CONFIG_SYS_CACHELINE_SIZE	32
+
+#define CONFIG_SYS_UART_BASE UART3_BASE
+#define CONFIG_BAUDRATE 115200
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_TYPE_DDR3
-#define CONFIG_DDR3_H5TQ1G83DFR_H9C
+#define CONFIG_DDR3_H5TQ2G83CFR_H9C
+#define CONFIG_DDR_CHIP_ODT
+#define CONFIG_DDR_PHY_ODT
+#define CONFIG_DDR_PHY_DQ_ODT
+#define CONFIG_DDR_PHY_DQS_ODT
+
 /* #define CONFIG_DDR_DLL_OFF */
 /*
  * #define CONFIG_DDR_CHIP_ODT
@@ -56,10 +70,52 @@
  * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
  */
 
-#define CONFIG_LCD
+/**
+ * Boot arguments definitions.
+ */
+#define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=768@0x30000000"
+
+#ifdef CONFIG_BOOT_ANDROID
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
+#else
+  #ifdef CONFIG_SPL_MMC_SUPPORT
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
+  #else
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
+  #endif
+#endif
+
+/**
+ * Boot command definitions.
+ */
+#define CONFIG_BOOTDELAY 1
+#ifdef CONFIG_BOOT_ANDROID
+  #ifdef CONFIG_SPL_MMC_SUPPORT
+    #define CONFIG_BOOTCOMMAND "boota mmc 0 0x80f00000 6144"
+    #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
+    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
+  #else
+    #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
+    #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
+    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
+  #endif
+#else  /* CONFIG_BOOT_ANDROID */
+  #ifdef CONFIG_SPL_MMC_SUPPORT
+    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
+  #else
+    #define CONFIG_BOOTCOMMAND						\
+	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
+	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
+  #endif
+#endif /* CONFIG_BOOT_ANDROID */
+
+/**
+ * Drivers configuration.
+ */
+/* #define CONFIG_LCD */
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
-#define GPIO_LCD_PWM	 	        (32*4+1) /* GPE14 PWM4 */
+#define GPIO_LCD_PWM	 	        GPIO_PE(1)
 #define CONFIG_LCD_LOGO
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000
@@ -70,96 +126,9 @@
 #define CONFIG_VIDEO_JZ4780
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U
-#endif
+#endif /* CONFIG_LCD */
 
-#define CONFIG_SYS_UART_BASE UART3_BASE
-#define CONFIG_BAUDRATE 115200
-
-#define CONFIG_SKIP_LOWLEVEL_INIT
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_SYS_NO_FLASH
-#define CONFIG_SYS_FLASH_BASE	0 /* init flash_base as 0 */
-#define CONFIG_ENV_OVERWRITE
-#define CONFIG_MISC_INIT_R 1
-
-#define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAUL)
-
-#define CONFIG_BOOTDELAY 1
-#define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
-
-#ifdef CONFIG_MBR_CREATOR
-#define CONFIG_MBR_P0_OFF	64mb
-#define CONFIG_MBR_P0_END	556mb
-#define CONFIG_MBR_P0_TYPE 	linux
-
-#define CONFIG_MBR_P1_OFF	580mb
-#define CONFIG_MBR_P1_END 	1604mb
-#define CONFIG_MBR_P1_TYPE 	linux
-
-#define CONFIG_MBR_P2_OFF	28mb
-#define CONFIG_MBR_P2_END	58mb
-#define CONFIG_MBR_P2_TYPE 	linux
-
-#define CONFIG_MBR_P3_OFF	1609mb
-#define CONFIG_MBR_P3_END	7800mb
-#define CONFIG_MBR_P3_TYPE 	fat
-#endif
-
-/*
- * CONFIG_BOOT_ANDROID:uboot boot android system
- * CONFIG_FAST_BOOT_SUPPORT:android system support fast boot mode.
- * boot linux system need not the next two macro
- */
-
-#define CONFIG_BOOT_ANDROID
-#define CONFIG_FAST_BOOT_SUPPORT
-
-#ifdef CONFIG_SPL_MMC_SUPPORT
-
-/* SD/MMC card defaults */
-
-#define CONFIG_BOOTARGS \
-    BOOTARGS_COMMON " root=/dev/mmcblk0p1"
-
-#ifdef CONFIG_BOOT_ANDROID
-
-/* boot android android system */
-#define CONFIG_BOOTCOMMAND \
-    "boota mmc 0 0x80f00000 6144"
-#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-#define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
-
-#else/*!CONFIG_BOOT_ANDROID */
-#define CONFIG_BOOTCOMMAND \
-    "fatload mmc 1:1 0x88000000 vmlinux.ub; bootm 0x88000000"
-#endif/* !CONFIG_BOOT_ANDROID*/
-
-#else /* !CONFIG_SPL_MMC_SUPPORT */
-
-/* NAND defaults */
-
-#define CONFIG_BOOTARGS \
-    BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
-
-#ifdef CONFIG_BOOT_ANDROID
-
-/* boot android android system */
-#define CONFIG_BOOTCOMMAND \
-    "boota nand 0 0x80f00000 6144"
-#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-#define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
-
-#else/*!CONFIG_BOOT_ANDROID */
-#define CONFIG_BOOTCOMMAND \
-    "mtdparts default; ubi part system; ubifsmount ubi:boot; " \
-    "ubifsload 0x88000000 vmlinux.ub; bootm 0x88000000"
-#endif/* CONFIG_BOOT_ANDROID */
-
-#endif /* !CONFIG_SPL_MMC_SUPPORT */
-
-#define CONFIG_JZ_GPIO
-
-/* NAND */
+/* NAND(mtd) */
 #define CONFIG_NAND			1
 #define CONFIG_NAND_JZ4780		1
 #define CONFIG_SYS_NAND_BASE		0xbb000000	/* nand chip base */
@@ -203,31 +172,26 @@
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:4m(uboot-spl),1m(uboot),1m(uboot-env),2m(skip),-(system)"
 
-/*
- * MMC
- */
-
+/* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
 #define CONFIG_JZ_MMC 1
 #define CONFIG_JZ_MMC_MSC0 1
 #define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
 #define CONFIG_JZ_MMC_MSC1 1
-#define CONFIG_JZ_MMC_MSC1_PE_4BIT 1
+#define CONFIG_JZ_MMC_MSC1_PE 1
+#ifndef CONFIG_JZ_MMC_SPLMSC
 #define CONFIG_JZ_MMC_SPLMSC 0
+#endif
 
-/*
- * I2C
- */
+/* I2C */
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
 
-/*
- * PMU
- */
+/* PMU */
 #define CONFIG_REGULATOR
 #define CONFIG_PMU_ACT8600
 
@@ -237,8 +201,11 @@
 #define DM9000_IO			CONFIG_DM9000_BASE
 #define DM9000_DATA			(CONFIG_DM9000_BASE + 2)
 
-/*
- * Command line configuration.
+/* GPIO */
+#define CONFIG_JZ_GPIO
+
+/**
+ * Command configuration.
  */
 #define CONFIG_CMD_BOOTD	/* bootd			*/
 #define CONFIG_CMD_CONSOLE	/* coninfo			*/
@@ -250,9 +217,9 @@
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
-#define CONFIG_CMD_MMC 	    /* MMC/SD support			*/
+#define CONFIG_CMD_MMC		/* MMC/SD support			*/
 #define CONFIG_CMD_MTDPARTS
-#define CONFIG_CMD_NET 	    /* networking support			*/
+#define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
@@ -261,23 +228,33 @@
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
+#define CONFIG_CMD_FASTBOOT
 
+/**
+ * Serial download configuration
+ */
+#define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
+
+/**
+ * Miscellaneous configurable options
+ */
 #define CONFIG_DOS_PARTITION
 
 #define CONFIG_LZO
 #define CONFIG_RBTREE
 
-/*
- * Serial download configuration
- */
-#define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
+#define CONFIG_SKIP_LOWLEVEL_INIT
+#define CONFIG_BOARD_EARLY_INIT_F
+#define CONFIG_SYS_NO_FLASH
+#define CONFIG_SYS_FLASH_BASE	0 /* init flash_base as 0 */
+#define CONFIG_ENV_OVERWRITE
+#define CONFIG_MISC_INIT_R 1
 
-/*
- * Miscellaneous configurable options
- */
+#define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAUL)
+
 #define CONFIG_SYS_MAXARGS 16
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT "grus# "
+#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
@@ -295,41 +272,27 @@
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 
-/*
+/**
  * Environment
  */
 #ifdef CONFIG_ENV_IS_IN_MMC
-
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		((16 + 512) << 10)
-
 #else
-
 #define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_NAND_BLOCK_SIZE * 5)
-
 #endif
 
-/*
- * SDRAM Info.
+/**
+ * SPL configuration
  */
-#define CONFIG_NR_DRAM_BANKS	1
-
-/*
- * Cache Configuration
- */
-#define CONFIG_SYS_DCACHE_SIZE		16384
-#define CONFIG_SYS_ICACHE_SIZE		16384
-#define CONFIG_SYS_CACHELINE_SIZE	32
-
-/* SPL */
 #define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_STACK		0x80003000 /* only max. 2KB spare! */
+#define CONFIG_SPL_STACK		0x80003000 /* 12K stack_size */
 #define CONFIG_SPL_BSS_START_ADDR	0x80003000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x1000
+#define CONFIG_SPL_BSS_MAX_SIZE		0x1000 /* stack_size + bss_size <= CONFIG_SYS_DCACHE_SIZE */
 
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
@@ -374,17 +337,40 @@
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
 
-/*
- *key
+/**
+ * MBR configuration
  */
+#ifdef CONFIG_MBR_CREATOR
+#define CONFIG_MBR_P0_OFF	64mb
+#define CONFIG_MBR_P0_END	556mb
+#define CONFIG_MBR_P0_TYPE 	linux
 
-#define CONFIG_GPIO_BOOT_MENU		GPIO_PF(10)/* GPF10 is key main */
-#define CONFIG_MENU_ENLEVEL		0/* low level is valid*/
+#define CONFIG_MBR_P1_OFF	580mb
+#define CONFIG_MBR_P1_END 	1604mb
+#define CONFIG_MBR_P1_TYPE 	linux
 
-#define CONFIG_GPIO_USB_DETECT		GPIO_PF(12)/* GPF12 ok*/
-#define CONFIG_USB_DETECT_ENLEVEL	1/* high level is valid*/
+#define CONFIG_MBR_P2_OFF	28mb
+#define CONFIG_MBR_P2_END	58mb
+#define CONFIG_MBR_P2_TYPE 	linux
+
+#define CONFIG_MBR_P3_OFF	1609mb
+#define CONFIG_MBR_P3_END	7800mb
+#define CONFIG_MBR_P3_TYPE 	fat
+#endif
+
+/**
+ * Keys.
+ */
+#define CONFIG_GPIO_BOOT_MENU		GPIO_PF(10)
+#define CONFIG_MENU_ENLEVEL		0
+
+#define CONFIG_GPIO_USB_DETECT		GPIO_PF(12)
+#define CONFIG_USB_DETECT_ENLEVEL	1
 
 #define CONFIG_RECOVERY_KEY		CONFIG_GPIO_BOOT_MENU
-#define CONFIG_RECOVERY_ENLEVEL		0/* low level is valid*/
+#define CONFIG_RECOVERY_ENLEVEL		0
+
+#define CONFIG_FASTBOOT_KEY		CONFIG_GPIO_BOOT_MENU
+#define CONFIG_FASTBOOT_ENLEVEL		0
 
 #endif /* __CONFIG_GRUS_H__ */

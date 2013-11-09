@@ -97,7 +97,7 @@ static unsigned int get_cclk_rate(void)
 static unsigned int get_msc_rate(unsigned int xcdr)
 {
 #ifndef CONFIG_SPL_BUILD
-	unsigned int msc0cdr  = cpm_inl(CPM_MSCCDR);
+	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
 	unsigned int mscxcdr  = cpm_inl(xcdr);
 	unsigned int ret = 1;
 
@@ -128,11 +128,11 @@ unsigned int clk_get_rate(int clk)
 		return get_cclk_rate();
 #endif
 	case MSC0:
-		return get_msc_rate(CPM_MSCCDR);
+		return get_msc_rate(CPM_MSC0CDR);
 	case MSC1:
-		return get_msc_rate(CPM_MSCCDR1);
+		return get_msc_rate(CPM_MSC1CDR);
 	case MSC2:
-		return get_msc_rate(CPM_MSCCDR2);
+		return get_msc_rate(CPM_MSC2CDR);
 	}
 
 	return 0;
@@ -141,20 +141,20 @@ unsigned int clk_get_rate(int clk)
 static unsigned int set_msc_rate(int clk, unsigned long rate)
 {
 #ifndef CONFIG_SPL_BUILD
-	unsigned int msc0cdr  = cpm_inl(CPM_MSCCDR);
+	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
 	unsigned int xcdr_addr = 0;
 	unsigned int pll_rate = 0;
 	unsigned int cdr = 0;
 
 	switch (clk) {
 	case MSC0:
-		xcdr_addr = CPM_MSCCDR;
+		xcdr_addr = CPM_MSC0CDR;
 		break;
 	case MSC1:
-		xcdr_addr = CPM_MSCCDR1;
+		xcdr_addr = CPM_MSC1CDR;
 		break;
 	case MSC2:
-		xcdr_addr = CPM_MSCCDR2;
+		xcdr_addr = CPM_MSC2CDR;
 		break;
 	default:
 		break;
@@ -206,17 +206,29 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	 */
 	[0] = {CPM_DDRCDR, 2, 30, 29, 28, 0},
 #ifdef CONFIG_JZ_MMC_MSC0
-	{CPM_MSCCDR, 2, 30, 29, 28, CGU_MSC_DIV},
+	{CPM_MSC0CDR, 2, 30, 29, 28, CGU_MSC_DIV},
 #endif
 #ifdef CONFIG_JZ_MMC_MSC1
-	{CPM_MSCCDR1, 2, 30, 29, 28, CGU_MSC_DIV},
+	{CPM_MSC1CDR, 2, 30, 29, 28, CGU_MSC_DIV},
 #endif
 #ifdef CONFIG_NAND
-	{CPM_BCHCDR, 2, 29, 28, CGU_BCH_DIV},
+	{CPM_BCHCDR, 2, 30, 29, 28, CGU_BCH_DIV}, /* This must be wrong! */
 #endif
 #ifdef CONFIG_VIDEO_JZ4780
-	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
+	{CPM_LPCDR, 2, 30, 28, 27, CGU_LCD_DIV},
+	{CPM_LPCDR1, 2, 30, 28, 27, CGU_LCD_DIV},
+#else /* Fix it when LCD driver on JZ4780 is ok. */
+	{CPM_LPCDR, 2, 30, 0, 0, 0},
+	{CPM_LPCDR1, 2, 30, 0, 0, 0},
 #endif
+	{CPM_GPUCDR, 2, 30, 0, 0, 0},
+	{CPM_HDMICDR, 2, 30, 0, 0, 0},
+	{CPM_I2SCDR, 3, 30, 0, 0, 0},
+	{CPM_VPUCDR, 1, 30, 0, 0, 0},
+	{CPM_UHCCDR, 3, 30, 0, 0, 0},
+	{CPM_CIMCDR, 1, 31, 0, 0, 0},
+	{CPM_PCMCDR, 5, 29, 0, 0, 0},
+	{CPM_SSICDR, 3, 30, 0, 0, 0},
 };
 
 void clk_init(void)
@@ -249,11 +261,11 @@ void enable_uart_clk(void)
 	unsigned int clkgr0 = cpm_inl(CPM_CLKGR0);
 
 	switch (gd->arch.gi->uart_base) {
-#define _CASE0(U, N) case U: clkgr0 &= ~N; break
-		_CASE0(UART0_BASE, CPM_CLKGR0_UART0);
-		_CASE0(UART1_BASE, CPM_CLKGR0_UART1);
-		_CASE0(UART2_BASE, CPM_CLKGR0_UART2);
-		_CASE0(UART3_BASE, CPM_CLKGR0_UART3);
+#define _CASE(U, N) case U: clkgr0 &= ~N; break
+		_CASE(UART0_BASE, CPM_CLKGR0_UART0);
+		_CASE(UART1_BASE, CPM_CLKGR0_UART1);
+		_CASE(UART2_BASE, CPM_CLKGR0_UART2);
+		_CASE(UART3_BASE, CPM_CLKGR0_UART3);
 	default:
 		break;
 	}
