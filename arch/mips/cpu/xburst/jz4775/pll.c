@@ -39,8 +39,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SEL_H0			1
 #define SEL_H2			1
 #if (CONFIG_SYS_APLL_FREQ > 1000000000)
-#define DIV_PCLK		12
-#define DIV_H2			6
+#define DIV_PCLK		10
+#define DIV_H2			5
 #else
 #define DIV_PCLK		8
 #define DIV_H2			4
@@ -113,11 +113,13 @@ void pll_init(void)
 	while(!(cpm_inl(CPM_CPAPCR) & (0x1<<10)));
 	debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
 
-	cpccr = CPCCR_CFG | (7 << 20);
+	cpccr = (cpm_inl(CPM_CPCCR) & (0xff << 24))
+		| (CPCCR_CFG & ~(0xff << 24))
+		| (7 << 20);
 	cpm_outl(cpccr,CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
 
-	cpccr = (CPCCR_CFG  & (0xff<<24)) | (cpm_inl(CPM_CPCCR) & ~(0xff<<24));
+	cpccr = (CPCCR_CFG & (0xff << 24)) | (cpm_inl(CPM_CPCCR) & ~(0xff << 24));
 	cpm_outl(cpccr,CPM_CPCCR);
 
 	debug("ok\n");

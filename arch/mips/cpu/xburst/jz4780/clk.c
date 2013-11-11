@@ -252,7 +252,7 @@ void clk_init(void)
 	reg_clkgr0 &= ~gate0;
 	cpm_outl(reg_clkgr0,CPM_CLKGR0);
 
-	spl_cgu_clksel[0].div = gd->arch.gi->ddr_div;
+	spl_cgu_clksel[0].div = gd->arch.gi->ddr_div - 1;
 	cgu_clks_set(spl_cgu_clksel, ARRAY_SIZE(spl_cgu_clksel));
 }
 

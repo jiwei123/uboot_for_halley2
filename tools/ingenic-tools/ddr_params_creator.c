@@ -102,9 +102,14 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->timing2.b.tRL = p->tRL;
 
 	ddrc->timing3.b.ONUM = 4;
+#if 0
 	tmp = calc_nck(p->tCKSRE, tck->ps) / 8;
 	if (tmp < 1) tmp = 1;
 	ddrc->timing3.b.tCKSRE = tmp;
+#else
+	/* Set DDR_tCKSRE to max to ensafe suspend & resume */
+	ddrc->timing3.b.tCKSRE = 7;
+#endif
 	ddrc->timing3.b.tRP = calc_nck(p->tRP, tck->ps);
 	ddrc->timing3.b.tRRD = calc_nck(p->tRRD, tck->ps);
 	ddrc->timing3.b.tRC = calc_nck(p->tRC, tck->ps);
@@ -136,8 +141,8 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 
 	ddrc->timing6.b.tXSRD = p->tXSRD / 4;
 	ddrc->timing6.b.tFAW = p->tFAW; /* NOT sure */
-	ddrc->timing6.b.tCFGW = 3;
-	ddrc->timing6.b.tCFGR = 3;
+	ddrc->timing6.b.tCFGW = 2;
+	ddrc->timing6.b.tCFGR = 2;
 
 	/* REFCNT */
 	tmp = p->tREFI / tck->ns;

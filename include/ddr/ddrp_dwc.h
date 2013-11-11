@@ -20,8 +20,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __DDRP_SYNOPSIS_H__
-#define __DDRP_SYNOPSIS_H__
+#ifndef __DDRP_DWC_H__
+#define __DDRP_DWC_H__
 
 typedef union ddrp_mr0 {
 	/** raw register data */
@@ -240,4 +240,4 @@ struct ddrp_reg {
 	ddrp_dtpr2_t dtpr2;
 };
 
-#endif /* __DDRP_SYNOPSIS_H__ */
+#endif /* __DDRP_DWC_H__ */

@@ -216,6 +216,7 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 #ifdef CONFIG_VIDEO_JZ4775
 	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
 #endif
+	{CPM_I2SCDR, 2, 30, 0, 0, 0},
 };
 
 void clk_init(void)
@@ -239,7 +240,7 @@ void clk_init(void)
 	reg_clkgr &= ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR);
 
-	spl_cgu_clksel[0].div = gd->arch.gi->ddr_div;
+	spl_cgu_clksel[0].div = gd->arch.gi->ddr_div - 1;
 	cgu_clks_set(spl_cgu_clksel, ARRAY_SIZE(spl_cgu_clksel));
 }
 

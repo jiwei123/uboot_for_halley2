@@ -90,8 +90,8 @@ void pll_init(void)
 	unsigned int cppcr = cpm_inl(CPM_CPPCR);
 	struct m_n_od m_n_od = {0, 0, 0};
 
-	cppcr &= ~(0xfff << 8);			//BWADJ value
-	cppcr |= 16 << 8 | 0xff | (0x1 << 30);	//stable delay to MAX, Fastlock mode enable
+	cppcr &= ~(0xfffff);
+	cppcr |= 18 << 8 | 0x20;
 	cpm_outl(cppcr,CPM_CPPCR);
 
 	debug("pll init...");

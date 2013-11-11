@@ -32,47 +32,46 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 struct ddr_params *ddr_params_p = NULL;
-
 #ifdef DUMP_DDR
 static void dump_ddrc_register(void)
 {
-	printf("#define DDRC_STATUS		0x%x\n", ddr_readl(DDRC_STATUS));
-	printf("#define DDRC_CFG		0x%x\n", ddr_readl(DDRC_CFG));
-	printf("#define DDRC_CTRL		0x%x\n", ddr_readl(DDRC_CTRL));
-	printf("#define DDRC_LMR		0x%x\n", ddr_readl(DDRC_LMR));
-	printf("#define DDRC_TIMING1		0x%x\n", ddr_readl(DDRC_TIMING(1)));
-	printf("#define DDRC_TIMING2		0x%x\n", ddr_readl(DDRC_TIMING(2)));
-	printf("#define DDRC_TIMING3		0x%x\n", ddr_readl(DDRC_TIMING(3)));
-	printf("#define DDRC_TIMING4		0x%x\n", ddr_readl(DDRC_TIMING(4)));
-	printf("#define DDRC_TIMING5		0x%x\n", ddr_readl(DDRC_TIMING(5)));
-	printf("#define DDRC_TIMING6		0x%x\n", ddr_readl(DDRC_TIMING(6)));
-	printf("#define DDRC_REFCNT		0x%x\n", ddr_readl(DDRC_REFCNT));
-	printf("#define DDRC_MMAP0		0x%x\n", ddr_readl(DDRC_MMAP0));
-	printf("#define DDRC_MMAP1		0x%x\n", ddr_readl(DDRC_MMAP1));
-	printf("#define DDRC_REMAP1		0x%x\n", ddr_readl(DDRC_REMAP(1)));
-	printf("#define DDRC_REMAP2		0x%x\n", ddr_readl(DDRC_REMAP(2)));
-	printf("#define DDRC_REMAP3		0x%x\n", ddr_readl(DDRC_REMAP(3)));
-	printf("#define DDRC_REMAP4		0x%x\n", ddr_readl(DDRC_REMAP(4)));
-	printf("#define DDRC_REMAP5		0x%x\n", ddr_readl(DDRC_REMAP(5)));
+	printf("DDRC_STATUS		0x%x\n", ddr_readl(DDRC_STATUS));
+	printf("DDRC_CFG		0x%x\n", ddr_readl(DDRC_CFG));
+	printf("DDRC_CTRL		0x%x\n", ddr_readl(DDRC_CTRL));
+	printf("DDRC_LMR		0x%x\n", ddr_readl(DDRC_LMR));
+	printf("DDRC_TIMING1		0x%x\n", ddr_readl(DDRC_TIMING(1)));
+	printf("DDRC_TIMING2		0x%x\n", ddr_readl(DDRC_TIMING(2)));
+	printf("DDRC_TIMING3		0x%x\n", ddr_readl(DDRC_TIMING(3)));
+	printf("DDRC_TIMING4		0x%x\n", ddr_readl(DDRC_TIMING(4)));
+	printf("DDRC_TIMING5		0x%x\n", ddr_readl(DDRC_TIMING(5)));
+	printf("DDRC_TIMING6		0x%x\n", ddr_readl(DDRC_TIMING(6)));
+	printf("DDRC_REFCNT		0x%x\n", ddr_readl(DDRC_REFCNT));
+	printf("DDRC_MMAP0		0x%x\n", ddr_readl(DDRC_MMAP0));
+	printf("DDRC_MMAP1		0x%x\n", ddr_readl(DDRC_MMAP1));
+	printf("DDRC_REMAP1		0x%x\n", ddr_readl(DDRC_REMAP(1)));
+	printf("DDRC_REMAP2		0x%x\n", ddr_readl(DDRC_REMAP(2)));
+	printf("DDRC_REMAP3		0x%x\n", ddr_readl(DDRC_REMAP(3)));
+	printf("DDRC_REMAP4		0x%x\n", ddr_readl(DDRC_REMAP(4)));
+	printf("DDRC_REMAP5		0x%x\n", ddr_readl(DDRC_REMAP(5)));
 }
 
 static void dump_ddrp_register(void)
 {
-	printf("#define	DDRP_PIR		0x%x\n", ddr_readl(DDRP_PIR));
-	printf("#define	DDRP_PGCR		0x%x\n", ddr_readl(DDRP_PGCR));
-	printf("#define	DDRP_PGSR		0x%x\n", ddr_readl(DDRP_PGSR));
-	printf("#define	DDRP_PTR0		0x%x\n", ddr_readl(DDRP_PTR0));
-	printf("#define	DDRP_PTR1		0x%x\n", ddr_readl(DDRP_PTR1));
-	printf("#define	DDRP_PTR2		0x%x\n", ddr_readl(DDRP_PTR2));
-	printf("#define	DDRP_DCR		0x%x\n", ddr_readl(DDRP_DCR));
-	printf("#define	DDRP_DTPR0		0x%x\n", ddr_readl(DDRP_DTPR0));
-	printf("#define	DDRP_DTPR1		0x%x\n", ddr_readl(DDRP_DTPR1));
-	printf("#define	DDRP_DTPR2		0x%x\n", ddr_readl(DDRP_DTPR2));
-	printf("#define	DDRP_MR0		0x%x\n", ddr_readl(DDRP_MR0));
-	printf("#define	DDRP_MR1		0x%x\n", ddr_readl(DDRP_MR1));
-	printf("#define	DDRP_MR2		0x%x\n", ddr_readl(DDRP_MR2));
-	printf("#define	DDRP_MR3		0x%x\n", ddr_readl(DDRP_MR3));
-	printf("#define	DDRP_ODTCR		0x%x\n", ddr_readl(DDRP_ODTCR));
+	printf("DDRP_PIR		0x%x\n", ddr_readl(DDRP_PIR));
+	printf("DDRP_PGCR		0x%x\n", ddr_readl(DDRP_PGCR));
+	printf("DDRP_PGSR		0x%x\n", ddr_readl(DDRP_PGSR));
+	printf("DDRP_PTR0		0x%x\n", ddr_readl(DDRP_PTR0));
+	printf("DDRP_PTR1		0x%x\n", ddr_readl(DDRP_PTR1));
+	printf("DDRP_PTR2		0x%x\n", ddr_readl(DDRP_PTR2));
+	printf("DDRP_DCR		0x%x\n", ddr_readl(DDRP_DCR));
+	printf("DDRP_DTPR0		0x%x\n", ddr_readl(DDRP_DTPR0));
+	printf("DDRP_DTPR1		0x%x\n", ddr_readl(DDRP_DTPR1));
+	printf("DDRP_DTPR2		0x%x\n", ddr_readl(DDRP_DTPR2));
+	printf("DDRP_MR0		0x%x\n", ddr_readl(DDRP_MR0));
+	printf("DDRP_MR1		0x%x\n", ddr_readl(DDRP_MR1));
+	printf("DDRP_MR2		0x%x\n", ddr_readl(DDRP_MR2));
+	printf("DDRP_MR3		0x%x\n", ddr_readl(DDRP_MR3));
+	printf("DDRP_ODTCR		0x%x\n", ddr_readl(DDRP_ODTCR));
 }
 #endif
 
@@ -259,14 +258,14 @@ void ddr_phy_init(void)
 					 | DDRP_PGSR_ZCDONE
 					 | DDRP_PGSR_DIDONE
 					 | DDRP_PGSR_DTDONE))
-	       && (ddr_readl(DDRP_PGSR)
+	       && !(ddr_readl(DDRP_PGSR)
 		   & (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR))
 	       && --timeout);
 	if (timeout == 0) {
 		printf("DDR training timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
 	} else if (ddr_readl(DDRP_PGSR)
-		   & (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
+		   & (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
 		int i = 0;
 
 		printf("DDR training error: PGSR=%X\n", ddr_readl(DDRP_PGSR));
@@ -324,8 +323,6 @@ void sdram_init(void)
 	debug("sdram init start\n");
 	reset_dll();
 	reset_controller();
-
-	ddr_writel(0, DDRC_CTRL);
 
 	/* DDR PHY init*/
 	ddr_phy_init();
