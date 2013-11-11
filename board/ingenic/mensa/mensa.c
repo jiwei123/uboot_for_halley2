@@ -28,6 +28,7 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
+#include <usb/jz_dwc2_udc.h>
 
 int board_early_init_f(void)
 {
@@ -37,6 +38,14 @@ int board_early_init_f(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_USB_GADGET
+void board_usb_init(void)
+{
+	printf("USB_udc_probe\n");
+	jz_udc_probe();
+}
+#endif /* CONFIG_USB_GADGET */
 
 int misc_init_r(void)
 {
