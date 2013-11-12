@@ -211,10 +211,13 @@ void ddr_phy_init(void)
 		tmp |= 1 << 9;
 #endif
 #endif
-		if (ddr_params_p->dw32 == 0) {
-			if (i > 1)
-				tmp &= ~DDRP_DXGCR_DXEN;
-		}
+#ifndef CONFIG_DDR_HOST_CC
+		if ((i > 1) && (ddr_params_p->dw32 == 0))
+			tmp &= ~DDRP_DXGCR_DXEN;
+#elif (CONFIG_DDR_DW32 == 0)
+		if (i > 1)
+			tmp &= ~DDRP_DXGCR_DXEN;
+#endif
 		ddr_writel(tmp, DDRP_DXGCR(i));
 	}
 
