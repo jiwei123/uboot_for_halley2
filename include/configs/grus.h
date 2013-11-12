@@ -36,6 +36,9 @@
 #define CONFIG_SYS_MPLL_FREQ		1200000000
 #define CONFIG_SYS_EPLL_FREQ		204000000
 #define CONFIG_SYS_VPLL_FREQ		888000000
+#define CONFIG_SYS_VPLL_M		(CONFIG_SYS_VPLL_FREQ * 2 / CONFIG_SYS_EXTAL)
+#define CONFIG_SYS_VPLL_N		1
+#define CONFIG_SYS_VPLL_OD		2
 
 #define CONFIG_SYS_EXTAL		48000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000 /* incrementer freq */
@@ -54,6 +57,9 @@
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_TYPE_DDR3
+#define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
+#define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
 #define CONFIG_DDR3_H5TQ2G83CFR_H9C
 #define CONFIG_DDR_CHIP_ODT
 #define CONFIG_DDR_PHY_ODT

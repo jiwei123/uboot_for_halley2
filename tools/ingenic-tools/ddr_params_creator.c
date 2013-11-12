@@ -342,9 +342,9 @@ void fill_in_params(struct ddr_params *params, int type)
 	caculate_tck(params);
 #ifndef CONFIG_DDR_TYPE_VARIABLE
 	params->div = DDR_CLK_DIV;
-	params->cs0 = DDR_CS0EN;
-	params->cs1 = DDR_CS1EN;
-	params->dw32 = DDR_DW32;
+	params->cs0 = CONFIG_DDR_CS0;
+	params->cs1 = CONFIG_DDR_CS1;
+	params->dw32 = CONFIG_DDR_DW32;
 	params->cl = DDR_CL;
 	params->bl = DDR_BL;
 	params->col = DDR_COL;

@@ -7,11 +7,6 @@
 /*--------------------------------------------------------------------------------
  * DDR3-1066 info
  */
-/* Chip Select */
-#define DDR_CS1EN  0  /* CSEN : whether a ddr chip exists 0 - un-used, 1 - used */
-#define DDR_CS0EN  1
-#define DDR_DW32   1  /* 0 - 16-bit data width, 1 - 32-bit data width */
-
 /* DDR3 paramters */
 #define DDR_ROW     14  /* ROW : 12 to 18 row address ,1G only 512MB*/
 #define DDR_COL     10  /* COL :  8 to 14 column address */

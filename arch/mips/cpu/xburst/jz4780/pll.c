@@ -124,7 +124,7 @@ void pll_init(void)
 	debug("CPM_CPAPCR %x\n",cpm_inl(CPM_CPAPCR));
 #endif /* CONFIG_SYS_APLL_FREQ */
 
-#ifdef CONFIG_SYS_MPLL_FREQ
+#if (CONFIG_SYS_MPLL_FREQ > 0)
 	cpxpcr.d32 = 0;
   #if defined (CONFIG_SYS_MPLL_M) && (CONFIG_SYS_MPLL_N) && (CONFIG_SYS_MPLL_OD)
 	GET_M_N_OD_DIRECTLY(MPLL);
@@ -135,7 +135,7 @@ void pll_init(void)
 	debug("CPM_CPMPCR %x\n",cpm_inl(CPM_CPMPCR));
 #endif /* CONFIG_SYS_MPLL_FREQ */
 
-#ifdef CONFIG_SYS_EPLL_FREQ
+#if (CONFIG_SYS_EPLL_FREQ > 0)
 	cpxpcr.d32 = 0;
   #if defined (CONFIG_SYS_EPLL_M) && (CONFIG_SYS_EPLL_N) && (CONFIG_SYS_EPLL_OD)
 	GET_M_N_OD_DIRECTLY(EPLL);
@@ -146,7 +146,7 @@ void pll_init(void)
 	debug("CPM_CPEPCR %x\n",cpm_inl(CPM_CPEPCR));
 #endif /* CONFIG_SYS_EPLL_FREQ */
 
-#ifdef CONFIG_SYS_VPLL_FREQ
+#if (CONFIG_SYS_VPLL_FREQ > 0)
   #if defined (CONFIG_SYS_VPLL_M) && (CONFIG_SYS_VPLL_N) && (CONFIG_SYS_VPLL_OD)
 	GET_M_N_OD_DIRECTLY(VPLL);
   #else

@@ -162,7 +162,7 @@ void jump_kernel(unsigned long mem_address,unsigned long size)
 	void (*kernel)(int, char **, char *);
 
 	if (ready_for_jump((unsigned char*)mem_address, size) == 0) {
-		printf("Jump to kernel start Addr 0x%lu\n\n",mem_address);
+		printf("Jump to kernel start Addr 0x%x\n\n",mem_address);
 		kernel = (void (*)(int, char **, char *))mem_address;
 		flush_cache_all();
 		/*Jump to kernel image*/
@@ -241,7 +241,7 @@ void msc_boot(unsigned int mmc_select,unsigned int mem_address,unsigned int sect
 
 	/* Load kernel and ramdisk */
 	mmc->block_dev.block_read(mmc_select, boffset+4, bsize, (void*)(mem_address+2048));
-	printf("Load kernel and ramdisk done!\n ");
+	printf("Load kernel and ramdisk done!\n");
 
 	printf("Prepare kernel parameters ...\n");
 	jump_kernel(mem_address,size);

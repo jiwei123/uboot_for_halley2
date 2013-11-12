@@ -121,10 +121,10 @@ static void mem_remap(void)
 #ifdef CONFIG_DDR_HOST_CC
 	row = DDR_ROW;
 	col = DDR_COL;
-	dw32 = DDR_DW32;
+	dw32 = CONFIG_DDR_DW32;
 	bank8 = DDR_BANK8;
-	cs0 = DDR_CS0EN;
-	cs1 = DDR_CS1EN;
+	cs0 = CONFIG_DDR_CS0;
+	cs1 = CONFIG_DDR_CS1;
 #else
 	row = ddr_params_p->row;
 	col = ddr_params_p->col;
@@ -211,12 +211,11 @@ void ddr_phy_init(void)
 		tmp |= 1 << 9;
 #endif
 #endif
-#if (DDR_DW32 == 0)
-		if (i > 1)
-			tmp &= ~DDRP_DXGCR_DXEN;
-#endif
+		if (ddr_params_p->dw32 == 0) {
+			if (i > 1)
+				tmp &= ~DDRP_DXGCR_DXEN;
+		}
 		ddr_writel(tmp, DDRP_DXGCR(i));
-
 	}
 
 	ddr_writel(DDRP_PGCR_VALUE, DDRP_PGCR);
