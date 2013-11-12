@@ -20,7 +20,12 @@
  * MA 02111-1307 USA
  */
 #include "../../../drivers/video/jz_lcd/jz4780_lcd.h"
-#include <asm/arch/gpio.h>
+#include <asm/gpio.h>
+
+void set_lcd_power_on(void)
+{
+	gpio_direction_output(CONFIG_GPIO_LCD_POWERON,1);
+}
 
 struct jzfb_config_info jzfb1_init_data = {
 	.modes = &jzfb1_videomode,
@@ -35,7 +40,7 @@ struct jzfb_config_info jzfb1_init_data = {
 };
 
 #ifdef CONFIG_VIDEO_BYD_BM8766U
-#include <asm/byd_bm8766u.h>
+#include "../../../drivers/video/jz_lcd/lcd_panel/byd_bm8766u.h"
 struct byd_bm8766u_data byd_bm8766u_pdata= {
         .gpio_lcd_disp = GPIO_PD(11),
         .gpio_lcd_de   = 0,             //GPIO_PC(9),   /* chose sync mode */

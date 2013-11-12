@@ -62,15 +62,15 @@ void lcd_set_backlight_level(int num)
 		++prescaler;
 	}
 	_half =_period * _val / (CONFIG_SYS_PWM_FULL);
-	gpio_set_func(GPIO_PORT_E, GPIO_FUNC_0,2);
+	gpio_set_func(GPIO_PORT_E, GPIO_FUNC_0,1 << (CONFIG_GPIO_LCD_PWM % 32));
 	struct pwm pwm_backlight = {CONFIG_SYS_PWM_CHN,prescaler,EXTAL,_period,_half};
 	pwm_init(&pwm_backlight);
 }
 
 void lcd_close_backlight(void)
 {
-        gpio_direction_output(GPIO_LCD_PWM,-1);
-        gpio_direction_output(GPIO_LCD_PWM,0);
+        gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
+        gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
 }
 
 #else
@@ -81,8 +81,8 @@ void lcd_close_backlight(void)
 void lcd_init_backlight(int num)
 {
 	unsigned int tmp = (num)/CONVERT_FACTOR + 1;
-	gpio_direction_output(GPIO_LCD_PWM,-1);
-	gpio_direction_output(GPIO_LCD_PWM),1;
+	gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
+	gpio_direction_output(CONFIG_GPIO_LCD_PWM),1;
 	udelay(30);
 	send_low_pulse(MAX_BRIGHTNESS_STEP-tmp);
 }
@@ -91,9 +91,9 @@ void send_low_pulse(int num)
 {
 	unsigned int i;
 	for (i = n; i > 0; i--)	{
-		gpio_direction_output(GPIO_LCD_PWM,0);
+		gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
 		udelay(1);
-		gpio_direction_output(GPIO_LCD_PWM,1);
+		gpio_direction_output(CONFIG_GPIO_LCD_PWM,1);
 		udelay(3);
 	}
 }
@@ -112,8 +112,8 @@ void lcd_set_backlight_level(int num)
 
 void lcd_close_backlight(void)
 {
-		gpio_direction_output(GPIO_LCD_PWM,-1);
-		gpio_direction_output(GPIO_LCD_PWM,0);
+		gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
+		gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
 	} while (0)
 
 #endif

@@ -22,6 +22,14 @@
 #include "../../../drivers/video/jz_lcd/jz4780_lcd.h"
 #include <asm/arch/gpio.h>
 
+void set_lcd_power_on(void)
+{
+	char *id = "OUT7";
+	struct regulator *lcd_regulator = regulator_get(id);
+	regulator_enable(lcd_regulator);
+	regulator_set_voltage(lcd_regulator,3300000,3300000);
+}
+
 struct jzfb_config_info jzfb1_init_data = {
 	.modes = &jzfb1_videomode,
 	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
@@ -35,7 +43,7 @@ struct jzfb_config_info jzfb1_init_data = {
 };
 
 #ifdef CONFIG_VIDEO_BYD_BM8766U
-#include <asm/byd_bm8766u.h>
+#include "../../../drivers/video/jz_lcd/lcd_panel/byd_bm8766u.h"
 struct byd_bm8766u_data byd_bm8766u_pdata= {
         .gpio_lcd_disp = GPIO_PB(30),
         .gpio_lcd_de   = 0,             //GPIO_PC(9),   /* chose sync mode */

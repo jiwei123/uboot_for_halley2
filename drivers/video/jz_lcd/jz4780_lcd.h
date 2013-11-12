@@ -24,12 +24,13 @@
 #ifndef __JZ4780_LCD_H__
 #define __JZ4780_LCD_H__
 
+#include <common.h>
 #include <linux/types.h>
 
 void lcd_display_pin_init(void);
 void lcd_display_on(void);
 void lcd_display_off(void);
-
+void set_lcd_power_on(void);
 #if PWM_BACKLIGHT_CHIP
 void lcd_set_backlight_level(int num);
 void lcd_close_backlight(void);

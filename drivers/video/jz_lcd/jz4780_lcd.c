@@ -41,7 +41,6 @@ struct jzfb_config_info lcd_config_info;
 static int lcd_enable_state = 0;
 void board_lcd_init(void);
 void flush_cache_all(void);
-void set_lcd_power_on(void);
 void lcd_close_backlight(void);
 void lcd_set_backlight_level(int num);
 #define reg_write(addr,config) \
@@ -132,7 +131,12 @@ static void jzfb_config_tft_lcd_dma(struct jzfb_config_info *info)
 	framedesc->fdadr = virt_to_phys((void*)info->dmadesc_fbhigh);
 	framedesc->fsadr = virt_to_phys((void *)info->screen);
 	framedesc->fidr = 0xda0;
+#ifdef CONFIG_VIDEO_JZ4775
 	framedesc->ldcmd = LCDC_CMD_EOFINT | LCDC_CMD_FRM_EN;
+#endif
+#ifdef CONFIG_VIDEO_JZ4780
+	framedesc->ldcmd = LCDC_CMD_SOFINT | LCDC_CMD_EOFINT | LCDC_CMD_FRM_EN;
+#endif
 	framedesc->ldcmd |= BYTES_PER_PANEL/4;
 	framedesc->offsize = 0;
 	framedesc->page_width = 0;
@@ -265,9 +269,10 @@ static int jzfb_prepare_dma_desc(struct jzfb_config_info *info)
 {
 	info->dmadesc_fblow = (struct jz_fb_dma_descriptor *)((unsigned long)info->palette - 2*32);
 	info->dmadesc_fbhigh = (struct jz_fb_dma_descriptor *)((unsigned long)info->palette - 1*32);
+#ifdef CONFIG_VIDEO_JZ4775
 	info->dmadesc_cmd = (struct jz_fb_dma_descriptor *)((unsigned long)info->palette - 3*32);
 	info->dmadesc_cmd_tmp = (struct jz_fb_dma_descriptor *)((unsigned long)info->palette - 4*32);
-
+#endif
 	if (info->lcd_type != LCD_TYPE_LCM) {
 		jzfb_config_tft_lcd_dma(info);
 	} else {
@@ -489,7 +494,6 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		ctrl |= LCDC_CTRL_PINMD;
 
 	ctrl |= LCDC_CTRL_BPP_18_24;
-
 	/* configure smart LCDC registers */
 	if(info->lcd_type == LCD_TYPE_LCM) {
 		smart_cfg = lcd_config_info.smart_config.smart_type |
@@ -525,7 +529,6 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	}
 
 	reg_write( LCDC_CFG, cfg);
-
 	reg_write( LCDC_CTRL, ctrl);
 
 	pcfg = 0xC0000000 | (511<<18) | (400<<9) | (256<<0) ;
@@ -558,6 +561,7 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 
 	/* locate palette and descs at end of page following fb */
 	info->palette = (unsigned long)lcdbase + fb_size + PAGE_SIZE - palette_mem_size;
+#ifdef CONFIG_VIDEO_JZ4775
 	info->dma_cmd_buf = (((unsigned long)lcdbase + fb_size + PAGE_SIZE)
 			     + PAGE_SIZE -1) & ~(PAGE_SIZE -1);
 	if (info->lcd_type == LCD_TYPE_LCM) {
@@ -590,6 +594,7 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 		}
 		flush_cache_all();
 	}
+#endif
 	return 0;
 }
 
@@ -597,7 +602,14 @@ void lcd_ctrl_init(void *lcd_base)
 {
 	/* init registers base address */
 	lcd_config_info = jzfb1_init_data;
+#if defined(CONFIG_VIDEO_JZ4775) || defined(CONFIG_FB_JZ4780_LCDC0)
 	lcd_config_info.lcdbaseoff = 0;
+#elif defined(CONFIG_FB_JZ4780_LCDC1)
+	lcd_config_info.lcdbaseoff = LCDC1_BASE - LCDC0_BASE;
+#else
+	printf("error, LCDC init data is NULL\n");
+	return;
+#endif
 	lcd_close_backlight();
 	lcd_display_pin_init();
 
@@ -617,7 +629,7 @@ void lcd_ctrl_init(void *lcd_base)
 	flush_cache_all();
 
 #ifdef DEFAULT_BACKLIGHT_LEVEL
-        lcd_set_backlight_level(DEFAULT_BACKLIGHT_LEVEL);
+        lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
         lcd_set_backlight_level(80);
         puts("80");

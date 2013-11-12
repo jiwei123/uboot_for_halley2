@@ -215,8 +215,16 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	{CPM_BCHCDR, 2, 30, 29, 28, CGU_BCH_DIV}, /* This must be wrong! */
 #endif
 #ifdef CONFIG_VIDEO_JZ4780
+#ifdef CONFIG_FB_JZ4780_LCDC0
 	{CPM_LPCDR, 2, 30, 28, 27, CGU_LCD_DIV},
+#else
+	{CPM_LPCDR, 2, 30, 0, 0, 0},
+#endif
+#ifdef CONFIG_FB_JZ4780_LCDC1
 	{CPM_LPCDR1, 2, 30, 28, 27, CGU_LCD_DIV},
+#else
+	{CPM_LPCDR1, 2, 30, 0, 0, 0},
+#endif
 #else /* Fix it when LCD driver on JZ4780 is ok. */
 	{CPM_LPCDR, 2, 30, 0, 0, 0},
 	{CPM_LPCDR1, 2, 30, 0, 0, 0},
@@ -246,6 +254,9 @@ void clk_init(void)
 #endif
 #ifdef CONFIG_VIDEO_JZ4780
 		| CPM_CLKGR0_LCD
+#ifdef CONFIG_FB_JZ4780_LCDC0
+		| CPM_CLKGR0_TVE
+#endif
 #endif
 		;
 

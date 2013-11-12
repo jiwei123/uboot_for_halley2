@@ -33,6 +33,7 @@
 #include "byd_bm8766u.h"
 
 struct byd_bm8766u_data byd_bm8766u_pdata;
+void set_lcd_power_on(void);
 
 void bm800480_8766ftgu_panel_display_pin_init(void)
 {
@@ -83,16 +84,6 @@ void board_lcd_init(void)
         /* turn on the lcd power supply */
         set_lcd_power_on();
 }
-
-void set_lcd_power_on(void)
-{
-
-	char *id = "OUT7";
-	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_enable(lcd_regulator);
-	regulator_set_voltage(lcd_regulator,3300000,3300000);
-}
-
 #ifdef CONFIG_FB_JZ4780_LCDC0
 	static struct fb_videomode jzfb0_videomode[] = {
 #ifdef CONFIG_JZ4780_HDMI_80
