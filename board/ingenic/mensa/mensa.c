@@ -79,7 +79,7 @@ int board_mmc_init(bd_t *bd)
 
 int board_eth_init(bd_t *bis)
 {
-	return 0;
+	return jz_net_initialize(bis);
 }
 
 #endif /* CONFIG_DRIVER_DM9000 */

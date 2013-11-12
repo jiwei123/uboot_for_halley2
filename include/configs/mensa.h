@@ -194,11 +194,17 @@
 #define CONFIG_REGULATOR
 #define CONFIG_PMU_ACT8600
 
-/* Ethernet:  davicom DM9000 */
-#define CONFIG_DRIVER_DM9000		1
-#define CONFIG_DM9000_BASE		0xb6000000
-#define DM9000_IO			CONFIG_DM9000_BASE
-#define DM9000_DATA			(CONFIG_DM9000_BASE + 2)
+/* Ethernet: gmac and 9161 */
+
+#define CONFIG_NET_JZ4775
+
+/* DEBUG ETHERNET
+#define CONFIG_SERVERIP		192.168.4.122
+#define CONFIG_IPADDR		192.168.4.121
+#define CONFIG_GATEWAYIP        192.168.4.1
+#define CONFIG_NETMASK          255.255.255.0
+#define CONFIG_ETHADDR          00:11:22:33:44:55
+*/
 
 /* GPIO */
 #define CONFIG_JZ_GPIO

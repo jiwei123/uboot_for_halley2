@@ -83,6 +83,8 @@ COBJS-$(CONFIG_XILINX_EMACLITE) += xilinx_emaclite.o
 COBJS-$(CONFIG_XILINX_LL_TEMAC) += xilinx_ll_temac.o xilinx_ll_temac_mdio.o \
 		xilinx_ll_temac_fifo.o xilinx_ll_temac_sdma.o
 COBJS-$(CONFIG_ZYNQ_GEM) += zynq_gem.o
+COBJS-$(CONFIG_NET_JZ4775) += jz4775-9161.o
+COBJS-$(CONFIG_NET_JZ4775) += SynopGMAC_Dev.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
