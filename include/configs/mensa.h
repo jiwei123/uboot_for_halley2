@@ -112,7 +112,7 @@
 #define CONFIG_LCD
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
-#define GPIO_LCD_PWM	 	        GPIO_PE(1)
+#define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 #define CONFIG_LCD_LOGO
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000

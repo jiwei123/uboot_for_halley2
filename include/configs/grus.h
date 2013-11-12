@@ -118,17 +118,19 @@
 /**
  * Drivers configuration.
  */
-/* #define CONFIG_LCD */
+#define CONFIG_LCD
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
-#define GPIO_LCD_PWM	 	        GPIO_PE(1)
+#define CONFIG_GPIO_LCD_PWM	 	        GPIO_PE(0)
+#define CONFIG_GPIO_LCD_POWERON                GPIO_PE(9)/*(32*4 + 9)*/
 #define CONFIG_LCD_LOGO
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
-#define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
+#define CONFIG_SYS_PWM_CHN		0  /* Pwm channel ok*/
 #define CONFIG_SYS_PWM_FULL		256
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
+#define CONFIG_FB_JZ4780_LCDC1
 #define CONFIG_VIDEO_JZ4780
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U

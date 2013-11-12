@@ -20,14 +20,15 @@
  * MA 02111-1307 USA
  */
 #include "../../../drivers/video/jz_lcd/jz4780_lcd.h"
-#include <asm/arch/gpio.h>
+#include <regulator.h>
+#include <asm/gpio.h>
 
 void set_lcd_power_on(void)
 {
 	char *id = "OUT7";
 	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_enable(lcd_regulator);
 	regulator_set_voltage(lcd_regulator,3300000,3300000);
+	regulator_enable(lcd_regulator);
 }
 
 struct jzfb_config_info jzfb1_init_data = {
