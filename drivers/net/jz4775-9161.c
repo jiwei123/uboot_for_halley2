@@ -7,7 +7,6 @@
 #include <asm/cache.h>
 
 #include "SynopGMAC_Dev.h"
-#include "jz4775-9161.h"
 
 /* The amount of time between FLP bursts is 16ms +/- 8ms */
 #define MAX_WAIT	40000
@@ -297,7 +296,6 @@ static int jz_send(struct eth_device* dev, void *packet, int length)
 	desc->status |= DescOwnByDma;
 
 	flush_dcache_all();
-	jz_sync();
 
 	/* start tx operation*/
 	jzmac_restart_tx_dma();
@@ -374,23 +372,6 @@ static int jz_recv(struct eth_device* dev)
 	return length;
 }
 
-#define __gpio_as_eth47xx()                             \
-	do {                                            \
-		REG_GPIO_PXINTC(1) =  0x0003fc10;       \
-		REG_GPIO_PXMASKC(1) = 0x0003fc10;       \
-		REG_GPIO_PXPAT1C(1) = 0x0003fc10;       \
-		REG_GPIO_PXPAT0S(1) = 0x0003fc10;       \
-		REG_GPIO_PXINTC(3) =  0x3c000000;       \
-		REG_GPIO_PXMASKC(3) = 0x3c000000;       \
-		REG_GPIO_PXPAT1C(3) = 0x3c000000;       \
-		REG_GPIO_PXPAT0S(3) = 0x3c000000;       \
-		REG_GPIO_PXINTC(5) =  0x0000fff0;       \
-		REG_GPIO_PXMASKC(5) = 0x0000fff0;       \
-		REG_GPIO_PXPAT1C(5) = 0x0000fff0;       \
-		REG_GPIO_PXPAT0C(5) = 0x0000fff0;       \
-	} while (0)
-
-
 static int jz_init(struct eth_device* dev, bd_t * bd)
 {
 	int i;
@@ -463,7 +444,6 @@ static int jz_init(struct eth_device* dev, bd_t * bd)
 	synopGMACWriteReg((u32 *)gmacdev->DmaBase,DmaRxBaseAddr, virt_to_phys(_rx_desc));
 
 	flush_dcache_all();
-	jz_sync();
 
 	//jz47xx_mac_configure();
 
@@ -511,17 +491,16 @@ int jz_net_initialize(bd_t *bis)
 	gmacdev->DmaBase =  JZ_GMAC_BASE + DMABASE;
 	gmacdev->MacBase =  JZ_GMAC_BASE + MACBASE;
 
-	/* power down gmac clock */
-	__cpm_start_mac();
-
 	/* reset DM9161 */
-	__gpio_as_output0(32 * 1 + 7);//PB7 = 0
-	udelay(100000);
-	__gpio_as_output1(32 * 1 + 7);//PB7 =1
-	udelay(100000);
+	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	mdelay(10);
+	gpio_set_value(CONFIG_GPIO_DM9161_RESET, !CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	mdelay(10);
 
 	/* initialize jz4775 gpio */
-	__gpio_as_eth47xx();
+	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_1, 0x0003fc10);
+	gpio_set_func(GPIO_PORT_D, GPIO_FUNC_1, 0x3c000000);
+	gpio_set_func(GPIO_PORT_F, GPIO_FUNC_0, 0x0000fff0);
 	udelay(100000);
 
 	dev = (struct eth_device *)malloc(sizeof(struct eth_device));

@@ -258,6 +258,9 @@ void clk_init(void)
 		| CPM_CLKGR0_TVE
 #endif
 #endif
+#ifdef CONFIG_NET_JZ4780
+		| CPM_CLKGR0_MAC
+#endif
 		;
 
 	reg_clkgr0 &= ~gate0;
@@ -282,3 +285,4 @@ void enable_uart_clk(void)
 	}
 	cpm_outl(clkgr0, CPM_CLKGR0);
 }
+

@@ -75,14 +75,10 @@ int board_mmc_init(bd_t *bd)
 }
 #endif
 
-#ifdef CONFIG_DRIVER_DM9000
-
 int board_eth_init(bd_t *bis)
 {
 	return jz_net_initialize(bis);
 }
-
-#endif /* CONFIG_DRIVER_DM9000 */
 
 /* U-Boot common routines */
 int checkboard(void)

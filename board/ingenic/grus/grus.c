@@ -66,14 +66,20 @@ int board_mmc_init(bd_t *bd)
 }
 #endif
 
-#ifdef CONFIG_DRIVER_DM9000
-
 int board_eth_init(bd_t *bis)
 {
-	return 0;
-}
+	/* reset grus DM9000 */
+	gpio_direction_output(CONFIG_GPIO_DM9000_RESET, CONFIG_GPIO_DM9000_RESET_ENLEVEL);
+	mdelay(10);
+	gpio_set_value(CONFIG_GPIO_DM9000_RESET, !CONFIG_GPIO_DM9000_RESET_ENLEVEL);
+	mdelay(10);
 
-#endif /* CONFIG_DRIVER_DM9000 */
+	/* init grus gpio */
+	gpio_set_func(GPIO_PORT_A, GPIO_FUNC_0, 0x040300ff);
+	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_0, 0x00000002);
+
+	return dm9000_initialize(bis);
+}
 
 /* U-Boot common routines */
 int checkboard(void)

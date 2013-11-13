@@ -235,6 +235,9 @@ void clk_init(void)
 #ifdef CONFIG_VIDEO_JZ4775
 		| CPM_CLKGR_LCD
 #endif
+#ifdef CONFIG_NET_JZ4775
+		| CPM_CLKGR_GMAC
+#endif
 		;
 
 	reg_clkgr &= ~gate;
