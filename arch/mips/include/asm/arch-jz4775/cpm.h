@@ -121,6 +121,11 @@
 #define CPM_CLKGR_BCH		(1 << 1)
 #define CPM_CLKGR_NEMC		(1 << 0)
 
+#define CPM_RSR_HR		(1 << 3)
+#define CPM_RSR_P0R		(1 << 2)
+#define CPM_RSR_WR		(1 << 1)
+#define CPM_RSR_PR		(1 << 0)
+
 #define OPCR_ERCS		(0x1<<2)
 #define OPCR_PD			(0x1<<3)
 #define OPCR_IDLE		(0x1<<31)

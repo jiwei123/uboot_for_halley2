@@ -107,5 +107,10 @@ void gpio_port_direction_output(int port, int pin, int value);
 void gpio_init(void);
 void gpio_enable_pull(unsigned gpio);
 void gpio_disable_pull(unsigned gpio);
+void gpio_as_irq_high_level(unsigned gpio);
+void gpio_as_irq_low_level(unsigned gpio);
+void gpio_as_irq_rise_edge(unsigned gpio);
+void gpio_as_irq_fall_edge(unsigned gpio);
+void gpio_ack_irq(unsigned gpio);
 
 #endif /* __GPIO_H__ */

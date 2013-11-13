@@ -29,6 +29,10 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 
+static void battery_init_gpio(void)
+{
+}
+
 int board_early_init_f(void)
 {
 	/* Power on TF-card */
@@ -48,6 +52,10 @@ int misc_init_r(void)
 #endif
 #ifdef CONFIG_BOOT_ANDROID
 	boot_mode_select();
+#endif
+
+#if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
+	battery_init_gpio();
 #endif
 	return 0;
 }

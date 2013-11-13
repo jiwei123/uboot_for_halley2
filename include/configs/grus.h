@@ -97,7 +97,8 @@
 #define CONFIG_BOOTDELAY 1
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "boota mmc 0 0x80f00000 6144"
+    #define CONFIG_BOOTCOMMAND	\
+	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
@@ -253,6 +254,7 @@
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_FASTBOOT
+/* #define CONFIG_CMD_BATTERYDET */	/* detect battery and show charge logo */
 
 /**
  * Serial download configuration
@@ -282,7 +284,7 @@
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
-#define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
@@ -302,7 +304,7 @@
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
-#define CONFIG_ENV_OFFSET		((16 + 512) << 10)
+#define CONFIG_ENV_OFFSET		(16 << 10 + CONFIG_SYS_MONITOR_LEN)
 #else
 #define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_SIZE			(32 << 10)
@@ -393,5 +395,20 @@
 
 #define CONFIG_GPIO_FASTBOOT		GPIO_PF(10)	/* SW2 */
 #define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
+
+#define CONFIG_GPIO_MENU		GPIO_PF(10)	/* SW2 */
+#define CONFIG_GPIO_MENU_ENLEVEL	0
+
+#define CONFIG_GPIO_VOL_SUB		GPIO_PD(18)	/* SW4 */
+#define CONFIG_GPIO_VOL_SUB_ENLEVEL	0
+
+#define CONFIG_GPIO_VOL_ADD		GPIO_PD(17)	/* SW5 */
+#define CONFIG_GPIO_VOL_ADD_ENLEVEL	1
+
+#define CONFIG_GPIO_BACK		GPIO_PF(9)	/* SW1 */
+#define CONFIG_GPIO_BACK_ENLEVEL	0
+
+#define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
+#define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
 
 #endif /* __CONFIG_GRUS_H__ */

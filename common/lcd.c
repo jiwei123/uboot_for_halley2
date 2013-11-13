@@ -452,6 +452,16 @@ int drv_lcd_init(void)
 }
 
 /*----------------------------------------------------------------------*/
+void lcd_clear_black(void)
+{
+	unsigned int i;
+	int *lcdbase_p = (int *) gd->fb_base;
+	for (i = 0; i < lcd_line_length * panel_info.vl_row / 4; i++) {
+		*lcdbase_p++ = 0x0;
+	}
+}
+
+/*----------------------------------------------------------------------*/
 void lcd_clear(void)
 {
 #if LCD_BPP == LCD_MONOCHROME
@@ -551,7 +561,12 @@ static int lcd_init(void *lcdbase)
 	lcd_get_size(&lcd_line_length);
 	lcd_line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
 	lcd_is_enabled = 1;
+
+#ifdef CONFIG_CMD_BATTERYDET
+	lcd_clear_black();
+#else
 	lcd_clear();
+#endif
 	lcd_enable();
 
 	/* Initialize the console */

@@ -139,6 +139,58 @@ void gpio_disable_pull(unsigned gpio)
 	writel(1 << pin, GPIO_PXPES(port));
 }
 
+void gpio_as_irq_high_level(unsigned gpio)
+{
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXINTS(port));
+	writel(1 << pin, GPIO_PXMSKC(port));
+	writel(1 << pin, GPIO_PXPAT1C(port));
+	writel(1 << pin, GPIO_PXPAT0S(port));
+}
+
+void gpio_as_irq_low_level(unsigned gpio)
+{
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXINTS(port));
+	writel(1 << pin, GPIO_PXMSKC(port));
+	writel(1 << pin, GPIO_PXPAT1C(port));
+	writel(1 << pin, GPIO_PXPAT0C(port));
+}
+
+void gpio_as_irq_rise_edge(unsigned gpio)
+{
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXINTS(port));
+	writel(1 << pin, GPIO_PXMSKC(port));
+	writel(1 << pin, GPIO_PXPAT1S(port));
+	writel(1 << pin, GPIO_PXPAT0S(port));
+}
+
+void gpio_as_irq_fall_edge(unsigned gpio)
+{
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXINTS(port));
+	writel(1 << pin, GPIO_PXMSKC(port));
+	writel(1 << pin, GPIO_PXPAT1S(port));
+	writel(1 << pin, GPIO_PXPAT0C(port));
+}
+
+void gpio_ack_irq(unsigned gpio)
+{
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXFLGC(port));
+}
+
 void gpio_init(void)
 {
 	int i, n;

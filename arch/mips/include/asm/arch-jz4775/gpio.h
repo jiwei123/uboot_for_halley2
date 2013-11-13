@@ -37,7 +37,7 @@ enum gpio_function {
 	GPIO_FUNC_1     = 0x01,  //0001, GPIO as function 1 / device 1
 	GPIO_FUNC_2     = 0x02,  //0010, GPIO as function 2 / device 2
 	GPIO_FUNC_3     = 0x03,  //0011, GPIO as function 3 / device 3
-	GPIO_INPUT	= 0x06,	 //0110, GPIO as input 
+	GPIO_INPUT	= 0x06,	 //0110, GPIO as input
 };
 
 enum gpio_port {
@@ -108,5 +108,10 @@ void gpio_port_direction_output(int port, int pin, int value);
 void gpio_init(void);
 void gpio_enable_pull(unsigned gpio);
 void gpio_disable_pull(unsigned gpio);
+void gpio_as_irq_high_level(unsigned gpio);
+void gpio_as_irq_low_level(unsigned gpio);
+void gpio_as_irq_rise_edge(unsigned gpio);
+void gpio_as_irq_fall_edge(unsigned gpio);
+void gpio_ack_irq(unsigned gpio);
 
 #endif /* __GPIO_H__ */

@@ -280,6 +280,7 @@ void	lcd_putc(const char c);
 void	lcd_puts(const char *s);
 void	lcd_printf(const char *fmt, ...);
 void	lcd_clear(void);
+void	lcd_clear_black(void);
 int	lcd_display_bitmap(ulong bmp_image, int x, int y);
 
 /**
