@@ -96,9 +96,9 @@ static int get_boot_sel(void)
 {
 	/* Fast boot keys */
 #if defined(CONFIG_CMD_FASTBOOT)
-	if (get_key_status(CONFIG_FASTBOOT_KEY, CONFIG_FASTBOOT_ENLEVEL)
+	if (get_key_status(CONFIG_GPIO_FASTBOOT, CONFIG_GPIO_FASTBOOT_ENLEVEL)
 #ifdef CONFIG_GPIO_USB_DETECT
-	    && get_key_status(CONFIG_GPIO_USB_DETECT, CONFIG_USB_DETECT_ENLEVEL)
+	    && get_key_status(CONFIG_GPIO_USB_DETECT, CONFIG_GPIO_USB_DETECT_ENLEVEL)
 #endif
 	) {
 		return FASTBOOT_RECOVERY_BOOT;
@@ -110,7 +110,7 @@ static int get_boot_sel(void)
 	}
 
 	/* Recovery boot keys */
-	if (get_key_status(CONFIG_RECOVERY_KEY, CONFIG_RECOVERY_ENLEVEL)) {
+	if (get_key_status(CONFIG_GPIO_RECOVERY, CONFIG_GPIO_RECOVERY_ENLEVEL)) {
 		return RECOVERY_BOOT;
 	}
 	return NORMAL_BOOT;

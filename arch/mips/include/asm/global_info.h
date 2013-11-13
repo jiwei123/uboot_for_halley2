@@ -35,7 +35,6 @@ struct global_info {
 	uint32_t uart_base;
 	uint32_t baud_rate;
 #ifdef CONFIG_BURNER
-	struct jz_gpio_func_def gpio_func[MAX_GPIO_FUNC];
 	struct ddr_params ddr_params;
 #endif
 };
