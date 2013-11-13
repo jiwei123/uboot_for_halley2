@@ -192,6 +192,11 @@
 #define CONFIG_JZ_MMC_SPLMSC 0
 #endif
 
+/* USB */
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_JZ_DWC2_UDC
+
 /* I2C */
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */

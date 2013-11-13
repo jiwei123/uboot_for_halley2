@@ -179,7 +179,6 @@
 #define CONFIG_JZ_MMC_MSC1_PE 1
 #ifndef CONFIG_JZ_MMC_SPLMSC
 #define CONFIG_JZ_MMC_SPLMSC 0
-
 #endif
 
 /* USB */

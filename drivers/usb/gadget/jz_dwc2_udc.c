@@ -1540,7 +1540,10 @@ static int udc_read_fifo(struct jz_ep *ep, struct jz_request *req)
 		if (req->req.length <= ep->ep.maxpacket) {
 			is_last = 1;
 		} else {
-			is_last = (req->req.length <= req->req.actual) ? 1 : 0;
+			if (fifo_count <= ep->ep.maxpacket)
+				is_last = 1;
+			else
+				is_last = (req->req.length <= req->req.actual) ? 1 : 0;
 		}
 	}
 

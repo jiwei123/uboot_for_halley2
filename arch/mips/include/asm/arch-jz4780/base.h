@@ -62,6 +62,7 @@
 #define ETHC_BASE	0xB34B0000
 #define BCH_BASE	0xB34D0000
 #define HDMI_BASE	0xB0180000
+#define OTG_BASE	0xb3500000
 
 /* APB BUS Devices Base */
 #define CPM_BASE	0xB0000000
