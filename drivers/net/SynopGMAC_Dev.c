@@ -1119,7 +1119,6 @@ s32 synopGMAC_search_phy (synopGMACdevice * gmacdev) {
  * @param[in] pointer to synopGMACdevice.
  * \return 0 if success else returns the error number.
  */
-#define TR printf
 #if 0
 s32 synopGMAC_check_phy_init (synopGMACdevice * gmacdev)
 {
@@ -1585,7 +1584,7 @@ bool synopGMAC_is_sa_filter_failed(DmaDesc *desc)
  * @param[in] pointer to DmaDesc structure.
  * \return returns true if Dma owns descriptor and false if not.
  */
-bool synopGMAC_is_desc_owned_by_dma(DmaDesc *desc)
+bool synopGMAC_is_desc_owned_by_dma(volatile DmaDesc *desc)
 {
 	return ((desc->status & DescOwnByDma) == DescOwnByDma );
 }

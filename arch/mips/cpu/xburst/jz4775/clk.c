@@ -177,7 +177,7 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 
 	while (cpm_inl(xcdr_addr) & (1 << 28));
 
-	debug("%s: %d mscXcdr%x\n", __func__, rate, cpm_inl(xcdr_addr));
+	debug("%s: %lu mscXcdr%x\n", __func__, rate, cpm_inl(xcdr_addr));
 #endif
 	return 0;
 }

@@ -33,7 +33,6 @@
  * One for each consumer device.
  */
 
-#ifndef CONFIG_SPL_BUILD
 struct regulator {
 	struct list_head list;
 	char *name;
@@ -84,9 +83,8 @@ void *regulator_get_drvdata(struct regulator *);
 int regulator_set_current_limit(struct regulator *regulator,
 			       int min_uA, int max_uA);
 int regulator_get_current_limit(struct regulator *regulator);
-#else
+
 enum regulator_outnum { REGULATOR_CORE = 1, REGULATOR_MEM, REGULATOR_IO };
 int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv);
-#endif
 
 #endif

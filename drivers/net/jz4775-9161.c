@@ -273,7 +273,6 @@ static void jzmac_restart_tx_dma(void)
 static int jz_send(struct eth_device* dev, void *packet, int length)
 {
 	DmaDesc *desc = tx_desc + next_tx;
-	unsigned int dma_status_reg;
 	int ret = 1;
 	int wait_delay = 1000;
 
@@ -330,10 +329,7 @@ static int jz_send(struct eth_device* dev, void *packet, int length)
 static int jz_recv(struct eth_device* dev)
 {
 	volatile DmaDesc *desc;
-	unsigned int dma_status_reg;
-	int ret = 1;
-	int retry = 5;
-	u32 length;
+	int length = -1;
 
 	desc = rx_desc + next_rx;
 
@@ -375,7 +371,7 @@ static int jz_recv(struct eth_device* dev)
 static int jz_init(struct eth_device* dev, bd_t * bd)
 {
 	int i;
-	int phy_id;
+	/* int phy_id; */
 	next_tx = 0;
 	next_rx = 0;
 

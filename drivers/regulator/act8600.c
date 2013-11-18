@@ -27,8 +27,10 @@
 #include <linux/err.h>
 #include <linux/list.h>
 #include <regulator.h>
-#include <power/jz4780_battery.h>
 #include <i2c.h>
+#ifndef CONFIG_SPL_BUILD
+#include <power/jz4780_battery.h>
+#endif
 
 #define ACT8600_I2C_ADDR    0x5a
 static int act8600_write_reg(u8 reg, u8 *val);
@@ -545,7 +547,7 @@ static int act8600_charger_get_current(struct regulator *reg)
 static int act8600_charger_get_voltage (struct regulator *reg)
 {
 	return 0;
-	//return get_battery_voltage();
+	/* return get_battery_voltage(); */
 }
 
 static struct regulator_ops charger_ops = {
@@ -559,6 +561,7 @@ static struct regulator_ops charger_ops = {
 	.get_voltage = act8600_charger_get_voltage,
 };
 
+/*
 static struct charger_ops act8600_battery_ops = {
 	.get_charger_status = act8600_charger_source,
 	.charger_disable = act8600_charger_disable,
@@ -568,6 +571,7 @@ static struct charger_ops act8600_battery_ops = {
 	.set_current = act8600_charger_set_current,
 	.get_current = act8600_charger_get_current,
 };
+*/
 
 int act8600_regulator_init(void)
 {
@@ -586,7 +590,7 @@ int act8600_regulator_init(void)
 					act8600_regulators[i].name);
 	}
 
-//	jz4780_battery_cherger(&act8600_battery_ops);
+	/* jz4780_battery_cherger(&act8600_battery_ops); */
 
 	return 0;
 }

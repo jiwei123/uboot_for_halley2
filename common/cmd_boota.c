@@ -87,7 +87,6 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 {
 	int i;
 	unsigned kernel_actual;
-	unsigned ramdisk_actual;
 	unsigned page_mask;
 	char initrd_param[64];
 	unsigned int pos;
@@ -100,8 +99,11 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 	static u8       *tmpbuf = 0;
 	static u8       cmdline[256] = CONFIG_BOOTARGS;
 
-	if (data_buf != 0 && data_size != 0) {
-		bulk_data_buf = data_buf;
+	if (data_buf == NULL) {
+		return -EINVAL;
+	}
+	bulk_data_buf = data_buf;
+	if (data_size != 0) {
 		dsize = data_size;
 	} else {
 		dsize = bulk_data_size;
@@ -115,7 +117,6 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 
 	page_mask = bootimginfo.page_size - 1;
 	kernel_actual = (bootimginfo.kernel_size + page_mask) & (~page_mask);
-	ramdisk_actual = (bootimginfo.ramdisk_size + page_mask) & (~page_mask);
 	bootimginfo.kernel_addr = (unsigned int)bulk_data_buf;
 	bootimginfo.ramdisk_addr = bootimginfo.kernel_addr + kernel_actual;
 
@@ -131,7 +132,7 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 	param_addr[3] = 0;
 	param_addr[4] = 0;
 	param_addr[5] = CONFIG_PARAM_BASE + 32;
-	param_addr[6] = data_buf;
+	param_addr[6] = (u32)data_buf;
 	tmpbuf = (u8 *)(CONFIG_PARAM_BASE + 32);
 
 	memset(initrd_param, 0, 40);
@@ -162,7 +163,7 @@ void jump_kernel(unsigned long mem_address,unsigned long size)
 	void (*kernel)(int, char **, char *);
 
 	if (ready_for_jump((unsigned char*)mem_address, size) == 0) {
-		printf("Jump to kernel start Addr 0x%x\n\n",mem_address);
+		printf("Jump to kernel start Addr 0x%lx\n\n",mem_address);
 		kernel = (void (*)(int, char **, char *))mem_address;
 		flush_cache_all();
 		/*Jump to kernel image*/
@@ -172,7 +173,7 @@ void jump_kernel(unsigned long mem_address,unsigned long size)
 }
 
 /* boot the android system form the memory directly.*/
-void mem_boot (unsigned int mem_address)
+int mem_boot (unsigned int mem_address)
 {
 	struct boot_img_hdr *bootimginfo;
 	int kernel_actual,ramdisk_actual,size;
@@ -198,6 +199,7 @@ void mem_boot (unsigned int mem_address)
 	size = kernel_actual + ramdisk_actual + page_size;
 	printf("Prepare kernel parameters ...\n");
 	jump_kernel(mem_address,size);
+	return 0;
 }
 
 /* load .img file form mmc,analyze the header of boot.img and then jump to the kernel*/

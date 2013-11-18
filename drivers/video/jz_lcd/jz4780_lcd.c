@@ -365,6 +365,40 @@ static void slcd_set_mcu_register(struct jzfb_config_info *info, unsigned long c
 	slcd_send_mcu_data(info, data);
 }
 
+void lcd_enable(void)
+{
+	unsigned ctrl;
+	if (lcd_enable_state == 0) {
+		reg_write( LCDC_STATE, 0);
+		reg_write( LCDC_DA0, lcd_config_info.fdadr0);
+		ctrl = reg_read( LCDC_CTRL);
+		ctrl |= LCDC_CTRL_ENA;
+		ctrl &= ~LCDC_CTRL_DIS;
+		reg_write( LCDC_CTRL, ctrl);
+		serial_puts("dump_lcdc_registers\n");
+	}
+	lcd_enable_state= 1;
+}
+
+void lcd_disable(void)
+{
+	unsigned ctrl;
+	if (lcd_enable_state == 1) {
+		if (lcd_config_info.lcd_type != LCD_TYPE_LCM) {
+			ctrl = reg_read( LCDC_CTRL);
+			ctrl |= LCDC_CTRL_DIS;
+			reg_write(LCDC_CTRL, ctrl);
+			while(!(reg_read(LCDC_STATE) & LCDC_STATE_LDD));
+		} else {
+			/* SLCD and TVE only support quick disable */
+			ctrl = reg_read(LCDC_CTRL);
+			ctrl &= ~LCDC_CTRL_ENA;
+			reg_write(LCDC_CTRL, ctrl);
+		}
+	}
+	lcd_enable_state = 0;
+}
+
 static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
 {
 	unsigned int is_enabled, i;
@@ -413,40 +447,6 @@ static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
 	if (!is_enabled) {
 		lcd_disable();
 	}
-}
-
-void lcd_enable(void)
-{
-	unsigned ctrl;
-	if (lcd_enable_state == 0) {
-		reg_write( LCDC_STATE, 0);
-		reg_write( LCDC_DA0, lcd_config_info.fdadr0);
-		ctrl = reg_read( LCDC_CTRL);
-		ctrl |= LCDC_CTRL_ENA;
-		ctrl &= ~LCDC_CTRL_DIS;
-		reg_write( LCDC_CTRL, ctrl);
-		serial_puts("dump_lcdc_registers\n");
-	}
-	lcd_enable_state= 1;
-}
-
-void lcd_disable(void)
-{
-	unsigned ctrl;
-	if (lcd_enable_state == 1) {
-		if (lcd_config_info.lcd_type != LCD_TYPE_LCM) {
-			ctrl = reg_read( LCDC_CTRL);
-			ctrl |= LCDC_CTRL_DIS;
-			reg_write(LCDC_CTRL, ctrl);
-			while(!(reg_read(LCDC_STATE) & LCDC_STATE_LDD));
-		} else {
-			/* SLCD and TVE only support quick disable */
-			ctrl = reg_read(LCDC_CTRL);
-			ctrl &= ~LCDC_CTRL_ENA;
-			reg_write(LCDC_CTRL, ctrl);
-		}
-	}
-	lcd_enable_state = 0;
 }
 
 static int jzfb_set_par(struct jzfb_config_info *info)
@@ -566,7 +566,7 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 			     + PAGE_SIZE -1) & ~(PAGE_SIZE -1);
 	if (info->lcd_type == LCD_TYPE_LCM) {
 		int i;
-		unsigned long cmd[2], *ptr;
+		unsigned long cmd[2] = {0, 0}, *ptr;
 
 		ptr = (unsigned long *)info->dma_cmd_buf;
 		cmd[0] = info->smart_config.write_gram_cmd;

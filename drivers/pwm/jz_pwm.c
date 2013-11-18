@@ -21,6 +21,7 @@
 #include <asm/arch/tcu.h>
 #include <config.h>
 #include <asm/io.h>
+#include <common.h>
 
 char pwm_flag = 0;
 

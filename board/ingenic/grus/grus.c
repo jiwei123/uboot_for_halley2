@@ -29,9 +29,16 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 
+extern int act8600_regulator_init(void);
+#ifdef CONFIG_BOOT_ANDROID
+extern void boot_mode_select(void);
+#endif
+
+#if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
 static void battery_init_gpio(void)
 {
 }
+#endif
 
 int board_early_init_f(void)
 {

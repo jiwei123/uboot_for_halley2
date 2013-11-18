@@ -37,7 +37,7 @@ static int hex2asc(int n)
     }
 }
 
-int spl_vsprintf(char *str,char *fmt,va_list ap)
+int spl_vsprintf(char *str,const char *fmt,va_list ap)
 {
    char scratch[16];
 

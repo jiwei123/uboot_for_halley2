@@ -2045,7 +2045,7 @@ bool synopGMAC_is_sof_in_rx_desc(DmaDesc *desc);
 bool synopGMAC_is_eof_in_rx_desc(DmaDesc *desc);
 bool synopGMAC_is_da_filter_failed(DmaDesc *desc);
 bool synopGMAC_is_sa_filter_failed(DmaDesc *desc);
-bool synopGMAC_is_desc_owned_by_dma(DmaDesc *desc);
+bool synopGMAC_is_desc_owned_by_dma(volatile DmaDesc *desc);
 u32 synopGMAC_get_rx_desc_frame_length(u32 status);
 bool synopGMAC_is_desc_valid(u32 status);
 bool synopGMAC_is_desc_empty(DmaDesc *desc);
