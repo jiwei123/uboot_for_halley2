@@ -39,14 +39,8 @@ extern struct jz_uart *uart;
 int board_early_init_f(void)
 {
 #ifndef CONFIG_SPL_BUILD
-	ginfo.extal = CONFIG_SYS_EXTAL;
-	ginfo.cpufreq = CONFIG_SYS_CPU_FREQ;
-	ginfo.ddrfreq = CONFIG_SYS_MEM_FREQ;
-	ginfo.uart_base = CONFIG_SYS_UART_BASE;
-	ginfo.baud_rate = CONFIG_BAUDRATE;
-
-	uart = (struct jz_uart *)CONFIG_SYS_UART_BASE;
-	gd->arch.gi = &ginfo;
+	uart = (struct jz_uart *)(UART0_BASE + gd->arch.gi->uart_idx * 0x1000);
+	gd->arch.gi = (struct global_info *)CONFIG_SPL_GINFO_BASE;
 #endif
 	return 0;
 }

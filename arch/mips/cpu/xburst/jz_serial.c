@@ -45,9 +45,9 @@ struct jz_uart *uart __attribute__ ((section(".data")));
 static int jz_serial_init(void)
 {
 #ifdef CONFIG_BURNER
-	uart = (struct jz_uart *)gd->arch.gi->uart_base;
+	uart = (struct jz_uart *)(UART0_BASE + gd->arch.gi->uart_idx * 0x1000);
 #else
-	uart = (struct jz_uart *)CONFIG_SYS_UART_BASE;
+	uart = (struct jz_uart *)(UART0_BASE + CONFIG_SYS_UART_INDEX * 0x1000);
 #endif
 
 	/* Disable port interrupts while changing hardware */

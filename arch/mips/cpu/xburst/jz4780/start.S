@@ -33,12 +33,11 @@
 	.text
 _start:
 #ifdef CONFIG_SPL_MMC_SUPPORT
-
 	/* magic value ("MSPL") */
 	.word 0x4d53504c
+#endif
 
-#else /* !CONFIG_SPL_MMC_SUPPORT */
-
+#ifdef CONFIG_SPL_NAND_SUPPORT
 	/*
 	 * NAND parameters are stored with plenty of redundancy in the
 	 * first 192 bytes of the first page of the SPL image.
@@ -72,7 +71,7 @@ _start:
 	.space 96, 0xaa
 #endif
 
-#endif /* !CONFIG_SPL_MMC_SUPPORT */
+#endif /* CONFIG_SPL_NAND_SUPPORT */
 
 	/* Invalidate BTB */
 	mfc0	v0, CP0_CONFIG, 7
@@ -142,7 +141,9 @@ cache_alloc_a_line:
 	addiu   t1, t1, CONFIG_SYS_CACHELINE_SIZE
 
 	/* Set up stack */
+#ifdef CONFIG_SPL_STACK
 	li	sp, CONFIG_SPL_STACK
+#endif
 	j	board_init_f
 	nop
 

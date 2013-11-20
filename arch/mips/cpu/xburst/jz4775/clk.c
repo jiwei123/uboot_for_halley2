@@ -251,12 +251,12 @@ void enable_uart_clk(void)
 {
 	unsigned int clkgr = cpm_inl(CPM_CLKGR);
 
-	switch (gd->arch.gi->uart_base) {
+	switch (gd->arch.gi->uart_idx) {
 #define _CASE(U, N) case U: clkgr &= ~N; break
-		_CASE(UART0_BASE, CPM_CLKGR_UART0);
-		_CASE(UART1_BASE, CPM_CLKGR_UART1);
-		_CASE(UART2_BASE, CPM_CLKGR_UART2);
-		_CASE(UART3_BASE, CPM_CLKGR_UART3);
+		_CASE(0, CPM_CLKGR_UART0);
+		_CASE(1, CPM_CLKGR_UART1);
+		_CASE(2, CPM_CLKGR_UART2);
+		_CASE(3, CPM_CLKGR_UART3);
 	default:
 		break;
 	}

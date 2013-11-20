@@ -30,6 +30,7 @@
 #include <asm/cacheops.h>
 #include <asm/reboot.h>
 #include <asm/io.h>
+#include <asm/arch/wdt.h>
 
 #define cache_op(op, addr)		\
 	__asm__ __volatile__(		\
@@ -43,6 +44,21 @@
 
 void __attribute__((weak)) _machine_restart(void)
 {
+	int time = RTC_FREQ / WDT_DIV * RESET_DELAY_MS / 1000;
+
+	if(time > 65535)
+		time = 65535;
+
+	writel(TSCR_WDTSC, TCU_BASE + TCU_TSCR);
+
+	writel(0, WDT_BASE + WDT_TCNT);
+	writel(time, WDT_BASE + WDT_TDR);
+	writel(TCSR_PRESCALE | TCSR_RTC_EN, WDT_BASE + WDT_TCSR);
+	writel(0,WDT_BASE + WDT_TCER);
+
+	printf("reset in %dms", RESET_DELAY_MS);
+	writel(TCER_TCEN,WDT_BASE + WDT_TCER);
+	mdelay(1000);
 }
 
 int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])

@@ -32,7 +32,7 @@ struct global_info {
 	uint32_t cpufreq;
 	uint32_t ddrfreq;
 	uint32_t ddr_div;
-	uint32_t uart_base;
+	uint32_t uart_idx;
 	uint32_t baud_rate;
 #ifdef CONFIG_BURNER
 	struct ddr_params ddr_params;
