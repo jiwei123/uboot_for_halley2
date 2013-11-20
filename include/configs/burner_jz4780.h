@@ -55,39 +55,8 @@
  */
 #define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
 
-#ifdef CONFIG_BOOT_ANDROID
-  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
-#else
-  #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
-  #else
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
-  #endif
-#endif
-
-/**
- * Boot command definitions.
- */
 #define CONFIG_BOOTDELAY 1
-#ifdef CONFIG_BOOT_ANDROID
-  #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "boota mmc 0 0x80f00000 6144"
-    #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
-  #else
-    #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
-    #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
-  #endif
-#else  /* CONFIG_BOOT_ANDROID */
-  #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
-  #else
-    #define CONFIG_BOOTCOMMAND						\
-	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
-	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
-  #endif
-#endif /* CONFIG_BOOT_ANDROID */
+#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
 
 /**
  * Drivers configuration.
@@ -246,17 +215,14 @@
  */
 #define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_STACK		0x80003000 /* 12K stack_size */
-#define CONFIG_SPL_BSS_START_ADDR	0x80003000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x1000 /* stack_size + bss_size <= CONFIG_SYS_DCACHE_SIZE */
 
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(TOPDIR)/board/$(BOARDDIR)/u-boot-spl.lds"
 #define CONFIG_SPL_PAD_TO		15872 /* u-boot start addr - mbr size(512) */
 
-#define CONFIG_SPL_GINFO_BASE		0xf4003800
-#define CONFIG_SPL_GINFO_SIZE		0x200
+#define CONFIG_SPL_GINFO_BASE		0xf4000800
+#define CONFIG_SPL_GINFO_SIZE		0x800
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
@@ -268,32 +234,10 @@
 #define CONFIG_SPL_BOARD_INIT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
 #define CONFIG_SPL_GPIO_SUPPORT
-#define CONFIG_SPL_I2C_SUPPORT
-#define CONFIG_SPL_REGULATOR_SUPPORT
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
-
-#define CONFIG_SPL_TEXT_BASE		0xf4000a00
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0xa00)
-
+#define CONFIG_SPL_TEXT_BASE		0xf4001000
+#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x1000)
 #define CONFIG_SPL_SERIAL_SUPPORT
-
-#else /* !CONFIG_SPL_MMC_SUPPORT */
-
-#define CONFIG_SPL_NAND_SUPPORT
-#define CONFIG_SPL_NAND_BASE
-#define CONFIG_SPL_NAND_DRIVERS
-#define CONFIG_SPL_NAND_SIMPLE
-#define CONFIG_SPL_NAND_LOAD
-
-#define CONFIG_SPL_TEXT_BASE		0xf4000800
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800 - 0x200)
-
-/* the NAND SPL is small enough to enable serial */
-#define CONFIG_SPL_SERIAL_SUPPORT
-#define CONFIG_SPL_LIBCOMMON_SUPPORT
-
-#endif /* !CONFIG_SPL_MMC_SUPPORT */
 
 /**
  * Burner
