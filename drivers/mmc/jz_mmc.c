@@ -156,6 +156,10 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 			jz_mmc_writel(val, priv, MSC_TXFIFO);
 			buf += 4;
 		}
+		while (!(jz_mmc_readl(priv, MSC_STAT) & (1 << 13)));
+		jz_mmc_writel((1 << 1), priv, MSC_IREG);
+		while (!(jz_mmc_readl(priv, MSC_IREG) & (1 << 0)));
+		jz_mmc_writel((1 << 0), priv, MSC_IREG);
 	} else if (data && (data->flags & MMC_DATA_READ)) {
 		/* read the data */
 		int sz = data->blocks * data->blocksize;
@@ -183,6 +187,8 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 				stat = jz_mmc_readl(priv, MSC_STAT);
 			} while (!(stat & MSC_STAT_DATA_FIFO_EMPTY));
 		} while (!(stat & MSC_STAT_DATA_TRAN_DONE));
+	while (!(jz_mmc_readl(priv, MSC_IREG) & (1 << 0)));
+	jz_mmc_writel((1 << 0), priv, MSC_IREG);
 	}
 
 	return 0;
