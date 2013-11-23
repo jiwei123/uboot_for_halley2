@@ -304,20 +304,22 @@ void sdram_init(void)
 #ifndef CONFIG_DDR_HOST_CC
 	struct ddrc_reg ddrc;
 	struct ddrp_reg ddrp;
+	int type = VARIABLE;
   #ifndef CONFIG_DDR_TYPE_VARIABLE
 	struct ddr_params ddr_params;
     #ifdef CONFIG_DDR_TYPE_DDR3
-	int type = DDR3;
+	type = DDR3;
     #elif defined(CONFIG_DDR_TYPE_LPDDR)
-	int type = LPDDR;
+	type = LPDDR;
     #elif defined(CONFIG_DDR_TYPE_LPDDR2)
-	int type = LPDDR2;
+	type = LPDDR2;
     #endif /* CONFIG_DDR_TYPE_DDR3 */
-	fill_in_params(&ddr_params, type);
 	ddr_params_p = &ddr_params;
   #else
 	ddr_params_p = &gd->arch.gi->ddr_params;
+	ddr_params_p->freq = gd->arch.gi->cpufreq / gd->arch.gi->ddr_div;
   #endif
+	fill_in_params(ddr_params_p, type);
 	ddr_params_creator(&ddrc, &ddrp, ddr_params_p);
 	ddr_params_assign(&ddrc, &ddrp, ddr_params_p);
 #endif /* CONFIG_DDR_HOST_CC */

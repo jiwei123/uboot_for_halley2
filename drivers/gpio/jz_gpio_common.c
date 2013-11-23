@@ -34,6 +34,8 @@
 /* TO DO */
 #endif
 
+DECLARE_GLOBAL_DATA_PTR;
+
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 {
 	unsigned int base = GPIO_BASE + 0x100 * n;
@@ -194,11 +196,15 @@ void gpio_ack_irq(unsigned gpio)
 void gpio_init(void)
 {
 	int i, n;
+	struct jz_gpio_func_def *g;
 
 	n = ARRAY_SIZE(gpio_func);
 
 	for (i = 0; i < n; i++) {
-		struct jz_gpio_func_def *g = &gpio_func[i];
+		g = &gpio_func[i];
 		gpio_set_func(g->port, g->func, g->pins);
 	}
+
+	g = &uart_gpio_func[gd->arch.gi->uart_idx];
+	gpio_set_func(g->port, g->func, g->pins);
 }
