@@ -26,6 +26,7 @@
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
+#include <asm/mipsregs.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/cpm.h>
 #include <spl.h>
@@ -105,6 +106,8 @@ void board_init_f(ulong dummy)
 
 	debug("board_init_r\n");
 	board_init_r(NULL, 0);
+#else
+	printf("run firmware finished\n");
 #endif
 }
 

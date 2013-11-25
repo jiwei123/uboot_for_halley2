@@ -97,16 +97,6 @@ _start:
 	ori	t1, t1, 0x22
 	sw	t1, 0x24(t0)
 
-	/* Initialize GOT pointer.
-	*/
-	bal     1f
-	nop
-/*	.word   _GLOBAL_OFFSET_TABLE_ */
-	1:
-	move    gp, ra
-	lw      t1, 0(ra)
-	move	gp, t1
-
 init_caches:
 	li	t0, CONF_CM_CACHABLE_NONCOHERENT
 	mtc0	t0, CP0_CONFIG
