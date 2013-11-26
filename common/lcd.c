@@ -672,7 +672,11 @@ void bitmap_plot(int x, int y)
 	ushort *cmap = (ushort *)bmp_logo_palette;
 #endif
 	ushort i, j;
-	uchar *bmap;
+#if (BMP_LOGO_NBIT == 24)
+	unsigned int *bmap;
+#else
+	unsigned char *bmap;
+#endif
 	uchar *fb;
 	ushort *fb16;
 	uint *fb32;
@@ -762,12 +766,15 @@ void bitmap_plot(int x, int y)
 
 				for (j=0; j<BMP_LOGO_WIDTH; j++) {
 					col16 = bmp_logo_palette[(bmap[j]-16)];
-				/*the bitmap is 12bit,4bit each color.we should change the 12bit to 24bit(888)*/
+					/*the bitmap is 12bit,4bit each color.we should change the 12bit to 24bit(888)*/
+#if (BMP_LOGO_NBIT == 24)
+					fb32[j] = bmp_logo_bitmap[BMP_LOGO_WIDTH * (BMP_LOGO_HEIGHT - i - 1) + j];
+#else
 					fb32[j] =
 						((col16 & 0x000F) << 4) |
 						((col16 & 0x00F0) << 8) |
 						((col16 & 0x0F00) << 12);
-
+#endif
 				}
 				bmap += BMP_LOGO_WIDTH;
 				fb32 += panel_info.vl_col;

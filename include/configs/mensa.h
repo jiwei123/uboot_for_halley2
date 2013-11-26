@@ -240,7 +240,7 @@
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_FASTBOOT
-/* #define CONFIG_CMD_BATTERYDET */	/* detect battery and show charge logo */
+/* #define CONFIG_CMD_BATTERYDET */  	/* detect battery and show charge logo */
 
 /**
  * Serial download configuration
@@ -270,7 +270,7 @@
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
-#define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(2 * 1024 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
@@ -397,4 +397,11 @@
 #define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
 #define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
 
+/* TEST
+#define CONFIG_GPIO_DC_DETECT           GPIO_PG(10)
+#define CONFIG_GPIO_DC_DETECT_ENLEVEL   1
+
+#define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
+#define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
+*/
 #endif /* __CONFIG_MENSA_H__ */
