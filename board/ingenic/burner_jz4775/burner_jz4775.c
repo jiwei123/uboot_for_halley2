@@ -39,8 +39,8 @@ extern struct jz_uart *uart;
 int board_early_init_f(void)
 {
 #ifndef CONFIG_SPL_BUILD
-	uart = (struct jz_uart *)(UART0_BASE + gd->arch.gi->uart_idx * 0x1000);
 	gd->arch.gi = (struct global_info *)CONFIG_SPL_GINFO_BASE;
+	uart = (struct jz_uart *)(UART0_BASE + gd->arch.gi->uart_idx * 0x1000);
 #endif
 	return 0;
 }

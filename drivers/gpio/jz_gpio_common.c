@@ -197,14 +197,21 @@ void gpio_init(void)
 {
 	int i, n;
 	struct jz_gpio_func_def *g;
-
+#ifndef CONFIG_BURNER
 	n = ARRAY_SIZE(gpio_func);
 
 	for (i = 0; i < n; i++) {
 		g = &gpio_func[i];
 		gpio_set_func(g->port, g->func, g->pins);
 	}
+#else
+	n = gd->arch.gi->nr_gpio_func;
 
+	for (i = 0; i < n; i++) {
+		g = &gd->arch.gi->gpio[i];
+		gpio_set_func(g->port, g->func, g->pins);
+	}
+#endif
 	g = &uart_gpio_func[gd->arch.gi->uart_idx];
 	gpio_set_func(g->port, g->func, g->pins);
 }

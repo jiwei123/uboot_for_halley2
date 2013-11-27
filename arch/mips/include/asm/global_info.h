@@ -25,8 +25,6 @@
 #include <ddr/ddr_params.h>
 #include <asm/gpio.h>
 
-#define MAX_GPIO_FUNC		12
-
 struct global_info {
 	uint32_t extal;
 	uint32_t cpufreq;
@@ -36,6 +34,8 @@ struct global_info {
 	uint32_t baud_rate;
 #ifdef CONFIG_BURNER
 	struct ddr_params ddr_params;
+	uint32_t nr_gpio_func;
+	struct jz_gpio_func_def gpio[0];
 #endif
 };
 
