@@ -483,7 +483,7 @@ enum ep0_state {
 
 /* Device Endpoint-N Control Register (DIEPCTLn/DOEPCTLn) */
 #define DIEPCTL_TX_FIFO_NUM(x)                    (x << 22)
-#define DIEPCTL_TX_FIFO_NUM_MASK                  (~DIEPCTL_TX_FIFO_NUM(0xF))
+#define DIEPCTL_TX_FIFO_NUM_MASK                  (DIEPCTL_TX_FIFO_NUM(0xF))
 
 /* Device ALL Endpoints Interrupt Register (DAINT) */
 #define DAINT_IN_EP_INT(x)                        (x << 0)
