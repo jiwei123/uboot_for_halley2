@@ -54,7 +54,7 @@ static void caculate_tck(struct ddr_params *params)
 	tck_g.ns = params->tck.ns;
 }
 
-static unsigned int sdram_size(int cs, struct ddr_params *p)
+unsigned int sdram_size(int cs, struct ddr_params *p)
 {
 	unsigned int dw = p->dw32 ? 4 : 2;
 	unsigned int banks = p->bank8 ? 8 : 4;

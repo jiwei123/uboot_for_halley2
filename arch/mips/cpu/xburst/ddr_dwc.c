@@ -31,7 +31,9 @@
 #include <asm/arch/clk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+extern unsigned int sdram_size(int cs, struct ddr_params *p);
 struct ddr_params *ddr_params_p = NULL;
+
 #ifdef DUMP_DDR
 static void dump_ddrc_register(void)
 {
@@ -349,5 +351,20 @@ void sdram_init(void)
 
 phys_size_t initdram(int board_type)
 {
+#ifdef CONFIG_DDR_HOST_CC
+	/* SDRAM size was calculated when compiling. */
 	return DDR_CHIP_0_SIZE + DDR_CHIP_1_SIZE;
+#elif defined (CONFIG_BURNER)
+	/* SDRAM size was defined in global info. */
+	ddr_params_p = &gd->arch.gi->ddr_params;
+	return ddr_params_p->size.chip0 + ddr_params_p->size.chip1;
+#else
+	ddr_params_p->dw32 = CONFIG_DDR_DW32;
+	ddr_params_p->bank8 = DDR_BANK8;
+	ddr_params_p->cs0 = CONFIG_DDR_CS0;
+	ddr_params_p->cs1 = CONFIG_DDR_CS1;
+	ddr_params_p->row = DDR_ROW;
+	ddr_params_p->col = DDR_COL;
+	return sdram_size(0, ddr_params_p) + sdram_size(1, ddr_params_p);
+#endif
 }
