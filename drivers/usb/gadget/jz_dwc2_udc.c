@@ -19,8 +19,14 @@
  * MA 02111-1307 USA
  */
 
-#define DEBUG_SETUP 0
-#define DEBUG_INTR 0
+#if 1
+#define DEBUG_SETUP	0
+#define DEBUG_INTR	0
+#else
+#define DEBUG_SETUP	1
+#define DEBUG_INTR	1
+#endif
+#define	DEBUG_REG	0
 
 #include <common.h>
 #include <malloc.h>
@@ -97,7 +103,10 @@ struct jz_ep {
 struct jz_request {
 	struct usb_request req;
 	struct list_head queue;
-	bool	is_last;
+	bool	is_write_last;
+	bool	is_read_last;
+	u32	write_pktcnt;
+	u32	read_pktcnt;
 };
 
 struct jz_udc {
@@ -118,15 +127,56 @@ struct jz_udc {
 
 struct jz_udc	*the_controller;
 
-static inline int udc_read_reg(unsigned int addr)
-{
-	return readl(OTG_BASE + addr);
-}
+#define	udc_read_reg(addr)	readl(OTG_BASE + addr)
 
-static inline void udc_write_reg(int value, unsigned int addr)
+#define udc_write_reg(value, addr)	writel(value, OTG_BASE + addr)
+
+#if 1
+static void pri_glb_reg(void)
+{}
+
+static void pri_dev_reg(u32 n)
+{}
+#else
+static void pri_glb_reg(void)
 {
-	writel(value, OTG_BASE + addr);
+	printf("\n\n==============Now the global REG status==========\n");
+	printf("GOTGCTL		= 0x%08x\n", udc_read_reg(GOTG_CTL));
+	printf("GOTGINT		= 0x%08x\n", udc_read_reg(GOTG_INTR));
+	printf("GAHBCFG		= 0x%08x\n", udc_read_reg(GAHB_CFG));
+	printf("GUSBCFG = 0x%08x\n", udc_read_reg(GUSB_CFG));
+	printf("GRSTCTL = 0x%08x\n", udc_read_reg(GRST_CTL));
+	printf("GINTSTS = 0x%08x\n", udc_read_reg(GINT_STS));
+	printf("GINTMSK = 0x%08x\n", udc_read_reg(GINT_MASK));
+	printf("GRXSTSR = 0x%08x\n", udc_read_reg(GRXSTS_READ));
+	//printf("GRXSTSPOP = 0x%08x\n", udc_read_reg(GRXSTS_POP));
+	printf("GRXFSIZ = 0x%08x\n", udc_read_reg(GRXFIFO_SIZE));
+	printf("GNPTXFIFO_SIZE = 0x%08x\n", udc_read_reg(GNPTXFIFO_SIZE));
+	printf("GHW_CFG1 = 0x%08x\n", udc_read_reg(GHW_CFG1));
+	printf("GHW_CFG2 = 0x%08x\n", udc_read_reg(GHW_CFG2));
+	printf("GHW_CFG3 = 0x%08x\n", udc_read_reg(GHW_CFG3));
+	printf("GHW_CFG4 = 0x%08x\n", udc_read_reg(GHW_CFG4));
+	printf("GDFIFO_CFG = 0x%08x\n", udc_read_reg(GDFIFO_CFG));
 }
+static void pri_dev_reg(u32 n)
+{
+	printf("\n\n==============Now the device REG status==========\n");
+	printf("DCFG = 0x%08x\n", udc_read_reg(OTG_DCFG));
+	printf("DCTL = 0x%08x\n", udc_read_reg(OTG_DCTL));
+	printf("DSTS = 0x%08x\n", udc_read_reg(OTG_DSTS));
+	printf("DIEP_MASK = 0x%08x\n", udc_read_reg(DIEP_MASK));
+	printf("DOEP_MASK = 0x%08x\n", udc_read_reg(DOEP_MASK));
+	printf("DAINT = 0x%08x\n", udc_read_reg(OTG_DAINT));
+	printf("DIEP_EMPMSK = 0x%08x\n", udc_read_reg(DIEP_EMPMSK));
+	printf("DIEP_CTL(%d) = 0x%08x\n",n, udc_read_reg(DIEP_CTL(n)));
+	printf("DOEP_CTL(%d) = 0x%08x\n",n, udc_read_reg(DOEP_CTL(n)));
+	printf("DIEP_INT(%d) = 0x%08x\n",n, udc_read_reg(DIEP_INT(n)));
+	printf("DOEP_INT(%d) = 0x%08x\n",n, udc_read_reg(DOEP_INT(n)));
+	printf("DIEP_SIZE(%d) = 0x%08x\n",n, udc_read_reg(DIEP_SIZE(n)));
+	printf("DOEP_SIZE(%d) = 0x%08x\n",n, udc_read_reg(DOEP_SIZE(n)));
+	printf("DIEP_TXFSTS(%d) = 0x%08x\n",n, udc_read_reg(DIEP_TXFSTS(n)));
+}
+#endif
 
 static void cpm_enable_otg_phy(struct jz_udc *dev)
 {
@@ -335,7 +385,8 @@ static void dwc_otg_device_init(struct jz_udc *dev)
 
 
 	udc_write_reg(DEP_RXFIFO_SIZE, GRXFIFO_SIZE);
-	udc_write_reg((DEP_NPTXFIFO_SIZE << 16) | DEP_RXFIFO_SIZE, GNPTXFIFO_SIZE);
+	udc_write_reg((DEP_NPTXFIFO_SIZE << 16) | DEP_RXFIFO_SIZE,
+			GNPTXFIFO_SIZE);
 	udc_write_reg((DEP_DTXFIFO_SIZE << 16) |
 			(DEP_RXFIFO_SIZE + DEP_NPTXFIFO_SIZE), GDTXFIFO_SIZE);
 
@@ -492,7 +543,7 @@ static void udc_done(struct jz_ep *ep, struct jz_request *req, int status)
 {
 	unsigned int stopped = ep->stopped;
 
-	debug("%s: %s %p, req = %p, stopped = %d\n",
+	debug_cond(DEBUG_INTR != 0, "%s: %s %p, req = %p, stopped = %d\n",
 	      __func__, ep->ep.name, ep, &req->req, stopped);
 
 	list_del_init(&req->queue);
@@ -503,7 +554,7 @@ static void udc_done(struct jz_ep *ep, struct jz_request *req, int status)
 		status = req->req.status;
 
 	if (status && status != -ESHUTDOWN) {
-		debug("complete %s req %p stat %d len %u/%u\n",
+		printf("complete %s req %p stat %d len %u/%u\n",
 		      ep->ep.name, &req->req, status,
 		      req->req.actual, req->req.length);
 	}
@@ -515,7 +566,7 @@ static void udc_done(struct jz_ep *ep, struct jz_request *req, int status)
 	req->req.complete(&ep->ep, &req->req);
 	spin_lock(&ep->dev->lock);
 
-	debug("callback completed\n");
+	debug_cond(DEBUG_INTR != 0, "callback completed\n");
 
 	ep->stopped = stopped;
 }
@@ -527,7 +578,7 @@ static void nuke(struct jz_ep *ep, int status)
 {
 	struct jz_request *req;
 
-	debug("%s: %s %p\n", __func__, ep->ep.name, ep);
+	printf("%s: %s %p\n", __func__, ep->ep.name, ep);
 
 	/* called with irqs blocked */
 	while (!list_empty(&ep->queue)) {
@@ -611,16 +662,10 @@ static void dwc_set_in_nak(int epnum)
 static void jz_udc_ep_activate(struct jz_ep *ep)
 {
 	u32		reg_tmp;
-	u32		reg;
 	u32		eptype;
 	u32		epnum;
 
 	epnum = ep->bEndpointAddress & 0x7f;
-
-	if (ep_is_in(ep)) {
-		reg = DIEP_CTL(epnum);
-	} else
-		reg = DOEP_CTL(epnum);
 
 	switch (ep->ep_type) {
 	case ep_control:
@@ -638,22 +683,30 @@ static void jz_udc_ep_activate(struct jz_ep *ep)
 		return;
 	}
 
-	reg_tmp = udc_read_reg(reg);
+	if (ep_is_in(ep)) {
+		reg_tmp = udc_read_reg(DIEP_CTL(epnum));
+	} else {
+		reg_tmp = udc_read_reg(DOEP_CTL(epnum));
+	}
 
 	reg_tmp &= ~DEPCTL_MPS_MASK;
-	reg_tmp |= ep->ep.maxpacket << DEPCTL_MPS_BIT;
+	reg_tmp |= (ep->ep.maxpacket << DEPCTL_MPS_BIT);
 
 	reg_tmp |= DEPCTL_USBACTEP;
 
 	reg_tmp |= DEPCTL_SETD0PID;
 
 	reg_tmp &=~ DEPCTL_TYPE_MASK;
-	reg_tmp |= eptype << DEPCTL_TYPE_BIT;
+	reg_tmp |= (eptype << DEPCTL_TYPE_BIT);
 
 	reg_tmp &= ~DIEPCTL_TX_FIFO_NUM_MASK;
 	reg_tmp |= DIEPCTL_TX_FIFO_NUM(ep->fifo_num);
 
-	udc_write_reg(reg_tmp, reg);
+	if (ep_is_in(ep)) {
+		udc_write_reg(reg_tmp, DIEP_CTL(epnum));
+	} else {
+		udc_write_reg(reg_tmp, DOEP_CTL(epnum));
+	}
 }
 
 static void jz_udc_set_nak(struct jz_ep *ep)
@@ -718,8 +771,6 @@ static int jz_ep_enable(struct usb_ep *_ep,
 	struct jz_udc *dev;
 	unsigned long flags;
 
-	debug("%s: %p\n", __func__, _ep);
-
 	ep = container_of(_ep, struct jz_ep, ep);
 	if (!_ep || !desc || ep->desc || _ep->name == ep0name
 			|| desc->bDescriptorType != USB_DT_ENDPOINT
@@ -727,7 +778,7 @@ static int jz_ep_enable(struct usb_ep *_ep,
 			|| ep_maxpacket(ep) <
 			le16_to_cpu(get_unaligned(&desc->wMaxPacketSize))) {
 
-		debug("%s: bad ep or descriptor\n", __func__);
+		printf("%s: bad ep or descriptor\n", __func__);
 		return -EINVAL;
 	}
 
@@ -737,7 +788,7 @@ static int jz_ep_enable(struct usb_ep *_ep,
 	    && desc->bmAttributes != USB_ENDPOINT_XFER_INT) {
 
 
-		debug("%s: %s type mismatch\n", __func__, _ep->name);
+		printf("%s: %s type mismatch\n", __func__, _ep->name);
 		return -EINVAL;
 	}
 
@@ -746,14 +797,14 @@ static int jz_ep_enable(struct usb_ep *_ep,
 	     && le16_to_cpu(get_unaligned(&desc->wMaxPacketSize)) !=
 	     ep_maxpacket(ep)) || !get_unaligned(&desc->wMaxPacketSize)) {
 
-		debug("%s: bad %s maxpacket\n", __func__, _ep->name);
+		printf("%s: bad %s maxpacket\n", __func__, _ep->name);
 		return -ERANGE;
 	}
 
 	dev = ep->dev;
 	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN) {
 
-		debug("%s: bogus device state\n", __func__);
+		printf("%s: bogus device state\n", __func__);
 		return -ESHUTDOWN;
 	}
 
@@ -770,7 +821,7 @@ static int jz_ep_enable(struct usb_ep *_ep,
 	jz_udc_ep_activate(ep);
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
 
-	debug("%s: enabled %s, stopped = %d, maxpacket = %d\n",
+	debug_cond(DEBUG_SETUP != 0, "%s: enabled %s, stopped = %d, maxpacket = %d\n",
 	      __func__, _ep->name, ep->stopped, ep->ep.maxpacket);
 	return 0;
 
@@ -806,11 +857,11 @@ static int jz_ep_disable(struct usb_ep *_ep)
 	struct jz_ep *ep;
 	unsigned long flags;
 
-	debug("%s: %p\n", __func__, _ep);
+	printf("%s: %p\n", __func__, _ep);
 
 	ep = container_of(_ep, struct jz_ep, ep);
 	if (!_ep || !ep->desc) {
-		debug("%s: %s not enabled\n", __func__,
+		printf("%s: %s not enabled\n", __func__,
 		      _ep ? ep->ep.name : NULL);
 		return -EINVAL;
 	}
@@ -825,7 +876,7 @@ static int jz_ep_disable(struct usb_ep *_ep)
 
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
 
-	debug("%s: disabled %s\n", __func__, _ep->name);
+	printf("%s: disabled %s\n", __func__, _ep->name);
 	return 0;
 
 }
@@ -855,16 +906,31 @@ static void jz_free_request(struct usb_ep *ep, struct usb_request *_req)
 	kfree(req);
 }
 
-void handle_ep_status_in_phase(int epnum)
+static void handle_ep_data(struct jz_ep *ep, struct jz_request *req,
+		u32 *pktcnt, u32 *xfersize)
 {
-	u32 reg_tmp;
-
-	udc_write_reg(DOEPSIZE0_PKTCNT_BIT, DIEP_SIZE(epnum));
-	reg_tmp = udc_read_reg(DIEP_CTL(epnum));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
-	udc_write_reg(reg_tmp, DIEP_CTL(epnum));
+	if (ep->ep.maxpacket > 512) {
+		if ((req->req.length - req->req.actual) > 0x7ffff) {
+			*xfersize = 0x7ffff;
+		} else {
+			*xfersize = req->req.length;
+		}
+		*pktcnt = (*xfersize + ep->ep.maxpacket  - 1) / (ep->ep.maxpacket);
+	} else {
+		*pktcnt = ((req->req.length - req->req.actual) + ep->ep.maxpacket  - 1) /
+			(ep->ep.maxpacket);
+		if (*pktcnt > 0x3ff) {
+			*pktcnt = 0x3ff;
+			*xfersize = *pktcnt * ep->ep.maxpacket;
+		} else {
+			*xfersize = req->req.length - req->req.actual;
+		}
+		debug_cond(DEBUG_INTR != 0, "%s: req->req.length = %d, actual = %d\n",
+				__func__, req->req.length, req->req.actual);
+	}
 }
 
+/* FIXME: the pkcnt > 0x3ff, and xfersize > 0x7ffff, How to deal with this case? */
 static void handle_ep_data_in_phase(struct jz_ep *ep, struct jz_request *req)
 {
         u32 pktcnt, xfersize;
@@ -878,43 +944,89 @@ static void handle_ep_data_in_phase(struct jz_ep *ep, struct jz_request *req)
 	epnum = ep->bEndpointAddress & 0x7f;
 	debug_cond(DEBUG_INTR != 0, "%s: epnum is %d\n", __func__, epnum);
 
-	xfersize = req->req.length;
-	debug_cond(DEBUG_INTR != 0, "%s: xfersize is %d\n", __func__, xfersize);
-
-	if (xfersize) {
-		pktcnt = (xfersize + ep->ep.maxpacket  - 1) / (ep->ep.maxpacket);
-		debug_cond(DEBUG_INTR != 0, "%s: pktcnt is %d\n", __func__, pktcnt);
-		if (pktcnt > 1023) {
-			printf("%s: Fatal error...size is more than 1023\n", __func__);
-			while(1);
-		}
+	if (req->req.length) {
+		handle_ep_data(ep, req, &pktcnt, &xfersize);
 	} else {
 		debug_cond(DEBUG_INTR != 0, "%s: Deal with zero package\n", __func__);
 		pktcnt = 1;
+		req->is_write_last = 1;
+	}
+	req->write_pktcnt = pktcnt;
+	debug_cond(DEBUG_INTR != 0, "%s: the pktcnt is %d, xfersize is %d\n",
+			__func__, pktcnt, xfersize);
+
+	debug_cond(DEBUG_INTR != 0, "pkcnt = %d, xfersize = %d\n", pktcnt, xfersize);
+	udc_write_reg(pktcnt << 19 | xfersize, DIEP_SIZE(epnum));
+
+	reg_tmp = udc_read_reg(DIEP_CTL(epnum));
+	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+	udc_write_reg(reg_tmp, DIEP_CTL(epnum));
+	debug_cond(DEBUG_REG != 0, "%s: IEP_CTL is 0x%x, epnum is %d\n",
+			__func__, udc_read_reg(DIEP_CTL(epnum)),epnum);
+
+	reg_tmp = udc_read_reg(DIEP_EMPMSK);
+	reg_tmp |= (1 << epnum);
+	udc_write_reg(reg_tmp, DIEP_EMPMSK);
+}
+
+static void handle_ep_data_out_phase(struct jz_ep *ep, struct jz_request *req)
+{
+        u32 pktcnt, xfersize;
+	u32 epnum;
+	u32 reg_tmp;
+
+	if ((!ep) || (!req)) {
+		debug_cond(DEBUG_INTR != 0, "%s:Error ep or req is NULL\n", __func__);
+		return ;
+	}
+	epnum = ep->bEndpointAddress & 0x7f;
+	debug_cond(DEBUG_INTR != 0, "%s: epnum is %d\n", __func__, epnum);
+
+	if (!req->req.length) {
+		printf("%s: Warning: The request length is 0, yes?\n", __func__);
+		return;
 	}
 
-		udc_write_reg(pktcnt << 19 | xfersize, DIEP_SIZE(epnum));
+	handle_ep_data(ep, req, &pktcnt, &xfersize);
+	debug_cond(DEBUG_INTR != 0, "%s: the pktcnt is %d = 0x%x, xfersize is %d = 0x%x\n",
+			__func__, pktcnt, pktcnt, xfersize, xfersize);
+	debug_cond(DEBUG_INTR != 0, "%s: the pktcnt is %d, xfersize is %d",
+			__func__, pktcnt, xfersize);
+	req->read_pktcnt = pktcnt;
 
-		reg_tmp = udc_read_reg(DIEP_CTL(epnum));
-		reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
-		udc_write_reg(reg_tmp, DIEP_CTL(epnum));
-		debug_cond(DEBUG_INTR != 0, "%s: IEP_CTL is 0x%x, epnum is %d\n",
-				__func__, udc_read_reg(DIEP_CTL(epnum)),epnum);
+	udc_write_reg(pktcnt << 19 | xfersize, DOEP_SIZE(epnum));
 
-		reg_tmp = udc_read_reg(DIEP_EMPMSK);
-		reg_tmp |= (1 << epnum);
-		udc_write_reg(reg_tmp, DIEP_EMPMSK);
+	reg_tmp = udc_read_reg(DOEP_CTL(epnum));
+	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+	udc_write_reg(reg_tmp, DOEP_CTL(epnum));
 }
 
 static inline int read_ep_fifo(unsigned int addr, unsigned char *buf, unsigned int len)
 {
 	unsigned int	*buf_tmp = (unsigned int *)buf;
 	unsigned int	total = (len + 3) / 4;
+	unsigned int	remain = 4 - len % 4;
 
 	while (total--) {
 		*buf_tmp = udc_read_reg(addr);
-		debug_cond(DEBUG_INTR != 0, "%s: read buf is 0x%x\n", __func__, *buf_tmp);
+		debug_cond(DEBUG_INTR >= 7, "%s: read buf is 0x%x\n", __func__, *buf_tmp);
 		buf_tmp++;
+	}
+
+	buf_tmp--;
+
+	switch (remain)	{
+	case 1:
+		*buf_tmp &= 0x00ffffff;
+		break;
+	case 2:
+		*buf_tmp &= 0x0000ffff;
+		break;
+	case 3:
+		*buf_tmp &= 0x000000ff;
+		break;
+	default:
+		break;
 	}
 
 	return 0;
@@ -930,10 +1042,11 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 
 	req = container_of(_req, struct jz_request, req);
 	if (unlikely(!_req || !_req->complete || !_req->buf
-		     || !list_empty(&req->queue))) {
+				|| !list_empty(&req->queue))) {
 
-		printf("req = %p, _req->complete = %p, _req->buf = %p, list = %d\n",_req,_req->complete,_req->buf,!list_empty(&req->queue));
-		debug_cond(DEBUG_INTR != 0, "%s: bad params\n", __func__);
+		printf("req = %p, _req->complete = %p, _req->buf = %p, list = %d\n",
+				_req,_req->complete,_req->buf,!list_empty(&req->queue));
+		printf("%s: bad params\n", __func__);
 		return -EINVAL;
 	}
 
@@ -941,7 +1054,7 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 
 	if (unlikely(!_ep || (!ep->desc && ep->ep.name != ep0name))) {
 
-		debug_cond(DEBUG_INTR != 0,"%s: bad ep: %s, %d, %p\n", __func__,
+		printf("%s: bad ep: %s, %d, %p\n", __func__,
 		      ep->ep.name, !ep->desc, _ep);
 		return -EINVAL;
 	}
@@ -949,7 +1062,7 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 	dev = ep->dev;
 	if (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) {
 
-		debug_cond(DEBUG_INTR != 0,"%s: bogus device state %p\n", __func__, dev->driver);
+		printf("%s: bogus device state %p\n", __func__, dev->driver);
 		return -ESHUTDOWN;
 	}
 
@@ -959,49 +1072,31 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 	_req->actual = 0;
 
 	/* kickstart this i/o queue? */
-	debug("\n*** %s: %s-%s req = %p, len = %d, buf = %p"
+	debug_cond(DEBUG_SETUP != 0, "\n*** %s: %s-%s req = %p, len = %d, buf = %p"
 		"Q empty = %d, stopped = %d\n",
 		__func__, _ep->name, ep_is_in(ep) ? "in" : "out",
 		_req, _req->length, _req->buf,
 		list_empty(&ep->queue), ep->stopped);
 
 	/* kickstart this i/o queue? */
-	if (list_empty(&ep->queue) && !ep->stopped) {
+	if (list_empty(&ep->queue) ) {
 		if (ep->bEndpointAddress == 0 /* ep0 */) {
 			handle_ep_data_in_phase(ep, req);
-#if 0
-			switch (dev->ep0state) {
-			case EP0_IN_DATA_PHASE:
-				if (write_ep_fifo(ep, req))
-					req = NULL;
-				break;
-			case EP0_OUT_DATA_PHASE:
-				if ((!_req->length)
-					 && read_ep_fifo(ep,req))) {
-					req = NULL;
-				}
-				break;
-			default:
-				local_irq_restore(flags);
-				return -EL2HLT;
-			}
-#endif
 		/* can the FIFO can satisfy the request immediately? */
 		} else if ((ep->bEndpointAddress & USB_DIR_IN) != 0) {
 			handle_ep_data_in_phase(ep, req);
-#if 0
-			if (udc_write_fifo(ep, req))
-				req = NULL;
-		} else if (udc_read_fifo(ep, req)) {
-			req = NULL;
-#endif
+		} else {
+			handle_ep_data_out_phase(ep, req);
 		}
 	}
 
 	/* pio or dma irq handler advances the queue. */
-	if (likely(req != NULL))
+	if (likely(req != NULL)) {
 		list_add_tail(&req->queue, &ep->queue);
-
+		req->is_read_last = 0;
+	} else {
+		printf("%s: Warning, request is NULL\n", __func__);
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	return 0;
@@ -1215,7 +1310,7 @@ static void handle_reset_intr(struct jz_udc *dev)
 	u32 reg_tmp;
 	debug_cond(DEBUG_INTR != 0, "%s: Handle reset intr\n", __func__);
 
-	/* Step 1: NAK OUT ep */
+	/* Step 1: SET NAK for all OUT ep */
 	reg_tmp = udc_read_reg(DOEP_CTL(0));
 	reg_tmp |= DEP_SET_NAK;
 	udc_write_reg(reg_tmp, DOEP_CTL(0));
@@ -1304,6 +1399,94 @@ static void handle_enum_done_intr(struct jz_udc *dev)
 	udc_write_reg(GINTSTS_ENUM_DONE, GINT_STS);
 }
 
+static void udc_get_status_complete(struct usb_ep *ep,
+		struct usb_request *req)
+{
+	usb_ep_free_request(ep, req);
+}
+
+static int udc_get_status(struct jz_udc *dev,
+		struct usb_ctrlrequest *crq)
+{
+	u8 ep_num = crq->wIndex & 0x7F;
+	struct usb_request *req;
+	char *buf;
+
+	req = usb_ep_alloc_request(dev->gadget.ep0, 0);
+	if (!req) {
+		printf("%s: Error, alloc request\n", __func__);
+		return -1;
+	}
+
+	req->length = 2;
+	req->complete = udc_get_status_complete;
+	req->buf = malloc(req->length);
+
+	buf = (char *)req->buf;
+
+	debug_cond(DEBUG_SETUP != 0,
+			"%s: *** USB_REQ_GET_STATUS\n", __func__);
+	debug_cond(DEBUG_SETUP != 0,
+			"crq->brequest:0x%x\n", crq->bRequestType & USB_RECIP_MASK);
+	switch (crq->bRequestType & USB_RECIP_MASK) {
+	case USB_RECIP_INTERFACE:
+		buf[0] = 0;
+		buf[1] = 0;
+		break;
+
+	case USB_RECIP_DEVICE:
+		buf[0] = 1;
+		buf[1] = 0;
+		break;
+
+	case USB_RECIP_ENDPOINT:
+		if (crq->wLength > 2) {
+		printf("GET_STATUS:Not support EP or wLength\n");
+			return 1;
+		}
+
+		buf[0] = dev->ep[ep_num].stopped;
+		buf[1] = 0;
+
+		break;
+
+	default:
+		return 1;
+	}
+
+	usb_ep_queue(dev->gadget.ep0, req, 0);
+
+	return 0;
+}
+
+static void udc_setup_status_complete(struct usb_ep *ep,
+		struct usb_request *req)
+{
+	free(req->buf);
+	usb_ep_free_request(ep, req);
+}
+
+static int udc_setup_status(struct jz_udc *dev,
+		struct usb_ctrlrequest *crq)
+{
+	struct usb_request *req;
+
+	req = usb_ep_alloc_request(dev->gadget.ep0, 0);
+	if (!req) {
+		printf("%s: Error, alloc request\n", __func__);
+		return -1;
+	}
+
+	req->buf = malloc(1);
+
+	req->length = 0;
+	req->complete = udc_setup_status_complete;
+
+	usb_ep_queue(dev->gadget.ep0, req, 0);
+
+	return 0;
+}
+
 static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 {
 	int ret;
@@ -1326,12 +1509,15 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 			reg_tmp |= dev->crq->wValue << DCFG_DEV_ADDR_BIT;
 			udc_write_reg(reg_tmp, OTG_DCFG);
 			debug_cond(DEBUG_INTR != 0, "Set ADDRESS : 0x%x\n",dev->crq->wValue);
-			handle_ep_status_in_phase(ep->bEndpointAddress & 0x7f);
+			udc_setup_status(dev, dev->crq);
 		}
 		return;
 	case USB_REQ_GET_STATUS:
 		debug_cond(DEBUG_INTR != 0, "USB_REQ_GET_STATUS\n");
-		break;
+		if (udc_get_status(dev, dev->crq)) {
+			break;
+		}
+		return;
 	case USB_REQ_CLEAR_FEATURE:
 		debug_cond(DEBUG_INTR != 0, "USB_REQ_CLEAR_FEATURE\n");
 		break;
@@ -1344,7 +1530,7 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 	}
 	ret = dev->driver->setup(&dev->gadget, dev->crq);
 	if (ret < 0) {
-		debug_cond(DEBUG_INTR != 0, "%s :setup error, ret is %d\n", __func__, ret);
+		printf("%s :setup error, ret is %d\n", __func__, ret);
 	}
 }
 
@@ -1362,7 +1548,6 @@ static inline int write_ep_fifo(unsigned int addr, unsigned char *buf, unsigned 
 	return 0;
 }
 
-/* FIXME */
 static int udc_write_fifo(struct jz_ep *ep, struct jz_request *req)
 {
 	u8	*buf;
@@ -1392,9 +1577,9 @@ static int udc_write_fifo(struct jz_ep *ep, struct jz_request *req)
 		break;
 	}
 
-	while (req->req.length > req->req.actual) {
+	while (req->write_pktcnt--) {
 		fifo_status = udc_read_reg(DIEP_TXFSTS(idx));
-		debug_cond(DEBUG_INTR != 0, "fifo_status is 0x%x\n",fifo_status);
+		debug_cond(DEBUG_REG != 0, "fifo_status is 0x%x\n",fifo_status);
 
 		bufferspace = req->req.length - req->req.actual;
 		debug_cond(DEBUG_INTR != 0, "bufferspace is 0x%x\n", bufferspace);
@@ -1407,30 +1592,25 @@ static int udc_write_fifo(struct jz_ep *ep, struct jz_request *req)
 			mdelay(10);
 			i++;
 			if (i >= 1000) {
-				debug_cond(DEBUG_INTR != 0, "Error: Timeout\n");
+				printf("Error: Timeout\n");
 				i = 0;
-				req->is_last = 1;
+				req->is_write_last = 1;
 				break;
 			} else
 				return 0;
 		}
 
 		if (bufferspace <= 0) {
-			debug_cond(DEBUG_INTR != 0, "Txfer is over\n");
-			req->is_last = 1;
+			printf("Txfer is over\n");
+			req->is_write_last = 1;
 			break;
 		}
 
 		max_packet = ep->ep.maxpacket;
 		txsizes = min(bufferspace, max_packet);
 		debug_cond(DEBUG_INTR != 0, "txsizes is 0x%x\n",txsizes);
-		debug_cond(DEBUG_INTR != 0, "%s: DIEP_SIZE[%d] is 0x%x\n",
-			__func__, idx, udc_read_reg(DIEP_SIZE(idx)));
 
 		write_ep_fifo(fifo_reg, buf, txsizes);
-
-		debug_cond(DEBUG_INTR != 0, "%s: DIEP_SIZE[%d] is 0x%x\n",
-			__func__, idx, udc_read_reg(DIEP_SIZE(idx)));
 
 		req->req.actual += txsizes;
 		debug_cond(DEBUG_INTR != 0, "req.actual is %d,req.length is %d\n",
@@ -1438,33 +1618,12 @@ static int udc_write_fifo(struct jz_ep *ep, struct jz_request *req)
 	}
 
 	if (req->req.length <= ep->ep.maxpacket)
-		req->is_last = 1;
+		req->is_write_last = 1;
 	else if (req->req.length <= req->req.actual)
-		req->is_last = 1;
+		req->is_write_last = 1;
 	else
-		req->is_last = 0;
-	debug_cond(DEBUG_INTR != 0, "is_last is %d\n", req->is_last);
-
-	if (req->is_last) {
-		u32	reg_tmp;
-		int time = 1000;
-		unsigned int pktcnt, xfersize;
-		reg_tmp = udc_read_reg(DIEP_SIZE(idx));
-		pktcnt = reg_tmp & PKTCNT_MASK >> PKTCNT_BIT;
-		xfersize = reg_tmp & XFERSIZE_MASK >> XFERSIZE_BIT;
-		debug_cond(DEBUG_INTR != 0,
-			"%s PKTCNT is %d, xfersize is %d\n",__func__, pktcnt, xfersize);
-		while(pktcnt && xfersize) {
-			if (time-- < 1) {
-				debug_cond(DEBUG_INTR != 0, "%s Transfer Timeout\n",__func__);
-				break;
-			}
-			debug_cond(DEBUG_INTR != 0,
-				"%s PKTCNT is %d, xfersize is %d\n",__func__, pktcnt, xfersize);
-			udelay(10);
-		}
-		udc_done(ep, req, 0);
-	}
+		req->is_write_last = 0;
+	debug_cond(DEBUG_INTR != 0, "is_write_last is %d\n", req->is_write_last);
 
 	return 0;
 }
@@ -1481,12 +1640,10 @@ static inline int udc_read_packet(int fifo, u8 *buf,
 	return len;
 }
 
-static int udc_read_fifo(struct jz_ep *ep, struct jz_request *req)
+static int udc_read_fifo(struct jz_ep *ep, struct jz_request *req, u32 fifo_count)
 {
 	u8	*buf;
-	int	is_last = 1;
-	int	fifo_count = 0;
-	int	avail;
+	u32	avail;
 	u32	idx;
 	u32	fifo_reg;
 	unsigned int bufferspace;
@@ -1525,34 +1682,31 @@ static int udc_read_fifo(struct jz_ep *ep, struct jz_request *req)
 	if (!bufferspace) {
 		debug_cond(DEBUG_INTR != 0,
 			"%s: Buffer full, Flush rxfifo and return\n", __func__);
-		is_last = 1;
+		req->is_read_last = 1;
 	} else {
-
-		fifo_count = (udc_read_reg(GRXSTS_POP) & GRXSTSP_BYTE_CNT_MASK)
-				>> GRXSTSP_BYTE_CNT_BIT;
-		avail = fifo_count;
-
 		debug_cond(DEBUG_INTR != 0,
-			"%s: GRXSTSP_BYTE_CNT is %d\n",__func__, avail);
+			"%s: GRXSTSP_BYTE_CNT is %d\n",__func__, fifo_count);
 
-		fifo_count = udc_read_packet(fifo_reg, buf, req, avail);
+		avail = udc_read_packet(fifo_reg, buf, req, fifo_count);
+		debug_cond(DEBUG_INTR != 0,
+			"%s: read buf count is %d\n",__func__, avail);
 
 		if (req->req.length <= ep->ep.maxpacket) {
-			is_last = 1;
+			req->is_read_last = 1;
 		} else {
-			if (fifo_count <= ep->ep.maxpacket)
-				is_last = 1;
+			if (avail < ep->ep.maxpacket)
+				req->is_read_last = 1;
 			else
-				is_last = (req->req.length <= req->req.actual) ? 1 : 0;
+				req->is_read_last =
+					(req->req.length <= req->req.actual) ? 1 : 0;
 		}
 	}
 
-	if (is_last) {
-		dwc_otg_flush_rx_fifo();
-		udc_done(ep, req, 0);
+	if (req->is_read_last) {
+		debug_cond(DEBUG_INTR != 0, "%s:The last read packet now\n", __func__);
 	}
 
-	return is_last;
+	return req->is_read_last;
 }
 
 static void handle_ep0(struct jz_udc *dev)
@@ -1560,10 +1714,13 @@ static void handle_ep0(struct jz_udc *dev)
 	struct jz_ep		*ep = &dev->ep[0];
 	struct jz_request	*req;
 
-	if (list_empty(&ep->queue))
+	if (list_empty(&ep->queue)) {
+		debug_cond(DEBUG_SETUP != 0, "%s: list is empty\n", __func__);
 		req = NULL;
-	else
+	} else {
+		debug_cond(DEBUG_SETUP != 0, "%s: list is not empty\n", __func__);
 		req = list_entry(ep->queue.next, struct jz_request, queue);
+	}
 
 	switch (dev->ep0state) {
 	case EP0_IDLE:
@@ -1578,7 +1735,7 @@ static void handle_ep0(struct jz_udc *dev)
 	case EP0_OUT_DATA_PHASE:
 		debug_cond(DEBUG_INTR != 0, "%s: Now in out-data-phase,wait for complete\n", __func__);
 		if (req) {
-			udc_read_fifo(ep, req);
+			printf("%s:Error found\n", __func__);
 		}
 		break;
 	case EP0_END_XFER:
@@ -1590,7 +1747,7 @@ static void handle_ep0(struct jz_udc *dev)
 	}
 }
 
-static void udc_read_fifo_ep(struct jz_ep *ep)
+static void udc_read_fifo_ep(struct jz_ep *ep, u32 fifo_count)
 {
 	struct jz_request *req;
 
@@ -1601,7 +1758,7 @@ static void udc_read_fifo_ep(struct jz_ep *ep)
 		req = NULL;
 
 	if (likely(req)) {
-		udc_read_fifo(ep, req);
+		udc_read_fifo(ep, req, fifo_count);
 	}
 }
 
@@ -1620,9 +1777,11 @@ void handle_rxfifo_nempty(struct jz_udc *dev)
 {
 	u32	rxsts_pop = udc_read_reg(GRXSTS_POP);
 	int	ep_num = rxsts_pop & 0xf;
+	u32	fifo_count = (rxsts_pop & GRXSTSP_BYTE_CNT_MASK)
+				>> GRXSTSP_BYTE_CNT_BIT;
 
 	debug_cond(DEBUG_INTR != 0, "%s: rxfifo is not empty\n", __func__);
-	debug_cond(DEBUG_INTR != 0, "%s: GRXSTS_POP is 0x%x\n", __func__, rxsts_pop);
+	debug_cond(DEBUG_REG != 0, "%s: GRXSTS_POP is 0x%x\n", __func__, rxsts_pop);
 
 	switch(rxsts_pop & GRXSTSP_PKSTS_MASK) {
 	case GRXSTSP_PKSTS_GOUT_NAK:
@@ -1630,8 +1789,10 @@ void handle_rxfifo_nempty(struct jz_udc *dev)
 		break;
 	case GRXSTSP_PKSTS_GOUT_RECV:
 		debug_cond(DEBUG_INTR != 0, "%s: GRXSTSP_PKSTS_GOUT_RECV\n", __func__);
-		debug_cond(DEBUG_INTR != 0, "%s: The ep is %d\n", __func__, ep_num);
-		udc_read_fifo_ep(&dev->ep[ep_num]);
+		debug_cond(DEBUG_INTR != 0, "%s: The ep is %d, fifo_count is %d\n",
+				__func__, ep_num, fifo_count);
+		if (fifo_count != 0)
+			udc_read_fifo_ep(&dev->ep[ep_num], fifo_count);
 		break;
 	case GRXSTSP_PKSTS_TX_COMP:
 		debug_cond(DEBUG_INTR != 0, "%s: TX complete\n", __func__);
@@ -1644,6 +1805,7 @@ void handle_rxfifo_nempty(struct jz_udc *dev)
 		udc_read_fifo_ep0_crq(dev->crq);
                 break;
         default:
+		debug_cond(DEBUG_INTR != 0, "%s: Warring, have not intr\n", __func__);
                 break;
         }
 
@@ -1654,76 +1816,52 @@ static void udc_write_fifo_ep(struct jz_ep *ep)
 {
 	struct jz_request *req;
 
-	if (likely(!list_empty(&ep->queue)))
+	if (likely(!list_empty(&ep->queue))){
 		req = list_entry(ep->queue.next,
 				struct jz_request, queue);
-	else
+	} else
 		req = NULL;
 	if (likely(req)){
-		udc_write_fifo(ep, req);
+		if (req->req.length)
+			udc_write_fifo(ep, req);
+		else
+			req->is_write_last = 1;
 	}
 }
 
-static void inep_transfer_complete(struct jz_udc *dev, u32 epnum)
+static void inep_transfer_complete(struct jz_ep *ep)
 {
-#if 0
 	struct jz_request	*req;
-	struct jz_ep		*ep = &dev->ep[epnum];
-	u32 reg_tmp;
-	while(!(udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP));
-	udc_write_reg(DEP_XFER_COMP, DIEP_INT(epnum));
-
-	reg_tmp = udc_read_reg(DIEP_CTL(epnum));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
-	udc_write_reg(reg_tmp, DIEP_CTL(epnum));
 
 	if (likely(!list_empty(&ep->queue)))
 		req = list_entry(ep->queue.next,
 				struct jz_request, queue);
 	else
-		req = NULL;
-
-	if (!req) {
-		printf("%s req is NULL\n", __func__);
 		return ;
-	}
 
-	if (req->is_last) {
-		int time = 1000;
-		unsigned int pktcnt, xfersize;
-		reg_tmp = udc_read_reg(DIEP_SIZE(ep->bEndpointAddress & 0x7f));
-		pktcnt = reg_tmp & PKTCNT_MASK >> PKTCNT_BIT;
-		xfersize = reg_tmp & XFERSIZE_MASK >> XFERSIZE_BIT;
-		debug_cond(DEBUG_INTR != 0,
-			"%s PKTCNT is %d, xfersize is %d\n",__func__, pktcnt, xfersize);
-		while(pktcnt && xfersize) {
-			if (time-- < 1) {
-				debug_cond(DEBUG_INTR != 0, "%s Transfer Timeout\n",__func__);
-				break;
-			}
-			debug_cond(DEBUG_INTR != 0,
-				"%s PKTCNT is %d, xfersize is %d\n",__func__, pktcnt, xfersize);
-			udelay(10);
-		}
+	if (req->is_write_last) {
+		req->is_write_last = 0;
 		udc_done(ep, req, 0);
 	} else if (req->req.length <= req->req.actual) {
 		printf("%s: Error, Now it should be the last transfer, but not\n"
 			, __func__);
+	} else {
+		handle_ep_data_in_phase(ep, req);
 	}
-#endif
 }
 
 void handle_inep_intr(struct jz_udc *dev)
 {
         u32 ep_intr, intr;
-        int epnum = 31;
+        int epnum = 15;
 	u32 ep_empmsk;
 	u32 reg_tmp;
+	u32	reg_fck;
 
-	debug_cond(DEBUG_INTR != 0, "Handle inep intr.\n");
+	debug_cond(DEBUG_INTR != 0, "%s: Handle inep intr.\n", __func__);
 
 	ep_intr = udc_read_reg(OTG_DAINT);
-	debug_cond(DEBUG_INTR != 0, "%s: DAINT is 0x%x.\n", __func__, ep_intr);
+	debug_cond(DEBUG_REG != 0, "%s: DAINT = 0x%x.\n", __func__, ep_intr);
 	ep_intr &= 0xffff;
 
         while(ep_intr) {
@@ -1731,23 +1869,11 @@ void handle_inep_intr(struct jz_udc *dev)
 			epnum--;
 			continue;
 		}
-		debug_cond(DEBUG_INTR != 0, "epnum=%d\n", epnum);
+		debug_cond(DEBUG_REG != 0, "%s: epnum=%d\n", __func__, epnum);
 		intr = udc_read_reg(DIEP_INT(epnum));
 		ep_empmsk = udc_read_reg(DIEP_EMPMSK);
-		debug_cond(DEBUG_INTR != 0, "IEP_INT is 0x%x,IEP_EMPMSK is 0x%x\n",intr,ep_empmsk);
-
-		if ((intr & DEP_XFER_COMP)) {
-			debug_cond(DEBUG_INTR != 0,
-					"%s %d DEP_XFER_COMP\n",__func__,__LINE__);
-			udc_write_reg(DEP_XFER_COMP, DIEP_INT(epnum));
-
-			reg_tmp = udc_read_reg(DIEP_EMPMSK);
-			reg_tmp &= ~(1 << epnum);
-			udc_write_reg(reg_tmp, DIEP_EMPMSK);
-			inep_transfer_complete(dev,epnum);
-
-
-		}
+		debug_cond(DEBUG_REG != 0, "%s:IEP_INT = 0x%x,IEP_EMPMSK = 0x%x\n",
+				__func__, intr, ep_empmsk);
 
 		if (intr & DEP_EPDIS_INT) {
 			debug_cond(DEBUG_INTR != 0, "%s: DEP_EPDIS_INT\n", __func__);
@@ -1756,7 +1882,7 @@ void handle_inep_intr(struct jz_udc *dev)
 
 		if (intr & DEP_AHB_ERR) {
 			debug_cond(DEBUG_INTR != 0, "%s: DEP_AHB_ERR\n", __func__);
-			udc_write_reg(DEP_AHB_ERR, DOEP_INT(epnum));
+			udc_write_reg(DEP_AHB_ERR, DIEP_INT(epnum));
 		}
 
 
@@ -1786,40 +1912,77 @@ void handle_inep_intr(struct jz_udc *dev)
 		if ((intr & DEP_TXFIFO_EMPTY) && (ep_empmsk & (1 << epnum))) {
 			debug_cond(DEBUG_INTR != 0,
 					"%s: In TXFIFO_EMPTY intr.\n", __func__);
-
 			udc_write_fifo_ep(&dev->ep[epnum]);
 
 			udc_write_reg(DEP_TXFIFO_EMPTY, DIEP_INT(epnum));
+
+			/* FIXME: Using the BULK transferation, When DIEP_INT.DEP_XFER_COMP is 1,
+			 * but GINT_STS.GINTSTS_IEP_INTR is not 1, why? */
+			while (!(udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP));
 		}
 
 		if (intr & DEP_NAK_INT){
-			udc_write_reg(DEP_NAK_INT, DOEP_INT(epnum));
+			debug_cond(DEBUG_INTR != 0,
+					"%s: In DEP_NAK_INT intr.\n", __func__);
+			udc_write_reg(DEP_NAK_INT, DIEP_INT(epnum));
 		}
+
+		reg_fck = udc_read_reg(DIEP_INT(epnum));
+		if ((reg_fck & DEP_XFER_COMP)) {
+			debug_cond(DEBUG_INTR != 0,
+					"%s DEP_XFER_COMP\n",__func__);
+			udc_write_reg(DEP_XFER_COMP, DIEP_INT(epnum));
+
+			reg_tmp = udc_read_reg(DIEP_EMPMSK);
+			reg_tmp &= ~(1 << epnum);
+			udc_write_reg(reg_tmp, DIEP_EMPMSK);
+			inep_transfer_complete(&dev->ep[epnum]);
+		}
+
 
                 ep_intr &= ~(0x1<<epnum);
 		epnum--;
 	}
 }
 
-static void outep_transfer_complete(struct jz_udc *dev, u32 epnum)
+static void outep_transfer_complete(struct jz_ep *ep)
 {
-	u32 reg_tmp;
+	struct jz_request	*req;
 
-	reg_tmp = udc_read_reg(DOEP_CTL(epnum));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
-	udc_write_reg(reg_tmp, DOEP_CTL(epnum));
+	if (likely(!list_empty(&ep->queue)))
+		req = list_entry(ep->queue.next,
+				struct jz_request, queue);
+	else
+		return ;
+
+	if (req->is_read_last) {
+		req->is_read_last = 0;
+		udc_done(ep, req, 0);
+	} else if (req->req.length <= req->req.actual) {
+		if (req->req.length == 0) {
+			req->is_read_last = 0;
+			udc_done(ep, req, 0);
+			return;
+		} else
+			printf("%s: Error, Now it should be the last transfer,"
+					"but not, req.length = %d, req.actual = %d\n",
+					__func__, req->req.length, req->req.actual);
+	} else {
+		handle_ep_data_out_phase(ep, req);
+		debug_cond(DEBUG_INTR != 0, "%s: Transfer is not last\n", __func__);
+	}
 }
 
 static int handle_outep_intr(struct jz_udc *dev)
 {
 	u32 ep_intr, intr;
-	/* int epnum = 31; */
+	u32 reg_tmp;
 	int epnum = 15;
 
 	debug_cond(DEBUG_INTR != 0, "%s: Handle outep intr.\n", __func__);
 
 	ep_intr = udc_read_reg(OTG_DAINT);
-	debug_cond(DEBUG_INTR != 0, "%s: DAINT is 0x%x.\n", __func__, ep_intr);
+	debug_cond(DEBUG_REG != 0, "%s: DAINT is 0x%x.\n", __func__, ep_intr);
 	ep_intr = (ep_intr >> DAINT_OUT_BIT) & DAINT_OUT_MASK;
 
 	while (ep_intr) {
@@ -1830,21 +1993,28 @@ static int handle_outep_intr(struct jz_udc *dev)
 		}
 
 		intr = udc_read_reg(DOEP_INT(epnum));
-		debug_cond(DEBUG_INTR != 0, "%s: DOEP_INT(%d)=0x%08x\n",__func__, epnum, intr);
+		debug_cond(DEBUG_REG != 0, "%s: DOEP_INT(%d)=0x%08x\n",__func__, epnum, intr);
 
 		if (intr & DEP_XFER_COMP) {
-                        debug_cond(DEBUG_INTR != 0, "%s: outep xfer comp.\n", __func__);
+			debug_cond(DEBUG_INTR != 0, "%s: DEP_XFER_COMP\n", __func__);
 			udc_write_reg(DEP_XFER_COMP, DOEP_INT(epnum));
+			if (epnum == 0) {
+				reg_tmp = udc_read_reg(DOEP_CTL(epnum));
+				reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+				udc_write_reg(reg_tmp, DOEP_CTL(epnum));
+			}
+
 			/* FIXME How to deal with that ep0 status stage and data stage */
-			outep_transfer_complete(dev, epnum);
+			outep_transfer_complete(&dev->ep[epnum]);
                 }
 
 		if (intr & DEP_SETUP_PHASE_DONE) {
-                        debug_cond(DEBUG_INTR != 0, "DEP_SETUP_PHASE_DONE.\n");
+                        debug_cond(DEBUG_INTR != 0, "%s:DEP_SETUP_PHASE_DONE.\n", __func__);
 			udc_write_reg(DEP_SETUP_PHASE_DONE, DOEP_INT(epnum));
 			if (!epnum) {
 				if (intr & DEP_B2B_SETUP_RECV) {
-					printf("%s: Handle epnum 0 back to back .\n", __func__);
+					printf("%s: Handle epnum 0 back to back .\n",
+							__func__);
 					udc_write_reg(DEP_B2B_SETUP_RECV, DOEP_INT(epnum));
 				}
 				handle_ep0(dev);
@@ -1895,9 +2065,9 @@ static int jz_udc_irq(int irq, void *_dev)
 	spin_lock_irqsave(&dev->lock, flags);
 
 	intsts = udc_read_reg(GINT_STS);
-	debug_cond(DEBUG_INTR != 0, "%s: GINT_STS is 0x%x\n", __func__, intsts);
+	debug_cond(DEBUG_REG != 0, "%s: GINT_STS is 0x%x\n", __func__, intsts);
 	gintmsk = udc_read_reg(GINT_MASK);
-	debug_cond(DEBUG_INTR != 0, "%s: GINT_MASK is 0x%x\n", __func__, gintmsk);
+	debug_cond(DEBUG_REG != 0, "%s: GINT_MASK is 0x%x\n", __func__, gintmsk);
 
 	if (!intsts) {
 		debug_cond(DEBUG_INTR != 0,
