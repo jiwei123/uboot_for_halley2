@@ -435,6 +435,12 @@ else
 ALL-y += $(obj)u-boot-with-spl.bin
 endif
 
+ifeq ($(CONFIG_GPT_CREATOR),y)
+ALL-y += $(obj)u-boot-with-spl-mbr-gpt.bin
+else
+ALL-y += $(obj)u-boot-with-spl.bin
+endif
+
 all:		$(ALL-y) $(SUBDIR_EXAMPLES)
 
 $(obj)u-boot.dtb:	$(obj)u-boot
@@ -580,6 +586,9 @@ $(obj)u-boot-img-spl-at-end.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
 
 $(obj)u-boot-with-spl-mbr.bin: $(obj)u-boot-with-spl.bin
 		cat $(obj)tools/ingenic-tools/mbr.bin $(obj)u-boot-with-spl.bin > $@
+
+$(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
+		cat $(obj)tools/ingenic-tools/mbr-gpt.bin $(obj)u-boot-with-spl.bin > $@
 
 ifeq ($(CONFIG_SANDBOX),y)
 GEN_UBOOT = \

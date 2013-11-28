@@ -27,6 +27,7 @@ HOSTCPPFLAGS = -I$(TOPDIR)/include
 
 DDR-$(CONFIG_DDR_PARAMS_CREATOR)	+= ddr_params_creator ddr_reg_values.h
 MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
+MBR-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin #gpt_creator mbr-gpt.bin
 
 TOOLS	= $(DDR-y) $(MBR-y)
 TOOLS	:= $(addprefix $(obj),$(TOOLS))
@@ -51,6 +52,15 @@ $(obj)mbr.bin:	$(obj)mbr_creator
 		p2off=$(CONFIG_MBR_P2_OFF),p2end=$(CONFIG_MBR_P2_END),p2type=$(CONFIG_MBR_P2_TYPE) \
 		p3off=$(CONFIG_MBR_P3_OFF),p3end=$(CONFIG_MBR_P3_END),p3type=$(CONFIG_MBR_P3_TYPE) \
 		-o $@ > /dev/zero
+
+#$(obj)gpt_creator:	gpt_creator.c
+#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+#	$(HOSTSTRIP) $@
+#
+# GPT creator will come back soon, now gpt-table is filled by 0.
+
+$(obj)mbr-gpt.bin:	#$(obj)gpt_creator
+	dd if=/dev/zero of=$@ bs=512 count=34
 
 clean:
 	rm -f $(TOOLS) $(obj).depend
