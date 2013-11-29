@@ -149,6 +149,7 @@ static int burntool_bind(struct usb_composite_dev * cdev)
 			 "controller '%s'\n", shortname, gadget->name);
 
 	usb_gadget_connect(gadget);
+	return 0;
 error:
 	burntool_unbind(cdev);
 	return -ENOMEM;

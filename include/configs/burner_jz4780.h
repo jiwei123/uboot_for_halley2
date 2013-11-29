@@ -55,8 +55,8 @@
  */
 #define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
 
-#define CONFIG_BOOTDELAY 1
-#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
+#define CONFIG_BOOTDELAY 0
+#define CONFIG_BOOTCOMMAND "burn"
 
 /**
  * Drivers configuration.
