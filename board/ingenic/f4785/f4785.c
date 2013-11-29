@@ -96,6 +96,28 @@ int board_eth_init(bd_t *bis)
 	return jz_net_initialize(bis);
 }
 
+#ifdef CONFIG_SPL_SPI_SUPPORT
+void spl_spi_load_image(void)
+{
+
+}
+#endif
+
+#ifdef CONFIG_SPL_NAND_SUPPORT
+void nand_init(void)
+{
+}
+
+int nand_spl_load_image(uint32_t offs, unsigned int size, void *dst)
+{
+	return 0;
+}
+
+void nand_deselect(void)
+{
+}
+#endif
+
 /* U-Boot common routines */
 int checkboard(void)
 {

@@ -27,9 +27,10 @@ HOSTCPPFLAGS = -I$(TOPDIR)/include
 
 DDR-$(CONFIG_DDR_PARAMS_CREATOR)	+= ddr_params_creator ddr_reg_values.h
 MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
-MBR-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin #gpt_creator mbr-gpt.bin
+GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin #gpt_creator mbr-gpt.bin
+SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 
-TOOLS	= $(DDR-y) $(MBR-y)
+TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y)
 TOOLS	:= $(addprefix $(obj),$(TOOLS))
 
 all:	$(obj).depend $(TOOLS)
@@ -61,6 +62,10 @@ $(obj)mbr.bin:	$(obj)mbr_creator
 
 $(obj)mbr-gpt.bin:	#$(obj)gpt_creator
 	dd if=/dev/zero of=$@ bs=512 count=34
+
+$(obj)spi_checksum:	spi_checksum.c
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
 
 clean:
 	rm -f $(TOOLS) $(obj).depend

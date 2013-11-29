@@ -1,5 +1,5 @@
 /*
- * Jz4775 ddr routines
+ * MBR Creator.
  *
  * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Justin <ptkang@ingenic.cn>

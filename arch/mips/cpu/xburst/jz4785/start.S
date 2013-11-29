@@ -79,6 +79,12 @@ _start:
 	.space 256, 0x55
 #endif /* CONFIG_SPL_NAND_SUPPORT */
 
+#ifdef CONFIG_SPL_SPI_SUPPORT
+#define SSI_GR_BOOT (CONFIG_SYS_EXTAL / (CONFIG_SYS_SPI_BOOT_FREQ * 2) - 1)
+	.word 0x55020304
+	.word (0x00aa55aa | (SSI_GR_BOOT << 24))
+	.space 504, 0
+#endif /* CONFIG_SPL_SPI_SUPPORT */
 	.space 1536, 0
 	/* Invalidate BTB */
 	mfc0	v0, CP0_CONFIG, 7

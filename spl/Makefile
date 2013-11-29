@@ -177,8 +177,14 @@ $(obj)$(BOARD)-spl.bin: $(obj)u-boot-spl.bin
 		$(obj)u-boot-spl.bin $(obj)$(BOARD)-spl.bin
 endif
 
+ifndef CONFIG_SPI_SPL_CHECK
 $(obj)u-boot-spl.bin:	$(obj)u-boot-spl
 	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+else
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spi_checksum $@
+endif
 
 GEN_UBOOT = \
 	cd $(obj) && $(LD) $(LDFLAGS) $(LDFLAGS_$(@F)) $(__START) \
