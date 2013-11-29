@@ -1530,7 +1530,7 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 	debug_cond(DEBUG_INTR != 0,"requesttype %x request %x\n",dev->crq->bRequestType,
 			dev->crq->bRequest);
 
-	if ((dev->crq->bRequestType & USB_TYPE_MASK) & USB_TYPE_STANDARD) {
+	if ((dev->crq->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
 		switch (dev->crq->bRequest) {
 		case USB_REQ_SET_ADDRESS:
 			debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_ADDRESS\n");
@@ -1542,18 +1542,18 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 				debug_cond(DEBUG_INTR != 0, "Set ADDRESS : 0x%x\n",dev->crq->wValue);
 				udc_setup_status(dev, dev->crq);
 			}
-			return;
+			break;
 		case USB_REQ_GET_STATUS:
 			debug_cond(DEBUG_INTR != 0, "USB_REQ_GET_STATUS\n");
-			if (udc_get_status(dev, dev->crq)) {
-				break;
-			}
-			return;
+			ret = udc_get_status(dev, dev->crq);
+			break;
 		case USB_REQ_CLEAR_FEATURE:
 			debug_cond(DEBUG_INTR != 0, "USB_REQ_CLEAR_FEATURE\n");
+			ret = -1;
 			break;
 		case USB_REQ_SET_FEATURE:
 			debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_FEATURE\n");
+			ret = -1;
 			break;
 		default:
 			ret = dev->driver->setup(&dev->gadget, dev->crq);
@@ -1564,6 +1564,7 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 	}
 
 	if (ret) {
+		printf("%s: Warning, unsport request or error request\n");
 		/*usb_stall_ep0(dir);*/
 	}
 }

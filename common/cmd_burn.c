@@ -40,7 +40,10 @@ static int do_burn(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return CMD_RET_USAGE;
 
 	board_usb_init();
-	g_burntool_register(s);
+	if (g_burntool_register(s)) {
+		return CMD_RET_FAILURE;
+	}
+
 	g_burntool_virtual_set_config(s);
 	while (1) {
 		if (ctrlc())
