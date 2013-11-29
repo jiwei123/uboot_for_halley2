@@ -1,7 +1,6 @@
 /*
- * Ingenic Fastboot Command Explain CMD
- *
- *  Copyright (C) 2013 Ingenic Semiconductor Co., LTD.
+ *  Copyright (C) 2012 Samsung Electronics
+ *  Lukasz Majewski <l.majewski@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -10,7 +9,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -19,31 +18,18 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
-#include <command.h>
-#include <asm/errno.h>
-#include <g_fastboot.h>
+#ifndef __G_DOWNLOAD_H_
+#define __G_DOWNLOAD_H_
 
-static int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	char *s = "fastboot";
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+int g_fastboot_bind_fixup(struct usb_device_descriptor *dev);
+int g_fastboot_register(const char *type);
+void g_fastboot_unregister(void);
+/* USB initialization declaration - board specific */
+void board_usb_init(void);
 
-	if (argc > 1)
-		return CMD_RET_USAGE;
+void handle_fastboot_cmd(void);
 
-	board_usb_init();
-
-	g_fastboot_register(s);
-
-	handle_fastboot_cmd();
-
-	g_fastboot_unregister();
-
-	return CMD_RET_SUCCESS;
-}
-
-U_BOOT_CMD(
-	fastboot, 1, 1, do_fastboot,
-	"enter fastboot mode",
-	"enter fastboot mode"
-);
+int fastboot_add(struct usb_configuration *c);
+#endif /* __G_DOWNLOAD_H_ */
