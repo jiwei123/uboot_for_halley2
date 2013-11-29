@@ -102,6 +102,8 @@ struct jz_burner {
 	unsigned int		bulk_in_enabled:1;
 	unsigned int		bulk_out_enabled:1;
 	unsigned int		ack_status;
+	int (*vir_enable_ep)(struct usb_ep *usb_ep,
+			const struct usb_endpoint_descriptor *desc);
 };
 
 static const char burntool_name[] = "INGENIC VENDOR BURNNER";
@@ -170,6 +172,9 @@ static struct usb_descriptor_header *hs_intf_descs[] = {
 	(struct usb_descriptor_header *) &hs_bulk_in_desc,
 	NULL,
 };
+
+extern int f_ep_vir_enable(struct usb_ep *ep,
+		const struct usb_endpoint_descriptor *desc);
 
 static inline struct jz_burner *func_to_jz_burner(struct usb_function *f)
 {
@@ -591,7 +596,6 @@ static int f_vendor_burner_setup_handle(struct usb_function *f,
 	if ((ctlreq->bRequestType & USB_TYPE_MASK) == USB_TYPE_VENDOR) {
 		switch (ctlreq->bRequest) {
 		case VEN_GET_CPU_INFO:
-			printf("%wLength is %d\n", wLength);
 			length = burner_get_cpu_info(jz_burner,wValue,
 					wIndex,wLength);
 			break;
@@ -653,14 +657,13 @@ static int alloc_bulk_endpoints(struct jz_burner *jz_burner,
 	jz_burner->bulk_in = calloc(sizeof(struct burner_pipe),1);
 	jz_burner->bulk_out = calloc(sizeof(struct burner_pipe),1);
 	if (!jz_burner->bulk_in || !jz_burner->bulk_out) {
-		printf("%s:%d :nomem\n",__func__,__LINE__);
 		ret = -ENOMEM;
 		goto bulk_alloc_err;
 	}
 
 	ep = usb_ep_autoconfig(cdev->gadget, in);
 	if (!ep) {
-		debug("usb_ep_autoconfig for ep_in failed\n");
+		printf("usb_ep_autoconfig for ep_in failed\n");
 		ret = -ENODEV;
 		goto in_ep_err;
 	}
@@ -669,7 +672,7 @@ static int alloc_bulk_endpoints(struct jz_burner *jz_burner,
 
 	ep = usb_ep_autoconfig(cdev->gadget, out);
 	if (!ep) {
-		debug("usb_ep_autoconfig for ep_out failed\n");
+		printf("usb_ep_autoconfig for ep_out failed\n");
 		ret = -ENODEV;
 		goto out_ep_err;
 	}
@@ -678,7 +681,7 @@ static int alloc_bulk_endpoints(struct jz_burner *jz_burner,
 
 	req =  usb_ep_alloc_request(jz_burner->bulk_in->ep,0);
 	if (!req) {
-		debug("usb_ep_alloc_request for ep_in failed\n");
+		printf("usb_ep_alloc_request for ep_in failed\n");
 		ret = -ENOMEM;
 		goto in_req_err;
 	}
@@ -688,7 +691,7 @@ static int alloc_bulk_endpoints(struct jz_burner *jz_burner,
 
 	req =  usb_ep_alloc_request(jz_burner->bulk_out->ep,0);
 	if (!req) {
-		debug("usb_ep_alloc_request for ep_out failed\n");
+		printf("usb_ep_alloc_request for ep_out failed\n");
 		ret = -ENOMEM;
 		goto out_req_err;
 	}
@@ -744,20 +747,11 @@ static int f_vendor_burner_bind(struct usb_configuration *c,
 	if (ret)
 		return ret;
 
-	/*f->descriptors = usb_copy_descriptors(fs_intf_descs);
-	if (unlikely(!f->descriptors))
-		return -ENOMEM;*/
-
 	if (gadget_is_dualspeed(cdev->gadget)) {
 		 hs_bulk_in_desc.bEndpointAddress =
 			 fs_bulk_in_desc.bEndpointAddress;
 		 hs_bulk_out_desc.bEndpointAddress =
 			 fs_bulk_out_desc.bEndpointAddress;
-		/*f->hs_descriptors = usb_copy_descriptors(hs_intf_descs);
-		if (unlikely(!f->hs_descriptors)) {
-			free(f->descriptors);
-			return -ENOMEM;
-		}*/
 	}
 	cdev->req->context = jz_burner;
 
@@ -814,7 +808,11 @@ static int f_vendor_burner_set_alt(struct usb_function *f,
 	}
 	epdesc = ep_choose(jz_burner->gadget,&hs_bulk_in_desc,
 			&fs_bulk_in_desc);
-	status = usb_ep_enable(in_ep,epdesc);
+	if (jz_burner->vir_enable_ep)
+		status = jz_burner->vir_enable_ep(in_ep,epdesc);
+	else {
+		status = usb_ep_enable(in_ep,epdesc);
+	}
 	if (status < 0) {
 		printf("usb enable ep in failed\n");
 		goto failed;
@@ -833,15 +831,26 @@ static int f_vendor_burner_set_alt(struct usb_function *f,
 	}
 	epdesc = ep_choose(jz_burner->gadget,&hs_bulk_out_desc,
 			&fs_bulk_out_desc);
-	status = usb_ep_enable(out_ep, epdesc);
+	if (jz_burner->vir_enable_ep)
+		status = jz_burner->vir_enable_ep(out_ep,epdesc);
+	else {
+		status = usb_ep_enable(out_ep, epdesc);
+	}
 	if (status < 0) {
 		printf("usb enable ep out failed\n");
 		goto failed;
 	}
 	out_ep->driver_data = jz_burner;
 failed:
+	jz_burner->vir_enable_ep = NULL;
 	return status;
 }
+
+static void f_vendor_burner_disable(struct usb_function *f)
+{
+	debug("dump function\n");
+}
+
 static int burnfunction_bind_config(struct usb_configuration *c)
 {
 	struct jz_burner *jz_burner;
@@ -856,9 +865,11 @@ static int burnfunction_bind_config(struct usb_configuration *c)
 	jz_burner->usb_function.hs_descriptors = hs_intf_descs;
 	jz_burner->usb_function.descriptors = fs_intf_descs;
 	jz_burner->usb_function.set_alt = f_vendor_burner_set_alt;
+	jz_burner->usb_function.disable = f_vendor_burner_disable;
 	jz_burner->usb_function.unbind = f_vendor_burner_unbind;
 	jz_burner->usb_function.setup = f_vendor_burner_setup_handle;
 	jz_burner->usb_function.strings= burn_intf_string_tab;
+	jz_burner->vir_enable_ep = f_ep_vir_enable;
 	INIT_LIST_HEAD(&jz_burner->usb_function.list);
 	bitmap_zero(jz_burner->usb_function.endpoints,32);
 

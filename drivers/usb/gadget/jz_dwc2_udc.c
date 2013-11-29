@@ -131,6 +131,7 @@ struct jz_udc	*the_controller;
 
 #define udc_write_reg(value, addr)	writel(value, OTG_BASE + addr)
 
+
 #if 1
 static void pri_glb_reg(void)
 {}
@@ -178,6 +179,7 @@ static void pri_dev_reg(u32 n)
 }
 #endif
 
+int enum_done_speed_detect(struct jz_udc *dev);
 static void cpm_enable_otg_phy(struct jz_udc *dev)
 {
 	u32 reg_tmp;
@@ -429,6 +431,7 @@ static void dwc_otg_enable_common_irq(struct jz_udc *dev)
 	udc_write_reg(reg_tmp, GAHB_CFG);
 
 	reg_tmp = udc_read_reg(GINT_MASK);
+
         /*	    CONIDSTS    OUTEP      INEP         enum      usbreset      */
 	reg_tmp |= (1 << 28) | (1 << 19) | (1 << 18) | (1 << 13) | (1 << 12);
 	udc_write_reg(reg_tmp, GINT_MASK);
@@ -531,6 +534,8 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 		   "Registered gadget driver %s\n", dev->gadget.name);
 #ifndef CONFIG_BURNER
 	udc_enable(dev);
+#else
+	enum_done_speed_detect(dev);
 #endif /* CONFIG_BURNER */
 
 	return 0;
@@ -764,8 +769,9 @@ static int jz_udc_set_halt(struct usb_ep *_ep, int value)
 	return 0;
 }
 
-static int jz_ep_enable(struct usb_ep *_ep,
-			 const struct usb_endpoint_descriptor *desc)
+static int jz_ep_enable_part(struct usb_ep *_ep,
+			 const struct usb_endpoint_descriptor *desc,
+			 int hw_enable)
 {
 	struct jz_ep *ep;
 	struct jz_udc *dev;
@@ -813,18 +819,36 @@ static int jz_ep_enable(struct usb_ep *_ep,
 	ep->pio_irqs = 0;
 	ep->ep.maxpacket = le16_to_cpu(get_unaligned(&desc->wMaxPacketSize));
 
-	/* Reset halt state */
-	jz_udc_set_nak(ep);
-	jz_udc_set_halt(_ep, 0);
-
-	spin_lock_irqsave(&ep->dev->lock, flags);
-	jz_udc_ep_activate(ep);
-	spin_unlock_irqrestore(&ep->dev->lock, flags);
+	if (hw_enable) {
+		/* Reset halt state */
+		jz_udc_set_nak(ep);
+		jz_udc_set_halt(_ep, 0);
+		spin_lock_irqsave(&ep->dev->lock, flags);
+		jz_udc_ep_activate(ep);
+		spin_unlock_irqrestore(&ep->dev->lock, flags);
+	}
 
 	debug_cond(DEBUG_SETUP != 0, "%s: enabled %s, stopped = %d, maxpacket = %d\n",
 	      __func__, _ep->name, ep->stopped, ep->ep.maxpacket);
 	return 0;
+}
 
+static int jz_ep_vir_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	return jz_ep_enable_part(_ep,desc,0);
+}
+
+int f_ep_vir_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	return jz_ep_vir_enable(_ep,desc);
+}
+
+static int jz_ep_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	return jz_ep_enable_part(_ep,desc,1);
 }
 
 static void set_max_pktsize(struct jz_udc *dev, enum usb_device_speed speed)
@@ -1062,7 +1086,8 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 	dev = ep->dev;
 	if (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) {
 
-		printf("%s: bogus device state %p\n", __func__, dev->driver);
+		printf("%s: bogus device addr %p,speed %d\n", __func__,
+				dev,dev->gadget.speed);
 		return -ESHUTDOWN;
 	}
 
@@ -1355,11 +1380,9 @@ static void handle_reset_intr(struct jz_udc *dev)
 #endif
 }
 
-static void handle_enum_done_intr(struct jz_udc *dev)
+int enum_done_speed_detect(struct jz_udc *dev)
 {
 	u32 dsts = udc_read_reg(OTG_DSTS);
-	u32 reg_tmp;
-	debug_cond(DEBUG_INTR != 0, "%s: Handle enum done intr.\n", __func__);
 
 	switch(dsts & DSTS_ENUM_SPEED_MASK) {
 	case DSTS_ENUM_SPEED_HIGH:
@@ -1377,8 +1400,21 @@ static void handle_enum_done_intr(struct jz_udc *dev)
 		break;
 	default:
 		debug_cond(DEBUG_INTR != 0, "%s: Fault speed enumeration\n", __func__);
-		return;
+		return -1;
 	}
+
+	return 0;
+}
+
+void handle_enum_done_intr(struct jz_udc *dev)
+{
+	u32 reg_tmp;
+	u32 ret;
+	debug_cond(DEBUG_INTR != 0, "%s: Handle enum done intr.\n", __func__);
+
+	ret = enum_done_speed_detect(dev);
+	if (ret)
+		return;
 
 	reg_tmp = udc_read_reg(OTG_DCTL);
 	reg_tmp |= DCTL_CLR_GNPINNAK;
@@ -1489,48 +1525,46 @@ static int udc_setup_status(struct jz_udc *dev,
 
 static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 {
-	int ret;
+	int ret = 0;
 	u32 reg_tmp;
+	debug_cond(DEBUG_INTR != 0,"requesttype %x request %x\n",dev->crq->bRequestType,
+			dev->crq->bRequest);
 
-	switch (dev->crq->bRequest) {
-	case USB_REQ_SET_CONFIGURATION:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_CONFIGURATION\n");
-
-		break;
-	case USB_REQ_SET_INTERFACE:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_INTERFACE\n");
-
-		break;
-	case USB_REQ_SET_ADDRESS:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_ADDRESS\n");
-		if (dev->crq->bRequestType == USB_RECIP_DEVICE) {
-			reg_tmp = udc_read_reg(OTG_DCFG);
-			reg_tmp &=~DCFG_DEV_ADDR_MASK;
-			reg_tmp |= dev->crq->wValue << DCFG_DEV_ADDR_BIT;
-			udc_write_reg(reg_tmp, OTG_DCFG);
-			debug_cond(DEBUG_INTR != 0, "Set ADDRESS : 0x%x\n",dev->crq->wValue);
-			udc_setup_status(dev, dev->crq);
-		}
-		return;
-	case USB_REQ_GET_STATUS:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ_GET_STATUS\n");
-		if (udc_get_status(dev, dev->crq)) {
+	if ((dev->crq->bRequestType & USB_TYPE_MASK) & USB_TYPE_STANDARD) {
+		switch (dev->crq->bRequest) {
+		case USB_REQ_SET_ADDRESS:
+			debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_ADDRESS\n");
+			if (dev->crq->bRequestType == USB_RECIP_DEVICE) {
+				reg_tmp = udc_read_reg(OTG_DCFG);
+				reg_tmp &=~DCFG_DEV_ADDR_MASK;
+				reg_tmp |= dev->crq->wValue << DCFG_DEV_ADDR_BIT;
+				udc_write_reg(reg_tmp, OTG_DCFG);
+				debug_cond(DEBUG_INTR != 0, "Set ADDRESS : 0x%x\n",dev->crq->wValue);
+				udc_setup_status(dev, dev->crq);
+			}
+			return;
+		case USB_REQ_GET_STATUS:
+			debug_cond(DEBUG_INTR != 0, "USB_REQ_GET_STATUS\n");
+			if (udc_get_status(dev, dev->crq)) {
+				break;
+			}
+			return;
+		case USB_REQ_CLEAR_FEATURE:
+			debug_cond(DEBUG_INTR != 0, "USB_REQ_CLEAR_FEATURE\n");
+			break;
+		case USB_REQ_SET_FEATURE:
+			debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_FEATURE\n");
+			break;
+		default:
+			ret = dev->driver->setup(&dev->gadget, dev->crq);
 			break;
 		}
-		return;
-	case USB_REQ_CLEAR_FEATURE:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ_CLEAR_FEATURE\n");
-		break;
-	case USB_REQ_SET_FEATURE:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ_SET_FEATURE\n");
-		break;
-	default:
-		debug_cond(DEBUG_INTR != 0, "USB_REQ other\n");
-		break;
+	} else {
+		ret = dev->driver->setup(&dev->gadget, dev->crq);
 	}
-	ret = dev->driver->setup(&dev->gadget, dev->crq);
-	if (ret < 0) {
-		printf("%s :setup error, ret is %d\n", __func__, ret);
+
+	if (ret) {
+		/*usb_stall_ep0(dir);*/
 	}
 }
 

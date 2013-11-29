@@ -29,6 +29,7 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 #include <asm/jz_uart.h>
+#include <usb/jz_dwc2_udc.h>
 
 #ifndef CONFIG_SPL_BUILD
 DECLARE_GLOBAL_DATA_PTR;

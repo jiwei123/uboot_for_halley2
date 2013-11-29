@@ -25,6 +25,7 @@
 #include <linux/usb/gadget.h>
 int g_burntool_register(const char *s);
 void g_burntool_unregister(void);
+void g_burntool_virtual_set_config(const char *s);
 /* USB initialization declaration - board specific */
 void board_usb_init(void);
 #endif /* __G_DOWNLOAD_H_ */

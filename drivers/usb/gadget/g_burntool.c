@@ -69,6 +69,8 @@ struct usb_gadget_strings *g_bt_string_tab[] = {
 	NULL,
 };
 
+static struct usb_composite_dev *g_cdev;
+
 extern int jz_vendor_burner_add(struct usb_configuration *c);
 static int g_do_burntool_config(struct usb_configuration *c)
 {
@@ -76,6 +78,7 @@ static int g_do_burntool_config(struct usb_configuration *c)
 	const char *s = c->cdev->driver->name;
 	debug("%s: configuration: 0x%p composite dev: 0x%p\n",
 			__func__, c, c->cdev);
+
 	if (!strcmp(s, "jz_usb_burner_vdr")) {
 		 ret = jz_vendor_burner_add(c);
 	}
@@ -97,7 +100,6 @@ static int g_burntool_config(struct usb_composite_dev *cdev)
 		.bind	=	g_do_burntool_config,
 		.unbind =	g_do_burntool_unconfig,
 	};
-
 	return usb_add_config(cdev,&config);
 }
 
@@ -106,6 +108,7 @@ static int burntool_unbind(struct usb_composite_dev * cdev)
 	struct usb_gadget *gadget = cdev->gadget;
 	debug("%s: calling usb_gadget_disconnect for "
 			"controller '%s'\n", shortname, gadget->name);
+	g_cdev = NULL;
 	return usb_gadget_disconnect(gadget);
 }
 
@@ -135,6 +138,7 @@ static int burntool_bind(struct usb_composite_dev * cdev)
 	g_bt_string_defs[SERIALNUMBER_IDX].id = id;
 	device_desc.iSerialNumber = id;
 
+	g_cdev = cdev;
 	ret = g_burntool_config(cdev);
 	if (ret < 0)
 		goto error;
@@ -145,10 +149,11 @@ static int burntool_bind(struct usb_composite_dev * cdev)
 		device_desc.bcdDevice = cpu_to_le16(0x0200 + gcnum);
 	else
 		device_desc.bcdDevice = __constant_cpu_to_le16(0x9999);
-	 debug("%s: calling usb_gadget_connect for "
-			 "controller '%s'\n", shortname, gadget->name);
+	debug("%s: calling usb_gadget_connect for "
+			"controller '%s'\n", shortname, gadget->name);
 
-	usb_gadget_connect(gadget);
+	/* udc is already connect in bootrom*/
+	//usb_gadget_connect(gadget);
 	return 0;
 error:
 	burntool_unbind(cdev);
@@ -182,15 +187,70 @@ int g_burntool_register(const char *type)
 		printf("%s: failed!, error: %d\n", __func__, ret);
 		return ret;
 	}
-
-#if defined(CONFIG_CMD_BURN) || defined(CONFIG_CMD_FASTBOOT)
-#else
-	while(1) {
-		usb_gadget_handle_interrupts();
-	}
-#endif
-
 	return 0;
+}
+
+void  g_burntool_virtual_set_config(const char *type)
+{
+	struct usb_composite_dev *cdev = g_cdev;
+	struct usb_configuration *c = NULL;
+	struct usb_function *f = NULL;
+	struct usb_descriptor_header **descriptors = NULL;
+	u32 tmp = 0;
+
+	if (!cdev) {
+		printf("BURNTOOL: there no cdev\n");
+		return;
+	}
+	/*virtual set config because enumned in bootrom*/
+	list_for_each_entry(c, &cdev->configs, list) {
+		if (c->bConfigurationValue == 1) {
+			break;
+		}
+	}
+	if (!c) {
+		printf("BURNTOOL: there no default 1 configuration\n");
+		return;
+	}
+
+	/*set config*/
+	cdev->config = c;
+	/*set_alt*/
+	for (tmp = 0; tmp < MAX_CONFIG_INTERFACES; tmp++) {
+		f = c->interface[tmp];
+		if (!f)
+			break;
+
+		if (cdev->gadget->speed == USB_SPEED_HIGH)
+			descriptors = f->hs_descriptors;
+		else
+			descriptors = f->descriptors;
+
+		for (; *descriptors; ++descriptors) {
+			struct usb_endpoint_descriptor *ep;
+			u32 addr;
+			if ((*descriptors)->bDescriptorType != USB_DT_ENDPOINT)
+				continue;
+
+			ep = (struct usb_endpoint_descriptor *)*descriptors;
+			addr = ((ep->bEndpointAddress & 0x80) >> 3)
+				|	(ep->bEndpointAddress & 0x0f);
+			__set_bit(addr, f->endpoints);
+		}
+
+		if (f->set_alt(f, tmp, 0)) {
+			list_for_each_entry(f, &cdev->config->functions, list) {
+				if (f->disable)
+					f->disable(f);
+
+				bitmap_zero(f->endpoints, 32);
+			}
+			cdev->config = NULL;
+			return;
+		}
+	}
+
+	return;
 }
 
 void g_burntool_unregister(void)

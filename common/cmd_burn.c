@@ -39,15 +39,12 @@ static int do_burn(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (argc > 1)
 		return CMD_RET_USAGE;
 
-#ifdef CONFIG_TRATS
 	board_usb_init();
-#endif
-
 	g_burntool_register(s);
+	g_burntool_virtual_set_config(s);
 	while (1) {
 		if (ctrlc())
 			goto exit;
-
 		usb_gadget_handle_interrupts();
 	}
 exit:
