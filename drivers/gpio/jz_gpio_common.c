@@ -31,7 +31,7 @@
 #elif defined (CONFIG_JZ4780)
 #include "jz_gpio/jz4780_gpio.c"
 #elif defined (CONFIG_JZ4785)
-/* TO DO */
+#include "jz_gpio/jz4785_gpio.c"
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;

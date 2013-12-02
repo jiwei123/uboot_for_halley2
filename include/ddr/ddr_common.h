@@ -13,7 +13,9 @@
 #include <ddr/ddrc.h>
 #include <ddr/ddrp_dwc.h>
 #elif defined(CONFIG_JZ4785)
-/* TO DO */
+#include <asm/ddr_dwc.h>
+#include <ddr/ddrc.h>
+#include <ddr/ddrp_dwc.h>
 #endif
 
 
