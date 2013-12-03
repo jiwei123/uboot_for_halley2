@@ -27,8 +27,9 @@
 #include <asm/cacheops.h>
 #include <asm/arch/base.h>
 
-	.set noreorder
+#define RESERVED_FOR_SC(x) .space 1536, x
 
+	.set noreorder
 	.globl _start
 	.text
 _start:
@@ -36,6 +37,7 @@ _start:
 	/* magic value ("MSPL") */
 	.word 0x4d53504c
 	.space 508, 0
+	RESERVED_FOR_SC(0)
 #endif
 
 #ifdef CONFIG_SPL_NAND_SUPPORT
@@ -77,6 +79,7 @@ _start:
 	.space 96, 0xaa
 #endif
 	.space 256, 0x55
+	RESERVED_FOR_SC(0x55)
 #endif /* CONFIG_SPL_NAND_SUPPORT */
 
 #ifdef CONFIG_SPL_SPI_SUPPORT
@@ -84,8 +87,13 @@ _start:
 	.word 0x55020304
 	.word (0x00aa55aa | (SSI_GR_BOOT << 24))
 	.space 504, 0
+	RESERVED_FOR_SC(0xff)
 #endif /* CONFIG_SPL_SPI_SUPPORT */
-	.space 1536, 0
+
+#ifdef CONFIG_SPL_NOR_SUPPORT
+	.word 0
+#endif /* CONFIG_SPL_NOR_SUPPORT */
+
 	/* Invalidate BTB */
 	mfc0	v0, CP0_CONFIG, 7
 	nop

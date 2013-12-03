@@ -118,6 +118,12 @@ void nand_deselect(void)
 }
 #endif
 
+#ifdef CONFIG_SPL_NOR_SUPPORT
+int spl_start_uboot(void)
+{
+	return 1;
+}
+#endif
 /* U-Boot common routines */
 int checkboard(void)
 {
