@@ -23,11 +23,11 @@
 include $(TOPDIR)/config.mk
 
 ifndef CONFIG_SPL_BUILD
-HOSTCPPFLAGS = -I$(TOPDIR)/include
+HOSTCPPFLAGS = -I$(TOPDIR)/include -DUSE_HOSTCC
 
 DDR-$(CONFIG_DDR_PARAMS_CREATOR)	+= ddr_params_creator ddr_reg_values.h
 MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
-GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin #gpt_creator mbr-gpt.bin
+GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin
 SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 
 TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y)
@@ -54,14 +54,20 @@ $(obj)mbr.bin:	$(obj)mbr_creator
 		p3off=$(CONFIG_MBR_P3_OFF),p3end=$(CONFIG_MBR_P3_END),p3type=$(CONFIG_MBR_P3_TYPE) \
 		-o $@ > /dev/zero
 
-#$(obj)gpt_creator:	gpt_creator.c
-#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
-#	$(HOSTSTRIP) $@
-#
-# GPT creator will come back soon, now gpt-table is filled by 0.
+$(obj)gpt_creator:	$(SRCTREE)/lib/crc32.c gpt_creator.c
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
 
-$(obj)mbr-gpt.bin:	#$(obj)gpt_creator
-	dd if=/dev/zero of=$@ bs=512 count=34
+ifdef CONFIG_GPT_TABLE_PATH
+$(obj)mbr-gpt.bin:	$(obj)gpt_creator
+	$(OBJTREE)/tools/ingenic-tools/gpt_creator		\
+	$(CONFIG_GPT_TABLE_PATH)/partitions.tab mbr-of-gpt.bin gpt.bin
+	cat mbr-of-gpt.bin gpt.bin > $@
+else
+$(obj)mbr-gpt.bin:	$(obj)mbr.bin
+	dd if=/dev/zero of=gpt.bin bs=512 count=33
+	cat mbr.bin gpt.bin > $@
+endif
 
 $(obj)spi_checksum:	spi_checksum.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^

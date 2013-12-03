@@ -357,9 +357,12 @@
 #endif
 
 /**
- * MBR configuration
+ * GPT configuration
  */
-#ifdef CONFIG_MBR_CREATOR
+#ifdef CONFIG_GPT_CREATOR
+#define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
+#ifndef CONFIG_GPT_TABLE_PATH
+/* USE MBR + zero-GPT-table instead if no gpt table defined*/
 #define CONFIG_MBR_P0_OFF	64mb
 #define CONFIG_MBR_P0_END	556mb
 #define CONFIG_MBR_P0_TYPE 	linux
@@ -375,6 +378,7 @@
 #define CONFIG_MBR_P3_OFF	1609mb
 #define CONFIG_MBR_P3_END	7800mb
 #define CONFIG_MBR_P3_TYPE 	fat
+#endif
 #endif
 
 /**
