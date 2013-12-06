@@ -33,6 +33,8 @@
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
 
+#define BURNNER_DEBUG 1
+
 /*bootrom stage request*/
 #define VEN_GET_CPU_INFO	0x00
 #define VEN_SET_DATA_ADDR	0x01
@@ -42,22 +44,13 @@
 #define VEN_PROG_STAGE2		0x05
 /*firmware stage request*/
 #define VEN_GET_ACK		0x10
-#define VEN_SET_TRANS_ARGS	0x11
-#define VEN_CTL			0x12
-#define VEN_WRITE		0x13
-#define VEN_READ		0x14
-
-
-enum transfer_state {
-	TRANSFER_IDLE = 0,
-	TRANSFER_PREPARE,
-	TRANSFER_BUSY,
-	TRANSFER_SUCCESSS,
-	TRANSFER_ERROR,
-};
+#define VEN_CTL			0x11
+#define VEN_WRITE		0x12
+#define VEN_READ		0x13
 
 enum medium_type {
-	NAND = 0,
+	MEMORY = 0,
+	NAND,
 	MMC,
 	NOR,
 };
@@ -71,10 +64,9 @@ enum data_type {
 struct burner_pipe {
 	struct usb_ep		*ep;
 	struct usb_request	*epreq;
-	unsigned int	*buf_addr;
+	void			*buf;
 	unsigned int		buf_length;
 	unsigned int		crc;
-	enum transfer_state	transfer_state;
 };
 
 struct burner_trans_args {
@@ -91,17 +83,23 @@ struct jz_burner {
 	struct usb_request	*ep0req;	/*Copy of cdev->req*/
 	struct burner_pipe		*bulk_in;
 	struct burner_pipe		*bulk_out;
+
+	/*BURN INFO*/
 	unsigned int		has_crc:1;
-	enum	medium_type	pg_medium_type;
-	enum	data_type	pg_data_type;
-	enum	medium_type	rd_medium_type;
-	unsigned long long	pg_offset;
-	unsigned int		pg_length;
-	unsigned long long	rd_offset;
-	unsigned int		rd_length;
+	void			*args_buf;
+	enum	medium_type	medium_type;
+	enum	data_type	data_type;
+	unsigned int		request_type;
+	unsigned long long	f_offset;
+	unsigned int		offset;
+	unsigned int		length;
+
+	/*BURN STATE*/
+	unsigned int		ack_status;
+
+	/*EP INFO*/
 	unsigned int		bulk_in_enabled:1;
 	unsigned int		bulk_out_enabled:1;
-	unsigned int		ack_status;
 	int (*vir_enable_ep)(struct usb_ep *usb_ep,
 			const struct usb_endpoint_descriptor *desc);
 };
@@ -132,21 +130,21 @@ static struct usb_interface_descriptor intf_desc = {
 static struct usb_endpoint_descriptor fs_bulk_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
-	.bEndpointAddress       = USB_DIR_IN,
+	.bEndpointAddress       = USB_DIR_IN|0x1,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 };
 
 static struct usb_endpoint_descriptor fs_bulk_out_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
-	.bEndpointAddress       = USB_DIR_OUT,
+	.bEndpointAddress       = USB_DIR_OUT|0x1,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 };
 
 static struct usb_endpoint_descriptor hs_bulk_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
-	.bEndpointAddress       = USB_DIR_IN,
+	.bEndpointAddress       = USB_DIR_IN|0x1,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize         = __constant_cpu_to_le16(512),
 };
@@ -154,7 +152,7 @@ static struct usb_endpoint_descriptor hs_bulk_in_desc = {
 static struct usb_endpoint_descriptor hs_bulk_out_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
-	.bEndpointAddress       = USB_DIR_OUT,
+	.bEndpointAddress       = USB_DIR_OUT|0x1,
 	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize         = __constant_cpu_to_le16(512),
 };
@@ -190,11 +188,13 @@ static int burner_get_cpu_info(struct jz_burner *jz_burner,
 #else
 	static char *buf = "BOOT47XX";
 #endif
-
+	printf("burner_get_cpu_info\n");
 	if (wLength) {
-		memcpy(req->buf,buf,wLength);
-		req->length = wLength;
-		return wLength;
+		req->length = strlen(buf);
+		if (req->length > wLength)
+			req->length = wLength;
+		memcpy(req->buf,buf,req->length);
+		return req->length;
 	}
 
 	jz_burner->ack_status = -EINVAL;
@@ -216,128 +216,6 @@ static int burner_get_ack(struct jz_burner *jz_burner,
 
 	jz_burner->ack_status = -EINVAL;
 	return -EINVAL;
-}
-
-static void bunner_crc_calculate(struct usb_ep *ep,
-		struct usb_request *req) {
-	struct jz_burner *jz_burner = req->context;
-	struct burner_pipe *bulk_out = jz_burner->bulk_out;
-
-	if (bulk_out->transfer_state != TRANSFER_BUSY) {
-		bulk_out->transfer_state = TRANSFER_ERROR;
-		jz_burner->ack_status = -EBUSY;
-		return;
-	}
-	bulk_out->transfer_state = TRANSFER_SUCCESSS;
-
-	if (req->actual != bulk_out->buf_length)	//FIXME
-		debug("Bulk out transfer less than request\n");
-	if (jz_burner->has_crc) {	/*bulk data have crc code*/
-		/* crc polynomial  x^16+x^12+x^5+1 */
-		if (bulk_out->crc != cyg_crc16(req->buf,req->actual)) {
-			jz_burner->ack_status = 0;
-		} else {
-			bulk_out->transfer_state = TRANSFER_ERROR;
-			jz_burner->ack_status = -EIO;
-		}
-	} else {
-		jz_burner->ack_status = 0;	//success
-	}
-	return;
-}
-
-
-#define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
-static int addr_is_invalid(unsigned int *addr, unsigned int length)
-{
-	if ((unsigned)addr < 0x8000000)
-		return -EFAULT;
-	if ((unsigned)addr > (0x90000000 - length) && (unsigned)addr < 0xa0000000)
-		return -EFAULT;
-	if ((unsigned)addr > (0xb000000 - length))
-		return -EFAULT;
-	if (!IS_ALIGNED((unsigned)addr, 4))
-		return -EADDRNOTAVAIL;
-
-	return 0;
-}
-
-/*Complete function for bunner_set_trans_args data phase*/
-static void bunner_start_transfer(struct usb_ep *ep,
-		struct usb_request *req)
-{
-	struct jz_burner *jz_burner = req->context;
-	struct burner_pipe *bulk_out = jz_burner->bulk_out;
-	struct burner_trans_args *trans_args = req->buf;
-	int error;
-
-	if (trans_args) {
-		/*Store transer args*/
-		bulk_out->buf_length = le32_to_cpu(trans_args->length);
-		bulk_out->buf_addr = (unsigned *)le32_to_cpu(trans_args->addr);
-		bulk_out->crc = le32_to_cpu(trans_args->crc);
-
-		if (bulk_out->transfer_state != TRANSFER_PREPARE) {
-			bulk_out->transfer_state = TRANSFER_ERROR;
-			jz_burner->ack_status = -EBUSY;
-			return;
-		}
-
-		bulk_out->transfer_state = TRANSFER_BUSY;
-		if (!bulk_out->buf_length) {
-			jz_burner->ack_status = -EINVAL;
-			return;
-		}
-		if ((error = addr_is_invalid(bulk_out->buf_addr,
-					bulk_out->buf_length)) != 0) {
-			jz_burner->ack_status = error;
-			return;
-		}
-
-		/*Init one bulk out transfer*/
-		bulk_out->epreq->complete = bunner_crc_calculate;
-		bulk_out->epreq->context = jz_burner;
-		bulk_out->epreq->length = bulk_out->buf_length;
-		bulk_out->epreq->buf = bulk_out->buf_addr;
-		bulk_out->epreq->status = 0;
-		error = usb_ep_queue(bulk_out->ep,bulk_out->epreq,0);
-		if (error) {
-			debug("Bulk out queue request failed\n");
-			bulk_out->transfer_state = TRANSFER_PREPARE;
-			jz_burner->ack_status = -EIO;
-		}
-		return;
-	}
-
-	jz_burner->ack_status = -EINVAL;
-	return;
-}
-
-static int burner_set_trans_args(struct jz_burner *jz_burner,
-		u16 wValue,u16 wIndex,u16 wLength)
-{
-	struct usb_request *req = jz_burner->ep0req;
-	struct burner_pipe *bulk_out = jz_burner->bulk_out;
-
-	if (!wLength) {
-		jz_burner->ack_status = -EINVAL;
-		return -EINVAL;
-	}
-
-	if (bulk_out->transfer_state == TRANSFER_IDLE ||
-			bulk_out->transfer_state == TRANSFER_ERROR ||
-			bulk_out->transfer_state == TRANSFER_SUCCESSS) {
-		bulk_out->transfer_state = TRANSFER_PREPARE;
-		req->length = wLength;
-		req->status = 0;
-		req->complete= bunner_start_transfer;
-		req->context = jz_burner;
-		return wLength;
-	}
-
-	bulk_out->transfer_state = TRANSFER_ERROR;
-	jz_burner->ack_status = -EBUSY;
-	return -EBUSY;
 }
 
 enum ctl_type {
@@ -396,70 +274,139 @@ int nand_program_default(struct jz_burner *jz_burner,
 int mmc_program_default(struct jz_burner *jz_burner,
 		enum data_type data_type)
 {
+	printf("burn mmc\n");
 	return 0;
 }
+
 int nor_program_default(struct jz_burner *jz_burner,
 		enum data_type data_type)
 {
 	return 0;
 }
 
-
-static void burner_start_program(struct usb_ep *ep,
+static void handle_write(struct usb_ep *ep,
 		struct usb_request *req)
 {
 	struct jz_burner *jz_burner = req->context;
-	int ret = 0;
-	int offset_l = ((int *)req->buf)[0];
-	unsigned long long offset_b = ((int*)req->buf)[1];
-	int length = ((int *)req->buf)[2];
+	struct burner_pipe *bulk_out = jz_burner->bulk_out;
+	int ret;
 
-	offset_b = le32_to_cpu(offset_b);
-	offset_l = le32_to_cpu(offset_l);
-	length = le32_to_cpu(length);
-	jz_burner->rd_offset = ((offset_b << 32)|offset_l);
-	jz_burner->rd_length = length;
-	printf("Program medium %d frome %lld, length %d\n",
-			jz_burner->rd_medium_type,
-			jz_burner->rd_offset,
-			jz_burner->rd_length);
+	debug_cond(BURNNER_DEBUG,"handle write\n");
+	if (jz_burner->has_crc) {
+		if (bulk_out->crc != crc32(0,req->buf,req->actual)) {
+			jz_burner->ack_status = -EIO;
+			return;
+		}
+	} else if (req->actual != req->length) {
+		jz_burner->ack_status = -EIO;
+		return;
+	}
 
-	switch (jz_burner->pg_medium_type) {
+	switch (jz_burner->medium_type) {
 	case NAND:
-		ret = nand_program(jz_burner,jz_burner->pg_data_type);
+		ret = nand_program(jz_burner,jz_burner->data_type);
 		break;
 	case MMC:
-		ret = mmc_program(jz_burner,jz_burner->pg_data_type);
+		ret = mmc_program(jz_burner,jz_burner->data_type);
 		break;
 	case NOR:
-		ret = nor_program(jz_burner,jz_burner->pg_data_type);
+		ret = nor_program(jz_burner,jz_burner->data_type);
 		break;
 	default:
-		printf("Unkown bunner program command :%d\n",jz_burner->pg_medium_type);
+		ret = -EMEDIUMTYPE;
+		printf("Unkown bunner program command :%d\n",jz_burner->medium_type);
 	}
 
 	jz_burner->ack_status = ret;
 	return;
 }
 
-static int burner_program(struct jz_burner *jz_burner,
+static void parse_write_args(struct usb_ep *ep,
+		struct usb_request *req)
+{
+	struct jz_burner *jz_burner = req->context;
+	struct burner_pipe *bulk_out = jz_burner->bulk_out;
+	struct usb_request *w_req = bulk_out->epreq;
+	struct usb_ep	*w_ep = bulk_out->ep;
+	int foffset_l,offset,length,crc32;
+	int ret;
+	unsigned long long foffset_b;
+
+	if (req->actual < req->length) {
+		printf("burnner write args transfer error,actual %d,length %d\n",
+				req->actual,
+				req->length);
+		jz_burner->ack_status = req->status;
+		return;
+	}
+
+	foffset_l = ((int*)req->buf)[0];
+	foffset_b = ((int*)req->buf)[1];
+	offset = ((int *)req->buf)[2];
+	length = ((int *)req->buf)[3];
+	crc32 = ((int *)req->buf)[4];
+
+	foffset_b = le32_to_cpu(foffset_b);
+	foffset_l = le32_to_cpu(foffset_l);
+	length = le32_to_cpu(length);
+	offset = le32_to_cpu(offset);
+	crc32 = le32_to_cpu(crc32);
+
+	jz_burner->f_offset = ((foffset_b << 32)|foffset_l);
+	jz_burner->length = length;
+	jz_burner->offset = offset;
+	bulk_out->crc = crc32;
+	jz_burner->ack_status = -EBUSY;
+
+	debug_cond(BURNNER_DEBUG,
+			"file offset %lld,medium offset %d,length %d,crc32 %x\n",
+			jz_burner->f_offset,
+			jz_burner->offset,
+			jz_burner->length,
+			bulk_out->crc);
+
+	if (bulk_out->buf) {
+		if (bulk_out->buf_length < length) {
+			bulk_out->buf = realloc(bulk_out->buf,length);
+			bulk_out->buf_length = length;
+		}
+	} else {
+		bulk_out->buf = malloc(length);
+		bulk_out->buf_length = length;
+	}
+
+	if (!bulk_out->buf) {
+		printf("%s no mem\n",__func__);
+		bulk_out->buf_length = 0;
+		jz_burner->ack_status = -ENOMEM;
+		return;
+	}
+
+	w_req->buf = bulk_out->buf;
+	w_req->length = jz_burner->length;
+	w_req->complete = handle_write;
+	w_req->context = jz_burner;
+	ret = usb_ep_queue(w_ep,w_req,0);
+	if (ret) {
+		printf("Usb queue bulk out failed\n");
+		jz_burner->ack_status = ret;
+		return;
+	}
+	return;
+}
+
+static int write_args_trans_prepare(struct jz_burner *jz_burner,
 		u16 wValue,u16 wIndex,u16 wLength)
 {
 	struct usb_request *req = jz_burner->ep0req;
 
-	switch (wValue) {
-	case NAND:
-	case MMC:
-	case NOR:
-	default:
-		printf("Unkown bunner program medium type :%d\n",wValue);
-		return -EINVAL;
-	}
-
-	jz_burner->pg_medium_type = wValue;
-	jz_burner->pg_data_type = wIndex;
+	debug_cond(BURNNER_DEBUG,"Write medium_type %d,data_type %d length %d\n",
+			wValue,wIndex,wLength);
+	jz_burner->medium_type = wValue;
+	jz_burner->data_type = wIndex;
+	jz_burner->request_type = VEN_WRITE;
 	req->length = wLength;
-	req->complete = burner_start_program;
+	req->complete = parse_write_args;
 	req->context = jz_burner;
 	jz_burner->ack_status = -EBUSY;
 
@@ -492,11 +439,12 @@ int nor_read_default(struct jz_burner *jz_burner,
 static void bunner_read_complete(struct usb_ep *ep,
 		struct usb_request *req)
 {
-	/*Now do noting*/
+	struct jz_burner *jz_burner = req->context;
+	jz_burner->ack_status = 0;
 	return;
 }
 
-static void burner_start_read(struct usb_ep *ep,
+static void handle_read(struct usb_ep *ep,
 		struct usb_request *req)
 {
 	struct jz_burner *jz_burner = req->context;
@@ -509,32 +457,44 @@ static void burner_start_read(struct usb_ep *ep,
 	offset_b = le32_to_cpu(offset_b);
 	offset_l = le32_to_cpu(offset_l);
 	length = le32_to_cpu(length);
-	jz_burner->rd_offset = ((offset_b << 32)|offset_l);
-	jz_burner->rd_length = length;
+	jz_burner->f_offset = ((offset_b << 32)|offset_l);
+	jz_burner->length = length;
 	printf("Read medium %d frome %lld, length %d\n",
-			jz_burner->rd_medium_type,
-			jz_burner->rd_offset,
-			jz_burner->rd_length);
-	if (bulk_in->buf_length < length) {
+			jz_burner->medium_type,
+			jz_burner->f_offset,
+			jz_burner->length);
+	if (bulk_in->buf) {
+		if (bulk_in->buf_length < length) {
+			bulk_in->buf = realloc(bulk_in->buf,length);
+			bulk_in->buf_length = length;
+		}
+	} else {
+		bulk_in->buf = malloc(length);
 		bulk_in->buf_length = length;
-		free(bulk_in->buf_addr);
-		bulk_in->buf_addr = calloc(bulk_in->buf_length,1);
 	}
 
-	switch (jz_burner->rd_medium_type) {
+	if (!bulk_in->buf) {
+		printf("%s no mem\n",__func__);
+		bulk_in->buf_length = 0;
+		jz_burner->ack_status = -ENOMEM;
+		return;
+	}
+
+	switch (jz_burner->medium_type) {
 	case NAND:
-		length = burner_nand_read(jz_burner,bulk_in->buf_addr,
-				jz_burner->rd_length,jz_burner->rd_offset);
+		length = burner_nand_read(jz_burner,bulk_in->buf,
+				jz_burner->length,jz_burner->f_offset);
 		break;
 	case MMC:
-		length = burner_mmc_read(jz_burner,bulk_in->buf_addr,
-				jz_burner->rd_length,jz_burner->rd_offset);
+		length = burner_mmc_read(jz_burner,bulk_in->buf,
+				jz_burner->length,jz_burner->f_offset);
 		break;
 	case NOR:
-		length = burner_nor_read(jz_burner,bulk_in->buf_addr,
-				jz_burner->rd_length,jz_burner->rd_offset);
+		length = burner_nor_read(jz_burner,bulk_in->buf,
+				jz_burner->length,jz_burner->f_offset);
 		break;
 	default:
+		length = -EMEDIUMTYPE;
 		printf("Cannooooooooot happen %d\n",__LINE__);
 	}
 
@@ -543,9 +503,8 @@ static void burner_start_read(struct usb_ep *ep,
 		return;
 	}
 
-	bulk_in->epreq->buf = bulk_in->buf_addr;
+	bulk_in->epreq->buf = bulk_in->buf;
 	bulk_in->epreq->length = length;
-	bulk_in->epreq->status = 0;
 	bulk_in->epreq->context = jz_burner;
 	bulk_in->epreq->complete = bunner_read_complete;
 	ret= usb_ep_queue(bulk_in->ep,bulk_in->epreq,0);
@@ -554,27 +513,18 @@ static void burner_start_read(struct usb_ep *ep,
 		jz_burner->ack_status = ret;
 		bulk_in->epreq->status = 0;
 	}
-	jz_burner->ack_status = 0;
 	return;
 }
 
-static int burner_read(struct jz_burner *jz_burner,
+static int read_args_trans_prepare(struct jz_burner *jz_burner,
 		u16 wValue,u16 wIndex,u16 wLength)
 {
 	struct usb_request *req = jz_burner->ep0req;
-
-	switch (wValue) {
-	case NAND:
-	case MMC:
-	case NOR:
-	default:
-		printf("Unkown bunner read medium type :%d\n",wValue);
-		return -EINVAL;
-	}
-
-	jz_burner->rd_medium_type = wValue;
+	jz_burner->medium_type = wValue;
+	jz_burner->request_type = VEN_READ;
 	req->length = wLength;
-	req->complete = burner_start_read;
+	req->buf = jz_burner->args_buf;
+	req->complete = handle_read;
 	req->context = jz_burner;
 	jz_burner->ack_status = -EBUSY;
 
@@ -593,6 +543,10 @@ static int f_vendor_burner_setup_handle(struct usb_function *f,
 	int length = 0;
 
 	req->length = 0;
+	debug_cond(BURNNER_DEBUG,"vendor bRequestType %x,bRequest %x wLength %d\n",
+			ctlreq->bRequestType,
+			ctlreq->bRequest,
+			ctlreq->wLength);
 	if ((ctlreq->bRequestType & USB_TYPE_MASK) == USB_TYPE_VENDOR) {
 		switch (ctlreq->bRequest) {
 		case VEN_GET_CPU_INFO:
@@ -609,20 +563,16 @@ static int f_vendor_burner_setup_handle(struct usb_function *f,
 			length = burner_get_ack(jz_burner,wValue,
 					wIndex,wLength);
 			break;
-		case VEN_SET_TRANS_ARGS:
-			length = burner_set_trans_args(jz_burner,wValue,
-					wIndex,wLength);
-			break;
 		case VEN_CTL:
 			length = burner_control(jz_burner,wValue,
 					wIndex,wLength);
 			break;
 		case VEN_WRITE:
-			length = burner_program(jz_burner,wValue,
+			length = write_args_trans_prepare(jz_burner,wValue,
 					wIndex,wLength);
 			break;
 		case VEN_READ:
-			length = burner_read(jz_burner,wValue,
+			length = read_args_trans_prepare(jz_burner,wValue,
 					wIndex,wLength);
 			break;
 		default:
@@ -632,13 +582,15 @@ static int f_vendor_burner_setup_handle(struct usb_function *f,
 	} else {
 		printf("Unkown RequestType 0x%x \n",
 				ctlreq->bRequestType);
+		jz_burner->ack_status = -ENOSYS;
 		return -ENOSYS;
 	}
 
 	if (length >= 0) {
 		length = usb_ep_queue(gadget->ep0, req, 0);
 		if (length) {
-			debug("ep_queue --> %d\n", length);
+			printf("ep_queue error--> %x\n", length);
+			jz_burner->ack_status = length;
 			req->status = 0;
 		}
 	}
@@ -657,6 +609,7 @@ static int alloc_bulk_endpoints(struct jz_burner *jz_burner,
 	jz_burner->bulk_in = calloc(sizeof(struct burner_pipe),1);
 	jz_burner->bulk_out = calloc(sizeof(struct burner_pipe),1);
 	if (!jz_burner->bulk_in || !jz_burner->bulk_out) {
+		printf("%s:%d :nomem\n",__func__,__LINE__);
 		ret = -ENOMEM;
 		goto bulk_alloc_err;
 	}
@@ -699,12 +652,10 @@ static int alloc_bulk_endpoints(struct jz_burner *jz_burner,
 	req->buf = NULL;
 	jz_burner->bulk_out->epreq = req;
 
-	jz_burner->bulk_in->buf_addr = NULL;
+	jz_burner->bulk_in->buf = NULL;
 	jz_burner->bulk_in->buf_length = 0;
-	jz_burner->bulk_in->transfer_state = TRANSFER_IDLE;
-	jz_burner->bulk_out->buf_addr = NULL;
+	jz_burner->bulk_out->buf = NULL;
 	jz_burner->bulk_out->buf_length = 0;
-	jz_burner->bulk_out->transfer_state = TRANSFER_IDLE;
 
 	return 0;
 
@@ -741,6 +692,7 @@ static int f_vendor_burner_bind(struct usb_configuration *c,
 	jz_burner->bulk_in_enabled = 0;
 	jz_burner->ack_status = 0;
 	jz_burner->cdev = cdev;
+	jz_burner->args_buf = malloc(5*sizeof(int));
 
 	ret = alloc_bulk_endpoints(jz_burner,
 			&fs_bulk_in_desc,&fs_bulk_out_desc);
