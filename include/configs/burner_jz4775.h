@@ -135,17 +135,10 @@
 #define MTDPARTS_DEFAULT		"mtdparts=nand:4m(uboot-spl),1m(uboot),1m(uboot-env),2m(skip),-(system)"
 
 /* MMC */
-#define CONFIG_GENERIC_MMC		1
-#define CONFIG_MMC			1
-#define CONFIG_JZ_MMC 1
-#define CONFIG_JZ_MMC_MSC0 1
-#define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
-#define CONFIG_JZ_MMC_MSC1 1
-#define CONFIG_JZ_MMC_MSC1_PE 1
-#ifndef CONFIG_JZ_MMC_SPLMSC
-#define CONFIG_JZ_MMC_SPLMSC 0
-
-#endif
+#define CONFIG_GENERIC_MMC	1
+#define CONFIG_MMC		1
+#define CONFIG_JZ_MMC		1
+#define CONFIG_JZ_MMC_MSC0	1
 
 /* USB */
 #define CONFIG_USB_GADGET
@@ -172,9 +165,9 @@
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
-#define CONFIG_CMD_MMC		/* MMC/SD support			*/
+#define CONFIG_CMD_MMC		/* MMC/SD support		*/
 #define CONFIG_CMD_MTDPARTS
-#define CONFIG_CMD_NET		/* networking support			*/
+#define CONFIG_CMD_NET		/* networking support		*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/

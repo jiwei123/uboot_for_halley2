@@ -67,6 +67,7 @@ void board_usb_init(void)
 #ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
 {
+	jz_mmc_init();
 	return 0;
 }
 #endif

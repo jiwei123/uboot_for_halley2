@@ -90,7 +90,7 @@ struct jz_burner {
 	enum	medium_type	medium_type;
 	enum	data_type	data_type;
 	unsigned int		request_type;
-	unsigned long long	f_offset;
+	unsigned long long	offset_base;
 	unsigned int		offset;
 	unsigned int		length;
 
@@ -271,10 +271,41 @@ int nand_program_default(struct jz_burner *jz_burner,
 {
 	return 0; //0 success or errno
 }
+
+int curr_device = 0;
+#define MMC_BYTE_PER_BLOCK 512
 int mmc_program_default(struct jz_burner *jz_burner,
 		enum data_type data_type)
 {
-	printf("burn mmc\n");
+	printf("start burn mmc\n");
+
+	struct mmc *mmc = find_mmc_device(0);
+	u32 blk = (jz_burner->offset_base + jz_burner->offset)/MMC_BYTE_PER_BLOCK;
+	u32 cnt = jz_burner->length/MMC_BYTE_PER_BLOCK;
+	void *addr = (void *)jz_burner->bulk_out->buf;
+	u32 n;
+
+	if (!mmc) {
+		printf("no mmc device at slot %x\n", curr_device);
+		return -ENODEV;
+	}
+
+	printf("\nMMC write: dev # %d, block # %d, count %d ... ",
+			curr_device, blk, cnt);
+
+	mmc_init(mmc);
+
+	if (mmc_getwp(mmc) == 1) {
+		printf("Error: card is write protected!\n");
+		return -EPERM;
+	}
+
+	n = mmc->block_dev.block_write(curr_device, blk,
+			cnt, addr);
+	printf("%d blocks write: %s\n",
+			n, (n == cnt) ? "OK" : "ERROR");
+	if (n != cnt)
+		return -EIO;
 	return 0;
 }
 
@@ -294,10 +325,12 @@ static void handle_write(struct usb_ep *ep,
 	debug_cond(BURNNER_DEBUG,"handle write\n");
 	if (jz_burner->has_crc) {
 		if (bulk_out->crc != crc32(0,req->buf,req->actual)) {
+			printf("crc is errr\n");
 			jz_burner->ack_status = -EIO;
 			return;
 		}
 	} else if (req->actual != req->length) {
+		printf("transfer length is errr\n");
 		jz_burner->ack_status = -EIO;
 		return;
 	}
@@ -352,7 +385,7 @@ static void parse_write_args(struct usb_ep *ep,
 	offset = le32_to_cpu(offset);
 	crc32 = le32_to_cpu(crc32);
 
-	jz_burner->f_offset = ((foffset_b << 32)|foffset_l);
+	jz_burner->offset_base = ((foffset_b << 32)|foffset_l);
 	jz_burner->length = length;
 	jz_burner->offset = offset;
 	bulk_out->crc = crc32;
@@ -360,7 +393,7 @@ static void parse_write_args(struct usb_ep *ep,
 
 	debug_cond(BURNNER_DEBUG,
 			"file offset %lld,medium offset %d,length %d,crc32 %x\n",
-			jz_burner->f_offset,
+			jz_burner->offset_base,
 			jz_burner->offset,
 			jz_burner->length,
 			bulk_out->crc);
@@ -457,11 +490,11 @@ static void handle_read(struct usb_ep *ep,
 	offset_b = le32_to_cpu(offset_b);
 	offset_l = le32_to_cpu(offset_l);
 	length = le32_to_cpu(length);
-	jz_burner->f_offset = ((offset_b << 32)|offset_l);
+	jz_burner->offset_base = ((offset_b << 32)|offset_l);
 	jz_burner->length = length;
 	printf("Read medium %d frome %lld, length %d\n",
 			jz_burner->medium_type,
-			jz_burner->f_offset,
+			jz_burner->offset_base,
 			jz_burner->length);
 	if (bulk_in->buf) {
 		if (bulk_in->buf_length < length) {
@@ -483,15 +516,15 @@ static void handle_read(struct usb_ep *ep,
 	switch (jz_burner->medium_type) {
 	case NAND:
 		length = burner_nand_read(jz_burner,bulk_in->buf,
-				jz_burner->length,jz_burner->f_offset);
+				jz_burner->length,jz_burner->offset_base);
 		break;
 	case MMC:
 		length = burner_mmc_read(jz_burner,bulk_in->buf,
-				jz_burner->length,jz_burner->f_offset);
+				jz_burner->length,jz_burner->offset_base);
 		break;
 	case NOR:
 		length = burner_nor_read(jz_burner,bulk_in->buf,
-				jz_burner->length,jz_burner->f_offset);
+				jz_burner->length,jz_burner->offset_base);
 		break;
 	default:
 		length = -EMEDIUMTYPE;

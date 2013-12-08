@@ -245,7 +245,7 @@
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
-#define CONFIG_CMD_FASTBOOT
+/*#define CONFIG_CMD_FASTBOOT*/
 /* #define CONFIG_CMD_BATTERYDET */  	/* detect battery and show charge logo */
 
 /**

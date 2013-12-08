@@ -173,7 +173,10 @@ enum ep0_state {
 #define GINTMSK_START_FRAM	BIT3
 
 /* DCTL */
+#define DCTL_CLR_GONAK		BIT10
+#define DCTL_SET_GONAK		BIT9
 #define DCTL_CLR_GNPINNAK	BIT8
+#define DCTL_SET_GNPINNAK	BIT7
 #define DCTL_SOFT_DISCONN	BIT1
 
 /* DCFG */
