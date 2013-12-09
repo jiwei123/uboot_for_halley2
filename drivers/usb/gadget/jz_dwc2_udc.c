@@ -352,7 +352,7 @@ static void dwc_otg_core_init(struct jz_udc *dev)
 }
 
 void handle_rxfifo_nempty(struct jz_udc *dev);
-static void dwc_otg_flush_tx_fifo(unsigned char txf_num)
+void dwc_otg_flush_tx_fifo(unsigned char txf_num)
 {
 	unsigned int gintsts;
 	unsigned int grstctl;
@@ -389,7 +389,7 @@ static void dwc_otg_flush_tx_fifo(unsigned char txf_num)
 	debug_cond(DEBUG_SETUP != 0,"flush tx fifo\n");
 }
 
-static void dwc_otg_flush_rx_fifo(void)
+void dwc_otg_flush_rx_fifo(void)
 {
 	udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
 	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
@@ -404,7 +404,7 @@ static void dwc_otg_flush_rx_fifo(void)
 	debug_cond(DEBUG_SETUP != 0,"flush rx fifo\n");
 }
 
-static void disable_all_ep(void)
+void disable_all_ep(void)
 {
 	int i;
 	unsigned int	reg_tmp;
@@ -765,7 +765,7 @@ static int jz_udc_set_halt(struct usb_ep *_ep, int value)
 	return 0;
 }
 #ifdef CONFIG_BURNER
-static void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
+void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
 {
 	struct jz_ep *ep = container_of(_ep, struct jz_ep, ep);
 	int epnum = (ep->bEndpointAddress & 0xf);
@@ -786,7 +786,7 @@ static void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
 			tmp = udc_read_reg(DOEP_CTL(epnum));
 
 			if (tmp & DEP_ENA_BIT) {
-				/*set globle out nak*/
+				/*set global out nak*/
 				udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
 				while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
 					if ((udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY)) {
@@ -799,8 +799,13 @@ static void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
 				udc_write_reg(tmp, DOEP_CTL(epnum));
 				while(!(udc_read_reg(DOEP_INT(epnum)) & DEP_EPDIS_INT));
 				udc_write_reg(DEP_EPDIS_INT,DOEP_INT(epnum));
+
+				/*flush rx fifo*/
+				udc_write_reg(RSTCTL_RXFIFO_FLUSH, GRST_CTL);
+				while (udc_read_reg(GRST_CTL) & RSTCTL_RXFIFO_FLUSH);
+
+				/*clear global out nak*/
 				udc_write_reg(DCTL_CLR_GONAK,OTG_DCTL);
-				//printf("@@@@@@@@@@@disable ep %p\n",_ep);
 			}
 		}
 	}
@@ -982,7 +987,7 @@ static void handle_ep_data(struct jz_ep *ep, struct jz_request *req,
 			(ep->ep.maxpacket);
 		if (*pktcnt > 256) {
 			*pktcnt = 256;
-			*xfersize = *pktcnt * ep->ep.maxpacket;
+			*xfersize = (*pktcnt) * ep->ep.maxpacket;
 		} else {
 			*xfersize = req->req.length - req->req.actual;
 		}
@@ -1019,7 +1024,7 @@ static void handle_ep_data_in_phase(struct jz_ep *ep, struct jz_request *req)
 
 	debug_cond(DEBUG_INTR != 0, "pkcnt = %d, xfersize = %d\n", pktcnt, xfersize);
 	udc_write_reg(pktcnt << 19 | xfersize, DIEP_SIZE(epnum));
-
+	asm volatile ("nop\n\t");
 	reg_tmp = udc_read_reg(DIEP_CTL(epnum));
 	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
 	udc_write_reg(reg_tmp, DIEP_CTL(epnum));
@@ -1050,14 +1055,13 @@ void handle_ep_data_out_phase(struct jz_ep *ep, struct jz_request *req)
 	}
 	handle_ep_data(ep, req, &pktcnt, &xfersize);
 	if (epnum) {
-		//printf("udc_read_reg(DOEP_CTL(%d)) %x\n",epnum, udc_read_reg(DOEP_CTL(epnum)));
-		debug_cond(DEBUG_INTR == 0, "%s: the pktcnt is %d = 0x%x, xfersize is %d = 0x%x\n",
+		debug_cond(DEBUG_INTR != 0, "%s: the pktcnt is %d = 0x%x, xfersize is %d = 0x%x\n",
 				__func__, pktcnt, pktcnt, xfersize, xfersize);
 		req->read_pktcnt = pktcnt;
 	}
 
 	udc_write_reg(pktcnt << 19 | xfersize, DOEP_SIZE(epnum));
-
+	asm volatile ("nop\n\t");
 	reg_tmp = udc_read_reg(DOEP_CTL(epnum));
 	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
 	udc_write_reg(reg_tmp, DOEP_CTL(epnum));
@@ -1102,7 +1106,6 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 	struct jz_udc *dev;
 	int is_in = 0;
 	unsigned long flags;
-	//printf("###############QUEUE START##########################\n");
 	req = container_of(_req, struct jz_request, req);
 	if (unlikely(!_req || !_req->complete || !_req->buf
 				|| !list_empty(&req->queue))) {
@@ -1121,8 +1124,6 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 		      ep->ep.name, !ep->desc, _ep);
 		return -EINVAL;
 	}
-
-	//printf("%s\n",ep->ep.name);
 
 	dev = ep->dev;
 	if (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) {
@@ -1187,7 +1188,6 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 		printf("%s: Warning, request is NULL\n", __func__);
 	}
 	spin_unlock_irqrestore(&dev->lock, flags);
-	//printf("##############EEEEEEEEEEEEEE#############\n");
 	return 0;
 }
 
@@ -1564,11 +1564,13 @@ static int udc_setup_status(int epnum,
 	int reg_tmp = 0;
 	if (is_in) {
 		udc_write_reg(1 << 19, DIEP_SIZE(epnum));
+		asm volatile ("nop\n\t");
 		reg_tmp = udc_read_reg(DIEP_CTL(epnum));
 		reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
 		udc_write_reg(reg_tmp, DIEP_CTL(epnum));
 	} else {
 		udc_write_reg((1 << 19),DOEP_SIZE(epnum));
+		asm volatile ("nop\n\t");
 		reg_tmp = udc_read_reg(DOEP_CTL(epnum));
 		reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
 		udc_write_reg(reg_tmp, DOEP_CTL(epnum));
@@ -1576,7 +1578,7 @@ static int udc_setup_status(int epnum,
 	return 0;
 }
 
-static void udc_start_new_setup(int epnum)
+void udc_start_new_setup(int epnum)
 {
 	int reg_tmp = 0;
 	reg_tmp = udc_read_reg(DOEP_CTL(epnum));
@@ -1584,17 +1586,18 @@ static void udc_start_new_setup(int epnum)
 	udc_write_reg(reg_tmp, DOEP_CTL(epnum));
 }
 
-static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
+void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 {
 	int ret = 0;
 	u32 reg_tmp;
 	debug_cond(DEBUG_INTR != 0,"requesttype %x request %x\n",dev->crq->bRequestType,
 			dev->crq->bRequest);
 
-	/*if (dev->crq->bRequestType == 0xc0 && dev->crq->bRequest == 0x10) {
-		printf("EP 1 SIZE %x EP 1 CTL %x",udc_read_reg(DOEP_SIZE(1)),udc_read_reg(DOEP_CTL(1)));
-	}*/
-
+#ifdef CONFIG_BURNER
+	if (dev->crq->bRequestType == 0xc0 && dev->crq->bRequest == 0x00) {
+		jz_udc_disable_bootrom_ep(&memory.ep[2].ep);
+	}
+#endif
 	if (dev->crq->wLength) {
 		debug_cond(DEBUG_EP0 != 0 , "|ep0 %p| *SET UP DONE* data ===START===\n",ep);
 		dev->ep0state = DATA_STAGE;
@@ -1608,11 +1611,6 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 	else
 		dev->data_dir_out = 0;
 
-#ifdef CONFIG_BURNER
-	if (dev->crq->bRequestType == 0xc0 && dev->crq->bRequest == 0x00) {
-		jz_udc_disable_bootrom_ep(&memory.ep[2].ep);
-	}
-#endif
 	if ((dev->crq->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
 		switch (dev->crq->bRequest) {
 		case USB_REQ_SET_ADDRESS:
@@ -1642,12 +1640,10 @@ static void udc_handle_ep0_idle(struct jz_udc *dev, struct jz_ep *ep)
 			ret = -1;
 			break;
 		default:
-			printf("standard request\n");
 			ret = dev->driver->setup(&dev->gadget, dev->crq);
 			break;
 		}
 	} else {
-		//printf("vendor request\n");
 		ret = dev->driver->setup(&dev->gadget, dev->crq);
 	}
 
@@ -1930,7 +1926,7 @@ void handle_rxfifo_nempty(struct jz_udc *dev)
 	udc_write_reg(GINTSTS_RXFIFO_NEMPTY, GINT_STS);
 }
 
-static void udc_write_fifo_ep(struct jz_ep *ep)
+void udc_write_fifo_ep(struct jz_ep *ep)
 {
 	struct jz_request *req;
 
@@ -1946,10 +1942,8 @@ static void udc_write_fifo_ep(struct jz_ep *ep)
 			req->is_write_last = 1;
 	}
 }
-#ifdef CONFIG_BURNER
-static int xx = 1;
-#endif
-static void inep_transfer_complete(struct jz_ep *ep)
+
+void inep_transfer_complete(struct jz_ep *ep)
 {
 	struct jz_request	*req;
 	struct jz_udc	*dev = ep->dev;
@@ -1960,6 +1954,7 @@ static void inep_transfer_complete(struct jz_ep *ep)
 			struct jz_request, queue);
 	else {
 #ifdef CONFIG_BURNER
+		static volatile int xx = 1;
 		if (xx) {
 			debug_cond(DEBUG_EP0 != 0 ,
 				"|ep0 %p| in status state xfercomplet, \"bootrom last complete\" \n",
@@ -2003,13 +1998,90 @@ static void inep_transfer_complete(struct jz_ep *ep)
 
 	if (req->is_write_last) {
 		req->is_write_last = 0;
-		//printf("transfer complete\n");
 		udc_done(ep, req, 0);
 	} else if (req->req.length <= req->req.actual) {
 		printf("%s: Error, Now it should be the last transfer, but not\n"
 				, __func__);
 	} else {
 		handle_ep_data_in_phase(ep, req);
+	}
+}
+
+void outep_transfer_complete(struct jz_ep *ep)
+{
+	struct jz_request	*req;
+	struct jz_udc *dev = ep->dev;
+	static int out_data_cover = 0;
+
+	debug_cond(DEBUG_INTR != 0,"jz_udc is right %d line %d\n",&memory == dev,__LINE__);
+	if (likely(!list_empty(&ep->queue))) {
+		req = list_entry(ep->queue.next,
+				struct jz_request, queue);
+	} else {
+		if (!(ep->bEndpointAddress&0xf)) {
+			if (dev->ep0state == STATUS_STAGE && dev->data_dir_out) {
+				debug_cond(DEBUG_EP0 != 0 ,
+					"|ep0 %p| out status state xfercomplet, \"enable new setup\" \n",
+					ep);
+				dev->ep0state = SETUP_STAGE;
+				udc_start_new_setup(0);
+			} else if (dev->ep0state == SETUP_STAGE) {
+				debug_cond(DEBUG_EP0 != 0 ,
+					"|ep0 %p| setup state xfercomplet, \"wait setup done\" \n",
+					ep);
+			} else {
+				/*if dev->data_dir_out there may be a out token recive when ep disable*/
+				debug_cond(DEBUG_EP0 != 0 ,
+					"|ep0 %p| unkown out xfercomplet mark 1 \"warinnnnnnnnng\" \n",
+					ep);
+			}
+		}
+		return ;
+	}
+
+	if (!(ep->bEndpointAddress&0xf)) {
+		if (dev->ep0state == DATA_STAGE && dev->data_dir_out) {
+			if (!out_data_cover) {
+				debug_cond(DEBUG_EP0 != 0 ,
+					"|ep0 %p| out data state xfercomplet first time,"
+					"\" do nothing\"\n",
+					ep);
+				out_data_cover = 1;
+			} else {
+				debug_cond(DEBUG_EP0 != 0 ,
+					"|ep0 %p| out data state xfercomplet,"
+					"\"enable new setup and in status\" \n",
+					ep);
+				out_data_cover = 0;
+				dev->ep0state  = STATUS_STAGE;
+				udc_done(ep, req, 0);
+				udc_setup_status(0,1);
+				udc_start_new_setup(0);
+			}
+		} else {
+			debug_cond(DEBUG_EP0 != 0 ,
+				"|ep0 %p| unkown out xfercomplet mark 2\"warinnnnnnnnng\" \n",
+				ep);
+		}
+		return;
+	}
+
+	if (req->is_read_last) {
+		req->is_read_last = 0;
+		udc_done(ep, req, 0);
+	} else if (req->req.length <= req->req.actual) {
+		if (req->req.length == 0) {
+			req->is_read_last = 0;
+			udc_done(ep, req, 0);
+			return;
+		} else {
+			printf("%s: Error, Now it should be the last transfer,"
+					"but not, req.length = %d, req.actual = %d\n",
+					__func__, req->req.length, req->req.actual);
+		}
+	} else {
+		handle_ep_data_out_phase(ep, req);
+		debug_cond(DEBUG_INTR != 0, "%s: Transfer is not last\n", __func__);
 	}
 }
 
@@ -2051,7 +2123,7 @@ void handle_inep_intr(struct jz_udc *dev)
 
 
 		if ((intr & DEP_TIME_OUT) & udc_read_reg(DIEP_MASK)) {
-			debug_cond(DEBUG_INTR == 0, "%s: DEP_TIME_OUT\n", __func__);
+			debug_cond(DEBUG_INTR != 0, "%s: DEP_TIME_OUT\n", __func__);
 			reg_tmp = udc_read_reg(DIEP_MASK);
 			reg_tmp &= ~DEP_TIME_OUT;
 			udc_write_reg(reg_tmp, DIEP_MASK);
@@ -2079,7 +2151,7 @@ void handle_inep_intr(struct jz_udc *dev)
 		reg_fck = udc_read_reg(DIEP_INT(epnum));
 		if ((reg_fck & DEP_XFER_COMP)) {
 			debug_cond(DEBUG_INTR != 0,
-					"%s DEP_XFER_COMP\n",__func__);
+					"%s DEP_XFER_COMP %d\n",__func__,epnum);
 			udc_write_reg(DEP_XFER_COMP, DIEP_INT(epnum));
 
 			reg_tmp = udc_read_reg(DIEP_EMPMSK);
@@ -2088,80 +2160,13 @@ void handle_inep_intr(struct jz_udc *dev)
 			inep_transfer_complete(&dev->ep[epnum]);
 		}
 
-
                 ep_intr &= ~(0x1<<epnum);
 		epnum--;
 	}
 }
 
-static void outep_transfer_complete(struct jz_ep *ep)
-{
-	struct jz_request	*req;
-	struct jz_udc *dev = ep->dev;
 
-	debug_cond(DEBUG_INTR != 0,"jz_udc is right %d line %d\n",&memory == dev,__LINE__);
-	if (likely(!list_empty(&ep->queue))) {
-		req = list_entry(ep->queue.next,
-				struct jz_request, queue);
-	} else {
-		if (!(ep->bEndpointAddress&0xf)) {
-			if (dev->ep0state == STATUS_STAGE && dev->data_dir_out) {
-				debug_cond(DEBUG_EP0 != 0 ,
-					"|ep0 %p| out status state xfercomplet, \"enable new setup\" \n",
-					ep);
-				dev->ep0state = SETUP_STAGE;
-				udc_start_new_setup(0);
-			} else if (dev->ep0state == SETUP_STAGE) {
-				debug_cond(DEBUG_EP0 != 0 ,
-					"|ep0 %p| setup state xfercomplet, \"wait setup done\" \n",
-					ep);
-			} else {
-				/*if dev->data_dir_out there may be a out token recive when ep disable*/
-				debug_cond(DEBUG_EP0 != 0 ,
-					"|ep0 %p| unkown out xfercomplet mark 1 \"warinnnnnnnnng\" \n",
-					ep);
-			}
-		}
-		return ;
-	}
-
-	if (!(ep->bEndpointAddress&0xf)) {
-		if (dev->ep0state == DATA_STAGE && dev->data_dir_out) {
-			debug_cond(DEBUG_EP0 != 0 ,
-				"|ep0 %p| out data state xfercomplet, \"enable new setup and in status\" \n",
-				ep);
-			udc_setup_status(0,1);
-			udc_done(ep, req, 0);
-			dev->ep0state  = STATUS_STAGE;
-			udc_start_new_setup(0);
-		} else {
-			debug_cond(DEBUG_EP0 != 0 ,
-				"|ep0 %p| unkown out xfercomplet mark 2\"warinnnnnnnnng\" \n",
-				ep);
-		}
-		return;
-	}
-
-	if (req->is_read_last) {
-		req->is_read_last = 0;
-		udc_done(ep, req, 0);
-	} else if (req->req.length <= req->req.actual) {
-		if (req->req.length == 0) {
-			req->is_read_last = 0;
-			udc_done(ep, req, 0);
-			return;
-		} else {
-			printf("%s: Error, Now it should be the last transfer,"
-					"but not, req.length = %d, req.actual = %d\n",
-					__func__, req->req.length, req->req.actual);
-		}
-	} else {
-		handle_ep_data_out_phase(ep, req);
-		debug_cond(DEBUG_INTR != 0, "%s: Transfer is not last\n", __func__);
-	}
-}
-
-static int handle_outep_intr(struct jz_udc *dev)
+int handle_outep_intr(struct jz_udc *dev)
 {
 	u32 ep_intr, intr;
 	int epnum = 15;
@@ -2183,30 +2188,18 @@ static int handle_outep_intr(struct jz_udc *dev)
 		debug_cond(DEBUG_REG != 0, "%s: DOEP_INT(%d)=0x%08x\n",__func__, epnum, intr);
 
 		if (intr & DEP_XFER_COMP) {
-			//printf("---------------------------------------------------\n");
 			debug_cond(DEBUG_INTR != 0,"%s: DEP_XFER_COMP epnum %d\n", __func__,epnum);
 			udc_write_reg(DEP_XFER_COMP, DOEP_INT(epnum));
 			if (!epnum)
 				udc_write_reg(DEP_STATUS_PHASE_RECV, DOEP_INT(epnum));
-			/* FIXME How to deal with that ep0 status stage and data stage */
 			if (epnum == 0) {
 				outep_transfer_complete(&dev->ep[epnum]);
 			} else {
 				outep_transfer_complete(&dev->ep[epnum + 1]);
 			}
-			//printf("------------------------1--------------------------\n");
 		}
 
-		/*if (intr & DEP_STATUS_PHASE_RECV) {
-			udc_write_reg(DEP_STATUS_PHASE_RECV, DOEP_INT(epnum));
-		}*/
-
-		/*if (intr)
-			debug_cond(DEBUG_REG == 0, "%s: DOEP_INT(%d)=0x%08x\n",__func__, epnum, intr);*/
-
 		if (intr & DEP_SETUP_PHASE_DONE) {
-			//printf("================DOEP_INT(0) 0x%x====================\n",
-			//		udc_read_reg(DOEP_INT(0)));
                         debug_cond(DEBUG_INTR != 0, "%s:DEP_SETUP_PHASE_DONE.\n", __func__);
 			udc_write_reg(DEP_SETUP_PHASE_DONE, DOEP_INT(epnum));
 			if (!epnum) {
@@ -2260,7 +2253,7 @@ static int handle_outep_intr(struct jz_udc *dev)
 	return 0;
 }
 
-static int jz_udc_irq(int irq, void *_dev)
+int jz_udc_irq(int irq, void *_dev)
 {
 	struct jz_udc *dev = _dev;
 	u32 intsts;
@@ -2367,6 +2360,7 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 		reg_tmp |= (1 << 2);
 		udc_write_reg(reg_tmp, OTG_DCFG);
 	}
+
 	debug_cond(DEBUG_EP0 != 0,"EP 0 %p\n",&memory.ep[0].ep);
 	debug_cond(DEBUG_EP0 != 0,"EP 1 %p\n",&memory.ep[1].ep);
 	debug_cond(DEBUG_EP0 != 0,"EP 2 %p\n",&memory.ep[2].ep);
