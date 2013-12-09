@@ -108,6 +108,9 @@ void pll_init(void)
 
 	debug("pll init...");
 
+	cpccr = (0x95 << 24) | (7 << 20);
+	cpm_outl(cpccr,CPM_CPCCR);
+	while(cpm_inl(CPM_CPCSR) & 0x7);
 	/* Only apll is init here */
 	cpm_outl(get_pllreg_value(APLL) | (0x1 << 8) | 0x20,CPM_CPAPCR);
 	while(!(cpm_inl(CPM_CPAPCR) & (0x1<<10)));
@@ -121,6 +124,7 @@ void pll_init(void)
 
 	cpccr = (CPCCR_CFG & (0xff << 24)) | (cpm_inl(CPM_CPCCR) & ~(0xff << 24));
 	cpm_outl(cpccr,CPM_CPCCR);
+	while(cpm_inl(CPM_CPCSR) & 0x7);
 
 	debug("ok\n");
 }
