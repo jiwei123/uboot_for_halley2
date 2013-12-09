@@ -361,9 +361,9 @@ static void parse_write_args(struct usb_ep *ep,
 	struct burner_pipe *bulk_out = jz_burner->bulk_out;
 	struct usb_request *w_req = bulk_out->epreq;
 	struct usb_ep	*w_ep = bulk_out->ep;
-	int foffset_l,offset,length,crc32;
 	int ret;
-	unsigned long long foffset_b;
+	unsigned int foffset_l,offset,length,crc32;
+	unsigned int foffset_b;
 
 	if (req->actual < req->length) {
 		printf("burnner write args transfer error,actual %d,length %d\n",
