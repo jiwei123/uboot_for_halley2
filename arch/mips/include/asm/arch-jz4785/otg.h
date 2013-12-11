@@ -1,4 +1,4 @@
-/* arch/mips/include/asm/arch-jz4775/otg.h
+/* arch/mips/include/asm/arch-jz4780/otg.h
  *
  * Ingenic JZ DWC2 USB Device Controller support
  *
@@ -173,7 +173,10 @@ enum ep0_state {
 #define GINTMSK_START_FRAM	BIT3
 
 /* DCTL */
+#define DCTL_CLR_GONAK		BIT10
+#define DCTL_SET_GONAK		BIT9
 #define DCTL_CLR_GNPINNAK	BIT8
+#define DCTL_SET_GNPINNAK	BIT7
 #define DCTL_SOFT_DISCONN	BIT1
 
 /* DCFG */
@@ -483,7 +486,7 @@ enum ep0_state {
 
 /* Device Endpoint-N Control Register (DIEPCTLn/DOEPCTLn) */
 #define DIEPCTL_TX_FIFO_NUM(x)                    (x << 22)
-#define DIEPCTL_TX_FIFO_NUM_MASK                  (~DIEPCTL_TX_FIFO_NUM(0xF))
+#define DIEPCTL_TX_FIFO_NUM_MASK                  (DIEPCTL_TX_FIFO_NUM(0xF))
 
 /* Device ALL Endpoints Interrupt Register (DAINT) */
 #define DAINT_IN_EP_INT(x)                        (x << 0)
