@@ -139,8 +139,16 @@ cache_alloc_a_line:
 #ifdef CONFIG_SPL_STACK
 	li	sp, CONFIG_SPL_STACK
 #endif
+#ifndef CONFIG_BURNER
 	j	board_init_f
 	nop
+#else
+	jal	board_init_f
+	nop
+	li ra, 0xbfc03258
+        jr ra
+        addiu sp, sp, 8
+#endif
 
 	.globl	validate_cache
 	.type	validate_cache, @function
