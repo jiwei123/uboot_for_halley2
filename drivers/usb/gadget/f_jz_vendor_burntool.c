@@ -359,6 +359,24 @@ int mmc_program_default(struct jz_burner *jz_burner,
 			n, (n == cnt) ? "OK" : "ERROR");
 	if (n != cnt)
 		return -EIO;
+
+	if (jz_burner->has_crc) {
+		mmc->block_dev.block_read(curr_device, blk,
+				cnt, addr);
+		printf("%d blocks read: %s\n",
+				n, (n == cnt) ? "OK" : "ERROR");
+		if (n != cnt)
+			return -EIO;
+
+		unsigned int tmp_crc = local_crc32(0xffffffff,addr,jz_burner->length);
+		printf("%d blocks check: %s\n",
+				n, (jz_burner->bulk_out->crc == tmp_crc == cnt) ? "OK" : "ERROR");
+		if (jz_burner->bulk_out->crc != tmp_crc) {
+			printf("src_crc32 = %08x , dst_crc32 = %08x\n",jz_burner->bulk_out->crc,tmp_crc);
+			return -EIO;
+		}
+
+	}
 	return 0;
 }
 
@@ -385,7 +403,6 @@ void handle_write(struct usb_ep *ep,
 
 	if (jz_burner->has_crc) {
 		unsigned int tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
-		printf("crc=%08x\n",tmp_crc);
 		if (bulk_out->crc != tmp_crc) {
 			printf("crc is errr! src crc=%08x crc=%08x\n",bulk_out->crc,tmp_crc);
 			jz_burner->ack_status = -EINVAL;
