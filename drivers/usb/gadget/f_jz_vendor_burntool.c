@@ -32,7 +32,7 @@
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
 
-#define BURNNER_DEBUG 0
+#define BURNNER_DEBUG 1
 
 /*bootrom stage request*/
 #define VEN_GET_CPU_INFO	0x00
@@ -334,7 +334,7 @@ int mmc_program_default(struct jz_burner *jz_burner,
 {
 	struct mmc *mmc = find_mmc_device(0);
 	u32 blk = (jz_burner->offset_base + jz_burner->offset)/MMC_BYTE_PER_BLOCK;
-	u32 cnt = jz_burner->length/MMC_BYTE_PER_BLOCK;
+	u32 cnt = (jz_burner->length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
 	void *addr = (void *)jz_burner->bulk_out->buf;
 	u32 n;
 
@@ -370,12 +370,11 @@ int mmc_program_default(struct jz_burner *jz_burner,
 
 		unsigned int tmp_crc = local_crc32(0xffffffff,addr,jz_burner->length);
 		printf("%d blocks check: %s\n",
-				n, (jz_burner->bulk_out->crc == tmp_crc == cnt) ? "OK" : "ERROR");
+				n, (jz_burner->bulk_out->crc == tmp_crc) ? "OK" : "ERROR");
 		if (jz_burner->bulk_out->crc != tmp_crc) {
 			printf("src_crc32 = %08x , dst_crc32 = %08x\n",jz_burner->bulk_out->crc,tmp_crc);
 			return -EIO;
 		}
-
 	}
 	return 0;
 }
@@ -467,7 +466,7 @@ void parse_write_args(struct usb_ep *ep,
 	jz_burner->ack_status = -EBUSY;
 
 	debug_cond(BURNNER_DEBUG != 0,
-			"file offset %lld,medium offset %d,length %d,crc32 %x\n",
+			"medium offset %lld,file offset %d,length %d,crc32 %x\n",
 			jz_burner->offset_base,
 			jz_burner->offset,
 			jz_burner->length,
