@@ -84,8 +84,13 @@ _start:
 
 #ifdef CONFIG_SPL_SPI_SUPPORT
 #define SSI_GR_BOOT (CONFIG_SYS_EXTAL / (CONFIG_SYS_SPI_BOOT_FREQ * 2) - 1)
+#ifdef CONFIG_SPI_NAND
+	.word 0x55020304
+	.word (0x000055aa | (SSI_GR_BOOT << 24))
+#else
 	.word 0x55020304
 	.word (0x00aa55aa | (SSI_GR_BOOT << 24))
+#endif
 	.space 504, 0
 	RESERVED_FOR_SC(0xff)
 #endif /* CONFIG_SPL_SPI_SUPPORT */
