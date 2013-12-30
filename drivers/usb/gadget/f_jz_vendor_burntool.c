@@ -32,7 +32,7 @@
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
 
-#define BURNNER_DEBUG 1
+#define BURNNER_DEBUG 0
 
 /*bootrom stage request*/
 #define VEN_GET_CPU_INFO	0x00
@@ -279,13 +279,13 @@ enum ctl_type {
 	MMC_REQ,
 };
 
-void handle_default_complete(struct usb_ep *ep,
-				struct usb_request *req)
+#define REBOOT 0
+
+void handle_default_complete(struct usb_ep *ep,struct usb_request *req)
 {
-	return;
 }
 
-/*FIXME*/
+#define CTL(value,index) (((value) << 8) | (index))
 int burner_control(struct jz_burner *jz_burner,
 		u16 wValue,u16 wIndex,u16 wLength)
 {
@@ -296,9 +296,9 @@ int burner_control(struct jz_burner *jz_burner,
 	req->buf = (void *)~(0);
 	req->complete = handle_default_complete;
 
-	switch (wValue) {
-	case BOARD_REQ:
-		/*Board control : reboot,board cfg, flush cache and so on*/
+	switch (CTL(wValue,wIndex)) {
+	case CTL(BOARD_REQ,REBOOT):
+		do_reset(NULL,0,0,NULL);
 		break;
 	case NAND_REQ:
 		/*Nand control : nand query,init,erase and so on*/
