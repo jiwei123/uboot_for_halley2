@@ -26,13 +26,14 @@
 #include <common.h>
 #include <malloc.h>
 #include <mmc.h>
+#include <rtc.h>
 #include <part.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
 
-#define BURNNER_DEBUG 0
+#define BURNNER_DEBUG 1
 
 /*bootrom stage request*/
 #define VEN_GET_CPU_INFO	0x00
@@ -274,12 +275,15 @@ int burner_get_ack(struct jz_burner *jz_burner,
 }
 
 enum ctl_type {
-	BOARD_REQ = 0,
-	NAND_REQ,
-	MMC_REQ,
+	COMMON_CTL = 0,
+	NAND_CTL,
+	MMC_CTL,
 };
 
 #define REBOOT 0
+#define SYNC_TIME 1
+
+void parse_rtc_command(struct usb_ep *ep,struct usb_request *req);
 
 void handle_default_complete(struct usb_ep *ep,struct usb_request *req)
 {
@@ -297,13 +301,19 @@ int burner_control(struct jz_burner *jz_burner,
 	req->complete = handle_default_complete;
 
 	switch (CTL(wValue,wIndex)) {
-	case CTL(BOARD_REQ,REBOOT):
+	case CTL(COMMON_CTL,REBOOT):
 		do_reset(NULL,0,0,NULL);
 		break;
-	case NAND_REQ:
+	case CTL(COMMON_CTL,SYNC_TIME):
+		req->length = wLength;
+		req->complete = parse_rtc_command;
+		req->context = jz_burner;
+		jz_burner->ack_status = -EBUSY;
+		return wLength;
+	case CTL(NAND_CTL,0):
 		/*Nand control : nand query,init,erase and so on*/
 		break;
-	case MMC_REQ:
+	case CTL(MMC_CTL,0):
 		/*MMC control : sd open card and so on*/
 		break;
 	default:
@@ -426,6 +436,18 @@ void handle_write(struct usb_ep *ep,
 
 	jz_burner->ack_status = ret;
 	return;
+}
+
+void parse_rtc_command(struct usb_ep *ep,struct usb_request *req)
+{
+	struct jz_burner *jz_burner = req->context;
+	struct rtc_time *t = req->buf;
+	printf("fuck\n");
+#if defined(CONFIG_RTC_JZ47XX)
+	jz_burner->ack_status = rtc_set(t);
+#else
+	jz_burner->ack_status = -ENODEV;
+#endif
 }
 
 void parse_write_args(struct usb_ep *ep,
