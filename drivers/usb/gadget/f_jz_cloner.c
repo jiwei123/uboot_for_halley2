@@ -104,7 +104,7 @@ struct cloner {
 	struct cmd 		cmd;
 	unsigned int 		buf_size;
 	unsigned int		has_crc:1;
-	int 			ack;
+	int 			ack[8];
 };
 
 static const char burntool_name[] = "INGENIC VENDOR BURNNER";
@@ -250,7 +250,8 @@ int mmc_program(struct cloner *cloner)
 		return -ENODEV;
 	}
 
-	debug_cond(BURNNER_DEBUG,"\nMMC write: dev # %d, block # %d, count %d ... ",
+	//debug_cond(BURNNER_DEBUG,"\nMMC write: dev # %d, block # %d, count %d ... ",
+	printf("MMC write: dev # %d, block # %d, count %d ... ",
 			curr_device, blk, cnt);
 
 	mmc_init(mmc);
@@ -262,7 +263,8 @@ int mmc_program(struct cloner *cloner)
 
 	n = mmc->block_dev.block_write(curr_device, blk,
 			cnt, addr);
-	debug_cond(BURNNER_DEBUG,"%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
+	//debug_cond(BURNNER_DEBUG,"%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
+	printf("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
 
 	if (n != cnt)
 		return -EIO;
@@ -289,7 +291,7 @@ void handle_ack(struct usb_ep *ep,struct usb_request *req)
 	struct cloner *cloner = req->context;
 	if (req->actual != req->length) {
 		printf("ack transfer length is errr\n");
-		cloner->ack = -EIO;
+		cloner->ack[0] = -EIO;
 	}
 
 	usb_ep_queue(cloner->ep_out, cloner->cmd_req, 0);
@@ -300,7 +302,7 @@ void handle_read(struct usb_ep *ep,struct usb_request *req)
 	struct cloner *cloner = req->context;
 	if (req->actual != req->length) {
 		printf("read transfer length is errr\n");
-		cloner->ack = -EIO;
+		cloner->ack[0] = -EIO;
 	}
 
 	usb_ep_queue(cloner->ep_out, cloner->cmd_req, 0);
@@ -312,32 +314,31 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 	struct cloner *cloner = req->context;
 	if (req->actual != req->length) {
 		printf("write transfer length is errr,actual=%08x,length=%08x\n",req->actual,req->length);
-		cloner->ack = -EIO;
-		return;
+		cloner->ack[0] = -EIO;
+		goto faild;
 	}
 
 	if (cloner->has_crc) {
 		unsigned int tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
 		if (cloner->cmd.arg.write.crc != tmp_crc) {
 			printf("crc is errr! src crc=%08x crc=%08x\n",cloner->cmd.arg.write.crc,tmp_crc);
-			*(int *)cloner->ack_req->buf = -EINVAL;
-			usb_ep_queue(cloner->ep_in, cloner->ack_req, 0);
-			return;
+			cloner->ack[0] = -EINVAL;
+			goto faild;
 		}
 	}
 
 #define OPS(x,y) ((x<<16)|(y&0xffff))
 	switch(cloner->cmd.arg.write.ops) {
 		case OPS(MMC,RAW):
-			cloner->ack = mmc_program(cloner);
+			cloner->ack[0] = mmc_program(cloner);
 			break;
 		case OPS(MEMORY,RAW):
 		default:
 			printf("ops %08x not support yet.\n",cloner->cmd.arg.write.ops);
 	}
 #undef OPS
-
-	*(int *)cloner->ack_req->buf = cloner->ack;
+faild:
+	//printf("ack len = %08x\n",cloner->ack_req->length);
 	usb_ep_queue(cloner->ep_in, cloner->ack_req, 0);
 }
 
@@ -346,7 +347,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 	struct cloner *cloner = req->context;
 	if (req->actual != req->length) {
 		printf("cmd transfer length is errr\n");
-		cloner->ack = -EIO;
+		cloner->ack[0] = -EIO;
 		return;
 	}
 
@@ -364,15 +365,16 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 				cloner->write_req->buf = realloc(cloner->write_req->buf,cloner->buf_size);
 			}
 			cloner->write_req->length = cmd->arg.write.length;
+			//printf("queue buf %08x\n",cloner->write_req->length);
 			usb_ep_queue(cloner->ep_out, cloner->write_req, 0);
 			break;
 		case CMD_READ:
 			break;
 		case CMD_TIME_SYNC:
 #if defined(CONFIG_RTC_JZ47XX)
-			cloner->ack = rtc_set(&cloner->cmd.arg.rtc);
+			cloner->ack[0] = rtc_set(&cloner->cmd.arg.rtc);
 #else
-			cloner->ack = 0;
+			cloner->ack[0] = 0;
 #endif
 			usb_ep_queue(cloner->ep_in, cloner->ack_req, 0);
 			break;
@@ -406,7 +408,7 @@ int f_cloner_setup_handle(struct usb_function *f,
 	} else {
 		printf("Unkown RequestType 0x%x \n",
 				ctlreq->bRequestType);
-		cloner->ack = -ENOSYS;
+		cloner->ack[0] = -ENOSYS;
 		return -ENOSYS;
 	}
 
@@ -428,7 +430,7 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->ep0 = cdev->gadget->ep0;
 	cloner->ep0req = cdev->req;
 	cloner->gadget = cdev->gadget;
-	cloner->ack = 0;
+	cloner->ack[0] = 0;
 	cloner->cdev = cdev;
 
 	if (gadget_is_dualspeed(cdev->gadget)) {
@@ -461,7 +463,7 @@ int f_cloner_bind(struct usb_configuration *c,
 
 	cloner->ack_req->complete = handle_ack;
 	cloner->ack_req->buf = &cloner->ack;
-	cloner->ack_req->length = sizeof(cloner->ack);
+	cloner->ack_req->length = 32;
 	cloner->ack_req->context = cloner;
 
 	cloner->read_req->complete = handle_read;
@@ -543,7 +545,7 @@ int jz_cloner_add(struct usb_configuration *c)
 	burner_intf_string_defs[0].id = id;
 	intf_desc.iInterface = id;
 
-	debug_cond("%s: cdev: 0x%p gadget:0x%p gadget->ep0: 0x%p\n", __func__,
+	debug_cond(BURNNER_DEBUG,"%s: cdev: 0x%p gadget:0x%p gadget->ep0: 0x%p\n", __func__,
 			c->cdev, c->cdev->gadget, c->cdev->gadget->ep0);
 
 	return cloner_function_bind_config(c);
