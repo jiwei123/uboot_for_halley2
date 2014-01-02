@@ -875,18 +875,6 @@ static int jz_ep_enable_part(struct usb_ep *_ep,
 	return 0;
 }
 
-static int jz_ep_vir_enable(struct usb_ep *_ep,
-		const struct usb_endpoint_descriptor *desc)
-{
-	return jz_ep_enable_part(_ep,desc,0);
-}
-
-int f_ep_vir_enable(struct usb_ep *_ep,
-		const struct usb_endpoint_descriptor *desc)
-{
-	return jz_ep_vir_enable(_ep,desc);
-}
-
 static int jz_ep_enable(struct usb_ep *_ep,
 		const struct usb_endpoint_descriptor *desc)
 {

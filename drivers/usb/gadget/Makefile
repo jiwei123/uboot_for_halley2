@@ -42,7 +42,7 @@ COBJS-$(CONFIG_USB_JZ_BURNER_GADGET) += g_burntool.o
 COBJS-$(CONFIG_USB_JZ_DWC2_UDC)	+= jz_dwc2_udc.o
 COBJS-$(CONFIG_FASTBOOT_GADGET) += g_fastboot.o
 COBJS-$(CONFIG_FASTBOOT_FUNCTION) += f_fastboot.o
-COBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += f_jz_vendor_burntool.o
+COBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += f_jz_cloner.o
 endif
 ifdef CONFIG_USB_ETHER
 COBJS-y += ether.o
