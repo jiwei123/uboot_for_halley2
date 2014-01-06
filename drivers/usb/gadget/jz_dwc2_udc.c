@@ -875,6 +875,18 @@ static int jz_ep_enable_part(struct usb_ep *_ep,
 	return 0;
 }
 
+static int jz_ep_vir_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	return jz_ep_enable_part(_ep,desc,0);
+}
+
+int f_ep_vir_enable(struct usb_ep *_ep,
+		const struct usb_endpoint_descriptor *desc)
+{
+	return jz_ep_vir_enable(_ep,desc);
+}
+
 static int jz_ep_enable(struct usb_ep *_ep,
 		const struct usb_endpoint_descriptor *desc)
 {
@@ -1190,7 +1202,7 @@ static int jz_dequeue(struct usb_ep *_ep, struct usb_request *_req)
 	debug("%s: %p\n", __func__, _ep);
 
 	ep = container_of(_ep, struct jz_ep, ep);
-	if (!_ep || ep->ep.name == ep0name)
+	if (!_ep)
 		return -EINVAL;
 
 	spin_lock_irqsave(&ep->dev->lock, flags);
