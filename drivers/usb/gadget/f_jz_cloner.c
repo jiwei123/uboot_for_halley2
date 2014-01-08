@@ -45,11 +45,10 @@
 #define VR_PROG_STAGE2		0x05
 /*firmware stage request*/
 #define VR_GET_ACK		0x10
-#define VR_CTL			0x11
-#define VR_WRITE		0x12
-#define VR_READ			0x13
-#define VR_SYNC_TIME		0x14
-#define VR_REBOOT		0x15
+#define VR_WRITE		0x11
+#define VR_READ			0x12
+#define VR_SYNC_TIME		0x13
+#define VR_REBOOT		0x14
 
 enum medium_type {
 	MEMORY = 0,
@@ -281,9 +280,19 @@ int mmc_program(struct cloner *cloner)
 	return 0;
 }
 
+void handle_read(struct usb_ep *ep,struct usb_request *req)
+{
+}
+
 void handle_write(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
+
+	if(req->status == -ECONNRESET) {
+		cloner->ack = 0;
+		return;
+	}
+
 	if (req->actual != req->length) {
 		printf("write transfer length is errr,actual=%08x,length=%08x\n",req->actual,req->length);
 		cloner->ack = -EIO;
@@ -305,17 +314,22 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			cloner->ack = mmc_program(cloner);
 			break;
 		case OPS(MEMORY,RAW):
+			cloner->ack = 0;
 			break;
 		default:
 			printf("ops %08x not support yet.\n",cloner->cmd.write.ops);
 	}
 #undef OPS
-	cloner->ack = 0;
 }
 
 void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
+	if(req->status == -ECONNRESET) {
+		cloner->ack = 0;
+		return;
+	}
+
 	if (req->actual != req->length) {
 		printf("cmd transfer length is errr\n");
 		cloner->ack = -EIO;
@@ -338,6 +352,14 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 		case VR_SYNC_TIME:
 			cloner->ack = rtc_set(&cloner->cmd.rtc);
 			break;
+		case VR_GET_ACK:
+			memcpy(cloner->read_req->buf,&cloner->ack,sizeof(int));
+			cloner->read_req->length = sizeof(int);
+			usb_ep_queue(cloner->ep_in, cloner->read_req, 0);
+			break;
+		case VR_REBOOT:
+			do_reset(NULL,0,0,NULL);
+			break;
 	}
 }
 
@@ -347,7 +369,9 @@ int f_cloner_setup_handle(struct usb_function *f,
 	struct usb_gadget *gadget = f->config->cdev->gadget;
 	struct cloner *cloner = f->config->cdev->req->context;
 	struct usb_request *req = cloner->ep0req;
-	req->length = 0;
+
+	req->length = ctlreq->wLength;
+	req->complete = handle_cmd;
 
 	debug_cond(BURNNER_DEBUG,"vendor bRequestType %x,bRequest %x wLength %d\n",
 			ctlreq->bRequestType,
@@ -361,39 +385,18 @@ int f_cloner_setup_handle(struct usb_function *f,
 	}
 
 	cloner->cmd_type = ctlreq->bRequest;
+
+	usb_ep_dequeue(cloner->ep0, cloner->ep0req);
+	usb_ep_dequeue(cloner->ep_in, cloner->read_req);
+	usb_ep_dequeue(cloner->ep_out, cloner->write_req);
+
 	switch (ctlreq->bRequest) {
 		case VR_GET_CPU_INFO:
 			strcpy(cloner->ep0req->buf,"BOOT47XX");
-			cloner->ep0req->length = 8;
-			usb_ep_queue(cloner->ep0, cloner->ep0req, 0);
 			break;
-		case VR_SET_DATA_ADDR:
-		case VR_SET_DATA_LEN:
-		case VR_FLUSH_CACHE:
-		case VR_PROG_STAGE1:
-		case VR_PROG_STAGE2:
-			break;
-		case VR_GET_ACK:
-			memcpy(cloner->ep0req->buf,cloner->ack,sizeof(int));
-			cloner->ep0req->length = sizeof(int);
-			usb_ep_queue(cloner->ep0, cloner->ep0req, 0);
-			break;
-		case VR_READ:
-		case VR_WRITE:
-		case VR_SYNC_TIME:
-			cloner->ep0req->length = ctlreq->wLength;
-			cloner->ep0req->complete = handle_cmd;
-			usb_ep_queue(cloner->ep0, cloner->ep0req, 0);
-			break;
-		case VR_REBOOT:
-			do_reset(NULL,0,0,NULL);
-			break;
-		default:
-			printf("Unkown Vendor Request 0x%x\n",ctlreq->bRequest);
-			return -ENOSYS;
 	}
 
-	return 0;
+	return usb_ep_queue(cloner->ep0, cloner->ep0req, 0);
 }
 
 int f_cloner_bind(struct usb_configuration *c,
@@ -437,7 +440,7 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->write_req->length = 1024*1024;
 	cloner->write_req->context = cloner;
 
-	cloner->read_req->complete = NULL;
+	cloner->read_req->complete = handle_read;
 	cloner->read_req->buf = malloc(1024*1024);
 	cloner->read_req->length = 1024*1024;
 	cloner->read_req->context = cloner;
