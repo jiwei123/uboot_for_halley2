@@ -71,7 +71,7 @@ struct usb_gadget_strings *g_bt_string_tab[] = {
 
 static struct usb_composite_dev *g_cdev;
 
-extern int jz_vendor_burner_add(struct usb_configuration *c);
+extern int jz_cloner_add(struct usb_configuration *c);
 static int g_do_burntool_config(struct usb_configuration *c)
 {
 	int ret = -ENODEV;
@@ -80,7 +80,7 @@ static int g_do_burntool_config(struct usb_configuration *c)
 			__func__, c, c->cdev);
 
 	if (!strcmp(s, "jz_usb_burner_vdr")) {
-		 ret = jz_vendor_burner_add(c);
+		 ret = jz_cloner_add(c);
 	}
 	return ret;
 }

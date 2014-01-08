@@ -26,8 +26,6 @@
  */
 #include <common.h>
 #include <command.h>
-#if (defined(CONFIG_CMD_DATE))
-
 
 #include <rtc.h>
 #include <asm/io.h>
@@ -126,6 +124,7 @@ int rtc_read_time(void)
 
 int rtc_set(struct rtc_time *tmp)
 {
+	unsigned long time;
 	rtc_tm_to_time(tmp,&time);
 	jzrtc_writel(RTC_RTCSR, time);
 
@@ -136,4 +135,3 @@ void rtc_reset(void)
 {
 }
 
-#endif

@@ -245,4 +245,6 @@
 #define CONFIG_USB_GADGET_VBUS_DRAW 500
 #endif	/* !CONFIG_CMD_BURN */
 
+#define CONFIG_CMD_DATE
+#define CONFIG_RTC_JZ47XX
 #endif /* __CONFIG_BURNER_H__ */

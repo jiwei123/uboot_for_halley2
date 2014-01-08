@@ -2268,7 +2268,7 @@ int jz_udc_irq(int irq, void *_dev)
 	gintmsk = udc_read_reg(GINT_MASK);
 	debug_cond(DEBUG_REG != 0, "%s: GINT_MASK is 0x%x\n", __func__, gintmsk);
 
-	if (!intsts) {
+	if (!(intsts & gintmsk)) {
 		debug_cond(DEBUG_INTR != 0,
 				"%s: There are not interrupt found\n", __func__);
 		spin_unlock_irqrestore(&dev->lock, flags);
@@ -2371,11 +2371,5 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 
 int usb_gadget_handle_interrupts(void)
 {
-	u32 intr_status = udc_read_reg(GINT_STS);
-	u32 gintmsk = udc_read_reg(GINT_MASK);
-
-	if (intr_status & gintmsk) {
-		return jz_udc_irq(1, (void *)the_controller);
-	}
-	return 0;
+	return jz_udc_irq(1, (void *)the_controller);
 }
