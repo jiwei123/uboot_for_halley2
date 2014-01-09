@@ -178,8 +178,14 @@ $(obj)$(BOARD)-spl.bin: $(obj)u-boot-spl.bin
 endif
 
 ifndef CONFIG_SPI_SPL_CHECK
+ifndef CONFIG_SPL_PARAMS_FIXER
 $(obj)u-boot-spl.bin:	$(obj)u-boot-spl
 	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+else
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_params_fixer $@ $@ 256 256 > /dev/null
+endif
 else
 $(obj)u-boot-spl.bin:	$(obj)u-boot-spl
 	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@

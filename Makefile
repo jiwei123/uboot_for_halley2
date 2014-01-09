@@ -587,8 +587,14 @@ $(obj)u-boot-img-spl-at-end.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
 $(obj)u-boot-with-spl-mbr.bin: $(obj)u-boot-with-spl.bin
 		cat $(obj)tools/ingenic-tools/mbr.bin $(obj)u-boot-with-spl.bin > $@
 
+ifeq ($(CONFIG_SPL_PARAMS_FIXER),y)
 $(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
 		cat $(obj)tools/ingenic-tools/mbr-gpt.bin $(obj)u-boot-with-spl.bin > $@
+		$(obj)tools/ingenic-tools/spl_params_fixer $@ $(obj)spl/u-boot-spl.bin 0 256 > /dev/null
+else
+$(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
+		cat $(obj)tools/ingenic-tools/mbr-gpt.bin $(obj)u-boot-with-spl.bin > $@
+endif
 
 ifeq ($(CONFIG_SANDBOX),y)
 GEN_UBOOT = \

@@ -23,3 +23,4 @@
 /ingenic-tools/mbr_creator
 /ingenic-tools/gpt_creator
 /ingenic-tools/spi_checksum
+/ingenic-tools/spl_params_fixer
