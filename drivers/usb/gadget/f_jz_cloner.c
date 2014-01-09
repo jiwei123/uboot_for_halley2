@@ -337,7 +337,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 	}
 
 	union cmd *cmd = req->buf;
-	debug_cond(BURNNER_DEBUG,"handle_cmd type=%d\n",cloner->cmd_type);
+	debug_cond(BURNNER_DEBUG,"handle_cmd type=%x\n",cloner->cmd_type);
 	switch(cloner->cmd_type) {
 		case VR_WRITE:
 			if(cloner->buf_size < cmd->write.length) {
@@ -353,9 +353,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 			cloner->ack = rtc_set(&cloner->cmd.rtc);
 			break;
 		case VR_GET_ACK:
-			memcpy(cloner->read_req->buf,&cloner->ack,sizeof(int));
-			cloner->read_req->length = sizeof(int);
-			usb_ep_queue(cloner->ep_in, cloner->read_req, 0);
+		case VR_GET_CPU_INFO:
 			break;
 		case VR_REBOOT:
 			do_reset(NULL,0,0,NULL);
@@ -370,9 +368,6 @@ int f_cloner_setup_handle(struct usb_function *f,
 	struct cloner *cloner = f->config->cdev->req->context;
 	struct usb_request *req = cloner->ep0req;
 
-	req->length = ctlreq->wLength;
-	req->complete = handle_cmd;
-
 	debug_cond(BURNNER_DEBUG,"vendor bRequestType %x,bRequest %x wLength %d\n",
 			ctlreq->bRequestType,
 			ctlreq->bRequest,
@@ -384,15 +379,20 @@ int f_cloner_setup_handle(struct usb_function *f,
 		return -ENOSYS;
 	}
 
-	cloner->cmd_type = ctlreq->bRequest;
-
 	usb_ep_dequeue(cloner->ep0, cloner->ep0req);
 	usb_ep_dequeue(cloner->ep_in, cloner->read_req);
 	usb_ep_dequeue(cloner->ep_out, cloner->write_req);
 
+	cloner->cmd_type = ctlreq->bRequest;
+	req->length = ctlreq->wLength;
+	req->complete = handle_cmd;
+
 	switch (ctlreq->bRequest) {
 		case VR_GET_CPU_INFO:
 			strcpy(cloner->ep0req->buf,"BOOT47XX");
+			break;
+		case VR_GET_ACK:
+			memcpy(cloner->ep0req->buf,&cloner->ack,sizeof(int));
 			break;
 	}
 

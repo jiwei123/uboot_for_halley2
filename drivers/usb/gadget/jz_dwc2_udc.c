@@ -1195,13 +1195,13 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 /* dequeue JUST ONE request */
 static int jz_dequeue(struct usb_ep *_ep, struct usb_request *_req)
 {
-	struct jz_ep *ep;
+	struct jz_ep *ep = container_of(_ep, struct jz_ep, ep);
+	struct jz_udc	*dev = ep->dev;
 	struct jz_request *req;
 	unsigned long flags;
 
 	debug("%s: %p\n", __func__, _ep);
 
-	ep = container_of(_ep, struct jz_ep, ep);
 	if (!_ep)
 		return -EINVAL;
 
@@ -1935,8 +1935,8 @@ void udc_write_fifo_ep(struct jz_ep *ep)
 				struct jz_request, queue);
 	} else
 		req = NULL;
-	if (likely(req)){
-		if (req->req.length)
+	if (req){
+		if (req->req.length > req->req.actual)
 			udc_write_fifo(ep, req);
 		else
 			req->is_write_last = 1;
@@ -2007,6 +2007,56 @@ void inep_transfer_complete(struct jz_ep *ep)
 	}
 }
 
+static void dwc_set_in_nak(int epnum)
+{
+	int  timeout = 5000;
+	unsigned int diep_ctl = udc_read_reg(DIEP_CTL(epnum));
+
+	if (!(diep_ctl & DEP_ENA_BIT))
+		return ;
+
+	udc_write_reg(DEP_SET_NAK,DIEP_CTL(epnum));
+
+	do
+	{
+		udelay(1);
+		if (timeout < 2) {
+			debug_cond(DEBUG_EP0,"dwc set in nak timeout\n");
+		}
+	} while ( (!(udc_read_reg(DIEP_INT(epnum)) & DEP_INEP_NAKEFF)) && (--timeout > 0));
+
+	udc_write_reg(DEP_INEP_NAKEFF,DIEP_INT(epnum));
+}
+
+static void dwc_disable_in_ep(int epnum)
+{
+	int  timeout = 100000;
+	unsigned int diep_ctl = udc_read_reg(DIEP_CTL(epnum));
+
+	if (!(diep_ctl & DEP_ENA_BIT))
+		return;
+
+	udc_write_reg(diep_ctl | DEP_DISENA_BIT,DIEP_CTL(epnum));
+
+	do
+	{
+		udelay(1);
+		if (timeout < 2) {
+			debug_cond(DEBUG_EP0,"dwc disable in ep timeout\n");
+		}
+	} while ( (!(udc_read_reg(DIEP_INT(epnum)) & DEP_EPDIS_INT)) && (--timeout > 0));
+
+	udc_write_reg(DEP_EPDIS_INT,DIEP_INT(epnum));
+
+	dwc_otg_flush_tx_fifo(epnum);
+}
+
+static void dwc_stop_in_transfer(int epnum)
+{
+	dwc_set_in_nak(epnum);
+	dwc_disable_in_ep(epnum);
+}
+
 void outep_transfer_complete(struct jz_ep *ep)
 {
 	struct jz_request	*req;
@@ -2060,8 +2110,8 @@ void outep_transfer_complete(struct jz_ep *ep)
 			}
 		} else {
 			debug_cond(DEBUG_EP0 != 0 ,
-				"|ep0 %p| unkown out xfercomplet mark 2\"warinnnnnnnnng\" \n",
-				ep);
+				"|ep0 %p| unkown out xfercomplet status %d dir_out=%d\"warinnnnnnnnng\" \n",
+				ep,dev->ep0state,dev->data_dir_out);
 		}
 		return;
 	}
@@ -2091,7 +2141,6 @@ void handle_inep_intr(struct jz_udc *dev)
         int epnum = 15;
 	u32 ep_empmsk;
 	u32 reg_tmp;
-	u32	reg_fck;
 
 	debug_cond(DEBUG_INTR != 0, "%s: Handle inep intr.\n", __func__);
 
@@ -2131,6 +2180,7 @@ void handle_inep_intr(struct jz_udc *dev)
 		}
 
 		if ((intr & DEP_TXFIFO_EMPTY) && (ep_empmsk & (1 << epnum))) {
+			unsigned int timeout = 0x7ffff;
 			debug_cond(DEBUG_INTR != 0,
 					"%s: In TXFIFO_EMPTY intr.\n", __func__);
 			udc_write_fifo_ep(&dev->ep[epnum]);
@@ -2139,17 +2189,25 @@ void handle_inep_intr(struct jz_udc *dev)
 
 			/* FIXME: Using the BULK transferation, When DIEP_INT.DEP_XFER_COMP is 1,
 			 * but GINT_STS.GINTSTS_IEP_INTR is not 1, why? */
-			while (!(udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP));
+			while (!(udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP) && --timeout)
+				;
+			if(!timeout) {
+				printf("handle inep timeout\n");
+				dwc_stop_in_transfer(epnum);
+				reg_tmp = udc_read_reg(DIEP_EMPMSK);
+				reg_tmp &= ~(1 << epnum);
+				udc_write_reg(reg_tmp, DIEP_EMPMSK);
+				inep_transfer_complete(&dev->ep[epnum]);
+			}
 		}
 
-		if (intr & DEP_NAK_INT){
+		if (intr & DEP_NAK_INT) {
 			debug_cond(DEBUG_INTR != 0,
 					"%s: In DEP_NAK_INT intr.\n", __func__);
 			udc_write_reg(DEP_NAK_INT, DIEP_INT(epnum));
 		}
 
-		reg_fck = udc_read_reg(DIEP_INT(epnum));
-		if ((reg_fck & DEP_XFER_COMP)) {
+		if ((udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP) & udc_read_reg(DIEP_MASK)) {
 			debug_cond(DEBUG_INTR != 0,
 					"%s DEP_XFER_COMP %d\n",__func__,epnum);
 			udc_write_reg(DEP_XFER_COMP, DIEP_INT(epnum));
@@ -2215,10 +2273,6 @@ int handle_outep_intr(struct jz_udc *dev)
 		if (intr & DEP_OUTTOKEN_RECV_EPDIS) {
 			debug_cond(DEBUG_INTR !=0, "%s:DEP_OUTTOKEN_RECV_EPDIS.\n",__func__);
 			udc_write_reg(DEP_SETUP_PHASE_DONE, DOEP_INT(epnum));
-			/*NOT COMING I DONNOT KOWN WHY*/
-			if (!epnum) {
-				debug_cond(DEBUG_EP0 != 0, "[ep0] out data stage come but ep disable\n");
-			}
 		}
 
 		if (intr & DEP_EPDIS_INT) {
@@ -2259,7 +2313,6 @@ int jz_udc_irq(int irq, void *_dev)
 	u32 intsts;
 	u32 gintmsk;
 	unsigned long flags;
-	debug_cond((DEBUG_INTR != 0 || DEBUG_EP0 !=0 ), "\n\n=====================\n\n");
 
 	spin_lock_irqsave(&dev->lock, flags);
 
@@ -2269,8 +2322,6 @@ int jz_udc_irq(int irq, void *_dev)
 	debug_cond(DEBUG_REG != 0, "%s: GINT_MASK is 0x%x\n", __func__, gintmsk);
 
 	if (!(intsts & gintmsk)) {
-		debug_cond(DEBUG_INTR != 0,
-				"%s: There are not interrupt found\n", __func__);
 		spin_unlock_irqrestore(&dev->lock, flags);
 		return IRQ_HANDLED;
 	}
@@ -2371,5 +2422,11 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 
 int usb_gadget_handle_interrupts(void)
 {
+#if 0
+	static int i = 0;
+	if((i++%0x7fffff) == 0)
+		printf("usb_gadget_handle_interrupts\n");
+#endif
 	return jz_udc_irq(1, (void *)the_controller);
 }
+
