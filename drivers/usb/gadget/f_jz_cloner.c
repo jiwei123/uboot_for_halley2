@@ -47,8 +47,9 @@
 #define VR_GET_ACK		0x10
 #define VR_WRITE		0x11
 #define VR_READ			0x12
-#define VR_SYNC_TIME		0x13
-#define VR_REBOOT		0x14
+#define VR_UPDATE_CFG		0x13
+#define VR_SYNC_TIME		0x14
+#define VR_REBOOT		0x15
 
 enum medium_type {
 	MEMORY = 0,
@@ -61,6 +62,11 @@ enum data_type {
 	RAW = 0,
 	OOB,
 	IMAGE,
+};
+
+struct cloner_config {
+	unsigned int	transfer_data_chk;
+	unsigned int	write_back_chk;
 };
 
 union cmd {
@@ -80,6 +86,7 @@ union cmd {
 	}read;
 
 	struct rtc_time rtc;
+	struct cloner_config cfg;
 };
 
 struct cloner {
@@ -97,8 +104,8 @@ struct cloner {
 	union cmd 		cmd;
 	int 			cmd_type;
 	unsigned int 		buf_size;
-	unsigned int		has_crc:1;
 	int 			ack;
+	struct cloner_config cfg;
 };
 
 static const char burntool_name[] = "INGENIC VENDOR BURNNER";
@@ -263,7 +270,7 @@ int mmc_program(struct cloner *cloner)
 	if (n != cnt)
 		return -EIO;
 
-	if (cloner->has_crc) {
+	if (cloner->cfg.write_back_chk) {
 		mmc->block_dev.block_read(curr_device, blk,
 				cnt, addr);
 		debug_cond(BURNNER_DEBUG,"%d blocks read: %s\n",n, (n == cnt) ? "OK" : "ERROR");
@@ -299,7 +306,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		return;
 	}
 
-	if (cloner->has_crc) {
+	if (cloner->cfg.transfer_data_chk) {
 		unsigned int tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
 		if (cloner->cmd.write.crc != tmp_crc) {
 			printf("crc is errr! src crc=%08x crc=%08x\n",cloner->cmd.write.crc,tmp_crc);
@@ -339,6 +346,9 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 	union cmd *cmd = req->buf;
 	debug_cond(BURNNER_DEBUG,"handle_cmd type=%x\n",cloner->cmd_type);
 	switch(cloner->cmd_type) {
+		case VR_UPDATE_CFG:
+			memcpy(&cloner->cfg,&cmd->cfg,sizeof(struct cloner_config));
+			break;
 		case VR_WRITE:
 			if(cloner->buf_size < cmd->write.length) {
 				cloner->buf_size = cmd->write.length;
@@ -485,6 +495,7 @@ int cloner_function_bind_config(struct usb_configuration *c)
 {
 	int status = 0;
 	struct cloner *cloner = calloc(sizeof(struct cloner),1);
+
 	if (!cloner)
 		return -ENOMEM;
 
@@ -497,7 +508,10 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->usb_function.strings= burn_intf_string_tab;
 	cloner->usb_function.disable = f_cloner_disable;
 	cloner->usb_function.unbind = f_cloner_unbind;
-	cloner->has_crc = 1;
+	
+	cloner->cfg.transfer_data_chk = 1;
+	cloner->cfg.write_back_chk = 1;
+
 	INIT_LIST_HEAD(&cloner->usb_function.list);
 	bitmap_zero(cloner->usb_function.endpoints,32);
 
