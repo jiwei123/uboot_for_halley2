@@ -296,7 +296,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 	struct cloner *cloner = req->context;
 
 	if(req->status == -ECONNRESET) {
-		cloner->ack = 0;
+		cloner->ack = -ECONNRESET;
 		return;
 	}
 
@@ -333,7 +333,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
 	if(req->status == -ECONNRESET) {
-		cloner->ack = 0;
+		cloner->ack = -ECONNRESET;
 		return;
 	}
 
@@ -404,6 +404,9 @@ int f_cloner_setup_handle(struct usb_function *f,
 		case VR_GET_ACK:
 			memcpy(cloner->ep0req->buf,&cloner->ack,sizeof(int));
 			break;
+		case VR_UPDATE_CFG:
+		case VR_WRITE:
+			cloner->ack = -EBUSY;
 	}
 
 	return usb_ep_queue(cloner->ep0, cloner->ep0req, 0);
