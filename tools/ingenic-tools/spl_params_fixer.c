@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define SEL_SCLKA		2
+#define SEL_SCLKA		1
 #define SEL_CPU			1
 #define SEL_H0			1
 #define SEL_H2			1
@@ -84,12 +84,36 @@ typedef union reg_cpccr {
 	} b;
 } reg_cpccr_t;
 
+typedef union nand_timing {
+	/** raw register data */
+	uint32_t nand_timing[4];
+	/** register bits */
+	struct {
+		unsigned set_rw:8;
+		unsigned wait_rw:8;
+		unsigned hold_rw:8;
+		unsigned set_cs:8;
+		unsigned wait_cs:8;
+		unsigned trr:8;
+		unsigned tedo:8;
+		unsigned trpre:8;
+		unsigned twpre:8;
+		unsigned tds:8;
+		unsigned tdh:8;
+		unsigned twpst:8;
+		unsigned tdqsre:8;
+		unsigned trhw:8;
+		unsigned t1:8;
+		unsigned t2:8;
+	} b;
+} nand_timing_t;
+
 struct params {
 	unsigned int id;
 	unsigned int length;
 	unsigned int pll_freq;
 	reg_cpccr_t cpccr;
-	unsigned int nand_timing[4];
+	nand_timing_t nand_timing;
 	struct desc cpm_desc[0];
 };
 
@@ -97,8 +121,24 @@ struct desc descriptors[14] = {
 	/*
 	 * saddr,	paddr,		value,		poll_h_mask,	poll_l_mask
 	 */
-	{0,		0xd4,		0x95773310,	0,		0x7},
-	{0,		0xffff,		0x55073310,	0,		0},
+#define FPGA
+#ifndef FPGA
+	{0x20,		0xffff,		0x1fffffb7,	0,		0},		/* gate clk */
+	{0x10,		0x10,		0x03004a01,	0x8,		0},		/* conf APLL */
+	{0,		0xd4,		0x95773310,	0,		0x7},		/* conf DIV */
+	{0,		0xffff,		0x55073310,	0,		0},		/* conf select */
+#ifdef CONFIG_SPL_MMC_SUPPORT
+#if (CONFIG_JZ_MMC_SPLMSC == 0)
+	{0x68,		0x68,		0x20000017,	0,		0x10000000},	/* conf MSC0CDR */
+#elif (CONFIG_JZ_MMC_SPLMSC == 1)
+	{0xa4,		0xa4,		0x20000017,	0,		0x10000000},	/* conf MSC1CDR */
+#endif
+#endif
+#ifdef CONFIG_SPL_NAND_SUPPORT
+	{0xac,		0xac,		0x20000003,	0,		0x10000000},	/* conf BCHCDR */
+#endif
+	{0x20,		0xffff,		0x1fffff80,	0,		0},		/* ungate clk */
+#endif
 	{0xffff,	0xffff, 	0,		0,		0},
 };
 
@@ -117,7 +157,7 @@ void dump_params(struct params *p)
 	printf("CPM_CPCCR:\t0x%08X\n", p->cpccr.d32);
 
 	for (i = 0; i < 4; i++)
-		printf("nand_timing[%d]:\t0x%08X\n", i, p->nand_timing[0]);
+		printf("nand_timing[%d]:\t0x%08X\n", i, p->nand_timing.nand_timing[i]);
 
 	printf("descriptors:\n");
 	for (i = 0; i < 14; i++) {
@@ -177,10 +217,22 @@ int main(int argc, char *argv[])
 	params->pll_freq = CONFIG_BOOTROM_PLLFREQ;
 	params->cpccr.d32 = CONFIG_BOOTROM_CPMCPCCR;
 
-	params->nand_timing[0] = CONFIG_BOOTROM_NAND_TIMMING0;
-	params->nand_timing[1] = CONFIG_BOOTROM_NAND_TIMMING1;
-	params->nand_timing[2] = CONFIG_BOOTROM_NAND_TIMMING2;
-	params->nand_timing[3] = CONFIG_BOOTROM_NAND_TIMMING3;
+	params->nand_timing.b.set_rw = 3;
+	params->nand_timing.b.wait_rw = 14;
+	params->nand_timing.b.hold_rw = 6;
+	params->nand_timing.b.set_cs = 20;
+	params->nand_timing.b.wait_cs = 6;
+	params->nand_timing.b.trr = 12;
+	params->nand_timing.b.tedo = 15;
+	params->nand_timing.b.trpre = 0;
+	params->nand_timing.b.twpre = 0;
+	params->nand_timing.b.tds = 0;
+	params->nand_timing.b.tdh = 0;
+	params->nand_timing.b.twpst = 0;
+	params->nand_timing.b.tdqsre = 0;
+	params->nand_timing.b.trhw = 30;
+	params->nand_timing.b.t1 = 0;
+	params->nand_timing.b.t2 = 0;
 
 	desc = params->cpm_desc;
 
