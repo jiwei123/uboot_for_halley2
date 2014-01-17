@@ -78,6 +78,7 @@ enum {
 #define ep_index(EP) ((EP)->bEndpointAddress&0xF)
 #define ep_maxpacket(EP) ((EP)->ep.maxpacket)
 
+static void dwc_stop_out_transfer(int ep);
 static const char driver_name[] = "jz_dwc2_udc";
 static const char driver_desc[] = DRIVER_DESC;
 static const char ep0name[] = "ep0-control";
@@ -478,8 +479,8 @@ static void dwc_otg_enable_common_irq(struct jz_udc *dev)
 
 	reg_tmp = udc_read_reg(GINT_MASK);
 
-        /*	    CONIDSTS    OUTEP      INEP         enum      usbreset      */
-	reg_tmp |= (1 << 28) | (1 << 19) | (1 << 18) | (1 << 13) | (1 << 12);
+        /*	    CONIDSTS    OUTEP      INEP         enum      usbreset     goutnak */
+	reg_tmp |= (1 << 28) | (1 << 19) | (1 << 18) | (1 << 13) | (1 << 12) | (1<<7);
 	udc_write_reg(reg_tmp, GINT_MASK);
 }
 
@@ -643,24 +644,6 @@ int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
 	return 0;
 }
 
-#if 0
-static void dwc_set_in_nak(int epnum)
-{
-	int  timeout = 5000;
-
-	if (!(REG_DIEP_CTL(epnum) & DEP_ENA_BIT))
-		return ;
-
-	REG_DIEP_CTL(epnum) |= DEP_SET_NAK;
-	do {
-		xudelay(1);
-		if (timeout < 2) {
-			DBG("dwc set in nak timeout\n");
-		}
-	} while ( (!(REG_DIEP_INT(epnum) & DEP_INEP_NAKEFF)) && (--timeout > 0));
-}
-#endif
-
 static void jz_udc_ep_activate(struct jz_ep *ep)
 {
 	u32		reg_tmp;
@@ -688,18 +671,21 @@ static void jz_udc_ep_activate(struct jz_ep *ep)
 	if (ep_is_in(ep)) {
 		reg_tmp = udc_read_reg(DIEP_CTL(epnum));
 	} else {
+		dwc_stop_out_transfer(epnum);
 		reg_tmp = udc_read_reg(DOEP_CTL(epnum));
 	}
 
-	reg_tmp &= ~DEPCTL_MPS_MASK;
+	reg_tmp &= ~(DEPCTL_MPS_MASK | DEP_ENA_BIT);
 	reg_tmp |= (ep->ep.maxpacket << DEPCTL_MPS_BIT);
 
 	reg_tmp |= DEPCTL_USBACTEP;
 
 	reg_tmp |= DEPCTL_SETD0PID;
 
-	reg_tmp &=~ DEPCTL_TYPE_MASK;
+	reg_tmp &=~DEPCTL_TYPE_MASK;
 	reg_tmp |= (eptype << DEPCTL_TYPE_BIT);
+
+	reg_tmp |= (DEP_DISENA_BIT | DEP_SET_NAK);//queue will enable this endpoint
 
 	if (ep_is_in(ep)) {
 		reg_tmp &= ~DIEPCTL_TX_FIFO_NUM_MASK;
@@ -1191,6 +1177,59 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 	return 0;
 }
 
+#define DCTL_CLR_GOUTNAK	BIT10
+#define DCTL_SET_GOUTNAK	BIT9
+
+static void dwc_clear_global_out_nak()
+{
+	unsigned int dctl = udc_read_reg(OTG_DCTL);
+	udc_write_reg(dctl | DCTL_CLR_GOUTNAK,OTG_DCTL);
+	while(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF);
+}
+
+static void dwc_set_global_out_nak(void)
+{
+	int timeout = 5000;
+
+	dwc_clear_global_out_nak();
+
+	unsigned int dctl = udc_read_reg(OTG_DCTL);
+	udc_write_reg(dctl | DCTL_SET_GOUTNAK,OTG_DCTL);
+	
+	do {
+		udelay(1);
+	} while ( (!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) && (--timeout > 0));
+}
+
+static void dwc_out_endpoint(int epnum)
+{
+	int timeout = 5000;
+	unsigned int ctl = udc_read_reg(DOEP_CTL(epnum));
+	udc_write_reg(ctl | (DEP_DISENA_BIT | DEP_SET_NAK),DOEP_CTL(epnum));
+
+	do {
+		udelay(1);
+	} while ( (!(udc_read_reg(DOEP_INT(epnum)) & DEP_EPDIS_INT)) && (--timeout > 0));
+	udc_write_reg(DEP_EPDIS_INT,DOEP_INT(epnum));
+}
+
+static void dwc_stop_out_transfer(int ep)
+{
+	unsigned int reg_tmp = udc_read_reg(GINT_MASK);
+	reg_tmp |= (1<<7);
+	udc_write_reg(reg_tmp, GINT_MASK);
+
+	if (!(udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT))
+		return;
+
+	dwc_set_global_out_nak();
+	dwc_out_endpoint(ep);
+	dwc_clear_global_out_nak();
+
+	if (udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT)
+		printf("ep%d dwc_stop_out_transfer failed.\n",ep);
+}
+
 /* FIXME */
 /* dequeue JUST ONE request */
 static int jz_dequeue(struct usb_ep *_ep, struct usb_request *_req)
@@ -1215,6 +1254,10 @@ static int jz_dequeue(struct usb_ep *_ep, struct usb_request *_req)
 	if (&req->req != _req) {
 		spin_unlock_irqrestore(&ep->dev->lock, flags);
 		return -EINVAL;
+	}
+
+	if(!ep_is_in(ep) && (ep_index(ep) == 1)) {
+		dwc_stop_out_transfer(1);
 	}
 
 	udc_done(ep, req, -ECONNRESET);
