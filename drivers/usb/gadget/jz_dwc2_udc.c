@@ -1177,30 +1177,6 @@ static int jz_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flag
 	return 0;
 }
 
-#define DCTL_CLR_GOUTNAK	BIT10
-#define DCTL_SET_GOUTNAK	BIT9
-
-static void dwc_clear_global_out_nak()
-{
-	unsigned int dctl = udc_read_reg(OTG_DCTL);
-	udc_write_reg(dctl | DCTL_CLR_GOUTNAK,OTG_DCTL);
-	while(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF);
-}
-
-static void dwc_set_global_out_nak(void)
-{
-	int timeout = 5000;
-
-	dwc_clear_global_out_nak();
-
-	unsigned int dctl = udc_read_reg(OTG_DCTL);
-	udc_write_reg(dctl | DCTL_SET_GOUTNAK,OTG_DCTL);
-	
-	do {
-		udelay(1);
-	} while ( (!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) && (--timeout > 0));
-}
-
 static void dwc_out_endpoint(int epnum)
 {
 	int timeout = 5000;
@@ -1213,22 +1189,33 @@ static void dwc_out_endpoint(int epnum)
 	udc_write_reg(DEP_EPDIS_INT,DOEP_INT(epnum));
 }
 
-static void dwc_stop_out_transfer(int ep)
+void dwc_stop_out_transfer(int ep)
 {
+	if (!(udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT))
+		return;
+
 	unsigned int reg_tmp = udc_read_reg(GINT_MASK);
 	reg_tmp |= (1<<7);
 	udc_write_reg(reg_tmp, GINT_MASK);
 
-	if (!(udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT))
-		return;
+	udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
+	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
+		if ((udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY)) {
+			handle_rxfifo_nempty(the_controller);
+		}
+		udelay(1);
+	};
 
-	dwc_set_global_out_nak();
 	dwc_out_endpoint(ep);
-	dwc_clear_global_out_nak();
-
+	udc_write_reg(DCTL_CLR_GONAK,OTG_DCTL);
+#if 0
 	if (udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT)
 		printf("ep%d dwc_stop_out_transfer failed.\n",ep);
+	else
+		printf("ep%d dwc_stop_out_transfer ok.\n",ep);
+#endif
 }
+
 
 /* FIXME */
 /* dequeue JUST ONE request */
