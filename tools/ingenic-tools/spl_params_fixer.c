@@ -121,9 +121,9 @@ struct desc descriptors[14] = {
 	/*
 	 * saddr,	paddr,		value,		poll_h_mask,	poll_l_mask
 	 */
-#define FPGA
+/* #define FPGA */
 #ifndef FPGA
-	{0x20,		0xffff,		0x1fffffb7,	0,		0},		/* gate clk */
+	{0x20,		0xffff,		0x1fffffb6,	0,		0},		/* gate clk */
 	{0x10,		0x10,		0x03004a01,	0x8,		0},		/* conf APLL */
 	{0,		0xd4,		0x95773310,	0,		0x7},		/* conf DIV */
 	{0,		0xffff,		0x55073310,	0,		0},		/* conf select */
