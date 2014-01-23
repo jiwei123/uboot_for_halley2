@@ -27,6 +27,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define FPGA
+
 #define SEL_SCLKA		1
 #define SEL_CPU			1
 #define SEL_H0			1
@@ -47,13 +49,13 @@
 				 | (((DIV_L2 - 1) & 0xf) << 4)		\
 				 | (((DIV_CPU - 1) & 0xf) << 0))
 
+#ifndef FPGA
 #define CONFIG_BOOTROM_PLLFREQ		576000000
 #define CONFIG_BOOTROM_CPMCPCCR		CPCCR_CFG
-
-#define CONFIG_BOOTROM_NAND_TIMMING0	0
-#define CONFIG_BOOTROM_NAND_TIMMING1	0
-#define CONFIG_BOOTROM_NAND_TIMMING2	0
-#define CONFIG_BOOTROM_NAND_TIMMING3	0
+#else
+#define CONFIG_BOOTROM_PLLFREQ		0
+#define CONFIG_BOOTROM_CPMCPCCR		0
+#endif
 
 struct desc {
 	unsigned set_addr:16;
@@ -121,7 +123,6 @@ struct desc descriptors[14] = {
 	/*
 	 * saddr,	paddr,		value,		poll_h_mask,	poll_l_mask
 	 */
-#define FPGA
 #ifndef FPGA
 	{0x20,		0xffff,		0x1fffffb4,	0,		0},		/* gate clk */
 	{0x10,		0x10,		0x03004a01,	0x8,		0},		/* conf APLL */
