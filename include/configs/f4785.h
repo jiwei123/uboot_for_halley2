@@ -309,7 +309,7 @@
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
-#define CONFIG_SPL_PAD_TO		28672 /* u-boot start addr - mbr size(512) */
+#define CONFIG_SPL_PAD_TO		26624 /* equal to spl max size in JZ4785 */
 
 #define CONFIG_SPL_PARAMS_FIXER
 
@@ -328,7 +328,7 @@
 /* #define CONFIG_SPL_CORE_VOLTAGE		1300 */
 
 #define CONFIG_SPL_TEXT_BASE		0x80001000
-#define CONFIG_SPL_MAX_SIZE		(28 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(26 * 1024)
 #ifdef CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SPL_SERIAL_SUPPORT
 
