@@ -51,33 +51,19 @@ _start:
 #else
 	.space 64, 0xaa
 #endif
-#ifdef CONFIG_SYS_NAND_TOGGLE
+#if (CONFIG_SYS_NAND_TOGGLE == 1)
 	.space 64, 0xaa
 #else
 	.space 64, 0x55
 #endif
 
-#if (CONFIG_SYS_NAND_ROWCYCLE == 3)
-	.space 32, 0xaa
-#else
-	.space 32, 0x55
-#endif
+	/*nand row cycle and page size */
+	.word 0x214c5053
+	.word CONFIG_SYS_NAND_ROWCYCLE
+	.word CONFIG_SYS_NAND_PAGE_SIZE
+	/* non used space 116 bytes */
+	.space 116, 0x0
 
-#if CONFIG_SYS_NAND_PAGE_SIZE == 512
-	.space 96, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 2048
-	.space 32, 0x55
-	.space 32, 0xaa
-	.space 32, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 4096
-	.space 32, 0xaa
-	.space 64, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 8192
-	.space 64, 0xaa
-	.space 32, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 16384
-	.space 96, 0xaa
-#endif
 	.space 256, 0x55
 	RESERVED_FOR_SC(0x55)
 #endif /* CONFIG_SPL_NAND_SUPPORT */
