@@ -141,7 +141,6 @@
 #define CONFIG_CMD_NET		/* networking support		*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
-#define CONFIG_CMD_SAVEENV	/* saveenv			*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_UBI
@@ -165,7 +164,6 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_SYS_FLASH_BASE	0 /* init flash_base as 0 */
-#define CONFIG_ENV_OVERWRITE
 #define CONFIG_MISC_INIT_R 1
 
 #define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAUL)
@@ -190,19 +188,8 @@
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 
-/**
- * Environment
- */
-#ifdef CONFIG_ENV_IS_IN_MMC
-#define CONFIG_SYS_MMC_ENV_DEV		0
-#define CONFIG_ENV_SIZE			(32 << 10)
-#define CONFIG_ENV_OFFSET		(16 << 10 + CONFIG_SYS_MONITOR_LEN)
-#else
-#define CONFIG_ENV_IS_IN_NAND
-#define CONFIG_ENV_SIZE			(32 << 10)
-#define CONFIG_ENV_OFFSET		(CONFIG_SYS_NAND_BLOCK_SIZE * 5)
-#endif
-
+#define CONFIG_ENV_IS_NOWHERE
+#define CONFIG_ENV_SIZE 512
 /**
  * SPL configuration
  */
