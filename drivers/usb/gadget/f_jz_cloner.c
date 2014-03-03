@@ -64,12 +64,17 @@ enum data_type {
 	IMAGE,
 };
 
-struct cloner_config {
+struct arguments {
 	unsigned int	transfer_data_chk;
 	unsigned int	write_back_chk;
+	int nr_nand_args;
 };
 
 union cmd {
+	struct update {
+		uint32_t length;
+	}update;
+
 	struct write {
 		uint64_t partation;
 		uint32_t ops;
@@ -86,26 +91,25 @@ union cmd {
 	}read;
 
 	struct rtc_time rtc;
-	struct cloner_config cfg;
 };
 
 struct cloner {
-	struct usb_function     usb_function;
+	struct usb_function usb_function;
 	struct usb_composite_dev *cdev;		/*Copy of config->cdev*/
-	struct usb_gadget	*gadget;	/*Copy of cdev->gadget*/
-	struct usb_ep		*ep0;		/*Copy of gadget->ep0*/
-	struct usb_request	*ep0req;	/*Copy of cdev->req*/
+	struct usb_gadget *gadget;	/*Copy of cdev->gadget*/
+	struct usb_ep *ep0;		/*Copy of gadget->ep0*/
+	struct usb_request *ep0req;	/*Copy of cdev->req*/
 
-	struct usb_ep		*ep_in;
-	struct usb_ep		*ep_out;
-	struct usb_request	*write_req;
-	struct usb_request	*read_req;
+	struct usb_ep *ep_in;
+	struct usb_ep *ep_out;
+	struct usb_request *write_req;
+	struct usb_request *read_req;
 
-	union cmd 		cmd;
-	int 			cmd_type;
-	unsigned int 		buf_size;
-	int 			ack;
-	struct cloner_config cfg;
+	union cmd cmd;
+	int cmd_type;
+	unsigned int buf_size;
+	int ack;
+	struct arguments *args;
 };
 
 static const char burntool_name[] = "INGENIC VENDOR BURNNER";
@@ -270,7 +274,7 @@ int mmc_program(struct cloner *cloner)
 	if (n != cnt)
 		return -EIO;
 
-	if (cloner->cfg.write_back_chk) {
+	if (cloner->args->write_back_chk) {
 		mmc->block_dev.block_read(curr_device, blk,
 				cnt, addr);
 		debug_cond(BURNNER_DEBUG,"%d blocks read: %s\n",n, (n == cnt) ? "OK" : "ERROR");
@@ -305,8 +309,13 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		cloner->ack = -EIO;
 		return;
 	}
+	
+	if(cloner->cmd_type == VR_UPDATE_CFG) {
+		cloner->ack = 0;
+		return;
+	}
 
-	if (cloner->cfg.transfer_data_chk) {
+	if (cloner->args->transfer_data_chk) {
 		unsigned int tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
 		if (cloner->cmd.write.crc != tmp_crc) {
 			printf("crc is errr! src crc=%08x crc=%08x\n",cloner->cmd.write.crc,tmp_crc);
@@ -314,7 +323,6 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			return;
 		}
 	}
-
 #define OPS(x,y) ((x<<16)|(y&0xffff))
 	switch(cloner->cmd.write.ops) {
 		case OPS(MMC,RAW):
@@ -347,7 +355,9 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 	debug_cond(BURNNER_DEBUG,"handle_cmd type=%x\n",cloner->cmd_type);
 	switch(cloner->cmd_type) {
 		case VR_UPDATE_CFG:
-			memcpy(&cloner->cfg,&cmd->cfg,sizeof(struct cloner_config));
+			cloner->write_req->length = cmd->update.length;
+			cloner->write_req->buf = cloner->args;
+			usb_ep_queue(cloner->ep_out, cloner->write_req, 0);
 			break;
 		case VR_WRITE:
 			if(cloner->buf_size < cmd->write.length) {
@@ -512,8 +522,9 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->usb_function.disable = f_cloner_disable;
 	cloner->usb_function.unbind = f_cloner_unbind;
 	
-	cloner->cfg.transfer_data_chk = 1;
-	cloner->cfg.write_back_chk = 1;
+	cloner->args = malloc(1024*1024);
+	cloner->args->transfer_data_chk = 1;
+	cloner->args->write_back_chk = 1;
 
 	INIT_LIST_HEAD(&cloner->usb_function.list);
 	bitmap_zero(cloner->usb_function.endpoints,32);
