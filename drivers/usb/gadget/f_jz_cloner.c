@@ -34,6 +34,8 @@
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
 
+#include <ingenic_nand_mgr/nand_param.h>
+
 #define BURNNER_DEBUG 1
 
 /*bootrom stage request*/
@@ -68,6 +70,7 @@ struct arguments {
 	unsigned int	transfer_data_chk;
 	unsigned int	write_back_chk;
 	int nr_nand_args;
+	struct __nand_flash nand_params[0];
 };
 
 union cmd {
