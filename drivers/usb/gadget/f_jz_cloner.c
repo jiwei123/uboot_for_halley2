@@ -36,6 +36,7 @@
 
 #include <ingenic_nand_mgr/nand_param.h>
 
+#define ARGS_LEN (1024*1024)
 #define BURNNER_DEBUG 1
 
 /*bootrom stage request*/
@@ -106,6 +107,7 @@ struct cloner {
 	struct usb_ep *ep_in;
 	struct usb_ep *ep_out;
 	struct usb_request *write_req;
+	struct usb_request *args_req;
 	struct usb_request *read_req;
 
 	union cmd cmd;
@@ -358,9 +360,8 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 	debug_cond(BURNNER_DEBUG,"handle_cmd type=%x\n",cloner->cmd_type);
 	switch(cloner->cmd_type) {
 		case VR_UPDATE_CFG:
-			cloner->write_req->length = cmd->update.length;
-			cloner->write_req->buf = cloner->args;
-			usb_ep_queue(cloner->ep_out, cloner->write_req, 0);
+			cloner->args_req->length = cmd->update.length;
+			usb_ep_queue(cloner->ep_out, cloner->args_req, 0);
 			break;
 		case VR_WRITE:
 			if(cloner->buf_size < cmd->write.length) {
@@ -458,6 +459,7 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->ep_out = usb_ep_autoconfig(cdev->gadget, &fs_bulk_out_desc);
 
 	cloner->write_req = usb_ep_alloc_request(cloner->ep_out,0);
+	cloner->args_req = usb_ep_alloc_request(cloner->ep_out,0);
 	cloner->read_req = usb_ep_alloc_request(cloner->ep_in,0);
 	
 	cloner->buf_size = 1024*1024;
@@ -465,6 +467,11 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->write_req->buf = malloc(1024*1024);
 	cloner->write_req->length = 1024*1024;
 	cloner->write_req->context = cloner;
+
+	cloner->args_req->complete = handle_write;
+	cloner->args_req->buf = cloner->args;
+	cloner->args_req->length = ARGS_LEN;
+	cloner->args_req->context = cloner;
 
 	cloner->read_req->complete = handle_read;
 	cloner->read_req->buf = malloc(1024*1024);
@@ -525,7 +532,7 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->usb_function.disable = f_cloner_disable;
 	cloner->usb_function.unbind = f_cloner_unbind;
 	
-	cloner->args = malloc(1024*1024);
+	cloner->args = malloc(ARGS_LEN);
 	cloner->args->transfer_data_chk = 1;
 	cloner->args->write_back_chk = 1;
 
