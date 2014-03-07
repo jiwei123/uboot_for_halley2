@@ -2,6 +2,54 @@
 #define __NAND_PARAM_H__
 
 
+#define MAX_NAME_SIZE 32
+#define MAX_RB_COUNT 4
+#define MAX_PART_NUM 16
+#define MUL_PARTS    4
+
+/* driver strength, level 0 is weakest */
+#define DRV_STRENGTH_DEFAULT    0
+#define DRV_STRENGTH_LEVEL0 1
+#define DRV_STRENGTH_LEVEL1 2
+#define DRV_STRENGTH_LEVEL2 3
+#define DRV_STRENGTH_LEVEL3 4
+
+/* rb pulldown strength, level 0 is weakest */
+#define RB_PULLDOWN_STRENGTH_DEFAULT    0
+#define RB_PULLDOWN_STRENGTH_LEVEL0 1
+#define RB_PULLDOWN_STRENGTH_LEVEL1 2
+#define RB_PULLDOWN_STRENGTH_LEVEL2 3
+#define RB_PULLDOWN_STRENGTH_LEVEL3 4
+
+typedef struct _PartitionInfo PartitionInfo;
+typedef struct _Nandppt Nandppt;
+typedef struct __ui_plat_ex_partition ui_plat_ex_partition;
+
+struct __ui_plat_ex_partition {
+	char name[MAX_NAME_SIZE];
+	int  offset;
+	int  size;
+};
+
+struct _Nandppt{
+	char name[MAX_NAME_SIZE];		/* the name of patition*/
+	int offset;						/* the offset of patition (M)*/
+	int size;						/* the size of the patition (M)*/
+	int managermode;				/* the managermode of the patition; 0:spl_manger, 1:direct_manger, 2:zone_manger, 3:once_manger*/
+	int cache;						/* whether the data need the nandmanger to cache */	
+	ui_plat_ex_partition ui_ex_partition[MUL_PARTS];	/* the patition info which is a embedded patition  */
+};
+
+struct _PartitionInfo{
+	Nandppt ndppt[MAX_PART_NUM];	/* patition */
+	int ptcount;					/* the number of patition */
+	int rbcount;					/* the number of rb */
+	int rb_gpio[MAX_RB_COUNT];		/* the gpio pin of rb */
+	int gpio_wp;					/* the gpio pin of wp */
+	unsigned char  rb_pulldown_strength[MAX_RB_COUNT];		/* the strength of the pin of rb */
+	unsigned char  nand_driver_strength;					/* the strength of nand driver */
+};
+
 
 /**
  *  * struct __nand_timing - NAND Flash Device timing
