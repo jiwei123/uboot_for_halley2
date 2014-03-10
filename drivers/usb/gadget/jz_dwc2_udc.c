@@ -134,6 +134,8 @@ struct jz_udc {
 	/* unsigned req_pending:1, req_std:1; */
 };
 
+struct usb_ctrlrequest crq;
+
 struct jz_udc	*the_controller;
 
 #define	udc_read_reg(addr)	readl(OTG_BASE + addr)
@@ -2401,6 +2403,7 @@ int jz_udc_irq(int irq, void *_dev)
 int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 {
 	struct jz_udc *dev = the_controller;
+	dev->crq = &crq;
 	int retval = 0;
 	unsigned long flags;
 
