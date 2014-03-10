@@ -177,14 +177,14 @@ void board_init_f(ulong bootflag)
 	/* round down to next 4 kB limit.
 	 */
 	addr &= ~(4096 - 1);
-	debug("Top of RAM usable for U-Boot at: %08lx\n", addr);
+	printf("Top of RAM usable for U-Boot at: %08lx\n", addr);
 #ifdef CONFIG_LCD
 #ifdef CONFIG_FB_ADDR
 	gd->fb_base = CONFIG_FB_ADDR;
 #else
 	/* reserve memory for LCD display (always full pages) */
 	addr = lcd_setmem(addr);
-	debug("Reserving %ldk for U-Boot at: %08lx\n", len >> 10, addr);
+	printf("Reserving %ldk for U-Boot at: %08lx\n", len >> 10, addr);
 	gd->fb_base = addr;
 #endif /* CONFIG_FB_ADDR */
 #endif /* CONFIG_LCD */
@@ -196,12 +196,12 @@ void board_init_f(ulong bootflag)
 	addr -= len;
 	addr &= ~(16 * 1024 - 1);
 
-	debug("Reserving %ldk for U-Boot at: %08lx\n", len >> 10, addr);
+	printf("Reserving %ldk for U-Boot at: %08lx\n", len >> 10, addr);
 
 	 /* Reserve memory for malloc() arena.
 	 */
 	addr_sp = addr - TOTAL_MALLOC_LEN;
-	debug("Reserving %dk for malloc() at: %08lx\n",
+	printf("Reserving %dk for malloc() at: %08lx\n",
 			TOTAL_MALLOC_LEN >> 10, addr_sp);
 
 	/*
@@ -211,19 +211,19 @@ void board_init_f(ulong bootflag)
 	addr_sp -= sizeof(bd_t);
 	bd = (bd_t *)addr_sp;
 	gd->bd = bd;
-	debug("Reserving %zu Bytes for Board Info at: %08lx\n",
+	printf("Reserving %zu Bytes for Board Info at: %08lx\n",
 			sizeof(bd_t), addr_sp);
 
 	addr_sp -= sizeof(gd_t);
 	id = (gd_t *)addr_sp;
-	debug("Reserving %zu Bytes for Global Data at: %08lx\n",
+	printf("Reserving %zu Bytes for Global Data at: %08lx\n",
 			sizeof(gd_t), addr_sp);
 
 	/* Reserve memory for boot params.
 	 */
 	addr_sp -= CONFIG_SYS_BOOTPARAMS_LEN;
 	bd->bi_boot_params = addr_sp;
-	debug("Reserving %dk for boot params() at: %08lx\n",
+	printf("Reserving %dk for boot params() at: %08lx\n",
 			CONFIG_SYS_BOOTPARAMS_LEN >> 10, addr_sp);
 
 	/*
@@ -238,7 +238,7 @@ void board_init_f(ulong bootflag)
 	*s-- = 0;
 	*s-- = 0;
 	addr_sp = (ulong)s;
-	debug("Stack Pointer at: %08lx\n", addr_sp);
+	printf("Stack Pointer at: %08lx\n", addr_sp);
 
 	/*
 	 * Save local variables to board info struct
@@ -271,8 +271,11 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	gd = id;
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 
-	debug("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
+	printf("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
 
+#ifdef CONFIG_XBURST_TRAPS
+	traps_init();
+#endif
 	gd->relocaddr = dest_addr;
 	gd->reloc_off = dest_addr - CONFIG_SYS_MONITOR_BASE;
 
