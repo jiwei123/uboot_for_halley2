@@ -28,7 +28,11 @@
  * DDRC (DDR Controller)
  *************************************************************************/
 #define DDR_MEM_PHY_BASE		0x20000000
+#ifdef CONFIG_JZ4785
+#define DDR_PHY_OFFSET 			(-0x4e0000 + 0x1000)
+#else
 #define DDR_PHY_OFFSET 			0x1000
+#endif
 
 #define CPM_DRCG			0xb00000d0
 

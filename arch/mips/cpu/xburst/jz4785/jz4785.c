@@ -68,12 +68,15 @@ void board_init_f(ulong dummy)
 
 	gpio_init();
 
+#ifndef CONFIG_FPGA
 	/* Init uart first */
 	enable_uart_clk();
+#endif
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif
 
+#ifndef CONFIG_FPGA
 	debug("Timer init\n");
 	timer_init();
 
@@ -91,7 +94,7 @@ void board_init_f(ulong dummy)
 
 	debug("CLK init\n");
 	clk_init();
-
+#endif
 	debug("SDRAM init\n");
 	sdram_init();
 

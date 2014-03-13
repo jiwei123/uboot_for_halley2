@@ -22,8 +22,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __CONFIG_MENSA_H__
-#define __CONFIG_MENSA_H__
+#ifndef __CONFIG_F4785_H__
+#define __CONFIG_F4785_H__
 
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
@@ -31,6 +31,7 @@
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_JZ4785		/* Jz4785 SoC */
+#define CONFIG_FPGA		/* Jz4785 FPGA */
 
 #define CONFIG_SYS_APLL_FREQ		1200000000
 #define CONFIG_SYS_MPLL_FREQ		-1
@@ -40,7 +41,7 @@
 
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
 #define CONFIG_SYS_MEM_DIV		3
-#define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
+#define CONFIG_SYS_MEM_FREQ		36000000//(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
 
 #define CONFIG_SYS_DCACHE_SIZE		32768
 #define CONFIG_SYS_ICACHE_SIZE		32768
@@ -49,13 +50,14 @@
 #define CONFIG_SYS_UART_INDEX		0
 #define CONFIG_BAUDRATE			115200
 
+#define CONFIG_DDR_DLL_OFF
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_TYPE_DDR3
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
-#define CONFIG_DDR3_H5TQ1G83DFR_H9C
+#define CONFIG_DDR3_TSD34096M1333C9_E 
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -177,13 +179,17 @@
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
 #define CONFIG_JZ_MMC 1
-#define CONFIG_JZ_MMC_MSC0 1
-#define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
-#define CONFIG_JZ_MMC_MSC1 1
-#define CONFIG_JZ_MMC_MSC1_PE 1
-#ifndef CONFIG_JZ_MMC_SPLMSC
+
+#ifdef CONFIG_JZ_MMC_MSC0
 #define CONFIG_JZ_MMC_SPLMSC 0
+#define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
 #endif
+#ifdef CONFIG_JZ_MMC_MSC1
+#define CONFIG_JZ_MMC_SPLMSC 1
+#define CONFIG_JZ_MMC_MSC1_PE 1
+#endif
+
+
 
 /* USB */
 #define CONFIG_USB_GADGET
@@ -314,7 +320,7 @@
 
 #define CONFIG_SPL_PARAMS_FIXER
 
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
+#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	86//0x5A //wli changed 0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	(CONFIG_SYS_NAND_BLOCK_SIZE * 4)
 #define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
@@ -421,4 +427,4 @@
 #define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
-#endif /* __CONFIG_MENSA_H__ */
+#endif /* __CONFIG_F4785_H__ */

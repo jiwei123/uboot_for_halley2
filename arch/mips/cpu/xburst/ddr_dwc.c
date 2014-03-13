@@ -87,7 +87,11 @@ static void reset_dll(void)
 
 static void reset_controller(void)
 {
+#ifndef CONFIG_FPGA
 	ddr_writel(0xf << 20, DDRC_CTRL);
+#else
+	ddr_writel(0xc0 << 16, DDRC_CTRL);
+#endif
 	mdelay(5);
 	ddr_writel(0, DDRC_CTRL);
 	mdelay(5);
@@ -238,8 +242,13 @@ void ddr_phy_init(void)
 	}
 
 	debug("DDR chip init\n");
+#ifndef CONFIG_FPGA
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
 		   | DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
+#else
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
+		   | DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
+#endif
 
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
 					  | DDRP_PGSR_DLDONE
@@ -327,9 +336,17 @@ void sdram_init(void)
 #endif /* CONFIG_DDR_HOST_CC */
 
 	debug("sdram init start\n");
+#ifndef CONFIG_FPGA
 	reset_dll();
+#endif
 	reset_controller();
 
+#ifndef CONFIG_FPGA
+	;
+#else
+	ddr_writel(DDRC_CFG_VALUE, DDRC_CFG);
+	ddr_writel((1 << 1), DDRC_CTRL);
+#endif
 	/* DDR PHY init*/
 	ddr_phy_init();
 	ddr_writel(0, DDRC_CTRL);

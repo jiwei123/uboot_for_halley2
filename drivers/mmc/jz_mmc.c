@@ -195,6 +195,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 static void jz_mmc_set_ios(struct mmc *mmc)
 {
 	struct jz_mmc_priv *priv = mmc->priv;
+#ifndef CONFIG_FPGA
 	uint32_t real_rate = 0;
 	uint32_t lpm = LPM_LPM;
 	uint8_t clk_div = 0;
@@ -219,7 +220,9 @@ static void jz_mmc_set_ios(struct mmc *mmc)
 		lpm |= (0x2 << LPM_DRV_SEL_SHF) | LPM_SMP_SEL;
 
 	jz_mmc_writel(lpm, priv, MSC_LPM);
-
+#else
+	jz_mmc_writel(1, priv, MSC_CLKRT);
+#endif
 	/* set the bus width for the next command */
 	priv->flags &= ~JZ_MMC_BUS_WIDTH_MASK;
 	if (mmc->bus_width == 8)
@@ -228,19 +231,24 @@ static void jz_mmc_set_ios(struct mmc *mmc)
 		priv->flags |= JZ_MMC_BUS_WIDTH_4;
 	else
 		priv->flags |= JZ_MMC_BUS_WIDTH_1;
-
+#ifndef CONFIG_FPGA
 	debug("jzmmc:clk_want:%d, clk_set:%d bus_width:%d\n",
 	      mmc->clock, clk_get_rate(priv->clk) / (1 << clk_div), mmc->bus_width);
+#endif
 }
 
 static int jz_mmc_core_init(struct mmc *mmc)
 {
+	int tmp;
 	struct jz_mmc_priv *priv = mmc->priv;
 	unsigned int clkrt = jz_mmc_readl(priv, MSC_CLKRT);
 
 	/* reset */
 	jz_mmc_writel(MSC_STRPCL_RESET, priv, MSC_STRPCL);
-	while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_IS_RESETTING);
+	tmp = jz_mmc_readl(priv, MSC_STRPCL);
+	tmp &= ~MSC_STRPCL_RESET;
+	jz_mmc_writel(tmp, priv, MSC_STRPCL);
+	//while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_IS_RESETTING);
 
 	/* enable low power mode */
 	jz_mmc_writel(0x1, priv, MSC_LPM);
