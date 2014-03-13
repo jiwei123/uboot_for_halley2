@@ -29,6 +29,7 @@
 /* AHB0 BUS Devices Base */
 #define HARB0_BASE	0xb3000000
 #define DDRC_BASE	0xb34f0000
+#define DDR_PHY_OFFSET	(-0x4e0000 + 0x1000)
 #define X2D_BASE	0xb3030000
 #define GPU_BASE	0xb3040000
 #define LCDC0_BASE	0xb3050000

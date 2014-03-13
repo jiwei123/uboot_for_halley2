@@ -245,10 +245,13 @@ static int jz_mmc_core_init(struct mmc *mmc)
 
 	/* reset */
 	jz_mmc_writel(MSC_STRPCL_RESET, priv, MSC_STRPCL);
+#ifdef CONFIG_JZ4785
 	tmp = jz_mmc_readl(priv, MSC_STRPCL);
 	tmp &= ~MSC_STRPCL_RESET;
 	jz_mmc_writel(tmp, priv, MSC_STRPCL);
-	//while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_IS_RESETTING);
+#else
+	while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_IS_RESETTING);
+#endif
 
 	/* enable low power mode */
 	jz_mmc_writel(0x1, priv, MSC_LPM);

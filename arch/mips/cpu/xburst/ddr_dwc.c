@@ -77,6 +77,7 @@ static void dump_ddrp_register(void)
 }
 #endif
 
+#ifndef CONFIG_FPGA
 static void reset_dll(void)
 {
 	writel(3, CPM_DRCG);
@@ -84,7 +85,7 @@ static void reset_dll(void)
 	writel(1, CPM_DRCG);
 	mdelay(5);
 }
-
+#endif
 static void reset_controller(void)
 {
 #ifndef CONFIG_FPGA
@@ -370,7 +371,16 @@ phys_size_t initdram(int board_type)
 {
 #ifdef CONFIG_DDR_HOST_CC
 	/* SDRAM size was calculated when compiling. */
-	return DDR_CHIP_0_SIZE + DDR_CHIP_1_SIZE;
+#ifndef EMC_LOW_SDRAM_SPACE_SIZE
+#define EMC_LOW_SDRAM_SPACE_SIZE 0x10000000 /* 256M */
+#endif
+	unsigned int ram_size;
+	ram_size = (unsigned int)(DDR_CHIP_0_SIZE) + (unsigned int)(DDR_CHIP_1_SIZE);
+
+	if (ram_size > EMC_LOW_SDRAM_SPACE_SIZE)
+		ram_size = EMC_LOW_SDRAM_SPACE_SIZE;
+
+	return ram_size;
 #elif defined (CONFIG_BURNER)
 	/* SDRAM size was defined in global info. */
 	ddr_params_p = &gd->arch.gi->ddr_params;
