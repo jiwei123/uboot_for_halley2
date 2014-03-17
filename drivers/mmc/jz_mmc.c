@@ -77,8 +77,10 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	if (data) {
 		/* setup data */
 		cmdat |= MSC_CMDAT_DATA_EN;
+#ifndef CONFIG_SPL_BUILD
 		if (data->flags & MMC_DATA_WRITE)
 			cmdat |= MSC_CMDAT_WRITE;
+#endif
 
 		jz_mmc_writel(data->blocks, priv, MSC_NOB);
 		jz_mmc_writel(data->blocksize, priv, MSC_BLKLEN);
@@ -114,9 +116,11 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	/* write the data setup */
 	jz_mmc_writel(cmdat, priv, MSC_CMDAT);
 
+#ifndef CONFIG_SPL_BUILD
 	jz_mmc_writel(0xffffffff, priv, MSC_IMASK);
 	/* clear interrupts */
 	jz_mmc_writel(0xffffffff, priv, MSC_IREG);
+#endif
 
 	/* start the command (& the clock) */
 	jz_mmc_writel(MSC_STRPCL_START_OP, priv, MSC_STRPCL);
@@ -146,6 +150,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		}
 	}
 
+#ifndef CONFIG_SPL_BUILD
 	if (data && (data->flags & MMC_DATA_WRITE)) {
 		/* write the data */
 		int sz = DIV_ROUND_UP(data->blocks * data->blocksize, 4);
@@ -188,6 +193,40 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		while (!(jz_mmc_readl(priv, MSC_IREG) & MSC_IREG_DATA_TRAN_DONE));
 		jz_mmc_writel(MSC_IREG_DATA_TRAN_DONE, priv, MSC_IREG);
 	}
+#else
+	if (data && (data->flags & MMC_DATA_READ)) {
+		/* read the data */
+		int sz = data->blocks * data->blocksize;
+		void *buf = data->dest;
+		do {
+			stat = jz_mmc_readl(priv, MSC_STAT);
+			if (stat & MSC_STAT_TIME_OUT_READ)
+				return TIMEOUT;
+			if (stat & MSC_STAT_CRC_READ_ERROR)
+				return COMM_ERR;
+			if (stat & MSC_STAT_DATA_FIFO_EMPTY) {
+				udelay(100);
+				continue;
+			}
+			do {
+				uint32_t val = jz_mmc_readl(priv, MSC_RXFIFO);
+				if (sz == 1)
+					*(uint8_t *)buf = (uint8_t)val;
+				else if (sz == 2)
+					put_unaligned_le16(val, buf);
+				else if (sz >= 4)
+					put_unaligned_le32(val, buf);
+				buf += 4;
+				sz -= 4;
+				stat = jz_mmc_readl(priv, MSC_STAT);
+			} while (!(stat & MSC_STAT_DATA_FIFO_EMPTY));
+		} while (!(stat & MSC_STAT_DATA_TRAN_DONE));
+
+		while (!(jz_mmc_readl(priv, MSC_IREG) & MSC_IREG_DATA_TRAN_DONE));
+
+		jz_mmc_writel(MSC_IREG_DATA_TRAN_DONE, priv, MSC_IREG);
+	}
+#endif
 
 	return 0;
 }
@@ -284,7 +323,11 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	mmc->priv = priv;
 	mmc->send_cmd = jz_mmc_send_cmd;
 	mmc->set_ios = jz_mmc_set_ios;
+#ifndef	CONFIG_SPL_BUILD
 	mmc->init = jz_mmc_core_init;
+#else
+	mmc->init = NULL;
+#endif
 	mmc->getcd = NULL;
 	mmc->getwp = NULL;
 

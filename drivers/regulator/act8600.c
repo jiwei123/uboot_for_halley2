@@ -609,7 +609,7 @@ int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv)
 	case REGULATOR_CORE:
 		reg = ACT8600_REG1_VSET;
 		if ((vol_mv < 1000) || (vol_mv >1300)) {
-			printf("voltage for core is out of range\n");
+			debug("voltage for core is out of range\n");
 			return -EINVAL;
 		}
 		break;
@@ -623,7 +623,7 @@ int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv)
 	}
 
 	if ((vol_mv < 600) || (vol_mv > 3900)) {
-		printf("unsupported voltage\n");
+		debug("unsupported voltage\n");
 		return -EINVAL;
 	} else if (vol_mv < 1200) {
 		regvalue = (vol_mv - 600) / 25;
@@ -642,7 +642,7 @@ static int act8600_write_reg(u8 reg, u8 *val)
 	int ret;
 	ret = i2c_write(ACT8600_I2C_ADDR, reg, 1, val, 1);
 	if(ret) {
-		printf("act8600 write register error\n");
+		debug("act8600 write register error\n");
 		return -EIO;
 	}
 	return 0;

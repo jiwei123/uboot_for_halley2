@@ -236,7 +236,7 @@ void ddr_phy_init(void)
 	       && (ddr_readl(DDRP_PGSR) != 0x1f)
 	       && --timeout);
 	if (timeout == 0) {
-		printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		debug("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
 	} else {
 		timeout = 10000;
@@ -258,7 +258,7 @@ void ddr_phy_init(void)
 	       && (ddr_readl(DDRP_PGSR) != 0x1f)
 	       && --timeout);
 	if (timeout == 0) {
-		printf("DDR init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		debug("DDR init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
 	} else {
 		timeout = 500000;
@@ -276,16 +276,18 @@ void ddr_phy_init(void)
 		   & (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR))
 	       && --timeout);
 	if (timeout == 0) {
-		printf("DDR training timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		debug("DDR training timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
 	} else if (ddr_readl(DDRP_PGSR)
 		   & (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
 		int i = 0;
 
-		printf("DDR training error: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		debug("DDR training error: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+#ifdef DEBUG
 		for (i = 0; i < 4; i++) {
 			printf("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
 		}
+#endif
 		hang();
 	}
 #if defined(CONFIG_DDR_PHY_IMPED_PULLUP) && defined(CONFIG_DDR_PHY_IMPED_PULLDOWN)

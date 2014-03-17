@@ -42,7 +42,7 @@ void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 		if (cgu_clks[i].en_bit && cgu_clks[i].busy_bit) {
 			writel(xcdr | cgu_clks[i].div | (1 << cgu_clks[i].en_bit), reg);
 			while (readl(reg) & (1 << cgu_clks[i].busy_bit))
-				printf("wait cgu %x\n",reg);
+				debug("wait cgu %x\n",reg);
 		}
 #ifdef DUMP_CGU_SELECT
 		printf("0x%X: value=0x%X\n",
