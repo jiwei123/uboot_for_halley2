@@ -48,11 +48,12 @@
 #define VR_PROG_STAGE2		0x05
 /*firmware stage request*/
 #define VR_GET_ACK		0x10
-#define VR_WRITE		0x11
-#define VR_READ			0x12
-#define VR_UPDATE_CFG		0x13
-#define VR_SYNC_TIME		0x14
-#define VR_REBOOT		0x15
+#define VR_INIT			0x11
+#define VR_WRITE		0x12
+#define VR_READ			0x13
+#define VR_UPDATE_CFG		0x14
+#define VR_SYNC_TIME		0x15
+#define VR_REBOOT		0x16
 
 enum medium_type {
 	MEMORY = 0,
@@ -115,6 +116,7 @@ struct cloner {
 	unsigned int buf_size;
 	int ack;
 	struct arguments *args;
+	int inited;
 };
 
 static const char burntool_name[] = "INGENIC VENDOR BURNNER";
@@ -245,6 +247,15 @@ static unsigned int local_crc32(unsigned int crc,unsigned char *buffer, unsigned
 	return crc ;
 }
 
+int cloner_init()
+{
+#if 0
+	printf("init test!\n");
+	mdelay(4000);
+	printf("init test!\n");
+#endif
+}
+
 int mmc_program(struct cloner *cloner)
 {
 #define MMC_BYTE_PER_BLOCK 512
@@ -371,6 +382,13 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 			cloner->write_req->length = cmd->write.length;
 			usb_ep_queue(cloner->ep_out, cloner->write_req, 0);
 			break;
+		case VR_INIT:
+			if(!cloner->inited) {
+				cloner->ack = -EBUSY;
+				cloner_init();
+				cloner->inited = 1;
+				cloner->ack = 0;
+			}
 		case VR_READ:
 			break;
 		case VR_SYNC_TIME:
@@ -417,6 +435,8 @@ int f_cloner_setup_handle(struct usb_function *f,
 			break;
 		case VR_GET_ACK:
 			memcpy(cloner->ep0req->buf,&cloner->ack,sizeof(int));
+			break;
+		case VR_INIT:
 			break;
 		case VR_UPDATE_CFG:
 		case VR_WRITE:
@@ -535,6 +555,8 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->args = malloc(ARGS_LEN);
 	cloner->args->transfer_data_chk = 1;
 	cloner->args->write_back_chk = 1;
+	
+	cloner->inited = 0;
 
 	INIT_LIST_HEAD(&cloner->usb_function.list);
 	bitmap_zero(cloner->usb_function.endpoints,32);
