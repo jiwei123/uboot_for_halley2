@@ -92,6 +92,10 @@ typedef struct __nand_flash {
 	unsigned int blocksize;
 	unsigned int oobsize;
 	unsigned int maxvalidblocks;
+	unsigned int minvalidblocks;
+	unsigned int pagenumber;
+	unsigned int badblockpage;
+	unsigned int bpc;
 	unsigned char eccbit;
 	unsigned char planepdie;
 	unsigned char diepchip;
@@ -99,7 +103,9 @@ typedef struct __nand_flash {
 	unsigned char buswidth;
 	unsigned char realplanenum;
 	unsigned short badblockpos;
+	unsigned char timingmod;
 	unsigned char rowcycles;
+	unsigned char pageaddresscycle;
 	unsigned char planeoffset; //multi-plane block address offset
 	unsigned int options;
 	nand_timing timing;
