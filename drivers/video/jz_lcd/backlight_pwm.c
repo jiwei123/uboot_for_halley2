@@ -26,7 +26,7 @@
 #include <asm/types.h>
 #include <asm/arch/tcu.h>
 #include <asm/arch/gpio.h>
-#include "jz4780_lcd.h"
+#include <asm/lcd/jz4780_lcd.h>
 
 /*
  * LCD backlight

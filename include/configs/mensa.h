@@ -124,6 +124,7 @@
 #define CONFIG_VIDEO_JZ4775
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U
+/*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
 #endif /* CONFIG_LCD */
 
 /* NAND(mtd) */
