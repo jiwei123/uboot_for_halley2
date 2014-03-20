@@ -108,10 +108,10 @@ typedef struct __nand_flash {
 	unsigned char pageaddresscycle;
 	unsigned char planeoffset; //multi-plane block address offset
 	unsigned int options;
+	unsigned char nandtype;
 	nand_timing timing;
 	optionalcmd *optcmd;
 } nand_flash;
-
 
 
 
