@@ -170,7 +170,7 @@ do{					\
 #define RECOVERY_SIGNATURE      (0x1a1a)        /* means "RECY" */
 #define RECOVERY_SIGNATURE_SEC  0x800           /* means "RECY" */
 
-#define cpm_get_scrpad()        readl(CPM_CPSPR)
+#define cpm_get_scrpad()        readl(CPM_BASE + CPM_CPSPR)
 #define cpm_set_scrpad(data)                    \
 do {                                            \
 	volatile int i = 0x3fff;                \

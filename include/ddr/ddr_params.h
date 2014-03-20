@@ -82,6 +82,8 @@ struct ddr_params {
 	uint32_t tXSRD;
 	uint32_t tREFI;
 	uint32_t tDLLSRST; /* In PHY PTR0 */
+	uint32_t tDQSCK;
+	uint32_t tDQSCKmax;
 	struct tck tck;
 	struct size size;
 };

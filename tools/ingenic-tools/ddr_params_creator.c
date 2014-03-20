@@ -117,7 +117,11 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->timing4.b.tRFC = (calc_nck(p->tRFC, tck->ps) - 1) / 2;
 	ddrc->timing4.b.tEXTRW = 3;/* Why?*/
 	ddrc->timing4.b.tRWCOV = 3;/* Why?*/
+#ifdef CONFIG_DDR_TYPE_LPDDR2
+	ddrc->timing4.b.tCKE = calc_nck(p->tCKE, tck->ps);
+#else
 	ddrc->timing4.b.tCKE = calc_nck(p->tCKE, tck->ps) - 1;
+#endif
 	tmp = p->tMINSR;
 	if (tmp < 9)
 		tmp = 9;
@@ -128,10 +132,13 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->timing4.b.tXP = p->tXP;
 	ddrc->timing4.b.tMRD = p->tMRD - 1;
 
-	ddrc->timing5.b.tCTLUPD = 0xff; /* 0xff is the default value */
+	if (p->type == LPDDR2)
+		ddrc->timing5.b.tCTLUPD = 0x0; /* 0xff is the default value */
+	else
+		ddrc->timing5.b.tCTLUPD = 0xff; /* 0xff is the default value */
 	ddrc->timing5.b.tRTW = p->tRTW;
 	if (p->type == LPDDR2)
-		ddrc->timing5.b.tRDLAT = p->tRL;
+		ddrc->timing5.b.tRDLAT = p->tRDLAT;
 	else
 		ddrc->timing5.b.tRDLAT = p->tRDLAT;
 	if (p->type == LPDDR2)
@@ -140,7 +147,9 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 		ddrc->timing5.b.tWDLAT = p->tWDLAT;
 
 	ddrc->timing6.b.tXSRD = p->tXSRD / 4;
-	ddrc->timing6.b.tFAW = p->tFAW; /* NOT sure */
+	tmp = calc_nck(p->tFAW, tck->ps); /* NOT sure */
+	if (tmp < 1) tmp = 1;
+	ddrc->timing6.b.tFAW = tmp; /* NOT sure */
 	ddrc->timing6.b.tCFGW = 2;
 	ddrc->timing6.b.tCFGR = 2;
 
@@ -171,7 +180,16 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->cfg.b.COL0 = p->col - 8;
 	ddrc->cfg.b.CS1EN = p->cs1;
 	ddrc->cfg.b.CS0EN = p->cs0;
+#ifndef CONFIG_DDR_TYPE_LPDDR2
 	ddrc->cfg.b.CL = 0; /* NOT used in this version */
+#else
+	tmp = p->cl - 1; /* NOT used in this version */
+	if (tmp < 0)
+		tmp = 0;
+	if (tmp > 4)
+		tmp = 4;
+	ddrc->cfg.b.CL = tmp | 0x8; /* NOT used in this version */
+#endif
 	ddrc->cfg.b.BA0 = p->bank8;
 	ddrc->cfg.b.DW = p->dw32;
 	switch (p->type) {
@@ -224,6 +242,7 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 	unsigned int tmp = 0;
 	unsigned int dinit1 = 0;
 	struct tck *tck = &p->tck;
+	unsigned int  count = 0;
 
 #define BETWEEN(T, MIN, MAX) if (T < MIN) T = MIN; if (T > MAX) T = MAX
 #define PNDEF(N, P, T, MIN, MAX, PS)	\
@@ -270,13 +289,11 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 			dinit1 = 5 * tck->ps;
 		tmp = calc_nck(dinit1 / 1000, tck->ps);
 		ddrp->ptr1.b.tDINIT1 = tmp;
-		if (tmp > 0xff)
-			tmp = 0xff;
 		ddrp->ptr2.b.tDINIT2 = calc_nck(200000, tck->ps); /* DDR3 default 200us*/
 		ddrp->ptr2.b.tDINIT3 = 512;
 
 		/* DTPR0 registers */
-		ddrp->dtpr0.b.tMRD = p->tMRD;
+		ddrp->dtpr0.b.tMRD = p->tMRD - 4;
 		PNDEF(0, tRTP, tmp, 2, 6, tck->ps);
 		PNDEF(0, tWTR, tmp, 1, 6, tck->ps);
 		PNDEF(0, tRP, tmp, 2, 11, tck->ps);
@@ -320,9 +337,134 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 		break;
 	case LPDDR:
 		ddrp->dcr = 0 | (p->bank8 << 3);
+
+		/* MRn registers */
+
+		ddrp->mr0.lpddr.CL = p->cl;
+		ddrp->mr0.lpddr.BL = 3;
+
+		/* PTRn registers */
+		ddrp->ptr0.b.tDLLSRST = calc_nck(p->tDLLSRST, tck->ps);
+		ddrp->ptr0.b.tDLLLOCK = calc_nck(5120, tck->ps); /* LPDDR default 5.12us*/
+		ddrp->ptr0.b.tITMSRST = 8;
+
+		ddrp->ptr1.b.tDINIT0 = calc_nck(200000, tck->ps); /* LPDDR default 200us*/
+		tmp = calc_nck(100, tck->ps);
+		ddrp->ptr1.b.tDINIT1 = tmp;
+
+		ddrp->ptr2.b.tDINIT2 = calc_nck(100, tck->ps); /* DDR3 default 200us*/
+		ddrp->ptr2.b.tDINIT3 = calc_nck(100, tck->ps);
+
+		/* DTPR0 registers */
+		ddrp->dtpr0.b.tMRD = p->tMRD;
+		PNDEF(0, tRTP, tmp, 2, 6, tck->ps);
+		PNDEF(0, tWTR, tmp, 1, 6, tck->ps);
+		PNDEF(0, tRP, tmp, 2, 11, tck->ps);
+		PNDEF(0, tRCD, tmp, 2, 11, tck->ps);
+		PNDEF(0, tRAS, tmp, 2, 31, tck->ps);
+		PNDEF(0, tRRD, tmp, 1, 8, tck->ps);
+		PNDEF(0, tRC, tmp, 2, 42, tck->ps);
+		ddrp->dtpr0.b.tCCD = (p->tCCD > (p->bl / 2)) ? 1 : 0;
+
+		/* DTPR1 registers */
+		PNDEF(1, tFAW, tmp, 2, 31, tck->ps);
+		PNDEF(1, tRFC, tmp, 1, 255, tck->ps);
+
+		/* DTPR2 registers */
+		tmp = calc_nck(p->tXS, tck->ps);
+		BETWEEN(tmp, 2, 1023);
+		ddrp->dtpr2.b.tXS = tmp;
+
+//		tmp = calc_nck(p->tXP, tck->ps);
+		tmp = p->tXP;
+//		BETWEEN(tmp, 2, 31);
+		ddrp->dtpr2.b.tXP = tmp;
+
+#if 0
+		tmp = p->tCKE;
+		BETWEEN(tmp, 2, 15);
+		ddrp->dtpr2.b.tCKE = tmp;
+#endif
+
+		tmp = calc_nck(5120, tck->ps);
+		BETWEEN(tmp, 2, 1023);
+		ddrp->dtpr2.b.tDLLK = tmp;
+
+		/* PGCR registers */
+		ddrp->pgcr = DDRP_PGCR_ITMDMD | DDRP_PGCR_DQSCFG | 7 << DDRP_PGCR_CKEN_BIT
+			| 2 << DDRP_PGCR_CKDV_BIT
+			| (p->cs0 | p->cs1 << 1) << DDRP_PGCR_RANKEN_BIT
+			| DDRP_PGCR_PDDISDX;
 		break;
 	case LPDDR2:
+		/* DCR register */
 		ddrp->dcr = 4 | (p->bank8 << 3);
+
+		/* MRn registers */
+		ddrp->mr0.d32 = 0x852;
+
+		tmp = calc_nck(p->tWR, tck->ps);
+		if (tmp < 3)
+			tmp = 3;
+		ddrp->mr1.lpddr2.nWR = tmp - 2;
+		tmp = p->bl;
+		while (tmp >>= 1) count++;
+		ddrp->mr1.lpddr2.BL = count;
+
+		ddrp->mr2.lpddr2.RL_WL = p->tRL - 2;
+
+		ddrp->mr3.lpddr2.DS = 2;
+
+		/* PTRn registers */
+		ddrp->ptr0.b.tDLLSRST = calc_nck(p->tDLLSRST, tck->ps);
+		ddrp->ptr0.b.tDLLLOCK = calc_nck(5120, tck->ps); /* DDR3 default 5.12us*/
+		ddrp->ptr0.b.tITMSRST = 8;
+
+		ddrp->ptr1.b.tDINIT0 = calc_nck(200000, tck->ps); /* LPDDR default 200us*/
+		tmp = calc_nck(100, tck->ps);
+		ddrp->ptr1.b.tDINIT1 = tmp;
+
+		ddrp->ptr2.b.tDINIT2 = calc_nck(11000, tck->ps); /* DDR3 default 200us*/
+		ddrp->ptr2.b.tDINIT3 = calc_nck(1000, tck->ps);
+
+		/* DTPR0 registers */
+		ddrp->dtpr0.b.tMRD = p->tMRD - 3;
+		PNDEF(0, tRTP, tmp, 2, 6, tck->ps);
+		PNDEF(0, tWTR, tmp, 1, 6, tck->ps);
+		PNDEF(0, tRP, tmp, 2, 11, tck->ps);
+		PNDEF(0, tRCD, tmp, 2, 11, tck->ps);
+		PNDEF(0, tRAS, tmp, 2, 31, tck->ps);
+		PNDEF(0, tRRD, tmp, 1, 8, tck->ps);
+		PNDEF(0, tRC, tmp, 2, 42, tck->ps);
+		ddrp->dtpr0.b.tCCD = (p->tCCD > (p->bl / 2)) ? 1 : 0;
+
+		/* DTPR1 registers */
+		PNDEF(1, tFAW, tmp, 2, 31, tck->ps);
+		PNDEF(1, tRFC, tmp, 1, 255, tck->ps);
+		PNDEF(1, tDQSCK, tmp, 1, 7, tck->ps);
+		PNDEF(1, tDQSCKmax, tmp, 1, 7, tck->ps);
+
+		/* DTPR2 registers */
+		tmp = calc_nck(p->tXS, tck->ps);
+		BETWEEN(tmp, 2, 1023);
+		ddrp->dtpr2.b.tXS = tmp;
+
+		tmp = calc_nck(p->tXP, tck->ps);
+		BETWEEN(tmp, 2, 31);
+		ddrp->dtpr2.b.tXP = tmp;
+
+		tmp = p->tCKE;
+		BETWEEN(tmp, 2, 15);
+		ddrp->dtpr2.b.tCKE = tmp;
+
+		tmp = p->tDLLLOCK;
+		BETWEEN(tmp, 2, 1023);
+		ddrp->dtpr2.b.tDLLK = tmp;
+		/* PGCR registers */
+		ddrp->pgcr = DDRP_PGCR_DQSCFG | 7 << DDRP_PGCR_CKEN_BIT
+			| 2 << DDRP_PGCR_CKDV_BIT
+			| (p->cs0 | p->cs1 << 1) << DDRP_PGCR_RANKEN_BIT
+			| DDRP_PGCR_ZCKSEL_32 | DDRP_PGCR_PDDISDX;
 		break;
 	default:
 		break;
@@ -350,7 +492,6 @@ void fill_in_params(struct ddr_params *params, int type)
 	params->col = DDR_COL;
 	params->row = DDR_ROW;
 	params->bank8 = DDR_BANK8;
-	params->tCWL = DDR_tCWL;
 	params->tRAS = DDR_tRAS;
 	params->tRP = DDR_tRP;
 	params->tRCD = DDR_tRCD;
@@ -373,10 +514,18 @@ void fill_in_params(struct ddr_params *params, int type)
 	params->tRTW = DDR_tRTW;
 	params->tRAS = DDR_tRAS;
 	params->tCKSRE = DDR_tCKSRE;
+#ifdef CONFIG_DDR_TYPE_LPDDR2
+	params->tDQSCK = DDR_tDQSCK;
+	params->tDQSCKmax = DDR_tDQSCKMAX;
+	params->tDLLLOCK = DDR_tDLLLOCK;
+#endif
+#ifdef CONFIG_DDR_TYPE_DDR3
+	params->tCWL = DDR_tCWL;
 	params->tDLLLOCK = DDR_tDLLLOCK;
 	params->tXSDLL = DDR_tXSDLL;
 	params->tMOD = DDR_tMOD;
 	params->tXPDLL = DDR_tXPDLL;
+#endif
 	params->tXS = DDR_tXS;
 	params->tXSRD = DDR_tXSRD;
 	params->tREFI = DDR_tREFI;
@@ -417,6 +566,7 @@ void ddr_params_assign(struct ddrc_reg *ddrc, struct ddrp_reg *ddrp, struct ddr_
 	DDRP_MR0_VALUE		= ddrp->mr0.d32;
 	DDRP_MR1_VALUE		= ddrp->mr1.d32;
 	DDRP_MR2_VALUE		= ddrp->mr2.d32;
+	DDRP_MR3_VALUE		= ddrp->mr3.d32;
 	DDRP_PTR0_VALUE		= ddrp->ptr0.d32;
 	DDRP_PTR1_VALUE		= ddrp->ptr1.d32;
 	DDRP_PTR2_VALUE		= ddrp->ptr2.d32;
@@ -451,6 +601,7 @@ static void params_print(struct ddrc_reg *ddrc, struct ddrp_reg *ddrp)
 	printf("#define	DDRP_MR0_VALUE			0x%08x\n", ddrp->mr0.d32);
 	printf("#define	DDRP_MR1_VALUE			0x%08x\n", ddrp->mr1.d32);
 	printf("#define	DDRP_MR2_VALUE			0x%08x\n", ddrp->mr2.d32);
+	printf("#define	DDRP_MR3_VALUE			0x%08x\n", ddrp->mr3.d32);
 	printf("#define	DDRP_PTR0_VALUE			0x%08x\n", ddrp->ptr0.d32);
 	printf("#define	DDRP_PTR1_VALUE			0x%08x\n", ddrp->ptr1.d32);
 	printf("#define	DDRP_PTR2_VALUE			0x%08x\n", ddrp->ptr2.d32);

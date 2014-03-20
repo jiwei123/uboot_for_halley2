@@ -31,6 +31,13 @@ COBJS-y	= $(SOC).o
 COBJS-y += pll.o
 COBJS-y += clk.o
 COBJS-y += ../ddr_dwc.o
+ifdef CONFIG_SPL_DDR_SOFT_TRAINING
+COBJS-y += ../ddr_dqs_training.o
+else
+ifdef CONFIG_DDR_FORCE_SOFT_TRAINING
+COBJS-y += ../ddr_dqs_training.o
+endif
+endif
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))

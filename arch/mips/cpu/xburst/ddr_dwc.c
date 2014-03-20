@@ -30,13 +30,25 @@
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 
+#ifdef	DEBUG
+#define DUMP_DDR
+#endif /* DEBUG */
+
 DECLARE_GLOBAL_DATA_PTR;
 extern unsigned int sdram_size(int cs, struct ddr_params *p);
 struct ddr_params *ddr_params_p = NULL;
 
-#ifdef DUMP_DDR
+#if defined(CONFIG_SPL_DDR_SOFT_TRAINING) || defined(CONFIG_DDR_FORCE_SOFT_TRAINING)
+extern bool dqs_gate_train(int rank_cnt, int byte_cnt);
+extern void send_MR0(int a);
+#else /* CONFIG_SPL_DDR_SOFT_TRAINING */
+#define send_MR0(a)	do {} while(0);
+#define dqs_gate_train(rank_cnt, byte_cnt) true
+#endif /* CONFIG_SPL_DDR_SOFT_TRAINING */
+
 static void dump_ddrc_register(void)
 {
+#ifdef DUMP_DDR
 	printf("DDRC_STATUS		0x%x\n", ddr_readl(DDRC_STATUS));
 	printf("DDRC_CFG		0x%x\n", ddr_readl(DDRC_CFG));
 	printf("DDRC_CTRL		0x%x\n", ddr_readl(DDRC_CTRL));
@@ -55,10 +67,12 @@ static void dump_ddrc_register(void)
 	printf("DDRC_REMAP3		0x%x\n", ddr_readl(DDRC_REMAP(3)));
 	printf("DDRC_REMAP4		0x%x\n", ddr_readl(DDRC_REMAP(4)));
 	printf("DDRC_REMAP5		0x%x\n", ddr_readl(DDRC_REMAP(5)));
+#endif
 }
 
 static void dump_ddrp_register(void)
 {
+#ifdef DUMP_DDR
 	printf("DDRP_PIR		0x%x\n", ddr_readl(DDRP_PIR));
 	printf("DDRP_PGCR		0x%x\n", ddr_readl(DDRP_PGCR));
 	printf("DDRP_PGSR		0x%x\n", ddr_readl(DDRP_PGSR));
@@ -74,8 +88,13 @@ static void dump_ddrp_register(void)
 	printf("DDRP_MR2		0x%x\n", ddr_readl(DDRP_MR2));
 	printf("DDRP_MR3		0x%x\n", ddr_readl(DDRP_MR3));
 	printf("DDRP_ODTCR		0x%x\n", ddr_readl(DDRP_ODTCR));
-}
+	int i=0;
+	for(i=0;i<4;i++) {
+		printf("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
+		printf("@pas:DXDQSTR(%d)= 0x%x\n", i,ddr_readl(DDRP_DXDQSTR(i)));
+	}
 #endif
+}
 
 #ifndef CONFIG_FPGA
 static void reset_dll(void)
@@ -86,6 +105,7 @@ static void reset_dll(void)
 	mdelay(5);
 }
 #endif
+
 static void reset_controller(void)
 {
 #ifndef CONFIG_FPGA
@@ -97,7 +117,6 @@ static void reset_controller(void)
 	ddr_writel(0, DDRC_CTRL);
 	mdelay(5);
 }
-
 
 static void remap_swap(int a, int b)
 {
@@ -132,14 +151,14 @@ static void mem_remap(void)
 	bank8 = DDR_BANK8;
 	cs0 = CONFIG_DDR_CS0;
 	cs1 = CONFIG_DDR_CS1;
-#else
+#else /* CONFIG_DDR_HOST_CC */
 	row = ddr_params_p->row;
 	col = ddr_params_p->col;
 	dw32 = ddr_params_p->dw32;
 	bank8 = ddr_params_p->bank8;
 	cs0 = ddr_params_p->cs0;
 	cs1 = ddr_params_p->cs1;
-#endif
+#endif /* CONFIG_DDR_HOST_CC */
 	start += row + col + (dw32 ? 4 : 2) / 2;
 	start -= 12;
 
@@ -186,6 +205,7 @@ void ddr_controller_init(void)
 void ddr_phy_init(void)
 {
 	unsigned int timeout = 10000, i;
+	bool	soft_training = false;
 
 	debug("DDR PHY init\n");
 
@@ -194,11 +214,20 @@ void ddr_phy_init(void)
 
 	ddr_writel(DDRP_DCR_VALUE, DDRP_DCR);
 	ddr_writel(DDRP_MR0_VALUE, DDRP_MR0);
+
+#ifndef CONFIG_DDR_TYPE_LPDDR
 	ddr_writel(DDRP_MR1_VALUE, DDRP_MR1);
 	ddr_writel(DDRP_MR2_VALUE, DDRP_MR2);
+#endif
+
+#ifdef CONFIG_DDR_TYPE_LPDDR2
+	ddr_writel(DDRP_MR3_VALUE, DDRP_MR3);
+#endif
+
 #ifdef CONFIG_SYS_DDR_CHIP_ODT
 	ddr_writel(0, DDRP_ODTCR);
 #endif
+
 	ddr_writel(DDRP_PTR0_VALUE, DDRP_PTR0);
 	ddr_writel(DDRP_PTR1_VALUE, DDRP_PTR1);
 	ddr_writel(DDRP_PTR2_VALUE, DDRP_PTR2);
@@ -230,33 +259,53 @@ void ddr_phy_init(void)
 
 	ddr_writel(DDRP_PGCR_VALUE, DDRP_PGCR);
 
+#ifdef CONFIG_DDR_TYPE_LPDDR2
+	ddr_writel(0xc40, DDRP_DXCCR);
+#endif
+
+#ifdef CONFIG_DDR_TYPE_LPDDR
+	ddr_writel(0x30c00813, DDRP_ACIOCR);
+	ddr_writel(0x4802, DDRP_DXCCR);
+#endif
+
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
-					  | DDRP_PGSR_DLDONE
-					  | DDRP_PGSR_ZCDONE))
-	       && (ddr_readl(DDRP_PGSR) != 0x1f)
-	       && --timeout);
+					| DDRP_PGSR_DLDONE
+					| DDRP_PGSR_ZCDONE))
+			&& (ddr_readl(DDRP_PGSR) != 0x1f)
+			&& --timeout);
 	if (timeout == 0) {
-		debug("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
 	} else {
 		timeout = 10000;
 	}
 
 	debug("DDR chip init\n");
-#ifndef CONFIG_FPGA
+#ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
-		   | DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
-#else
+			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
+#endif
+
+#ifdef CONFIG_DDR_TYPE_LPDDR2
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
-		   | DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
+			| DDRP_PIR_DLLSRST, DDRP_PIR);
+#endif
+
+#ifdef	CONFIG_DDR_TYPE_LPDDR
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
+#endif
+
+#ifdef CONFIG_FPGA
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
+			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
 #endif
 
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
-					  | DDRP_PGSR_DLDONE
-					  | DDRP_PGSR_ZCDONE
-					  | DDRP_PGSR_DIDONE))
-	       && (ddr_readl(DDRP_PGSR) != 0x1f)
-	       && --timeout);
+					| DDRP_PGSR_DLDONE
+					| DDRP_PGSR_ZCDONE
+					| DDRP_PGSR_DIDONE))
+			&& (ddr_readl(DDRP_PGSR) != 0x1f)
+			&& --timeout);
 	if (timeout == 0) {
 		debug("DDR init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
@@ -265,30 +314,69 @@ void ddr_phy_init(void)
 	}
 
 	debug("DDR training\n");
+#ifdef CONFIG_DDR_FORCE_SOFT_TRAINING
+	soft_training = true;
+#else /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
+#ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_QSTRN, DDRP_PIR);
+#endif /* CONFIG_DDR_TYPE_DDR3 */
+
+#ifdef CONFIG_DDR_TYPE_LPDDR
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DLLLOCK
+			| DDRP_PIR_QSTRN, DDRP_PIR);
+#endif /* CONFIG_DDR_TYPE_LPDDR */
+
+#ifdef CONFIG_DDR_TYPE_LPDDR2
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_QSTRN, DDRP_PIR);
+#endif /* CONFIG_DDR_TYPE_LPDDR2 */
 
 	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
-					 | DDRP_PGSR_DLDONE
-					 | DDRP_PGSR_ZCDONE
-					 | DDRP_PGSR_DIDONE
-					 | DDRP_PGSR_DTDONE))
-	       && !(ddr_readl(DDRP_PGSR)
-		   & (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR))
-	       && --timeout);
+					| DDRP_PGSR_DLDONE
+					| DDRP_PGSR_ZCDONE
+					| DDRP_PGSR_DIDONE
+					| DDRP_PGSR_DTDONE))
+			&& !(ddr_readl(DDRP_PGSR)
+				& (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR))
+			&& --timeout);
+
 	if (timeout == 0) {
-		debug("DDR training timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		debug("DDR training timeout\n");
+#ifdef CONFIG_SPL_DDR_SOFT_TRAINING
+		soft_training = true;
+#else
+		dump_ddrp_register();
 		hang();
+#endif
 	} else if (ddr_readl(DDRP_PGSR)
-		   & (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
+			& (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
+		debug("DDR hardware training error\n");
+#ifdef CONFIG_SPL_DDR_SOFT_TRAINING
+		soft_training = true;
+#else
 		int i = 0;
 
-		debug("DDR training error: PGSR=%X\n", ddr_readl(DDRP_PGSR));
-#ifdef DEBUG
 		for (i = 0; i < 4; i++) {
-			printf("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
+			debug("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
 		}
-#endif
+		dump_ddrp_register();
 		hang();
+#endif
+	}
+#endif /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
+
+	if (soft_training) {
+		unsigned int tmp = 1;
+		debug("Now try soft training\n");
+		if (dqs_gate_train(CONFIG_DDR_CS0 + CONFIG_DDR_CS1, 4)) {
+			debug("DDR soft train fail too!!!\n");
+			dump_ddrp_register();
+			hang();
+		}
+
+		while (DDR_BL >> tmp)
+			tmp++;
+		ddr_writel((DDR_CL << 4) | (tmp - 1), DDRP_MR0);
+		send_MR0(ddr_readl(DDRP_MR0));
 	}
 #if defined(CONFIG_DDR_PHY_IMPED_PULLUP) && defined(CONFIG_DDR_PHY_IMPED_PULLDOWN)
 	/**
@@ -319,20 +407,20 @@ void sdram_init(void)
 	struct ddrc_reg ddrc;
 	struct ddrp_reg ddrp;
 	int type = VARIABLE;
-  #ifndef CONFIG_DDR_TYPE_VARIABLE
+#ifndef CONFIG_DDR_TYPE_VARIABLE
 	struct ddr_params ddr_params;
-    #ifdef CONFIG_DDR_TYPE_DDR3
+#ifdef CONFIG_DDR_TYPE_DDR3
 	type = DDR3;
-    #elif defined(CONFIG_DDR_TYPE_LPDDR)
+#elif defined(CONFIG_DDR_TYPE_LPDDR)
 	type = LPDDR;
-    #elif defined(CONFIG_DDR_TYPE_LPDDR2)
+#elif defined(CONFIG_DDR_TYPE_LPDDR2)
 	type = LPDDR2;
-    #endif /* CONFIG_DDR_TYPE_DDR3 */
+#endif /* CONFIG_DDR_TYPE_DDR3 */
 	ddr_params_p = &ddr_params;
-  #else
+#else
 	ddr_params_p = &gd->arch.gi->ddr_params;
 	ddr_params_p->freq = gd->arch.gi->cpufreq / gd->arch.gi->ddr_div;
-  #endif
+#endif
 	fill_in_params(ddr_params_p, type);
 	ddr_params_creator(&ddrc, &ddrp, ddr_params_p);
 	ddr_params_assign(&ddrc, &ddrp, ddr_params_p);
@@ -352,10 +440,12 @@ void sdram_init(void)
 #endif
 	/* DDR PHY init*/
 	ddr_phy_init();
+	dump_ddrp_register();
 	ddr_writel(0, DDRC_CTRL);
 
 	/* DDR Controller init*/
 	ddr_controller_init();
+	dump_ddrc_register();
 
 	/* DDRC address remap configure*/
 	mem_remap();
@@ -363,10 +453,6 @@ void sdram_init(void)
 	ddr_writel(ddr_readl(DDRC_STATUS) & ~DDRC_DSTATUS_MISS, DDRC_STATUS);
 
 	debug("sdram init finished\n");
-#ifdef DUMP_DDR
-	dump_ddrc_register();
-	dump_ddrp_register();
-#endif
 }
 
 phys_size_t initdram(int board_type)
