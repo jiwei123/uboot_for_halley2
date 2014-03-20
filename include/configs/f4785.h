@@ -57,7 +57,7 @@
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
-#define CONFIG_DDR3_TSD34096M1333C9_E 
+#define CONFIG_DDR3_TSD34096M1333C9_E
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -315,10 +315,14 @@
 
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
+#ifdef CONFIG_SPL_NOR_SUPPORT
+#define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-nor-spl.lds"
+#else
+#define CONFIG_SPL_PARAMS_FIXER
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
+#endif
 #define CONFIG_SPL_PAD_TO		26624 /* equal to spl max size in JZ4785 */
 
-#define CONFIG_SPL_PARAMS_FIXER
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	86//0x5A //wli changed 0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
@@ -333,9 +337,13 @@
 /* #define CONFIG_SPL_I2C_SUPPORT */
 /* #define CONFIG_SPL_REGULATOR_SUPPORT */
 /* #define CONFIG_SPL_CORE_VOLTAGE		1300 */
-
+#ifdef CONFIG_SPL_NOR_SUPPORT
+#define CONFIG_SPL_TEXT_BASE		0xba000000
+#else
 #define CONFIG_SPL_TEXT_BASE		0x80001000
+#endif	/*CONFIG_SPL_NOR_SUPPORT*/
 #define CONFIG_SPL_MAX_SIZE		(26 * 1024)
+
 #ifdef CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SPL_SERIAL_SUPPORT
 
@@ -362,7 +370,8 @@
 #endif
 
 #ifdef CONFIG_SPL_NOR_SUPPORT
-#define CONFIG_SYS_UBOOT_BASE		0x80007000
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SYS_UBOOT_BASE		(CONFIG_SPL_TEXT_BASE + CONFIG_SPL_PAD_TO - 0x40)	//0x40 = sizeof (image_header)
 #define CONFIG_SYS_OS_BASE		0
 #define CONFIG_SYS_SPL_ARGS_ADDR	0
 #define CONFIG_SYS_FDT_BASE		0

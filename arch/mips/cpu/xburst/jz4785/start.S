@@ -113,5 +113,20 @@ _start:
 #ifdef CONFIG_SPL_STACK
 	li	sp, CONFIG_SPL_STACK
 #endif
+#ifdef CONFIG_SPL_NOR_SUPPORT
+	.extern __data_start
+	.extern __data_end
+	/*Init data section, nor spl*/
+	la	t0, __data_start
+	la	t1, __data_end
+	la	t2, 0x80000000
+1:
+	lw	t3, 0(t0)
+	addiu	t0, t0, 4
+	sw	t3, 0(t2)
+	addiu	t2, t2, 4
+	bne	t0, t1, 1b
+	nop
+#endif
 	j	board_init_f
 	nop
