@@ -26,7 +26,7 @@
 #include <common.h>
 #include <lcd.h>
 #include <asm/arch/lcdc.h>
-#include "jz4780_lcd.h"
+#include <asm/lcd/jz4780_lcd.h>
 #include <asm/arch/gpio.h>
 
 int lcd_line_length;
@@ -47,46 +47,6 @@ void lcd_set_backlight_level(int num);
 	writel(config,lcd_config_info.lcdbaseoff+addr)
 #define reg_read(addr)	\
 	readl(lcd_config_info.lcdbaseoff+addr)
-
-vidinfo_t panel_info = {
-#if defined(CONFIG_VIDEO_KR070LA0S_270_65HZ)
-	1024,600,LCD_BPP,
-#elif defined(CONFIG_VIDEO_KR070LA0S_270)
-	1024,600,LCD_BPP,
-#elif defined(CONFIG_VIDEO_KR080LA4S_250)
-	1024,768,LCD_BPP,
-#elif defined(CONFIG_VIDEO_SL007DC18B05)
-	1024,600,LCD_BPP,
-#elif defined(CONFIG_VIDEO_EK070TN93)
-	800,480,LCD_BPP,
-#elif defined(CONFIG_VIDEO__AT065TN14)
-	800,480,LCD_BPP,
-#elif defined(CONFIG_VIDEO_JCMT070T115A18)
-	800,480,LCD_BPP,
-#elif  defined(CONFIG_VIDEO_HSD101PWW1)
-	1280,800,LCD_BPP,
-#elif defined(CONFIG_VIDEO_LP101WX1_SLN2)
-	1280,800,LCD_BPP,
-#elif defined(CONFIG_VIDEO_KD50G2_40NM_A2)
-	800,480,LCD_BPP,
-#elif defined(CONFIG_VIDEO_TFT_HSD070IDW1)
-	800,480,LCD_BPP,
-#elif defined(CONFIG_VIDEO__HHX070ML208CP21)
-	1024,600,LCD_BPP,
-#elif defined(CONFIG_VIDEO_BYD_BM8766U)
-	800,480,LCD_BPP,
-#elif defined(CONFIG_VIDEO_KFM701A21_1A)
-	400,240,LCD_BPP,
-#elif  defined(CONFIG_VIDEO_TFT_720P)
-	1280,720,LCD_BPP,
-#elif defined(CONFIG_VIDEO_TM080TDH01)
-	1024,768,LCD_BPP,
-#elif defined(CONFIG_VIDEO_S369FG06)   /* driver IC: TL2796  */
-	480,800,LCD_BPP,
-#else
-#error "Select LCD panel first!!!"
-#endif
-};
 
 int jzfb_get_controller_bpp(unsigned int bpp)
 {
