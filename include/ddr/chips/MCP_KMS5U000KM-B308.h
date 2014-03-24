@@ -7,11 +7,6 @@
 /*--------------------------------------------------------------------------------
  * MDDR-266 info
  */
-/* Chip Select */
-#define DDR_CS1EN    1 // CSEN : whether a ddr chip exists 0 - un-used, 1 - used
-#define DDR_CS0EN    1
-#define DDR_DW32     1 /* 0 - 16-bit data width, 1 - 32-bit data width */
-
 /* MDDR paramters */
 #define DDR_ROW    14 /* ROW : 12 to 14 row address */
 #define DDR_COL    10 /* COL :  8 to 10 column address */
@@ -58,21 +53,4 @@
 #define DDR_CLK_DIV     1 /* Clock Divider. auto refresh
 			   * cnt_clk = memclk/(16*(2^DDR_CLK_DIV))
 			   */
-/*-----------------------------------------------------------------------
- * NAND FLASH configuration
- */
-#define CFG_NAND_BW8            0 /* Data bus width: 0-16bit, 1-8bit */
-#define CFG_NAND_PAGE_SIZE      2048
-#define CFG_NAND_ROW_CYCLE      3
-#define CFG_NAND_BLOCK_SIZE     (128 << 10) /* NAND chip block size */
-#define CFG_NAND_BADBLOCK_PAGE  0 /* NAND bad block was marked at this page in a block, starting from 0 */
-#define CFG_NAND_OOB_SIZE       128
-#define CFG_NAND_BCH_BIT        8
-#define CFG_NAND_TOTAL_BLOCKS	4096
-
-#define X_DELAY_TRR		20
-#define X_DELAY_TADL		100
-#define X_DELAY_TWHR		60
-
-#define CONFIG_SDRAM_SIZE_512M  1
 #endif  /* __MCP_CONFIG_H */

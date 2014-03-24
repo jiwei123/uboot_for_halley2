@@ -206,6 +206,7 @@ void ddr_phy_init(void)
 {
 	unsigned int timeout = 10000, i;
 	bool	soft_training = false;
+	unsigned int ddr_bl, ddr_cl;
 
 	debug("DDR PHY init\n");
 
@@ -364,20 +365,31 @@ void ddr_phy_init(void)
 	}
 #endif /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
 
+#if defined(CONFIG_SPL_DDR_SOFT_TRAINING) || defined(CONFIG_DDR_FORCE_SOFT_TRAINING)
 	if (soft_training) {
 		unsigned int tmp = 1;
 		debug("Now try soft training\n");
-		if (dqs_gate_train(CONFIG_DDR_CS0 + CONFIG_DDR_CS1, 4)) {
+		if (dqs_gate_train(ddr_params_p->cs0 + ddr_params_p->cs1, 4)) {
 			debug("DDR soft train fail too!!!\n");
 			dump_ddrp_register();
 			hang();
 		}
 
-		while (DDR_BL >> tmp)
+#ifdef CONFIG_DDR_HOST_CC
+		ddr_bl = DDR_BL;
+		ddr_cl = DDR_CL;
+#else /* CONFIG_DDR_HOST_CC */
+		ddr_cl = ddr_params_p->cl;
+		ddr_bl = ddr_params_p->bl;
+#endif /* CONFIG_DDR_HOST_CC */
+
+		while (ddr_bl >> tmp)
 			tmp++;
-		ddr_writel((DDR_CL << 4) | (tmp - 1), DDRP_MR0);
+		ddr_writel((ddr_cl << 4) | (tmp - 1), DDRP_MR0);
 		send_MR0(ddr_readl(DDRP_MR0));
 	}
+#endif /* CONFIG_SPL_DDR_SOFT_TRAINING || CONFIG_DDR_FORCE_SOFT_TRAINING */
+
 #if defined(CONFIG_DDR_PHY_IMPED_PULLUP) && defined(CONFIG_DDR_PHY_IMPED_PULLDOWN)
 	/**
 	 * DDR3 240ohm RZQ output impedance:
@@ -461,7 +473,7 @@ phys_size_t initdram(int board_type)
 	/* SDRAM size was calculated when compiling. */
 #ifndef EMC_LOW_SDRAM_SPACE_SIZE
 #define EMC_LOW_SDRAM_SPACE_SIZE 0x10000000 /* 256M */
-#endif
+#endif /* EMC_LOW_SDRAM_SPACE_SIZE */
 	unsigned int ram_size;
 	ram_size = (unsigned int)(DDR_CHIP_0_SIZE) + (unsigned int)(DDR_CHIP_1_SIZE);
 
