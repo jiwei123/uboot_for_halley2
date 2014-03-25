@@ -3,32 +3,31 @@
 #include <config.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
+#include <asm/lcd/byd_8991.h>
 
 //#define DEBUG
 
-/*PE1  LCD_BACKLIGNT   */
-#define back_light(n)\
-     gpio_direction_output((32*4 + 1), n)
+extern struct byd_8991_data byd_8991_pdata;
 
 /*PB30  LCD_RESET   */
 #define RESET(n)\
-     gpio_direction_output((32*1 + 30), n)
+     gpio_direction_output(byd_8991_pdata.gpio_lcd_disp, n)
 
 /*PC0  SPI_CS   */
 #define CS(n)\
-     gpio_direction_output((32*2 + 0), n)
+     gpio_direction_output(byd_8991_pdata.gpio_spi_cs, n)
 
-/*PC1  SPI_CS   */
+/*PC1  SPI_CLK   */
 #define SCK(n)\
-     gpio_direction_output((32*2 + 1), n)
+     gpio_direction_output(byd_8991_pdata.gpio_spi_clk, n)
 
 /*PC10 SPI_MOSI */
 #define SDO(n)\
-	 gpio_direction_output((32*2 + 10), n)
+	 gpio_direction_output(byd_8991_pdata.gpio_spi_mosi, n)
 
 /*PC11 SPI_MISO */
 #define SDI()\
-	gpio_get_value((32*2 + 11))
+	gpio_get_value(byd_8991_pdata.gpio_spi_miso)
 
 
 void SPI_3W_SET_CMD(unsigned char c)

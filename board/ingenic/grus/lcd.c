@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#include "../../../drivers/video/jz_lcd/jz4780_lcd.h"
+#include <asm/lcd/jz4780_lcd.h>
 #include <asm/gpio.h>
 
 void set_lcd_power_on(void)
@@ -28,6 +28,8 @@ void set_lcd_power_on(void)
 }
 
 struct jzfb_config_info jzfb1_init_data = {
+#if (defined(CONFIG_VIDEO_BYD_BM8766U)||\
+		defined(CONFIG_VIDEO_BM347WV_F_8991FTGF))
 	.modes = &jzfb1_videomode,
 	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
 	.bpp = 24,
@@ -37,10 +39,13 @@ struct jzfb_config_info jzfb1_init_data = {
 
 	.lvds = 0,
 	.dither_enable = 0,
+#else
+#error "Please add the board data!!!"
+#endif
 };
 
 #ifdef CONFIG_VIDEO_BYD_BM8766U
-#include "../../../drivers/video/jz_lcd/lcd_panel/byd_bm8766u.h"
+#include <asm/lcd/byd_bm8766u.h>
 struct byd_bm8766u_data byd_bm8766u_pdata= {
         .gpio_lcd_disp = GPIO_PD(11),
         .gpio_lcd_de   = 0,             //GPIO_PC(9),   /* chose sync mode */
@@ -48,3 +53,17 @@ struct byd_bm8766u_data byd_bm8766u_pdata= {
         .gpio_lcd_hsync = 0,            //GPIO_PC(18),
 };
 #endif /* CONFIG_LCD_BYD_BM8766U */
+
+#ifdef CONFIG_VIDEO_BM347WV_F_8991FTGF
+#include <asm/lcd/byd_8991.h>
+struct byd_8991_data byd_8991_pdata= {
+        .gpio_lcd_disp = GPIO_PD(11),
+        .gpio_lcd_de   = 0,
+        .gpio_lcd_vsync = 0,
+        .gpio_lcd_hsync = 0,
+        .gpio_spi_cs	= GPIO_PC(0),
+        .gpio_spi_clk	= GPIO_PC(1),
+        .gpio_spi_mosi	= GPIO_PC(10),
+        .gpio_spi_miso	= GPIO_PC(11),
+};
+#endif /* CONFIG_VIDEO_BM347WV_F_8991FTGF */

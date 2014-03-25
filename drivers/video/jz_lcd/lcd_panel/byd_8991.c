@@ -80,7 +80,7 @@ void lcd_display_off(void)
 void board_lcd_init(void)
 {
 	unsigned int pins = 0x0ffff3fc;
-	serial_puts("mensa board_lcd_init\n");
+	serial_puts("board_lcd_init\n");
 	/* init gpio */
 	gpio_set_func(GPIO_PORT_C,GPIO_FUNC_0,pins);
 
