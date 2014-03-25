@@ -69,8 +69,14 @@ enum data_type {
 };
 
 struct arguments {
+	int mmc_open_card;
+	int mmc_force_erase;
+	int mmc_erase_all;
+	int mmc_erase_part;
+	int nand_erase;
 	unsigned int	transfer_data_chk;
 	unsigned int	write_back_chk;
+	PartitionInfo PartInfo;
 	int nr_nand_args;
 	struct __nand_flash nand_params[0];
 };
@@ -315,6 +321,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
 
+	int infonum;
 	if(req->status == -ECONNRESET) {
 		cloner->ack = -ECONNRESET;
 		return;
@@ -325,9 +332,14 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		cloner->ack = -EIO;
 		return;
 	}
-	
+
 	if(cloner->cmd_type == VR_UPDATE_CFG) {
 		cloner->ack = 0;
+		printf("nand_erase:%d\n",cloner->args->nand_erase);
+		printf("mmc_erase:%d\n",cloner->args->mmc_force_erase);
+		printf("mmc_open_card:%d\n",cloner->args->mmc_open_card);
+		printf("mmc_erase_all:%d\n",cloner->args->mmc_erase_all);
+		printf("mmc_erase_part:%d\n",cloner->args->mmc_erase_part);
 		return;
 	}
 
@@ -467,10 +479,10 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->ep0req->buf = &cloner->cmd;
 
 	if (gadget_is_dualspeed(cdev->gadget)) {
-		 hs_bulk_in_desc.bEndpointAddress =
-			 fs_bulk_in_desc.bEndpointAddress;
-		 hs_bulk_out_desc.bEndpointAddress =
-			 fs_bulk_out_desc.bEndpointAddress;
+		hs_bulk_in_desc.bEndpointAddress =
+			fs_bulk_in_desc.bEndpointAddress;
+		hs_bulk_out_desc.bEndpointAddress =
+			fs_bulk_out_desc.bEndpointAddress;
 	}
 
 	cdev->req->context = cloner;
@@ -481,7 +493,7 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->write_req = usb_ep_alloc_request(cloner->ep_out,0);
 	cloner->args_req = usb_ep_alloc_request(cloner->ep_out,0);
 	cloner->read_req = usb_ep_alloc_request(cloner->ep_in,0);
-	
+
 	cloner->buf_size = 1024*1024;
 	cloner->write_req->complete = handle_write;
 	cloner->write_req->buf = malloc(1024*1024);
@@ -529,7 +541,7 @@ failed:
 void f_cloner_unbind(struct usb_configuration *c,struct usb_function *f)
 {
 }
- 
+
 void f_cloner_disable(struct usb_function *f)
 {
 }
@@ -551,11 +563,11 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->usb_function.strings= burn_intf_string_tab;
 	cloner->usb_function.disable = f_cloner_disable;
 	cloner->usb_function.unbind = f_cloner_unbind;
-	
+
 	cloner->args = malloc(ARGS_LEN);
 	cloner->args->transfer_data_chk = 1;
 	cloner->args->write_back_chk = 1;
-	
+
 	cloner->inited = 0;
 
 	INIT_LIST_HEAD(&cloner->usb_function.list);
