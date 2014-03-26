@@ -282,6 +282,7 @@ void ddr_phy_init(void)
 	}
 
 	debug("DDR chip init\n");
+#ifndef CONFIG_FPGA
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
 			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
@@ -295,8 +296,7 @@ void ddr_phy_init(void)
 #ifdef	CONFIG_DDR_TYPE_LPDDR
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
 #endif
-
-#ifdef CONFIG_FPGA
+#else
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
 			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
 #endif
@@ -308,7 +308,7 @@ void ddr_phy_init(void)
 			&& (ddr_readl(DDRP_PGSR) != 0x1f)
 			&& --timeout);
 	if (timeout == 0) {
-		debug("DDR init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		printf("DDR init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
 	} else {
 		timeout = 500000;

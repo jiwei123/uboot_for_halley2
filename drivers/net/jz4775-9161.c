@@ -283,6 +283,7 @@ static int jz_send(struct eth_device* dev, void *packet, int length)
 
 	memset(&tx_buff[next_tx * 2048], 0, 2048);
 	memcpy((void *)&tx_buff[next_tx * 2048], packet, length);
+	flush_dcache_all();
 
 	/* prepare DMA data */
 	desc->length |= (((length <<DescSize1Shift) & DescSize1Mask)
@@ -294,7 +295,7 @@ static int jz_send(struct eth_device* dev, void *packet, int length)
 	desc->status |=  (DescTxFirst | DescTxLast | DescTxIntEnable);
 	desc->status |= DescOwnByDma;
 
-	flush_dcache_all();
+//	flush_dcache_all();
 
 	/* start tx operation*/
 	jzmac_restart_tx_dma();
@@ -316,8 +317,6 @@ static int jz_send(struct eth_device* dev, void *packet, int length)
 
 //	jzmac_dump_dma_regs(__func__, __LINE__);
 	/* if error occurs, then handle the error */
-
-
 
 	next_tx++;
 	if (next_tx >= NUM_TX_DESCS)
@@ -486,7 +485,7 @@ int jz_net_initialize(bd_t *bis)
 #define JZ_GMAC_BASE 0xb34b0000
 	gmacdev->DmaBase =  JZ_GMAC_BASE + DMABASE;
 	gmacdev->MacBase =  JZ_GMAC_BASE + MACBASE;
-
+#ifndef CONFIG_FPGA
 	/* reset DM9161 */
 	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
 	mdelay(10);
@@ -498,7 +497,21 @@ int jz_net_initialize(bd_t *bis)
 	gpio_set_func(GPIO_PORT_D, GPIO_FUNC_1, 0x3c000000);
 	gpio_set_func(GPIO_PORT_F, GPIO_FUNC_0, 0x0000fff0);
 	udelay(100000);
+#else
+	/* PB7 */
+	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_1, 0x00000080);
+	udelay(10);
 
+	/* reset PE10 */
+	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	udelay(10);
+	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, !CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	udelay(10);
+
+	/* output 1 PB7 */
+	gpio_direction_output(32 * 1 + 7, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	udelay(100000);
+#endif
 	dev = (struct eth_device *)malloc(sizeof(struct eth_device));
 	if(dev == NULL) {
 		printf("struct eth_device malloc fail\n");

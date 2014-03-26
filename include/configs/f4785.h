@@ -72,13 +72,13 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS0,115200 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.8.3:/home/nfsroot/bliu/buildroot rw"
   #else
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
   #endif
@@ -101,7 +101,7 @@
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
+    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm"
   #else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
@@ -210,16 +210,15 @@
 /* Ethernet: gmac and 9161 */
 
 #define CONFIG_NET_JZ4775
-#define CONFIG_GPIO_DM9161_RESET	GPIO_PB(7)
+#define CONFIG_GPIO_DM9161_RESET	GPIO_PE(10)
 #define CONFIG_GPIO_DM9161_RESET_ENLEVEL	0
 
-/* DEBUG ETHERNET
-#define CONFIG_SERVERIP		192.168.4.122
-#define CONFIG_IPADDR		192.168.4.121
-#define CONFIG_GATEWAYIP        192.168.4.1
+/* DEBUG ETHERNET */
+#define CONFIG_SERVERIP		192.168.8.3
+#define CONFIG_IPADDR		192.168.10.206
+#define CONFIG_GATEWAYIP        192.168.10.1
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_ETHADDR          00:11:22:33:44:55
-*/
 
 /* GPIO */
 #define CONFIG_JZ_GPIO
