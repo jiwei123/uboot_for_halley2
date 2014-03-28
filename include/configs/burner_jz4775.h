@@ -44,7 +44,7 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		3
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			57600
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_TYPE_VARIABLE
@@ -105,6 +105,9 @@
 #define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:4m(uboot-spl),1m(uboot),1m(uboot-env),2m(skip),-(system)"
+
+#define CONFIG_JZ_GPIO
+#define CONFIG_INGENIC_SOFT_I2C
 
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
