@@ -29,6 +29,7 @@
 #include <mmc.h>
 #include <rtc.h>
 #include <part.h>
+#include <ingenic_soft_i2c.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/compiler.h>
@@ -272,12 +273,18 @@ int cloner_init()
 
 int i2c_program(struct cloner *cloner)
 {
-	struct i2c_args *i2c = (struct i2c_args *)cloner->write_req->buf;
-	printf("%d\n",i2c->clk);
-	printf("%d\n",i2c->data);
-	printf("%x\n",i2c->device);
-	printf("%d\n",i2c->value_count);
-	printf("%x\n",i2c->value[0]);
+	int i = 0;
+	struct i2c_args *i2c_arg = (struct i2c_args *)cloner->write_req->buf;
+	struct i2c i2c;
+	i2c.scl = i2c_arg->clk;
+	i2c.sda = i2c_arg->data;
+	i2c_init(&i2c);
+
+	for(i=0;i<i2c_arg->value_count;i++) {
+		char reg = i2c_arg->value[i] >> 16;
+		char value = i2c_arg->value[i] & 0xff;
+		i2c_write(&i2c,i2c_arg->device,reg,1,&value,1);
+	}
 	return 0;
 }
 

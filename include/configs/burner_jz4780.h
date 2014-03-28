@@ -106,6 +106,8 @@
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:4m(uboot-spl),1m(uboot),1m(uboot-env),2m(skip),-(system)"
 
+#define CONFIG_JZ_GPIO
+#define CONFIG_INGENIC_SOFT_I2C
 /* MMC */
 #define CONFIG_GENERIC_MMC	1
 #define CONFIG_MMC		1
