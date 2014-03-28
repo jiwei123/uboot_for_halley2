@@ -588,5 +588,12 @@
 	value;									\
 })
 
+#define DDR_GET_VALUE(x, y)					\
+({								\
+	unsigned long value, temp;		                \
+	 temp = x * 1000;					\
+	 value = (temp % y == 0) ? (temp / y) : (temp / y + 1); \
+	 value;							\
+ })
 #endif /* __DDR_H__ */
 

@@ -243,18 +243,18 @@ void ddr_phy_init(void)
 #ifdef CONFIG_DDR_PHY_ODT
 #ifdef CONFIG_DDR_PHY_DQ_ODT
 		tmp |= 1 << 10;
-#endif
+#endif /* CONFIG_DDR_PHY_DQ_ODT */
 #ifdef CONFIG_DDR_PHY_DQS_ODT
 		tmp |= 1 << 9;
-#endif
-#endif
+#endif /* CONFIG_DDR_PHY_DQS_ODT */
+#endif /* CONFIG_DDR_PHY_ODT */
 #ifndef CONFIG_DDR_HOST_CC
 		if ((i > 1) && (ddr_params_p->dw32 == 0))
 			tmp &= ~DDRP_DXGCR_DXEN;
 #elif (CONFIG_DDR_DW32 == 0)
 		if (i > 1)
 			tmp &= ~DDRP_DXGCR_DXEN;
-#endif
+#endif /* CONFIG_DDR_HOST_CC */
 		ddr_writel(tmp, DDRP_DXGCR(i));
 	}
 
@@ -262,12 +262,12 @@ void ddr_phy_init(void)
 
 #ifdef CONFIG_DDR_TYPE_LPDDR2
 	ddr_writel(0xc40, DDRP_DXCCR);
-#endif
+#endif /* CONFIG_DDR_TYPE_LPDDR2 */
 
 #ifdef CONFIG_DDR_TYPE_LPDDR
 	ddr_writel(0x30c00813, DDRP_ACIOCR);
 	ddr_writel(0x4802, DDRP_DXCCR);
-#endif
+#endif /* CONFIG_DDR_TYPE_LPDDR */
 
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
 					| DDRP_PGSR_DLDONE
@@ -286,20 +286,21 @@ void ddr_phy_init(void)
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
 			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
-#endif
+#endif /* CONFIG_DDR_TYPE_DDR3 */
 
 #ifdef CONFIG_DDR_TYPE_LPDDR2
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
 			| DDRP_PIR_DLLSRST, DDRP_PIR);
-#endif
+#endif /* CONFIG_DDR_TYPE_LPDDR2 */
 
 #ifdef	CONFIG_DDR_TYPE_LPDDR
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
-#endif
-#else
+#endif /* CONFIG_DDR_TYPE_LPDDR */
+#else /* CONFIG_FPGA */
+
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
 			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
-#endif
+#endif /*CONFIG_FPGA */
 
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
 					| DDRP_PGSR_DLDONE
@@ -344,16 +345,16 @@ void ddr_phy_init(void)
 		debug("DDR training timeout\n");
 #ifdef CONFIG_SPL_DDR_SOFT_TRAINING
 		soft_training = true;
-#else
+#else /* CONFIG_SPL_DDR_SOFT_TRAINING */
 		dump_ddrp_register();
 		hang();
-#endif
+#endif /* CONFIG_SPL_DDR_SOFT_TRAINING */
 	} else if (ddr_readl(DDRP_PGSR)
 			& (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
 		debug("DDR hardware training error\n");
 #ifdef CONFIG_SPL_DDR_SOFT_TRAINING
 		soft_training = true;
-#else
+#else /* CONFIG_SPL_DDR_SOFT_TRAINING */
 		int i = 0;
 
 		for (i = 0; i < 4; i++) {
@@ -361,15 +362,25 @@ void ddr_phy_init(void)
 		}
 		dump_ddrp_register();
 		hang();
-#endif
+#endif /* CONFIG_SPL_DDR_SOFT_TRAINING */
 	}
 #endif /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
 
 #if defined(CONFIG_SPL_DDR_SOFT_TRAINING) || defined(CONFIG_DDR_FORCE_SOFT_TRAINING)
 	if (soft_training) {
 		unsigned int tmp = 1;
+		unsigned int cs0;
+		unsigned int cs1;
 		debug("Now try soft training\n");
-		if (dqs_gate_train(ddr_params_p->cs0 + ddr_params_p->cs1, 4)) {
+#ifdef CONFIG_DDR_HOST_CC
+		cs0 = CONFIG_DDR_CS0;
+		cs1 = CONFIG_DDR_CS1;
+#else /* CONFIG_DDR_HOST_CC */
+		cs0 = ddr_params_p->cs0;
+		cs1 = ddr_params_p->cs1;
+#endif /* CONFIG_DDR_HOST_CC */
+
+		if (dqs_gate_train(cs0 + cs1, 4)) {
 			debug("DDR soft train fail too!!!\n");
 			dump_ddrp_register();
 			hang();

@@ -21,14 +21,14 @@
 #define DDR_tRCD    15 /* ACTIVE to READ or WRITE command period to the same bank. */
 #define DDR_tRC     (DDR_tRAS + DDR_tRP) /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRRD    10 /* ACTIVE bank A to ACTIVE bank B command period. */
-#define DDR_tWR     15 /* WRITE Recovery Time defined by register MR of DDR2 memory */
+#define DDR_tWR     12 /* WRITE Recovery Time defined by register MR of DDR2 memory */
 #define DDR_tWTR    MAX(2, 0) /* WRITE to READ command delay. */
 /*
  * MDDR controller timing2 register
  */
 #define DDR_tRFC    120 /* ns,  AUTO-REFRESH command period. */
-#define DDR_tMINSR   6 /* Minimum Self-Refresh / Deep-Power-Down */
-#define DDR_tXP      1 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
+#define DDR_tMINSR DDR_GET_VALUE(DDR_tRFC, tck_g.ps) /* Minimum Self-Refresh */
+#define DDR_tXP      2 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
 #define DDR_tMRD     2 /* unit: tCK Load-Mode-Register to next valid command period: 1 to 4 tCK */
 
 /* new add */
@@ -36,21 +36,21 @@
 #define DDR_tAL      0 /* Additive Latency, tCK*/
 #define DDR_tRL      (DDR_tAL + DDR_CL)	/* MDDR: Read Latency = tAL + tCL */
 #define DDR_tWL      1 /* MDDR: must 1 */
-#define DDR_tRDLAT   (DDR_tRL - 2)	
+#define DDR_tRDLAT   (DDR_tRL - 2)
 #define DDR_tWDLAT   (DDR_tWL - 1)
 #define DDR_tCCD     4 /* CAS# to CAS# command delay , tCK, MDDR no*/
 #define DDR_tRTW     (DDR_tRL + DDR_tCCD + 2 - DDR_tWL)	/* Read to Write delay */
 #define DDR_tFAW     50 /* Four bank activate period, ns, MDDR no */
-#define DDR_tCKE     2 /* CKE minimum pulse width, tCK */
-#define DDR_tXS      140	/* Exit self-refresh to next valid command delay, ns */
-#define DDR_tXSRD    4 /* DDR2 only: Exit self refresh to a read command, tck */
-#define DDR_tCKSRE   4 /* Valid Clock Requirement after Self Refresh Entry or Power-Down Entry */
+#define DDR_tCKE	MAX(2, 0) /* tCK, CKE minimum pulse width */
+#define DDR_tXS      120	/* Exit self-refresh to next valid command delay, ns */
+#define DDR_tXSRD DDR_GET_VALUE(DDR_tXS, tck_g.ps) /* ns, Exit self refresh to */
+#define DDR_tCKSRE   MAX(1, 0) /* Valid Clock Requirement after Self Refresh Entry or Power-Down Entry */
 
 /*
  * MDDR controller refcnt register
  */
-#define DDR_tREFI    7800 /* Refresh period: 4096 refresh cycles/64ms */
-#define DDR_CLK_DIV     1 /* Clock Divider. auto refresh
+#define DDR_tREFI	7800 /* Refresh period: 4096 refresh cycles/64ms */
+#define DDR_CLK_DIV	1 /* Clock Divider. auto refresh
 			   * cnt_clk = memclk/(16*(2^DDR_CLK_DIV))
 			   */
 #endif  /* __MCP_CONFIG_H */
