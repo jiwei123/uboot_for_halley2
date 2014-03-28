@@ -59,7 +59,7 @@ enum medium_type {
 	MEMORY = 0,
 	NAND,
 	MMC,
-	NOR,
+	I2C,
 };
 
 enum data_type {
@@ -68,14 +68,22 @@ enum data_type {
 	IMAGE,
 };
 
+struct i2c_args {
+	int clk;
+	int data;
+	int device;
+	int value_count;
+	int value[0];
+};
+
 struct arguments {
 	int mmc_open_card;
 	int mmc_force_erase;
 	int mmc_erase_all;
 	int mmc_erase_part;
 	int nand_erase;
-	unsigned int	transfer_data_chk;
-	unsigned int	write_back_chk;
+	int transfer_data_chk;
+	int write_back_chk;
 	PartitionInfo PartInfo;
 	int nr_nand_args;
 	struct __nand_flash nand_params[0];
@@ -119,7 +127,7 @@ struct cloner {
 
 	union cmd cmd;
 	int cmd_type;
-	unsigned int buf_size;
+	uint32_t buf_size;
 	int ack;
 	struct arguments *args;
 	int inited;
@@ -197,7 +205,7 @@ static inline struct cloner *func_to_cloner(struct usb_function *f)
 	return container_of(f, struct cloner, usb_function);
 }
 
-static unsigned int crc_table[] = {
+static uint32_t crc_table[] = {
 	/* CRC polynomial 0xedb88320 */
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -244,9 +252,9 @@ static unsigned int crc_table[] = {
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-static unsigned int local_crc32(unsigned int crc,unsigned char *buffer, unsigned int size)
+static uint32_t local_crc32(uint32_t crc,unsigned char *buffer, uint32_t size)
 {
-	unsigned int i;
+	uint32_t i;
 	for (i = 0; i < size; i++) {
 		crc = crc_table[(crc ^ buffer[i]) & 0xff] ^ (crc >> 8);
 	}
@@ -260,6 +268,17 @@ int cloner_init()
 	mdelay(4000);
 	printf("init test!\n");
 #endif
+}
+
+int i2c_program(struct cloner *cloner)
+{
+	struct i2c_args *i2c = (struct i2c_args *)cloner->write_req->buf;
+	printf("%d\n",i2c->clk);
+	printf("%d\n",i2c->data);
+	printf("%x\n",i2c->device);
+	printf("%d\n",i2c->value_count);
+	printf("%x\n",i2c->value[0]);
+	return 0;
 }
 
 int mmc_program(struct cloner *cloner)
@@ -303,7 +322,7 @@ int mmc_program(struct cloner *cloner)
 		if (n != cnt)
 			return -EIO;
 
-		unsigned int tmp_crc = local_crc32(0xffffffff,addr,cloner->cmd.write.length);
+		uint32_t tmp_crc = local_crc32(0xffffffff,addr,cloner->cmd.write.length);
 		debug_cond(BURNNER_DEBUG,"%d blocks check: %s\n",n,(cloner->cmd.write.crc == tmp_crc) ? "OK" : "ERROR");
 		if (cloner->cmd.write.crc != tmp_crc) {
 			printf("src_crc32 = %08x , dst_crc32 = %08x\n",cloner->cmd.write.crc,tmp_crc);
@@ -344,7 +363,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 	}
 
 	if (cloner->args->transfer_data_chk) {
-		unsigned int tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
+		uint32_t tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
 		if (cloner->cmd.write.crc != tmp_crc) {
 			printf("crc is errr! src crc=%08x crc=%08x\n",cloner->cmd.write.crc,tmp_crc);
 			cloner->ack = -EINVAL;
@@ -353,6 +372,9 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 	}
 #define OPS(x,y) ((x<<16)|(y&0xffff))
 	switch(cloner->cmd.write.ops) {
+		case OPS(I2C,RAW):
+			cloner->ack = i2c_program(cloner);
+			break;
 		case OPS(MMC,RAW):
 			cloner->ack = mmc_program(cloner);
 			break;
