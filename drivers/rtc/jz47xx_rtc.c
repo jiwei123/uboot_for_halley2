@@ -103,7 +103,7 @@ static void jzrtc_writel(int offset, unsigned int value)
 
 int rtc_tm_to_time(struct rtc_time *tm, unsigned long *time)
 {
-	*time = mktime(tm->tm_year, tm->tm_mon , tm->tm_mday,
+	*time = mktime(tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 			tm->tm_hour , tm->tm_min, tm->tm_sec);
 	return 0;
 }
