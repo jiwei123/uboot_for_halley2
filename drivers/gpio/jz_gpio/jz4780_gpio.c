@@ -29,6 +29,9 @@ static struct jz_gpio_func_def uart_gpio_func[] = {
 };
 
 static struct jz_gpio_func_def gpio_func[] = {
+#if defined(CONFIG_JZ_SPI_NORFLASH)
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_2, .pins = 0x00b40000},
+#endif
 #if defined(CONFIG_JZ_MMC_MSC0_PA_4BIT)
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00fc0000},
 #endif

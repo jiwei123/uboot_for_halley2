@@ -452,6 +452,9 @@ static const struct {
 	struct spi_flash *(*probe) (struct spi_slave *spi, u8 *idcode);
 } flashes[] = {
 	/* Keep it sorted by define name */
+#ifdef CONFIG_SPI_FLASH_INGENIC
+	{ 0, 0xe0, spi_flash_probe_ingenic, },
+#endif
 #ifdef CONFIG_SPI_FLASH_ATMEL
 	{ 0, 0x1f, spi_flash_probe_atmel, },
 #endif

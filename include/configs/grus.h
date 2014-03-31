@@ -109,7 +109,7 @@
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
-  #else
+ #else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
@@ -206,6 +206,18 @@
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
 
+/* SPI */
+#if defined(CONFIG_SPI_FLASH)
+#undef SPI_INIT
+#define SPI_DELAY       udelay(5)
+#define	SPI_SDA(val)    gpio_direction_output(GPIO_PA(21), val)
+#define	SPI_SCL(val)	gpio_direction_output(GPIO_PA(18), val)
+#define	SPI_READ	gpio_get_value(GPIO_PA(20))
+#define CONFIG_SOFT_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_BUILD
+#define CONFIG_SPI_FLASH_INGENIC
+#endif
 /* PMU */
 #define CONFIG_REGULATOR
 #define CONFIG_PMU_ACT8600
@@ -307,7 +319,10 @@
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 #else
+/*
 #define CONFIG_ENV_IS_IN_NAND
+*/
+#define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_NAND_BLOCK_SIZE * 5)
 #endif
@@ -347,7 +362,8 @@
 
 #define CONFIG_SPL_SERIAL_SUPPORT
 
-#else /* !CONFIG_SPL_MMC_SUPPORT */
+#endif /* CONFIG_SPL_MMC_SUPPORT */
+#ifdef CONFIG_SPL_NAND_SUPPORT
 
 #define CONFIG_SPL_NAND_SUPPORT
 #define CONFIG_SPL_NAND_BASE
@@ -362,7 +378,20 @@
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 
-#endif /* !CONFIG_SPL_MMC_SUPPORT */
+#endif /* CONFIG_SPL_NAND_SUPPORT */
+
+#ifdef CONFIG_SPL_SPI_SUPPORT
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SPI_SPL_CHECK
+#define CONFIG_SYS_SPI_BOOT_FREQ	1000000
+#endif
+
+#ifdef CONFIG_SPL_NOR_SUPPORT
+#define CONFIG_SYS_UBOOT_BASE		0x80007000
+#define CONFIG_SYS_OS_BASE		0
+#define CONFIG_SYS_SPL_ARGS_ADDR	0
+#define CONFIG_SYS_FDT_BASE		0
+#endif
 
 /**
  * MBR configuration

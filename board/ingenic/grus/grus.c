@@ -25,9 +25,11 @@
 #include <net.h>
 #include <netdev.h>
 #include <asm/gpio.h>
+#include <asm/io.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
+#include <spi_flash.h>
 
 extern int act8600_regulator_init(void);
 #ifdef CONFIG_BOOT_ANDROID
@@ -108,5 +110,44 @@ int checkboard(void)
 void spl_board_init(void)
 {
 }
-
 #endif /* CONFIG_SPL_BUILD */
+
+void spl_spi_load_image(void)
+{
+
+}
+
+#ifdef CONFIG_SOFT_SPI
+int spi_cs_is_valid(unsigned int bus, unsigned int cs)
+{
+	gpio_direction_input(GPIO_PA(20));
+	return bus == 0 && cs == 0;
+}
+
+void spi_cs_activate(struct spi_slave *slave)
+{
+	gpio_direction_output(GPIO_PA(23), 0);
+}
+
+void spi_cs_deactivate(struct spi_slave *slave)
+{
+	gpio_direction_output(GPIO_PA(23), 1);
+}
+
+struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
+{
+	struct spi_flash *flash;
+
+	flash = spi_flash_alloc_base(spi, "ingenic");
+	if (!flash) {
+		debug("SF: Failed to allocate memory\n");
+		return NULL;
+	}
+
+	flash->page_size = 256;
+	flash->sector_size = 4 * 1024;
+	flash->size = 32 * 1024 * 1024;
+
+	return flash;
+}
+#endif
