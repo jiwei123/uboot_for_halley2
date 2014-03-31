@@ -291,6 +291,7 @@ LIBS-y += drivers/misc/libmisc.o
 LIBS-y += drivers/mmc/libmmc.o
 LIBS-y += drivers/mtd/libmtd.o
 LIBS-y += drivers/mtd/nand/libnand.o
+LIBS-y += drivers/nand/libnand.o
 LIBS-y += drivers/mtd/onenand/libonenand.o
 LIBS-y += drivers/mtd/ubi/libubi.o
 LIBS-y += drivers/mtd/spi/libspi_flash.o

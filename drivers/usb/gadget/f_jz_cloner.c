@@ -38,7 +38,7 @@
 #include <ingenic_nand_mgr/nand_param.h>
 
 #define ARGS_LEN (1024*1024)
-#define BURNNER_DEBUG 1
+#define BURNNER_DEBUG 0
 
 /*bootrom stage request*/
 #define VR_GET_CPU_INFO		0x00
@@ -87,7 +87,7 @@ struct arguments {
 	int write_back_chk;
 	PartitionInfo PartInfo;
 	int nr_nand_args;
-	struct __nand_flash nand_params[0];
+	nand_flash nand_params[0];
 };
 
 union cmd {
@@ -261,16 +261,6 @@ static uint32_t local_crc32(uint32_t crc,unsigned char *buffer, uint32_t size)
 	}
 	return crc ;
 }
-
-int cloner_init()
-{
-#if 0
-	printf("init test!\n");
-	mdelay(4000);
-	printf("init test!\n");
-#endif
-}
-
 int i2c_program(struct cloner *cloner)
 {
 	int i = 0;
@@ -287,7 +277,34 @@ int i2c_program(struct cloner *cloner)
 	}
 	return 0;
 }
+extern int nand_init_4775(PartitionInfo *pt_info,nand_flash *nand_info,int total_nand,int nand_erase_mod);
+extern unsigned int do_nand_request(unsigned int startaddr, void *Bulk_out_buf, unsigned int ops_length,unsigned int offset);
+int cloner_init(struct cloner *cloner)
+{
+	nand_init_4775(&(cloner->args->PartInfo),&(cloner->args->nand_params[0]),cloner->args->nr_nand_args,cloner->args->nand_erase);
+}
+int nand_program(struct cloner *cloner)
+{
+	int curr_device = 0;
+	u32 startaddr = cloner->cmd.write.partation + (cloner->cmd.write.offset);
+	u32 length = cloner->cmd.write.length;
+	void *databuf = (void *)cloner->write_req->buf;
 
+	//printf("=========++++++++++++>   NAND PROGRAM:startaddr = %d P offset = %d P length = %d \n",startaddr,cloner->cmd.write.offset,length);
+	if(0){
+		int i;
+		for(i=0; i<length; i++){
+			if(i%16 == 0)
+				printf("\n[%d]: ",i);
+			printf(" %02x",((unsigned char*)databuf)[i]);
+		}
+		while(1);
+	}
+
+	do_nand_request(startaddr, databuf, length,cloner->cmd.write.offset);
+
+	return 0;
+}
 int mmc_program(struct cloner *cloner)
 {
 #define MMC_BYTE_PER_BLOCK 512
@@ -382,6 +399,9 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		case OPS(I2C,RAW):
 			cloner->ack = i2c_program(cloner);
 			break;
+		case OPS(NAND,IMAGE):
+			cloner->ack = nand_program(cloner);
+			break;
 		case OPS(MMC,RAW):
 			cloner->ack = mmc_program(cloner);
 			break;
@@ -426,7 +446,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 		case VR_INIT:
 			if(!cloner->inited) {
 				cloner->ack = -EBUSY;
-				cloner_init();
+				cloner_init(cloner);
 				cloner->inited = 1;
 				cloner->ack = 0;
 			}
