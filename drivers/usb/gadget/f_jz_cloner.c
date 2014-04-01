@@ -78,6 +78,9 @@ struct i2c_args {
 };
 
 struct arguments {
+	int use_nand_mgr;
+	int use_mmc;
+
 	int mmc_open_card;
 	int mmc_force_erase;
 	int mmc_erase_all;
@@ -261,6 +264,7 @@ static uint32_t local_crc32(uint32_t crc,unsigned char *buffer, uint32_t size)
 	}
 	return crc ;
 }
+
 int i2c_program(struct cloner *cloner)
 {
 	int i = 0;
@@ -277,12 +281,23 @@ int i2c_program(struct cloner *cloner)
 	}
 	return 0;
 }
+
 extern int nand_init_4775(PartitionInfo *pt_info,nand_flash *nand_info,int total_nand,int nand_erase_mod);
 extern unsigned int do_nand_request(unsigned int startaddr, void *Bulk_out_buf, unsigned int ops_length,unsigned int offset);
+
 int cloner_init(struct cloner *cloner)
 {
-	nand_init_4775(&(cloner->args->PartInfo),&(cloner->args->nand_params[0]),cloner->args->nr_nand_args,cloner->args->nand_erase);
+	if(cloner->args->use_nand_mgr) {
+		nand_init_4775(&(cloner->args->PartInfo),
+				&(cloner->args->nand_params[0]),
+				cloner->args->nr_nand_args,
+				cloner->args->nand_erase);
+	}
+
+	if(cloner->args->use_mmc)
+		;
 }
+
 int nand_program(struct cloner *cloner)
 {
 	int curr_device = 0;
@@ -305,6 +320,7 @@ int nand_program(struct cloner *cloner)
 
 	return 0;
 }
+
 int mmc_program(struct cloner *cloner)
 {
 #define MMC_BYTE_PER_BLOCK 512
