@@ -29,6 +29,7 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
+#include <usb/jz_dwc2_udc.h>
 #include <spi_flash.h>
 
 extern int act8600_regulator_init(void);
@@ -73,6 +74,15 @@ int board_nand_init(struct nand_chip *nand)
 {
 	return 0;
 }
+
+#ifdef CONFIG_USB_GADGET
+void board_usb_init(void)
+{
+	printf("USB_udc_probe\n");
+	jz_udc_probe();
+}
+#endif /* CONFIG_USB_GADGET */
+
 
 
 #ifdef CONFIG_MMC

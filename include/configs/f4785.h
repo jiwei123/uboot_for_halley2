@@ -72,6 +72,7 @@
 /**
  * Boot arguments definitions.
  */
+
 #define BOOTARGS_COMMON "console=ttyS0,115200 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
@@ -88,6 +89,7 @@
  * Boot command definitions.
  */
 #define CONFIG_BOOTDELAY 1
+
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
@@ -189,19 +191,13 @@
 #define CONFIG_JZ_MMC_MSC1_PE 1
 #endif
 
-
-
-/* USB */
-#define CONFIG_USB_GADGET
-#define CONFIG_USB_GADGET_DUALSPEED
-#define CONFIG_USB_JZ_DWC2_UDC
-
 /* I2C */
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(3)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(0)
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
+
 
 /* PMU */
 #define CONFIG_REGULATOR
@@ -246,7 +242,29 @@
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
+#define CONFIG_CMD_EEPROM
 /* #define CONFIG_CMD_BATTERYDET */  	/* detect battery and show charge logo */
+
+/*eeprom*/
+#ifdef CONFIG_CMD_EEPROM
+#define CONFIG_SYS_I2C_EEPROM_ADDR  0x50
+/*#define CONFIG_ENV_EEPROM_IS_ON_I2C*/
+#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
+#endif
+
+/* USB */
+#ifdef CONFIG_BOOT_ANDROID
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_JZ_DWC2_UDC
+#define CONFIG_FASTBOOT_GADGET
+#define CONFIG_FASTBOOT_FUNCTION
+#define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
+#define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
+#define CONFIG_USB_GADGET_VBUS_DRAW 500
+#endif  /*CONFIG_CMD_FASTBOOT*/
+
 
 /**
  * Serial download configuration

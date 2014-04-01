@@ -194,7 +194,7 @@ static void cpm_enable_otg_phy(struct jz_udc *dev)
 {
 	u32 reg_tmp;
 
-	reg_tmp =readl(CPM_BASE + CPM_OPCR);
+	reg_tmp = readl(CPM_BASE + CPM_OPCR);
 	reg_tmp |= OPCR_OTGPHY_ENABLE;
 	writel(reg_tmp, CPM_BASE + CPM_OPCR);
 }
@@ -311,13 +311,11 @@ static void dwc_otg_cpm_init(struct jz_udc *dev)
 {
 	u32	reg_tmp;
 
-#ifdef CONFIG_JZ4775
-
-#else /* !CONFIG_JZ4775 */
+#ifdef CONFIG_JZ4780
 	reg_tmp = readl(CPM_BASE + CPM_USBPCR1);
 	reg_tmp |= (1 << 28);
 	writel(reg_tmp, CPM_BASE + CPM_USBPCR1);
-#endif /* CONFIG_JZ4775 */
+#endif /* CONFIG_JZ4780 */
 	reg_tmp = readl(CPM_BASE + CPM_USBPCR);
 	reg_tmp &= ~(1 << 31);
 	writel(reg_tmp, CPM_BASE + CPM_USBPCR);
@@ -1063,7 +1061,6 @@ static inline int read_ep_fifo(unsigned int addr, unsigned char *buf, unsigned i
 
 	while (total--) {
 		*buf_tmp = udc_read_reg(addr);
-		debug_cond(DEBUG_INTR >= 7, "%s: read buf is 0x%x\n", __func__, *buf_tmp);
 		buf_tmp++;
 	}
 
@@ -1082,7 +1079,6 @@ static inline int read_ep_fifo(unsigned int addr, unsigned char *buf, unsigned i
 	default:
 		break;
 	}
-
 	return 0;
 }
 
@@ -1449,7 +1445,7 @@ static void handle_reset_intr(struct jz_udc *dev)
 	udc_write_reg(reg_tmp, DOEP_MASK);
 
 	reg_tmp = udc_read_reg(DIEP_MASK);
-	reg_tmp |= (1 << XFERCOMPIMSK_BIT);
+	reg_tmp |= XFERCOMPIMSK_BIT;
 	/* reg_tmp |= (1 << 0) | (1 << 3); */
 	udc_write_reg(reg_tmp, DIEP_MASK);
 
@@ -2219,6 +2215,7 @@ void handle_inep_intr(struct jz_udc *dev)
 
 			udc_write_reg(DEP_TXFIFO_EMPTY, DIEP_INT(epnum));
 
+#if 0
 			/* FIXME: Using the BULK transferation, When DIEP_INT.DEP_XFER_COMP is 1,
 			 * but GINT_STS.GINTSTS_IEP_INTR is not 1, why? */
 			while (!(udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP) && --timeout)
@@ -2231,6 +2228,7 @@ void handle_inep_intr(struct jz_udc *dev)
 				udc_write_reg(reg_tmp, DIEP_EMPMSK);
 				inep_transfer_complete(&dev->ep[epnum]);
 			}
+#endif
 		}
 
 		if (intr & DEP_NAK_INT) {
