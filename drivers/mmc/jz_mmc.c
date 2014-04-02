@@ -260,10 +260,17 @@ static void jz_mmc_set_ios(struct mmc *mmc)
 
 	jz_mmc_writel(lpm, priv, MSC_LPM);
 #else
-	jz_mmc_writel(1, priv, MSC_CLKRT);
+	if(mmc->clock < 400000) {
+		/* 1/64 devclk, 384KHz, for init */
+		jz_mmc_writel(6, priv, MSC_CLKRT);
+	} else {
+		/* 1/2 devclk, 12Mhz, for data transfer */
+		jz_mmc_writel(1, priv, MSC_CLKRT);
+	}
 #endif
 	/* set the bus width for the next command */
 	priv->flags &= ~JZ_MMC_BUS_WIDTH_MASK;
+
 	if (mmc->bus_width == 8)
 		priv->flags |= JZ_MMC_BUS_WIDTH_8;
 	else if (mmc->bus_width == 4)
@@ -341,7 +348,11 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HC;
 #else
 	mmc->f_max = 52000000;
+#ifndef CONFIG_FPGA
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+#else /* CONFIG_FPGA */
+	mmc->host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+#endif /* CONFIG_FPGA */
 #endif
 
 	mmc_register(mmc);
