@@ -91,6 +91,7 @@ typedef struct __nand_flash {
 	unsigned int pagesize;
 	unsigned int blocksize;
 	unsigned int oobsize;
+	unsigned int totalblocks;
 	unsigned int maxvalidblocks;
 	unsigned int minvalidblocks;
 	unsigned int pagenumber;
