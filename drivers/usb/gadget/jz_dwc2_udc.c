@@ -2215,7 +2215,6 @@ void handle_inep_intr(struct jz_udc *dev)
 
 			udc_write_reg(DEP_TXFIFO_EMPTY, DIEP_INT(epnum));
 
-#if 0
 			/* FIXME: Using the BULK transferation, When DIEP_INT.DEP_XFER_COMP is 1,
 			 * but GINT_STS.GINTSTS_IEP_INTR is not 1, why? */
 			while (!(udc_read_reg(DIEP_INT(epnum)) & DEP_XFER_COMP) && --timeout)
@@ -2228,7 +2227,6 @@ void handle_inep_intr(struct jz_udc *dev)
 				udc_write_reg(reg_tmp, DIEP_EMPMSK);
 				inep_transfer_complete(&dev->ep[epnum]);
 			}
-#endif
 		}
 
 		if (intr & DEP_NAK_INT) {
