@@ -28,7 +28,6 @@ LIB	= $(obj)lib$(SOC).o
 
 SOBJS-y	=
 COBJS-y	= $(SOC).o
-COBJS-y += pll.o
 COBJS-y += clk.o
 COBJS-y += ../ddr_dwc.o
 ifdef CONFIG_SPL_DDR_SOFT_TRAINING
@@ -37,6 +36,12 @@ else
 ifdef CONFIG_DDR_FORCE_SOFT_TRAINING
 COBJS-y += ../ddr_dqs_training.o
 endif
+endif
+
+ifdef CONFIG_BURNER
+COBJS-y += dym_pll.o
+else
+COBJS-y += pll.o
 endif
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)

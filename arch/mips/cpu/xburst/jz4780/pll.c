@@ -109,13 +109,6 @@ void pll_init(void)
 	cpm_outl(cpxpcr.d32,CPM_CP##X##PCR);				\
 	while(!(cpm_inl(CPM_CP##X##PCR) & (0x1<<4)))
 
-#ifdef CONFIG_BURNER
-	/* Set CPCCR to default for burner. */
-	cpccr = (0x95 << 24) | (7 << 20);
-	cpm_outl(cpccr,CPM_CPCCR);
-	while(cpm_inl(CPM_CPCSR) & 0x7);
-#endif
-
 #ifdef CONFIG_SYS_APLL_FREQ
 	cpxpcr.d32 = 0;
   #if defined (CONFIG_SYS_APLL_M) && (CONFIG_SYS_APLL_N) && (CONFIG_SYS_APLL_OD)
