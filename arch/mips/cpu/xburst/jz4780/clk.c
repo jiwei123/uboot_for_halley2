@@ -118,6 +118,22 @@ static unsigned int get_msc_rate(unsigned int xcdr)
 #endif
 }
 
+unsigned int cpm_get_h2clk(void)
+{
+	int h2clk_div;
+	unsigned int cpccr  = cpm_inl(CPM_CPCCR);
+
+	h2clk_div = (cpccr >> 12) & 0xf;
+
+	switch ((cpccr >> 24) & 3) {
+		case 1:
+			return pll_get_rate(APLL) / (h2clk_div + 1);
+		case 2:
+			return pll_get_rate(MPLL) / (h2clk_div + 1);
+	}   
+
+}
+
 unsigned int clk_get_rate(int clk)
 {
 	switch (clk) {
@@ -126,6 +142,8 @@ unsigned int clk_get_rate(int clk)
 		return get_ddr_rate();
 	case CPU:
 		return get_cclk_rate();
+	case H2CLK:
+		return cpm_get_h2clk();
 #endif
 	case MSC0:
 		return get_msc_rate(CPM_MSC0CDR);
@@ -183,6 +201,23 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
+static unsigned int set_bch_rate(int clk, unsigned long rate)
+{
+	unsigned int pll_rate = pll_get_rate(MPLL);
+
+	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
+		? (pll_rate / rate / 2)
+		: (pll_rate / rate / 2 + 1)) - 1;
+
+	cpm_outl(cdr | (1 << 29) | (2 << 30), CPM_BCHCDR);
+
+	while (cpm_inl(CPM_BCHCDR) & (1 << 28));
+
+	return 0;
+}
+#endif
+
 void clk_set_rate(int clk, unsigned long rate)
 {
 #ifndef CONFIG_SPL_BUILD
@@ -191,6 +226,9 @@ void clk_set_rate(int clk, unsigned long rate)
 	case MSC1:
 	case MSC2:
 		set_msc_rate(clk, rate);
+		return;
+	case BCH:
+		set_bch_rate(clk, rate);
 		return;
 	default:
 		break;
@@ -288,18 +326,4 @@ void enable_uart_clk(void)
 	cpm_outl(clkgr0, CPM_CLKGR0);
 	cpm_outl(clkgr1, CPM_CLKGR1);
 }
-unsigned int cpm_get_h2clk(void)
-{
-	int h2clk_div;
-	unsigned int cpccr  = cpm_inl(CPM_CPCCR);
 
-	h2clk_div = (cpccr >> 12) & 0xf;
-
-	switch ((cpccr >> 24) & 3) {
-		case 1:
-			return pll_get_rate(APLL) / (h2clk_div + 1);
-		case 2:
-			return pll_get_rate(MPLL) / (h2clk_div + 1);
-	}   
-
-}
