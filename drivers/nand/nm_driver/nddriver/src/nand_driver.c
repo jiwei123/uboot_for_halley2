@@ -332,7 +332,7 @@ static inline int get_devices_resources(io_base *base)
 static inline int get_devices_clk(io_base *base)
 {
 	nfi_base *nfi = &(base->nfi);
-	nfi->rate = __cpm_get_h2clk();
+	nfi->rate = cpm_get_h2clk();
 	return 0;
 }
 

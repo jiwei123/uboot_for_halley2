@@ -32,15 +32,13 @@ struct taskmsg_init m_msg_init;
 
 struct msg_handler m_msg_handler;
 
+extern unsigned int cpm_get_h2clk(void);
+
 static void dma_cache_wback(unsigned int start,unsigned int size)
 {
 	dma_cache_wback_inv(start, size);
 }
 
-int cpm_get_h2clk()
-{
-	return __cpm_get_h2clk();
-}
 
 static void mcu_reset(void)
 {
@@ -229,7 +227,7 @@ static int mcu_init(nand_dma *nd_dma,Nand_Task *nandtask,int id)
 	struct taskmsg_init *msg = nd_dma->msg_init;
 	chip_info *ndinfo = nd_data->cinfo;
 	const nand_timing *ndtime = ndinfo->timing;
-	unsigned int h2clk = __cpm_get_h2clk();
+	unsigned int h2clk = cpm_get_h2clk();
 	unsigned int fcycle;
 	int i;
 

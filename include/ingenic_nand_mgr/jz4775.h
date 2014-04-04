@@ -2661,7 +2661,6 @@ typedef enum {
 
 /* xPLL output frequency */
 void serial_puts (const char *s);
-void serial_printf(char *fmt, ...);
 void serial_put_hex(unsigned int  d);
 
 static __inline__ unsigned int __cpm_get_xpllout(sclk sclk_name)
@@ -2686,12 +2685,10 @@ static __inline__ unsigned int __cpm_get_xpllout(sclk sclk_name)
 		break;
 	}
 	
-	serial_printf("REG_CPM_CPAPCR = %x\n",REG_CPM_CPAPCR);
 	if ((cpxpcr & xpllen) && (!(cpxpcr & xpllbp))) {
 		m = __cpm_get_pllm(cpxpcr) + 1;
 		n = __cpm_get_plln(cpxpcr) + 1;
 		od = __cpm_get_pllod(cpxpcr) + 1;
-		serial_printf("m = %d,n = %d,od = %d JZ_EXTAL = %d\n",m , n, od,JZ_EXTAL);
 		pllout = ((JZ_EXTAL) * m / (n * od));
 	}
 
