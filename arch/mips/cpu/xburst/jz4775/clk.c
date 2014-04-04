@@ -262,3 +262,19 @@ void enable_uart_clk(void)
 	}
 	cpm_outl(clkgr, CPM_CLKGR);
 }
+
+unsigned int cpm_get_h2clk(void)
+{
+	int h2clk_div;
+	unsigned int cpccr  = cpm_inl(CPM_CPCCR);
+
+	h2clk_div = (cpccr >> 12) & 0xf;
+
+	switch ((cpccr >> 24) & 3) {
+		case 1:
+			return pll_get_rate(APLL) / (h2clk_div + 1);
+		case 2:
+			return pll_get_rate(MPLL) / (h2clk_div + 1);
+	}   
+
+}
