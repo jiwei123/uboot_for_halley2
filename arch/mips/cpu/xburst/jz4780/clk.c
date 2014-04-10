@@ -274,7 +274,8 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	{CPM_UHCCDR, 3, 30, 0, 0, 0},
 	{CPM_CIMCDR, 1, 31, 0, 0, 0},
 	{CPM_PCMCDR, 5, 29, 0, 0, 0},
-	{CPM_SSICDR, 0, 30, 29, 28, 0},
+/*	{CPM_SSICDR, 0, 30, 29, 28, 0}, */
+	{CPM_SSICDR, 3, 30, 29, 28, SPI_DIV},
 };
 
 void clk_init(void)

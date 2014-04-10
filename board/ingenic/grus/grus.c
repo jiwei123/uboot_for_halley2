@@ -116,16 +116,23 @@ int checkboard(void)
 }
 
 #ifdef CONFIG_SPL_BUILD
-
 void spl_board_init(void)
 {
 }
 #endif /* CONFIG_SPL_BUILD */
 
+#ifdef CONFIG_SPL_SPI_SUPPORT
 void spl_spi_load_image(void)
 {
+	struct image_header *header;
 
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
+
+	spl_parse_image_header(header);
+
+	spi_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN, CONFIG_SYS_TEXT_BASE);
 }
+#endif
 
 #ifdef CONFIG_SOFT_SPI
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)

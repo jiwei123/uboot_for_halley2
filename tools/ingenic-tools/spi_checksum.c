@@ -24,9 +24,15 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <config.h>
 
 #define BUFFER_SIZE 4
+#ifdef CONFIG_JZ4785
 #define SKIP_SIZE 2048
+#endif
+#ifdef CONFIG_JZ4780
+#define SKIP_SIZE 16
+#endif
 #define le(a) (((a & 0xff)<<24) | ((a>>8 & 0xff)<< 16) | ((a>>16 & 0xff)<< 8) | ((a>>24 & 0xff)))
 
 int main(int argc, char *argv[])

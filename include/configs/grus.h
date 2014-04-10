@@ -109,10 +109,14 @@
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
- #else
-    #define CONFIG_BOOTCOMMAND						\
+  #else
+	#ifdef CONFIG_SPL_SPI_SUPPORT
+		#define CONFIG_BOOTCOMMAND "sf probe; sf read 0x80f00000 0x60000 0x340000; bootm 0x80f00000"
+	#else
+		#define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
+	#endif
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
 
@@ -187,7 +191,9 @@
 #define CONFIG_MMC			1
 #define CONFIG_JZ_MMC 1
 #define CONFIG_JZ_MMC_MSC0 1
+#ifndef CONFIG_SPL_SPI_SUPPORT
 #define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
+#endif
 #define CONFIG_JZ_MMC_MSC1 1
 #define CONFIG_JZ_MMC_MSC1_PE 1
 #ifndef CONFIG_JZ_MMC_SPLMSC
@@ -202,9 +208,9 @@
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
 
 /* SPI */
-#if defined(CONFIG_SPI_FLASH)
+#if defined(CONFIG_SPI_BURNER)
 #undef SPI_INIT
-#define SPI_DELAY       udelay(5)
+#define SPI_DELAY
 #define	SPI_SDA(val)    gpio_direction_output(GPIO_PA(21), val)
 #define	SPI_SCL(val)	gpio_direction_output(GPIO_PA(18), val)
 #define	SPI_READ	gpio_get_value(GPIO_PA(20))
@@ -212,6 +218,7 @@
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_BUILD
 #define CONFIG_SPI_FLASH_INGENIC
+#define CONFIG_SPI_FLASH
 #endif
 /* PMU */
 #define CONFIG_REGULATOR
@@ -242,7 +249,6 @@
  */
 #define CONFIG_CMD_BOOTD	/* bootd			*/
 #define CONFIG_CMD_CONSOLE	/* coninfo			*/
-#define CONFIG_CMD_DHCP 	/* DHCP support			*/
 #define CONFIG_CMD_ECHO		/* echo arguments		*/
 #define CONFIG_CMD_EXT4 	/* ext4 support			*/
 #define CONFIG_CMD_FAT		/* FAT support			*/
@@ -250,17 +256,21 @@
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
-#define CONFIG_CMD_MMC		/* MMC/SD support			*/
 #define CONFIG_CMD_MTDPARTS
-#define CONFIG_CMD_NET		/* networking support			*/
-#define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
-#define CONFIG_CMD_SAVEENV	/* saveenv			*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
+#ifndef CONFIG_SPL_SPI_SUPPORT
+#define CONFIG_CMD_DHCP 	/* DHCP support			*/
+#define CONFIG_CMD_MMC		/* MMC/SD support			*/
+#define CONFIG_CMD_SAVEENV	/* saveenv			*/
+#define CONFIG_CMD_NET		/* networking support			*/
+#define CONFIG_CMD_PING
+#endif
+/*#define CONFIG_CMD_FASTBOOT*/
 /* #define CONFIG_CMD_BATTERYDET */	/* detect battery and show charge logo */
 
 /* USB */
@@ -304,7 +314,7 @@
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
-#define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
@@ -346,8 +356,11 @@
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
-#define CONFIG_SPL_PAD_TO		15872 /* u-boot start addr - mbr size(512) */
-
+#ifdef CONFIG_SPL_SPI_SUPPORT
+#define CONFIG_SPL_PAD_TO		16384 /* u-boot start addr - mbr size(512) */
+#else
+#define CONFIG_SPL_PAD_TO		15872
+#endif
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	(CONFIG_SYS_NAND_BLOCK_SIZE * 4)
@@ -362,6 +375,17 @@
 #define CONFIG_SPL_REGULATOR_SUPPORT
 #define CONFIG_SPL_CORE_VOLTAGE		1250
 
+#ifdef CONFIG_SPL_SPI_SUPPORT
+#define CONFIG_SPL_TEXT_BASE		0xf4000800
+#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_JZ_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH_INGENIC
+#define CONFIG_SPI_FLASH
+#define CONFIG_CMD_SPI
+#endif
+#define CONFIG_UBOOT_OFFSET		16384
+
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
 #define CONFIG_SPL_TEXT_BASE		0xf4000a00
@@ -370,14 +394,14 @@
 #define CONFIG_SPL_SERIAL_SUPPORT
 
 #endif /* CONFIG_SPL_MMC_SUPPORT */
-#ifdef CONFIG_SPL_NAND_SUPPORT
 
-#define CONFIG_SPL_NAND_SUPPORT
+#ifdef CONFIG_SPL_NAND_SUPPORT
+/*
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_SIMPLE
 #define CONFIG_SPL_NAND_LOAD
-
+*/
 #define CONFIG_SPL_TEXT_BASE		0xf4000800
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
 
