@@ -150,6 +150,11 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		}
 	}
 
+	if (cmd->resp_type == MMC_RSP_R1b) {
+		while (!(jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_PRG_DONE));
+		jz_mmc_writel(MSC_IREG_PRG_DONE, priv, MSC_IREG);
+	}
+
 #ifndef CONFIG_SPL_BUILD
 	if (data && (data->flags & MMC_DATA_WRITE)) {
 		/* write the data */

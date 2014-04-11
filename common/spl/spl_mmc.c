@@ -37,6 +37,10 @@ static int mmc_load_image_raw(struct mmc *mmc, unsigned long sector)
 	u32 image_size_sectors;
 	struct image_header *header;
 
+#ifdef CONFIG_SUPPORT_EMMC_BOOT
+	mmc_boot_part_access(mmc, 0x1, 0x1, 0x1);
+#endif
+
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
 						sizeof(struct image_header));
 
@@ -59,6 +63,10 @@ end:
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 	if (err == 0)
 		printf("spl: mmc blk read err - %lu\n", err);
+#endif
+
+#ifdef CONFIG_SUPPORT_EMMC_BOOT
+	mmc_boot_part_access(mmc, 0x1, 0x1, 0x0);
 #endif
 
 	return (err == 0);
