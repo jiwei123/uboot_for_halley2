@@ -205,6 +205,7 @@ void ddr_controller_init(void)
 void ddr_phy_init(void)
 {
 	unsigned int timeout = 10000, i;
+	unsigned int mr0_tmp = 1;
 	bool	soft_training = false;
 	unsigned int ddr_bl, ddr_cl;
 
@@ -368,7 +369,6 @@ void ddr_phy_init(void)
 
 #if defined(CONFIG_SPL_DDR_SOFT_TRAINING) || defined(CONFIG_DDR_FORCE_SOFT_TRAINING)
 	if (soft_training) {
-		unsigned int tmp = 1;
 		unsigned int cs0;
 		unsigned int cs1;
 		debug("Now try soft training\n");
@@ -394,11 +394,45 @@ void ddr_phy_init(void)
 		ddr_bl = ddr_params_p->bl;
 #endif /* CONFIG_DDR_HOST_CC */
 
-		while (ddr_bl >> tmp)
-			tmp++;
-		ddr_writel((ddr_cl << 4) | (tmp - 1), DDRP_MR0);
+		while (ddr_bl >> mr0_tmp)
+			mr0_tmp++;
+		ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
 		send_MR0(ddr_readl(DDRP_MR0));
 	}
+#else /*CONFIG_SPL_DDR_SOFT_TRAINING || CONFIG_DDR_FORCE_SOFT_TRAINING */
+#ifdef	CONFIG_DDR_TYPE_LPDDR
+#ifdef CONFIG_DDR_HOST_CC
+	ddr_bl = DDR_BL;
+	ddr_cl = DDR_CL;
+#else /* CONFIG_DDR_HOST_CC */
+	ddr_cl = ddr_params_p->cl;
+	ddr_bl = ddr_params_p->bl;
+#endif /* CONFIG_DDR_HOST_CC */
+
+	while (ddr_bl >> mr0_tmp)
+		mr0_tmp++;
+	ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
+
+	timeout = 10000;
+#ifndef CONFIG_DDR_PHY_ODT
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
+#else /* CONFIG_DDR_PHY_ODT */
+	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
+			DDRP_PIR);
+	ddr_writel(0x1, DDRP_ACDLLCR);
+#endif /* CONFIG_DDR_PHY_ODT */
+
+	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
+					| DDRP_PGSR_DLDONE
+					| DDRP_PGSR_ZCDONE
+					| DDRP_PGSR_DIDONE
+					| DDRP_PGSR_DTDONE))
+			&& --timeout);
+	if (timeout == 0) {
+		printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+		hang();
+	}
+#endif /* CONFIG_DDR_TYPE_LPDDR */
 #endif /* CONFIG_SPL_DDR_SOFT_TRAINING || CONFIG_DDR_FORCE_SOFT_TRAINING */
 
 #if defined(CONFIG_DDR_PHY_IMPED_PULLUP) && defined(CONFIG_DDR_PHY_IMPED_PULLDOWN)

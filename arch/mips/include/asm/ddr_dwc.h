@@ -48,7 +48,7 @@
 #define DDRP_PGCR	(DDR_PHY_OFFSET + 0x8) /* PHY General Configuration Register*/
 #define DDRP_PGSR	(DDR_PHY_OFFSET + 0xc) /* PHY General Status Register*/
 #define DDRP_DLLGCR	(DDR_PHY_OFFSET + 0x10) /* DLL General Control Register*/
-#define DDRP_ACDLLGCR	(DDR_PHY_OFFSET + 0x10) /* AC DLL Control Register*/
+#define DDRP_ACDLLCR	(DDR_PHY_OFFSET + 0x14) /* AC DLL Control Register*/
 
 #define DDRP_PTR0	(DDR_PHY_OFFSET + 0x18) /* PHY Timing Register 0 */
 #define DDRP_PTR1	(DDR_PHY_OFFSET + 0x1c) /* PHY Timing Register 1 */
