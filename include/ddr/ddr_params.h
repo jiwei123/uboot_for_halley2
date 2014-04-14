@@ -152,6 +152,8 @@ struct ddr_params {
 	uint32_t bl;
 	uint32_t col;
 	uint32_t row;
+	uint32_t col1;
+	uint32_t row1;
 	uint32_t bank8;
 	struct tck tck;
 	struct size size;

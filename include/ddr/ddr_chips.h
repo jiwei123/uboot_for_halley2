@@ -12,6 +12,10 @@
 #include "./chips/DDR3_TSD34096M1333C9_E.h"
 #endif
 
+#ifdef CONFIG_MCP_KMS5U000JM_B308
+#include "./chips/MCP_KMS5U000JM_B308.h"
+#endif
+
 #ifdef CONFIG_MCP_KMS5U000KM-B308
 #include "./chips/MCP_KMS5U000KM-B308.h"
 #endif
