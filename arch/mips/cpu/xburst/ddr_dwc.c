@@ -34,6 +34,15 @@
 #define DUMP_DDR
 #endif /* DEBUG */
 
+#if (CONFIG_DDR_CS1 == 1)
+#ifndef DDR_ROW1
+#define DDR_ROW1 DDR_ROW
+#endif /* DDR_ROW1 */
+#ifndef DDR_COL1
+#define DDR_COL1 DDR_COL
+#endif /* DDR_COL1 */
+#endif /* CONFIG_DDR_CS1 */
+
 DECLARE_GLOBAL_DATA_PTR;
 extern unsigned int sdram_size(int cs, struct ddr_params *p);
 struct ddr_params *ddr_params_p = NULL;
@@ -143,19 +152,59 @@ static void mem_remap(void)
 {
 	uint32_t start = 0, num = 0;
 	int row, col, dw32, bank8, cs0, cs1;
+	uint32_t size0 = 0, size1 = 0;
 
 #ifdef CONFIG_DDR_HOST_CC
-	row = DDR_ROW;
-	col = DDR_COL;
-	dw32 = CONFIG_DDR_DW32;
-	bank8 = DDR_BANK8;
+	size0 = (unsigned int)(DDR_CHIP_0_SIZE);
+	size1 = (unsigned int)(DDR_CHIP_1_SIZE);
+	if (size0) {
+		if (size0 <= size1) {
+#if (CONFIG_DDR_CS0 == 1)
+			row = DDR_ROW;
+			col = DDR_COL;
+			dw32 = CONFIG_DDR_DW32;
+			bank8 = DDR_BANK8;
+#endif
+		} else if (size1) {
+#if (CONFIG_DDR_CS1 == 1)
+			row = DDR_ROW1;
+			col = DDR_COL1;
+			dw32 = CONFIG_DDR_DW32;
+			bank8 = DDR_BANK8;
+#endif
+		}
+	} else {
+#if (CONFIG_DDR_CS1 == 1)
+		row = DDR_ROW1;
+		col = DDR_COL1;
+		dw32 = CONFIG_DDR_DW32;
+		bank8 = DDR_BANK8;
+#endif
+	}
+
 	cs0 = CONFIG_DDR_CS0;
 	cs1 = CONFIG_DDR_CS1;
 #else /* CONFIG_DDR_HOST_CC */
-	row = ddr_params_p->row;
-	col = ddr_params_p->col;
-	dw32 = ddr_params_p->dw32;
-	bank8 = ddr_params_p->bank8;
+	size0 = ddr_params_p->size.chip0;
+	size1 = ddr_params_p->size.chip1;
+	if (size0) {
+		if (size0 <= size1) {
+			row = ddr_params_p->row;
+			col = ddr_params_p->col;
+			dw32 = ddr_params_p->dw32;
+			bank8 = ddr_params_p->bank8;
+		} else if (size1) {
+			row = ddr_params_p->row1;
+			col = ddr_params_p->col1;
+			dw32 = ddr_params_p->dw32;
+			bank8 = ddr_params_p->bank8;
+		}
+	} else {
+		row = ddr_params_p->row1;
+		col = ddr_params_p->col1;
+		dw32 = ddr_params_p->dw32;
+		bank8 = ddr_params_p->bank8;
+	}
 	cs0 = ddr_params_p->cs0;
 	cs1 = ddr_params_p->cs1;
 #endif /* CONFIG_DDR_HOST_CC */
@@ -398,6 +447,40 @@ void ddr_phy_init(void)
 			mr0_tmp++;
 		ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
 		send_MR0(ddr_readl(DDRP_MR0));
+	} else {
+#ifdef	CONFIG_DDR_TYPE_LPDDR
+#ifdef CONFIG_DDR_HOST_CC
+		ddr_bl = DDR_BL;
+		ddr_cl = DDR_CL;
+#else /* CONFIG_DDR_HOST_CC */
+		ddr_cl = ddr_params_p->cl;
+		ddr_bl = ddr_params_p->bl;
+#endif /* CONFIG_DDR_HOST_CC */
+
+		while (ddr_bl >> mr0_tmp)
+			mr0_tmp++;
+		ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
+
+		timeout = 10000;
+#ifndef CONFIG_DDR_PHY_ODT
+		ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
+#else /* CONFIG_DDR_PHY_ODT */
+		ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
+				DDRP_PIR);
+		ddr_writel(0x1, DDRP_ACDLLCR);
+#endif /* CONFIG_DDR_PHY_ODT */
+
+		while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
+						| DDRP_PGSR_DLDONE
+						| DDRP_PGSR_ZCDONE
+						| DDRP_PGSR_DIDONE
+						| DDRP_PGSR_DTDONE))
+				&& --timeout);
+		if (timeout == 0) {
+			printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
+			hang();
+		}
+#endif /* CONFIG_DDR_TYPE_LPDDR */
 	}
 #else /*CONFIG_SPL_DDR_SOFT_TRAINING || CONFIG_DDR_FORCE_SOFT_TRAINING */
 #ifdef	CONFIG_DDR_TYPE_LPDDR
@@ -537,6 +620,12 @@ phys_size_t initdram(int board_type)
 	ddr_params_p->cs1 = CONFIG_DDR_CS1;
 	ddr_params_p->row = DDR_ROW;
 	ddr_params_p->col = DDR_COL;
+#ifdef DDR_ROW1
+	ddr_params_p->row1 = DDR_ROW1;
+#endif
+#ifdef DDR_COL1
+	ddr_params_p->col1 = DDR_COL1;
+#endif
 	return sdram_size(0, ddr_params_p) + sdram_size(1, ddr_params_p);
 #endif
 }

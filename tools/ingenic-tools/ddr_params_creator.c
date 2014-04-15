@@ -29,6 +29,14 @@
 #else
 #include <common.h>
 #include <generated/ddr_reg_values.h>
+#if (CONFIG_DDR_CS1 == 1)
+#ifndef DDR_ROW1
+#define DDR_ROW1 DDR_ROW
+#endif /* DDR_ROW1 */
+#ifndef DDR_COL1
+#define DDR_COL1 DDR_COL
+#endif /* DDR_COL1 */
+#endif /* CONFIG_DDR_CS1 */
 #endif
 #include <config.h>
 #include <ddr/ddr_common.h>
@@ -56,26 +64,35 @@ static void caculate_tck(struct ddr_params *params)
 
 unsigned int sdram_size(int cs, struct ddr_params *p)
 {
-	unsigned int dw = p->dw32 ? 4 : 2;
-	unsigned int banks = p->bank8 ? 8 : 4;
+	unsigned int dw;
+	unsigned int banks;
 	unsigned int size = 0;
+	unsigned int row,col;
 
 	switch (cs) {
 	case 0:
-		if (p->cs0 == 1)
+		if (p->cs0 == 1) {
+			row = p->row;
+			col = p->col;
+			banks = p->bank8 ? 8 : 4;
+			dw = p->dw32 ? 4 : 2;
 			break;
-		else
+		} else
 			return 0;
 	case 1:
-		if (p->cs1 == 1)
+		if (p->cs1 == 1) {
+			row = p->row1;
+			col = p->col1;
+			banks = p->bank8 ? 8 : 4;
+			dw = p->dw32 ? 4 : 2;
 			break;
-		else
+		} else
 			return 0;
 	default:
 		return 0;
 	}
 
-	size = (1 << (p->row + p->col)) * dw * banks;
+	size = (1 << (row + col)) * dw * banks;
 
 	return size;
 }
@@ -319,8 +336,8 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 		| DDRC_REFCNT_REF_EN;
 
 	/* CFG */
-	ddrc->cfg.b.ROW1 = p->row - 12;
-	ddrc->cfg.b.COL1 = p->col - 8;
+	ddrc->cfg.b.ROW1 = p->row1 - 12;
+	ddrc->cfg.b.COL1 = p->col1 - 8;
 	ddrc->cfg.b.BA1 = p->bank8;
 	ddrc->cfg.b.IMBA = 1;
 	ddrc->cfg.b.BSL = (p->bl == 8) ? 1 : 0;
@@ -334,7 +351,7 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->cfg.b.COL0 = p->col - 8;
 	ddrc->cfg.b.CS1EN = p->cs1;
 	ddrc->cfg.b.CS0EN = p->cs0;
-#ifndef CONFIG_DDR_TYPE_LPDDR2
+#ifdef CONFIG_DDR_TYPE_LPDDR
 	ddrc->cfg.b.CL = 0; /* NOT used in this version */
 #else
 	tmp = p->cl - 1; /* NOT used in this version */
@@ -671,6 +688,12 @@ void fill_in_params(struct ddr_params *ddr_params, int type)
 	ddr_params->bl = DDR_BL;
 	ddr_params->col = DDR_COL;
 	ddr_params->row = DDR_ROW;
+#ifdef DDR_COL1
+	ddr_params->col1 = DDR_COL1;
+#endif
+#ifdef DDR_ROW1
+	ddr_params->row1 = DDR_ROW1;
+#endif
 	ddr_params->bank8 = DDR_BANK8;
 	params->tRAS = DDR_tRAS;
 	params->tRP = DDR_tRP;
