@@ -308,6 +308,11 @@ struct mmc {
 int mmc_register(struct mmc *mmc);
 int mmc_initialize(bd_t *bis);
 int mmc_init(struct mmc *mmc);
+int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data);
+int mmc_send_status(struct mmc *mmc, int timeout);
+int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value);
+void mmc_set_bus_width(struct mmc *mmc, uint width);
+int mmc_set_blocklen(struct mmc *mmc, int len);
 int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size);
 void mmc_set_clock(struct mmc *mmc, uint clock);
 struct mmc *find_mmc_device(int dev_num);
