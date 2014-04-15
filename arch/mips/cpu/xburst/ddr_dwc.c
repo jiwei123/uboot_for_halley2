@@ -155,56 +155,90 @@ static void mem_remap(void)
 	uint32_t size0 = 0, size1 = 0;
 
 #ifdef CONFIG_DDR_HOST_CC
-	size0 = (unsigned int)(DDR_CHIP_0_SIZE);
-	size1 = (unsigned int)(DDR_CHIP_1_SIZE);
-	if (size0) {
-		if (size0 <= size1) {
 #if (CONFIG_DDR_CS0 == 1)
 			row = DDR_ROW;
 			col = DDR_COL;
 			dw32 = CONFIG_DDR_DW32;
 			bank8 = DDR_BANK8;
 #endif
-		} else if (size1) {
+
+	size0 = (unsigned int)(DDR_CHIP_0_SIZE);
+	size1 = (unsigned int)(DDR_CHIP_1_SIZE);
+
+#if (CONFIG_DDR_CS0 == 1)
 #if (CONFIG_DDR_CS1 == 1)
+	if (size1 && size0) {
+		if (size1 <= size0) {
 			row = DDR_ROW1;
 			col = DDR_COL1;
 			dw32 = CONFIG_DDR_DW32;
 			bank8 = DDR_BANK8;
-#endif
+		} else {
+			row = DDR_ROW;
+			col = DDR_COL;
+			dw32 = CONFIG_DDR_DW32;
+			bank8 = DDR_BANK8;
 		}
 	} else {
-#if (CONFIG_DDR_CS1 == 1)
+		printf("Error: The DDR size is 0\n");
+		hang();
+	}
+#else /*CONFIG_DDR_CS1 == 1*/
+	if (size0) {
+		row = DDR_ROW;
+		col = DDR_COL;
+		dw32 = CONFIG_DDR_DW32;
+		bank8 = DDR_BANK8;
+	} else {
+		printf("Error: The DDR size is 0\n");
+		hang();
+	}
+
+#endif /* CONFIG_DDR_CS1 == 1 */
+#else /* CONFIG_DDR_CS0 == 1 */
+	if (size1) {
 		row = DDR_ROW1;
 		col = DDR_COL1;
 		dw32 = CONFIG_DDR_DW32;
 		bank8 = DDR_BANK8;
-#endif
+	} else {
+		printf("Error: The DDR size is 0\n");
+		hang();
 	}
 
+#endif /* CONFIG_DDR_CS0 == 1 */
 	cs0 = CONFIG_DDR_CS0;
 	cs1 = CONFIG_DDR_CS1;
 #else /* CONFIG_DDR_HOST_CC */
 	size0 = ddr_params_p->size.chip0;
 	size1 = ddr_params_p->size.chip1;
-	if (size0) {
-		if (size0 <= size1) {
-			row = ddr_params_p->row;
-			col = ddr_params_p->col;
-			dw32 = ddr_params_p->dw32;
-			bank8 = ddr_params_p->bank8;
-		} else if (size1) {
+	if (size0 && size1) {
+		if (size1 <= size0) {
 			row = ddr_params_p->row1;
 			col = ddr_params_p->col1;
 			dw32 = ddr_params_p->dw32;
 			bank8 = ddr_params_p->bank8;
+		} else {
+			row = ddr_params_p->row;
+			col = ddr_params_p->col;
+			dw32 = ddr_params_p->dw32;
+			bank8 = ddr_params_p->bank8;
 		}
-	} else {
+	} else if (size0) {
+		row = ddr_params_p->row;
+		col = ddr_params_p->col;
+		dw32 = ddr_params_p->dw32;
+		bank8 = ddr_params_p->bank8;
+	} else if (size1) {
 		row = ddr_params_p->row1;
 		col = ddr_params_p->col1;
 		dw32 = ddr_params_p->dw32;
 		bank8 = ddr_params_p->bank8;
+	} else {
+		printf("Error: The DDR size is 0\n");
+		hang();
 	}
+
 	cs0 = ddr_params_p->cs0;
 	cs1 = ddr_params_p->cs1;
 #endif /* CONFIG_DDR_HOST_CC */
