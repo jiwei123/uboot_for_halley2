@@ -207,8 +207,8 @@ static unsigned int set_bch_rate(int clk, unsigned long rate)
 	unsigned int pll_rate = pll_get_rate(MPLL);
 
 	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
-		? (pll_rate / rate / 2)
-		: (pll_rate / rate / 2 + 1)) - 1;
+		? (pll_rate / rate)
+		: (pll_rate / rate + 1)) - 1;
 
 	cpm_outl(cdr | (1 << 29) | (2 << 30), CPM_BCHCDR);
 
