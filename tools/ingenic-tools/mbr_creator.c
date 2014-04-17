@@ -37,8 +37,8 @@
 #define ARRAY_SIZE(x)		((sizeof(x))/(sizeof(x[0])))
 
 struct mbr_tab_item {
-	unsigned int	offset;
-	unsigned int	size;
+	unsigned long	offset;
+	unsigned long	size;
 	unsigned char	type;
 };
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	}
 
 	block[0x1fe] = 0x55;                                                                                                             
-        block[0x1ff] = 0xaa;
+	block[0x1ff] = 0xaa;
 	memcpy(block+0x1c6,&tab_item[0].offset,sizeof(unsigned int));
 	memcpy(block+0x1d6,&tab_item[1].offset,sizeof(unsigned int));
 	memcpy(block+0x1e6,&tab_item[2].offset,sizeof(unsigned int));
@@ -158,4 +158,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-

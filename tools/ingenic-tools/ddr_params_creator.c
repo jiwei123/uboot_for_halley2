@@ -29,17 +29,17 @@
 #else
 #include <common.h>
 #include <generated/ddr_reg_values.h>
-#if (CONFIG_DDR_CS1 == 1)
-#ifndef DDR_ROW1
-#define DDR_ROW1 DDR_ROW
-#endif /* DDR_ROW1 */
-#ifndef DDR_COL1
-#define DDR_COL1 DDR_COL
-#endif /* DDR_COL1 */
-#endif /* CONFIG_DDR_CS1 */
-#endif
+#endif	/* define CONFIG_SPL_BUILD */
 #include <config.h>
 #include <ddr/ddr_common.h>
+#if (CONFIG_DDR_CS1 == 1)
+#ifndef DDR_ROW1
+#error "please define DDR_ROW1"
+#endif /* DDR_ROW1 */
+#ifndef DDR_COL1
+#error "please define DDR_COL1"
+#endif /* DDR_COL1 */
+#endif /* CONFIG_DDR_CS1 */
 
 struct tck tck_g = {0, 0};
 
@@ -67,15 +67,13 @@ unsigned int sdram_size(int cs, struct ddr_params *p)
 	unsigned int dw;
 	unsigned int banks;
 	unsigned int size = 0;
-	unsigned int row,col;
+	unsigned int row, col;
 
 	switch (cs) {
 	case 0:
 		if (p->cs0 == 1) {
 			row = p->row;
 			col = p->col;
-			banks = p->bank8 ? 8 : 4;
-			dw = p->dw32 ? 4 : 2;
 			break;
 		} else
 			return 0;
@@ -83,8 +81,6 @@ unsigned int sdram_size(int cs, struct ddr_params *p)
 		if (p->cs1 == 1) {
 			row = p->row1;
 			col = p->col1;
-			banks = p->bank8 ? 8 : 4;
-			dw = p->dw32 ? 4 : 2;
 			break;
 		} else
 			return 0;
@@ -92,6 +88,8 @@ unsigned int sdram_size(int cs, struct ddr_params *p)
 		return 0;
 	}
 
+	banks = p->bank8 ? 8 : 4;
+	dw = p->dw32 ? 4 : 2;
 	size = (1 << (row + col)) * dw * banks;
 
 	return size;
@@ -351,7 +349,7 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->cfg.b.COL0 = p->col - 8;
 	ddrc->cfg.b.CS1EN = p->cs1;
 	ddrc->cfg.b.CS0EN = p->cs0;
-#ifdef CONFIG_DDR_TYPE_LPDDR
+#ifdef CONFIG_DDR_TYPE_DDR3
 	ddrc->cfg.b.CL = 0; /* NOT used in this version */
 #else
 	tmp = p->cl - 1; /* NOT used in this version */

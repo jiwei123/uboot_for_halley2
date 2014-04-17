@@ -36,10 +36,10 @@
 
 #if (CONFIG_DDR_CS1 == 1)
 #ifndef DDR_ROW1
-#define DDR_ROW1 DDR_ROW
+#error "please define DDR_ROW1"
 #endif /* DDR_ROW1 */
 #ifndef DDR_COL1
-#define DDR_COL1 DDR_COL
+#error "please define DDR_COL1"
 #endif /* DDR_COL1 */
 #endif /* CONFIG_DDR_CS1 */
 
