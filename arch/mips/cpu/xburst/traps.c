@@ -43,7 +43,7 @@ char *get_exception(int num)
 void dump_task()
 {
 	int i,*p;
-	struct task_info_regs *regs = 0x80000004;
+	struct task_info_regs *regs = *((unsigned int *)0x80000004);
 	p = (int *)(*((volatile unsigned int *)(0x80000004)) + PT_LEN);
 
 	printf("epc:%x\n",regs->epc);

@@ -268,6 +268,6 @@ NESTED(handle_exception, 0, sp)
 	jr	t9
 	nop
 	nop
-END(__handle_exception)
+END(handle_exception)
 
 #endif
