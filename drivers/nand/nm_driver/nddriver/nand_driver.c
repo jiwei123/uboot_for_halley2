@@ -249,13 +249,12 @@ static void ndd_clear_rb_state(rb_item *rbitem)
 		while(1);
 	}
 }
-#if 0
+#if 1
 static int ndd_wait_rb_timeout(rb_item *rbitem, int timeout)
 {
 	volatile int timeout_ns = timeout * 1000 * 1000;
 	if(gpio_get_flag(rbitem->gpio))
 	{
-		printf(" --- !!! rb_gpio = %d  rb_flag = %d \n",rbitem->gpio,gpio_get_flag(rbitem->gpio));
 		printf("ERROR: wait rb error !!!!\n");
 		while(1);
 	}
@@ -445,7 +444,7 @@ void fill_rbinfo_table(PartitionInfo *pinfo, rb_info *rbinfo)
 		gpio = pinfo->rb_gpio[rb_index];
 
 		ret_gpio = gpio_request(gpio,"wait_rb");
-		gpio_as_irq_fall_edge(ret_gpio);
+		gpio_as_irq_rise_edge(ret_gpio);
 		gpio_disable_pull(ret_gpio);
 #if 0
 		REG_GPIO_PXINTS(0) = 1 << gpio_offset;	// used as interrupt
@@ -708,14 +707,9 @@ int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm
 	ndd_private.clib.get_time_nsecs = ndd_get_time_nsecs;
 	ndd_private.erasemode = eraseall;
 	
-	gpio_init();
-
-	//printf("------ printf gpio \n");
-	//for(i= 0;i < 32 ;i++)
-	//	dump_gpio_func(i);
-
 	get_nandflash_info(&(ndd_private.base->nfi),nand_info_ids,nand_nm);
 
+#if 0
 	{
 		unsigned int errpc;
 		__asm__ __volatile__(
@@ -727,7 +721,7 @@ int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm
 		printf("errpc = %x\n",errpc);
 
 	}
-
+#endif
 	burn_nandmanager_init(pinfo,eraseall);
 
 	/* nand api init */

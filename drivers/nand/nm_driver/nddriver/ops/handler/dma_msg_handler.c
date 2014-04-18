@@ -277,7 +277,7 @@ static int dma_handle_msg(int context, Nand_Task *nt)
 
 	if(nt->msg == NULL)
 		RETURN_ERR(ENAND, "data buffer is NULL!");
-	ndd_dump_taskmsg(nt->msg, nt->msg_index);
+	//ndd_dump_taskmsg(nt->msg, nt->msg_index);
 	ndd_dma_cache_wback((unsigned int)nt->msg, sizeof(struct task_msg) * nt->msg_index);
 	ret = send_msg_to_mcu(nd_dma, nt->msg_phyaddr, sizeof(struct task_msg) * MSG_NUMBER);
 #ifdef DEBUG_ERR_TSKMSG

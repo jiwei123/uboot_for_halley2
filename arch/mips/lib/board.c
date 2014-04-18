@@ -260,7 +260,6 @@ void board_init_f(ulong bootflag)
  * data can be written, BSS has been cleared, the stack size in not
  * that critical any more, etc.
  */
-
 void board_init_r(gd_t *id, ulong dest_addr)
 {
 #ifndef CONFIG_SYS_NO_FLASH
