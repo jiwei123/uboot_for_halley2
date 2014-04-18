@@ -52,17 +52,17 @@ void nand_io_send_addr(int context, int offset, int pageid, unsigned int delay);
 void nand_io_send_spec_addr(int context, int addr, unsigned int cycle, unsigned int delay);
 int nand_io_send_data(int context, unsigned char *src, unsigned int len);
 int nand_io_receive_data(int context, unsigned char *dst, unsigned int len);
+void nand_io_setup_default_16bit(nfi_base *base);
 
 int nand_io_open(nfi_base *base, chip_info *cinfo);
 void nand_io_close(int context);
 void pn_enable(int context);
 void pn_disable(int context);
-void nemc_counter0_enable(int context);
-void nemc_counter1_enable(int context);
-unsigned int nemc_read_counter(int context);
-void nemc_counter_disable(int context);
-
+void nand_io_counter0_enable(int context);
+void nand_io_counter1_enable(int context);
+unsigned int nand_io_read_counter(int context);
+void nand_io_counter_disable(int context);
+char* nand_io_get_clk_name(void);
 int nand_io_suspend(void);
 int nand_io_resume(void);
-
 #endif

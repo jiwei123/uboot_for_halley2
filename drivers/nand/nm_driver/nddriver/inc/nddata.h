@@ -28,6 +28,7 @@ typedef struct __ndpartition {
 	unsigned char copy_mode;
 	unsigned char ndparts_num;
 	mul_parts ndparts[MUL_PARTS];
+	unsigned int *pt_badblock_info;
 	unsigned int flags;
 	int handler;
 } ndpartition;
@@ -84,6 +85,7 @@ typedef struct __nand_data {
 	cs_info *csinfo;
 	pt_info *ptinfo;
 	int ops_context;
+	int (*clear_rb) (int cs);
 	int (*wait_rb) (int cs, int time);
 	unsigned short gpio_wp;
 } nand_data;

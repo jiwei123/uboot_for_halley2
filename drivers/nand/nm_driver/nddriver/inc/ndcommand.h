@@ -40,6 +40,7 @@
 
 
 #define CMD_READ_ID_1ST				0x90        //  ReadID
+#define CMD_OOB_READ_1ST_512				0x50        //  Read oob of 512B pagesize nandflash
 #define CMD_PAGE_READ_1ST				0x00        //  Read0
 #define CMD_PAGE_READ_2ND				0x30		//	Read confirm
 #define CMD_RANDOM_OUTPUT_1ST			0x05

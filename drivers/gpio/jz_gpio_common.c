@@ -56,7 +56,8 @@ void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 
 int gpio_request(unsigned gpio, const char *label)
 {
-	return 0;
+	printf("%s lable = %s gpio = %d\n",__func__,label,gpio);
+	return gpio;
 }
 
 int gpio_free(unsigned gpio)
@@ -104,6 +105,24 @@ int gpio_get_value(unsigned gpio)
 	
 	return !!(readl(GPIO_PXPIN(port)) & (1 << pin));
 }
+
+int gpio_get_flag(unsigned int gpio)
+{
+	unsigned port = gpio / 32;
+	unsigned pin = gpio % 32;
+
+	//printf("------->>> %s %d gpio_v = 0x%08x pin = 0x%08x ret = %d\n",__func__,__LINE__,readl(GPIO_PXFLG(port)),(1 << pin), (readl(GPIO_PXFLG(port)) & (1 << pin)));
+	return (readl(GPIO_PXFLG(port)) & (1 << pin));
+}
+
+int gpio_clear_flag(unsigned gpio)
+{
+	int port = gpio / 32;
+	int pin = gpio % 32;
+	writel(1 << pin, GPIO_PXFLGC(port));
+	return 0;
+}
+
 
 int gpio_direction_input(unsigned gpio)
 {
@@ -193,11 +212,13 @@ void gpio_ack_irq(unsigned gpio)
 	writel(1 << pin, GPIO_PXFLGC(port));
 }
 
+void dump_gpio_func( unsigned int gpio);
 void gpio_init(void)
 {
 	int i, n;
 	struct jz_gpio_func_def *g;
-#ifndef CONFIG_BURNER
+//#ifndef CONFIG_BURNER
+#if 1
 	n = ARRAY_SIZE(gpio_func);
 
 	for (i = 0; i < n; i++) {
@@ -214,4 +235,20 @@ void gpio_init(void)
 #endif
 	g = &uart_gpio_func[gd->arch.gi->uart_idx];
 	gpio_set_func(g->port, g->func, g->pins);
+
+
+	for(i=0; i< 8;i++)
+		dump_gpio_func(i);
+}
+void dump_gpio_func( unsigned int gpio)
+{
+	unsigned group = gpio / 32;
+	unsigned pin = gpio % 32;
+	int d = 0;
+	unsigned int base = GPIO_BASE + 0x100 * group;
+	d = d | ((readl(base + PXINT) >> pin) & 1) << 3;
+	d = d | ((readl(base + PXMSK) >> pin) & 1) << 2;
+	d = d | ((readl(base + PXPAT1) >> pin) & 1) << 1;
+	d = d | ((readl(base + PXPAT0) >> pin) & 1) << 0;
+    printf("gpio[%d] fun %x\n",gpio,d);	
 }

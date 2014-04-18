@@ -90,7 +90,7 @@ struct arguments {
 	int write_back_chk;
 	PartitionInfo PartInfo;
 	int nr_nand_args;
-	nand_flash nand_params[0];
+	nand_flash_param nand_params[0];
 };
 
 union cmd {
@@ -282,13 +282,10 @@ int i2c_program(struct cloner *cloner)
 	return 0;
 }
 
-extern int nand_init_4775(PartitionInfo *pt_info,nand_flash *nand_info,int total_nand,int nand_erase_mod);
-extern unsigned int do_nand_request(unsigned int startaddr, void *Bulk_out_buf, unsigned int ops_length,unsigned int offset);
-
 int cloner_init(struct cloner *cloner)
 {
 	if(cloner->args->use_nand_mgr) {
-		nand_init_4775(&(cloner->args->PartInfo),
+		nand_probe(&(cloner->args->PartInfo),
 				&(cloner->args->nand_params[0]),
 				cloner->args->nr_nand_args,
 				cloner->args->nand_erase);

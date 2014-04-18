@@ -24,4 +24,6 @@ void nand_bch_close(int context);
 int nand_bch_suspend(void);
 int nand_bch_resume(void);
 
+char *nand_bch_get_clk_name(void);
+char *nand_bch_get_cgu_clk_name(void);
 #endif

@@ -12,13 +12,11 @@
 #define __NAND_OPS_H__
 #include "pagelist.h"
 #include "blocklist.h"
+#include "vnandinfo.h"
 #include "nddata.h"
 #include "ndmessage.h"
 #include "lib_nandopsinterface.h"
 
-#ifndef	VNANDCACHESIZE
-#define VNANDCACHESIZE	(134 * 1024)
-#endif
 struct msg_handler{
 	int context;
 	int (*handler)(int context, Nand_Task *nt);

@@ -54,7 +54,7 @@ struct _PartitionInfo{
 /**
  *  * struct __nand_timing - NAND Flash Device timing
  *   **/
-typedef struct __nand_timing {
+typedef struct __nand_timing_param {
 	unsigned int tALS;  /* ... duration/width/time */
 	unsigned int tALH;  /* ... duration/width/time */
 	unsigned int tRP;   /* ... duration/width/time */
@@ -68,10 +68,10 @@ typedef struct __nand_timing {
 	unsigned int tCWAW; /* ... duration/width/time */
 	unsigned int tCS;   /* ... duration/width/time */
 	unsigned int tCLH;  /* ... duration/width/time */
-} nand_timing;
+} nand_timing_param;
 
  
-typedef struct __optionalcmd {
+typedef struct __optionalcmd_param {
 	unsigned char multiplaneread[2];        // the sequence is [0] -ADDR- [0] -ADDR- [1] - DATA
 	unsigned char multiplanewrite[2];       // the sequence is 80 -ADDR- DATA - [0] - [1] -ADDR- DATA - 10/15
 	unsigned char multiplanecopyread[3];    // the sequence is [0] -ADDR- [1] -ADDR- [2]
@@ -79,12 +79,12 @@ typedef struct __optionalcmd {
 	unsigned char multiplanestatus;     // the command may be 0x70/0x71/0x78/...
 	unsigned char interbnk0status;      // the command may be 0xf1/0x78/...
 	unsigned char interbnk1status;      // the command may be 0xf2/0x78/...
-} optionalcmd;
+} optionalcmd_param;
 
 /**
  *  * struct __nand_flash - NAND Flash Device attr Structure
  *   **/
-typedef struct __nand_flash {
+typedef struct __nand_flash_param {
 	char name[32];
 	unsigned int id;
 	unsigned int extid;
@@ -110,10 +110,11 @@ typedef struct __nand_flash {
 	unsigned char planeoffset; //multi-plane block address offset
 	unsigned int options;
 	unsigned char nandtype;
-	nand_timing timing;
-	optionalcmd *optcmd;
-} nand_flash;
+	nand_timing_param timing;
+	optionalcmd_param *optcmd;
+} nand_flash_param;
 
 
-
+int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall);
+unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned int ops_length,unsigned int offset);
 #endif //__NAND_PARAM_H__

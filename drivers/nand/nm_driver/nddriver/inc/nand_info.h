@@ -3,7 +3,6 @@
 
 #include <nand_chip.h>
 #include <nand_api.h>
-#include <ingenic_nand_mgr/nand_param.h>
 
 /* chip_info->options */
 #define SUPPROT_CACHE_READ(cinfo)	((cinfo)->options & NAND_CACHE_READ)
@@ -37,8 +36,8 @@ typedef struct __chip_info {
 	unsigned int pagesize;		/* page size */
 	unsigned int oobsize;		/* oob area size */
 	unsigned int ppblock;		/* pages per block */
-	unsigned int totalblocks;	/* blocks per chip */
-	unsigned int totalpages;	/* pages per chip */
+	unsigned int maxvalidblocks;	/* valid blocks per chip */
+	unsigned int maxvalidpages;	/* valid pages per chip */
 	unsigned char planepdie;	/* planes per die */
 	unsigned char totaldies;	/* die per chip */
 	unsigned short origbadblkpos;	/* original bad block position*/
@@ -52,13 +51,14 @@ typedef struct __chip_info {
 	unsigned int options;		/* options */
 	retry_parms *retryparms;	/* retry parm */
 	const nand_timing *timing;	/* chip timing */
-	unsigned char drv_strength;	/* driver strength */
-	unsigned char rb_pulldown;	/* rb pull down strength */
+	unsigned short drv_strength;	/* driver strength */
+	void *flash;
 } chip_info;
 
 rb_item* get_rbitem(nfi_base *base, unsigned int cs_id, rb_info *rbinfo);
-int get_nand_id(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, nand_flash_id *fid);
+int early_nand_prepare(nfi_base *base, unsigned int cs_id);
 int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms);
-int nand_set_features(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, chip_info *cinfo);
+int nand_set_features(nfi_base *base, unsigned int cs_id, rb_item *rbitem, chip_info *cinfo);
+int set_retry_feature(int ndata, unsigned int cs_id, int cycle);
 
 #endif /*__NAND_INFO_H__*/

@@ -9,15 +9,13 @@
 enum nandmanager_cmd {
 	NANDMANAGER_PREPARE_NEW_FLASH,
 	NANDMANAGER_CHECK_USED_FLASH,
-	NANDMANAGER_NORMAL_ERASE_FLASH,
-	NANDMANAGER_FORCE_ERASE_FLASH,
-	NANDMANAGER_SCAN_BADBLOCKS,
+	NANDMANAGER_ERASE_FLASH,
+	NANDMANAGER_UPDATE_ERRPT,
+	NANDMANAGER_SET_XBOOT_OFFSET = 24, // can only used for xboot partition, other partition will ignore this cmd
 };
 
 /* init flags */
 #define NM_FLAG_NO_ERROR	0x01
-
-#define XBOOT_OFFSET_BYTES	(16 * 1024)	// xboot offset of x-boot-nand.bin
 
 /*public*/
 int NandManger_Init(void *heap, int heap_size, int flags);
@@ -66,11 +64,4 @@ int NandManger_DirectIsBadBlock(int handle, PPartition *pt, int blockid);
  * NandManger_DirectMarkBadBlock, direct mark bad block
  **/
 int NandManger_DirectMarkBadBlock(int handle, PPartition *pt, int blockid);
-
-/**
- * NandManger_UpdateErrorPartition, update error partitions
- * @pt: if NULL, scan && store all partitions
- **/
-int NandManger_UpdateErrorPartition(int handle, PPartition *pt);
-
 #endif
