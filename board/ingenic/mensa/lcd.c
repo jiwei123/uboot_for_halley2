@@ -33,13 +33,22 @@ void set_lcd_power_on(void)
 }
 
 struct jzfb_config_info jzfb1_init_data = {
-#if (defined(CONFIG_VIDEO_BYD_BM8766U)||\
-		defined(CONFIG_VIDEO_BM347WV_F_8991FTGF))
+#if defined(CONFIG_VIDEO_BYD_BM8766U)
 	.modes = &jzfb1_videomode,
 	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
 	.bpp = 24,
 
 	.pixclk_falling_edge = 0,
+	.date_enable_active_low = 0,
+
+	.lvds = 0,
+	.dither_enable = 0,
+#elif defined(CONFIG_VIDEO_BM347WV_F_8991FTGF)
+	.modes = &jzfb1_videomode,
+	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
+	.bpp = 24,
+
+	.pixclk_falling_edge = 1,
 	.date_enable_active_low = 0,
 
 	.lvds = 0,
