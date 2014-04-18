@@ -303,16 +303,6 @@ int nand_program(struct cloner *cloner)
 	void *databuf = (void *)cloner->write_req->buf;
 
 	//printf("=========++++++++++++>   NAND PROGRAM:startaddr = %d P offset = %d P length = %d \n",startaddr,cloner->cmd.write.offset,length);
-	if(0){
-		int i;
-		for(i=0; i<length; i++){
-			if(i%16 == 0)
-				printf("\n[%d]: ",i);
-			printf(" %02x",((unsigned char*)databuf)[i]);
-		}
-		while(1);
-	}
-
 	do_nand_request(startaddr, databuf, length,cloner->cmd.write.offset);
 
 	return 0;

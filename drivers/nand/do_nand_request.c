@@ -95,7 +95,7 @@ int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall)
 	}
 		/* init global structure g_handle*/
 	g_handle.zm_handle = NandManger_Init(heap,ZM_MEMORY_SIZE,0);
-	printf("----------------------------------->>>>> g_handle.zm_handle = 0x%08x\n",g_handle.zm_handle);
+	//printf("----------------------------------->>>>> g_handle.zm_handle = 0x%08x\n",g_handle.zm_handle);
 	g_handle.eraseall = eraseall;
 	g_handle.nd_rbcnt = pinfo->rbcount;
 	g_handle.pagesize = ndparams.ndbaseinfo.pagesize;

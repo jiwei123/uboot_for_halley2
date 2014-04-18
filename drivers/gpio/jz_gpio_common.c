@@ -111,7 +111,6 @@ int gpio_get_flag(unsigned int gpio)
 	unsigned port = gpio / 32;
 	unsigned pin = gpio % 32;
 
-	//printf("------->>> %s %d gpio_v = 0x%08x pin = 0x%08x ret = %d\n",__func__,__LINE__,readl(GPIO_PXFLG(port)),(1 << pin), (readl(GPIO_PXFLG(port)) & (1 << pin)));
 	return (readl(GPIO_PXFLG(port)) & (1 << pin));
 }
 
@@ -217,8 +216,7 @@ void gpio_init(void)
 {
 	int i, n;
 	struct jz_gpio_func_def *g;
-//#ifndef CONFIG_BURNER
-#if 1
+#ifndef CONFIG_BURNER
 	n = ARRAY_SIZE(gpio_func);
 
 	for (i = 0; i < n; i++) {
@@ -236,9 +234,6 @@ void gpio_init(void)
 	g = &uart_gpio_func[gd->arch.gi->uart_idx];
 	gpio_set_func(g->port, g->func, g->pins);
 
-
-	for(i=0; i< 8;i++)
-		dump_gpio_func(i);
 }
 void dump_gpio_func( unsigned int gpio)
 {
