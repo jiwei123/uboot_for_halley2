@@ -26,7 +26,7 @@
 #define PDMA_BANK7_VA		0xB3425800
 #define PDMA_MSG_TCSMVA    (PDMA_BANK4_VA - 0xc0)
 
-//typedef unsigned int dma_addr_t;
+typedef unsigned int dma_addr_t;
 typedef struct _NandDma nand_dma;
 struct _NandDma {
 	struct taskmsg_init         		*msg_init;     /* send msg to mcu init*/

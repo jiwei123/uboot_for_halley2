@@ -45,8 +45,8 @@ void dump_task()
 	int i,*p;
 	struct task_info_regs *regs = *((unsigned int *)0x80000004);
 	p = (int *)(*((volatile unsigned int *)(0x80000004)) + PT_LEN);
-
-	printf("epc:%x\n",regs->epc);
+	
+	printf("epc:%x\n",read_c0_epc());
 	printf("status:%x\n",regs->status);
 	printf("cause:%x\n",read_c0_cause());
 

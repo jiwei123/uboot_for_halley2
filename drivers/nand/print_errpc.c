@@ -19,9 +19,7 @@
  */
 
 
-//#include <ingenic_nand_mgr/nandflash.h>
-#include <mipsregs.h>
-#include <ingenic_nand_mgr/jz4775.h>
+#include <asm/mipsregs.h>
 
 
 #define __raw_readb(addr) (*(volatile unsigned char *)(addr))
@@ -133,17 +131,14 @@ void my_print_epc(){
 			:
 			);
 #endif
-	unsigned int errpc = *(unsigned int *)(0x80000004);
+	unsigned int errpc;
 	__asm__ __volatile__(
-			"mfc0 $5,$14,0 \n\t"
-			"move $6,$29 \n\t"
-			"move $4,$25 \n\t"
-			"jr %0 \n\t"
-			"nop \n\t"
-			"aaa:  b aaa \n\t"
+			"mfc0 %0,$30 \n\t"
 			"nop"
-			:: "r" (errpc)
+			: "=r" (errpc)
+			:
 			);
+	printf("errpc = %x\n",errpc);
 
      
 }

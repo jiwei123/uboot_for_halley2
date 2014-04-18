@@ -5,7 +5,7 @@
 #include "blocklist.h"
 
 enum ndd_cmd {
-	NDD_UPDATE_PT = 48,
+	NDD_UPDATE_ERRPT = 48,
 };
 
 typedef struct _NandInterface NandInterface;
@@ -25,6 +25,13 @@ struct _NandInterface {
 	int (*iDeInitNand)(void * vNand);
 };
 
+typedef struct __nm_version {
+	unsigned char major;
+	unsigned char minor;
+	unsigned char revision;
+} nm_version;
+
+void Get_NandManagerVersion(nm_version *version);
 void Register_NandDriver(NandInterface *ni);
 
 #endif

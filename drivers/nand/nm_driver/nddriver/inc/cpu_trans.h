@@ -14,7 +14,7 @@ struct __CpuCopyInfo{
 	void (*copy_data)(unsigned char *src, unsigned char *dst, unsigned int len);
 };
 
-int cpu_move_init(transadaptor *trans, unsigned int burstlen);
+int cpu_move_init(transadaptor *trans);
 void cpu_move_deinit(int context, transadaptor *trans);
 int cpu_prepare_memcpy(int context, unsigned char *src, unsigned char *dst, unsigned int len, unsigned short flag);
 int cpu_finish_memcpy(int context);

@@ -6,7 +6,7 @@
 
 #define NDD_READ	1
 #define NDD_WRITE	0
-#define DEBUG_TIME_BYTES (20 * 1024 *1024)
+#define DEBUG_TIME_BYTES (10 * 1024 *1024) //10MB
 
 void __speed_dug_begin(int mode, PageList *pl);
 void __speed_dug_end(int mode);

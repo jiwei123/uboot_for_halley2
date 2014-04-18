@@ -51,12 +51,18 @@ static struct jz_gpio_func_def gpio_func[] = {
 	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_2, .pins = 0x30f00000},
 #endif
 
+#define CONFIG_NAND_LOADER
+#define CFG_NAND_BW8	1
+#define CONFIG_NAND_CS	1
+
 #if defined(CONFIG_NAND_LOADER)
 #if (CFG_NAND_BW8 == 1)
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x000c00ff, },
 	{ .port = GPIO_PORT_B, .func = GPIO_FUNC_0, .pins = 0x00000003, },
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x00200000 << ((CONFIG_NAND_CS)-1), },
 	{ .port = GPIO_PORT_A, .func = GPIO_INPUT,  .pins = 0x00100000, },
+
+	{ .port = GPIO_PORT_A, .func = GPIO_RISE_EDGE, .pins = 0x08100000, } //rbintc
 #else
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_0, .pins = 0x000c00ff, },
 	{ .port = GPIO_PORT_F, .func = GPIO_FUNC_1, .pins = 0x0003fc00, },

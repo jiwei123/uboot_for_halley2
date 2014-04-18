@@ -12,6 +12,7 @@
 #define __LIB_NANDOPSINTERFACE_H__
 #include "pagelist.h"
 #include "blocklist.h"
+#include "vnandinfo.h"
 
 enum nandops_opsmodel{
 	NANDOPS_READ,
@@ -20,9 +21,6 @@ enum nandops_opsmodel{
 	NANDOPS_ISBADBLOCK,
 	NANDOPS_MARKBADBLOCK,
 };
-#ifndef VNANDCACHESIZE
-#define VNANDCACHESIZE (134 * 1024)
-#endif
 struct nand_task{
 	struct task_msg *msg;
 	unsigned int msg_phyaddr;
@@ -49,6 +47,7 @@ struct lib_nandchipinfo{
 	unsigned int options;
 	unsigned int totalblocks;
 	unsigned int totalpages;
+	unsigned int pagesize;
         unsigned int tALS;	/* ... duration/width/time */
         unsigned int tALH;	/* ... duration/width/time */
         unsigned int tRP;	/* ... duration/width/time */

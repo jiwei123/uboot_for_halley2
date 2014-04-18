@@ -75,7 +75,7 @@
 
 #define MCU_TEST_DATA_DMA 0xB34257C0 //PDMA_BANK7 - 0x40
 
-int jzdma_init();
+int jzdma_init(void);
 int jzdma_prep_memcpy(unsigned short channel, dma_addr_t srcaddr, dma_addr_t dstaddr, unsigned int len);
 int jzdma_start_memcpy(unsigned short channel);
 void jzdma_clear_status(unsigned short channel);

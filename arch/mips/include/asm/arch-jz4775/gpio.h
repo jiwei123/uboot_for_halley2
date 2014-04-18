@@ -38,6 +38,7 @@ enum gpio_function {
 	GPIO_FUNC_2     = 0x02,  //0010, GPIO as function 2 / device 2
 	GPIO_FUNC_3     = 0x03,  //0011, GPIO as function 3 / device 3
 	GPIO_INPUT	= 0x06,	 //0110, GPIO as input
+	GPIO_RISE_EDGE  = 0x0b,	//1011, GPIO as rise edge interrupt 
 };
 
 enum gpio_port {
@@ -113,5 +114,7 @@ void gpio_as_irq_low_level(unsigned gpio);
 void gpio_as_irq_rise_edge(unsigned gpio);
 void gpio_as_irq_fall_edge(unsigned gpio);
 void gpio_ack_irq(unsigned gpio);
+int gpio_clear_flag(unsigned gpio);
+int gpio_get_flag(unsigned int gpio);
 
 #endif /* __GPIO_H__ */

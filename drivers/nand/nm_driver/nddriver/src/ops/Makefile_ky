@@ -1,5 +1,0 @@
-
-#obj-$(CONFIG_NAND)	+= nandcommand/
-COBJS-y	+= handler/bad_block.o handler/cpu_msg_handler.o \
-			handler/dma_msg_handler.o handler/spl_rw.o \
-			nand_ops.o

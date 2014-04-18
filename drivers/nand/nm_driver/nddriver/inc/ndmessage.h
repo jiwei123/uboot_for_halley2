@@ -35,6 +35,7 @@ struct __mcu_nand_info {
 	unsigned short tadl;
 	unsigned short tcs;
 	unsigned short tclh;
+	unsigned short tsync;
 	unsigned char buswidth;
 	unsigned char  rowcycle;
 	char cs[4];
