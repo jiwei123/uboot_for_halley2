@@ -81,6 +81,9 @@ struct arguments {
 	int use_nand_mgr;
 	int use_mmc;
 
+	int nand_erase_count;
+	unsigned int offsets[32];
+
 	int mmc_open_card;
 	int mmc_force_erase;
 	int mmc_erase_all;
