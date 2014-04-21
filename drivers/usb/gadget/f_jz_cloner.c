@@ -291,7 +291,7 @@ int cloner_init(struct cloner *cloner)
 		nand_probe(&(cloner->args->PartInfo),
 				&(cloner->args->nand_params[0]),
 				cloner->args->nr_nand_args,
-				cloner->args->nand_erase);
+				cloner->args->nand_erase,cloner->args->offsets,cloner->args->nand_erase_count);
 	}
 
 	if(cloner->args->use_mmc)
@@ -305,7 +305,7 @@ int nand_program(struct cloner *cloner)
 	u32 length = cloner->cmd.write.length;
 	void *databuf = (void *)cloner->write_req->buf;
 
-	//printf("=========++++++++++++>   NAND PROGRAM:startaddr = %d P offset = %d P length = %d \n",startaddr,cloner->cmd.write.offset,length);
+	printf("=========++++++++++++>   NAND PROGRAM:startaddr = %d P offset = %d P length = %d \n",startaddr,cloner->cmd.write.offset,length);
 	do_nand_request(startaddr, databuf, length,cloner->cmd.write.offset);
 
 	return 0;

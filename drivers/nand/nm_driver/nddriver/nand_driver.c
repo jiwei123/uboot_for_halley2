@@ -253,11 +253,11 @@ static void ndd_clear_rb_state(rb_item *rbitem)
 static int ndd_wait_rb_timeout(rb_item *rbitem, int timeout)
 {
 	volatile int timeout_ns = timeout * 1000 * 1000;
-	if(gpio_get_flag(rbitem->gpio))
-	{
-		printf("ERROR: wait rb error !!!!\n");
-		while(1);
-	}
+	//if(gpio_get_flag(rbitem->gpio))
+	//{
+	//	printf("ERROR: wait rb error !!!!\n");
+	//	while(1);
+	//}
 	while ((!gpio_get_flag(rbitem->gpio)) && (timeout_ns--));
 	gpio_clear_flag(rbitem->gpio);
 	if (timeout_ns > 0)
@@ -594,7 +594,7 @@ static int try_to_get_nand_id(int rb_gpio,nand_flash_id *fid)
 
 extern int __ndd_dump_nand_id(nfi_base *base, unsigned int cs_id,nand_flash_id *fid);
 extern void fill_nand_basic_info(nand_flash_param *nand_info);
-extern int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall);
+extern int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall,unsigned int *ops_pt_startaddrs,int erase_pt_cnt);
 
 extern void my_print_epc();
 
@@ -616,7 +616,7 @@ static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int 
 /* ############################################################################################ *\
  * nand driver main functions
 \* ############################################################################################ */
-int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall)
+int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int ops_pt_cnt)
 {
 	void *heap; 
 	void *h = NULL;
@@ -722,7 +722,7 @@ int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm
 
 	}
 #endif
-	burn_nandmanager_init(pinfo,eraseall);
+	burn_nandmanager_init(pinfo,eraseall,pt_startadd_offset,ops_pt_cnt);
 
 	/* nand api init */
 	ret = nand_api_init(&ndd_private);

@@ -207,6 +207,7 @@ int nandops_erase(int context, ndpartition *pt, BlockList *bl)
 		RETURN_ERR(ENAND, "lib_nandops_creat_task is failed !");
 	for(i = 0; i < unit_cnt; i++){
 		if(nandtask[i]->msg_index != 0){
+			//printf("==============>>> %s %d ops_mode = %d \n",__func__,__LINE__,pt->ops_mode);
 			if (pt->ops_mode == DMA_OPS) {
 				ndd_dma_cache_inv((unsigned int)nandtask[i]->ret,nandtask[i]->msg_maxcnt);
 				msghandler = handler[i].dma;
@@ -216,7 +217,7 @@ int nandops_erase(int context, ndpartition *pt, BlockList *bl)
 			flag = msghandler->handler(msghandler->context, nandtask[i]);
 			if(flag){
 				ret = flag;
-				ndd_print(NDD_ERROR, "ERROR: [%s] nandops erase error, ret = %d\n", pt->name, ret);
+				ndd_print(NDD_ERROR, "ERROR: [%s] nandops erase error, ret = %d blockid = %d \n", pt->name, ret,bl->startBlock);
 				ndd_dump_taskmsg(nandtask[i]->msg, nandtask[i]->msg_index);
 			}
 			flag = lib_nandops_getret(ops->lib_ops,pt->planes,pt->pagepblock,pt->startblockid,pt->eccbit, i,NANDOPS_ERASE);

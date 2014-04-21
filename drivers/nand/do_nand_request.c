@@ -30,25 +30,65 @@ struct Ghandle{
 	.uperrorpt = 1,
 };
 
-static int pt_count = MAX_PARTITION_NUM;
+static int g_pt_count = MAX_PARTITION_NUM;
+
+unsigned int *erase_pt_startaddrs;
+static int erase_pt_count;
 
 nand_params ndparams;
 extern int nd_raw_boundary;
 
 int erase_partition_fill_pphandle(unsigned int startpage, int pt_index);
+static int NM_PtDirecterase(PPartition *pt);
 
+static int erase_pt_fill_pphandle(unsigned int pt_startpage_offset)
+{
+	int pt_index,ret;
+	unsigned int pt_startpage,pt_endpage;
+	unsigned int startpage;
+	PPartition *pt = NULL;
+
+	startpage = pt_startpage_offset / ndparams.ndbaseinfo.pagesize;
+
+	for(pt_index = 0; pt_index < g_pt_count; pt_index++){
+		pt_startpage = g_handle.m_ppt[pt_index].startPage;
+		pt_endpage = pt_startpage + g_handle.m_ppt[pt_index].totalblocks * g_handle.m_ppt[pt_index].pageperblock;
+		if( pt_startpage ==startpage)
+			break;
+	}
+	if(pt_index == g_pt_count) {
+		printf("%s %d ERROR, write pos not in nand partition!\n",__func__,__LINE__);
+		printf(" the pt_startaddr should be %d or  \n",g_handle.m_ppt[0].startPage * 4046);
+		printf(" %d or ",g_handle.m_ppt[1].startPage * 4046);
+		printf(" %d \n",g_handle.m_ppt[2].startPage * 4046);
+		return -1;
+	}
+
+	pt = &(g_handle.m_ppt[pt_index]);
+	//printf("----------------->> pt_name = %s \n",pt->name);
+	NM_PtDirecterase(pt);
+	ret = NandManger_Ioctrl(g_handle.zm_handle, NANDMANAGER_UPDATE_ERRPT, (int)pt);
+
+	return ret;
+}
 static void start(int handle)
 {
+	int i;
 	PPartArray *pptinfo;
 
 	pptinfo = NandManger_getDirectPartition(g_handle.zm_handle);
 
 	g_handle.m_ppt = pptinfo->ppt;
-	pt_count = pptinfo->ptcount;
+	g_pt_count = pptinfo->ptcount;
 
 #if 1
 		/* xhshen */
 	switch (g_handle.eraseall) {
+	/* due to the write time reason ,when eraseall == 0 ,the erase and fill pphandle operation execute in there */
+	case 0:
+		for(i = 0; i < erase_pt_count; i++)
+			erase_pt_fill_pphandle(erase_pt_startaddrs[i]);
+		break;
 	case 1:
                 /*if normal eraseall,then skip erase each partition before write*/
 	case 2:
@@ -65,6 +105,7 @@ static void start(int handle)
 #endif
 	/*update all the partition with CPU_OPS for read/write/erase*/
 	NandManger_getPartition(g_handle.zm_handle,&g_handle.lp);
+
 }
 
 unsigned int jz_strlen(const char *s)
@@ -86,7 +127,7 @@ char * jz_strncpy(char *dest,const char *src, unsigned int count)
 	return dest;
 }
 
-int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall)
+int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall,unsigned int *ops_pt_startaddrs,int erase_pt_cnt)
 {
 	void *heap = (void*)malloc(ZM_MEMORY_SIZE);
 	if(!heap){
@@ -101,6 +142,9 @@ int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall)
 	g_handle.pagesize = ndparams.ndbaseinfo.pagesize;
 	g_handle.pageperblock = ndparams.ndbaseinfo.blocksize / ndparams.ndbaseinfo.pagesize;
 	memset(g_handle.pphandle, 0xff, MAX_PARTITION_NUM);
+
+	erase_pt_startaddrs = ops_pt_startaddrs;
+	erase_pt_count = erase_pt_cnt;
 
 	NandManger_startNotify(g_handle.zm_handle, start, g_handle.zm_handle);
 
@@ -149,7 +193,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 	int bl;
 	int pt_index;
 	int ret = startaddr + ops_length;
-	int pt_startpage,pt_endpage;
+	unsigned int pt_startpage,pt_endpage;
 	unsigned int spl_align_sectorcount = 0;
 
 
@@ -163,7 +207,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		else
 			startaddr += (nd_raw_boundary * g_handle.pageperblock);
 	}
-	for(pt_index = 0; pt_index < pt_count; pt_index++){
+	for(pt_index = 0; pt_index < g_pt_count; pt_index++){
 		pt_startpage = g_handle.m_ppt[pt_index].startPage;
 		pt_endpage = pt_startpage + g_handle.m_ppt[pt_index].totalblocks * g_handle.m_ppt[pt_index].pageperblock;
 		//printf("$$$$ pt_index=%d pt_startpage=%d pt_endpage=%d startaddr=%d  nd_raw_boundary=%d $$$$$\n",pt_index,pt_startpage,pt_endpage,startaddr,nd_raw_boundary);
@@ -171,7 +215,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			break;
 		}
 	}
-	if(pt_index == MAX_PARTITION_NUM) {
+	if(pt_index == g_pt_count) {
 		printf("%s ERROR, write pos not in nand partition!\n",__func__);
 		//printf("pt[%d]:%s ops_length = %d pagesize=%d totalbytes=%d\n",
 		//pt_index,__func__,ops_length,pagesize,totalbytes);
@@ -294,8 +338,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		sl->sectorCount = (wlen + 511)/ 512;
 		g_handle.sectorid += (wlen + 511)/ 512;
 #endif
-		//printf("%s write:sectorid:%d sectorCount:%d curpt_index=%d pt_index=%d pHandle=%x sl[%x]\n",
-			//      __func__,sl->startSector,sl->sectorCount,g_handle.curpt_index,pt_index,pHandle,(int)sl);
+		//printf("%s write:sectorid:%d sectorCount:%d curpt_index=%d pt_index=%d pHandle=%x sl[%x]\n",__func__,sl->startSector,sl->sectorCount,g_handle.curpt_index,pt_index,pHandle,(int)sl);
 rewrite:
 	//printf("============  %s %d pHandle = 0x%08x pHandle_nmhandle = 0x%x \n",__func__,__LINE__,pHandle,*(unsigned int *)pHandle);
 		if(NandManger_ptWrite(pHandle,sl) < 0){
@@ -338,7 +381,7 @@ static int NM_PtDirecterase(PPartition *pt)
 	int ret;
 	BlockList bl;
 
-	//printf("%s info: pt[%s] totalblocks= %d\n",__func__,pt->name,pt->totalblocks);
+	//printf("%s info: pt[%s] totalblocks= %d pt_startblockid = %d \n",__func__,pt->name,pt->totalblocks,pt->startblockID);
 	for(blockid = 0; blockid < pt->totalblocks; blockid++){
 		bl.startBlock = blockid;
 		bl.BlockCount = 1;
@@ -372,11 +415,6 @@ int erase_partition_fill_pphandle(unsigned int startpage, int pt_index)
 	int ret = 0;
 	//printf("===========> startpage = %d pt_startblock[%d] pt_pageperblock[%d] pt_startpage[%d] pt_index = %d \n",startpage,pt->startblockID,pt->pageperblock,pt->startPage,pt_index);
 	if(startpage == pt->startPage){
-		if(g_handle.eraseall == 0){
-			printf("%s %d erase and update PPartition!\n",__func__,__LINE__);
-			NM_PtDirecterase(pt);
-			ret = NandManger_Ioctrl(g_handle.zm_handle, NANDMANAGER_UPDATE_ERRPT, (int)pt);
-		}
 		singlelist_for_each(it,&(g_handle.lp->head)){
 			lpentry = singlelist_entry(it,LPartition,head);
 			if(strcmp(lpentry->name,pt->name) == 0){
