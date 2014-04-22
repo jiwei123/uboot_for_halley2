@@ -364,7 +364,7 @@ static int mark_bad_block(nand_data *nddata, nand_flash *ndflash, int chip_index
 	__wp_disable(nddata->gpio_wp);
 	nand_io_chip_select(nd_errpt_info.io_context, csitem->id);
 	for(i = 0; i < 4; i++){
-		ret = write_badblock(nddata, ndflash, chip_index, pageid);
+		ret = write_badblock(nddata, ndflash, chip_index, pageid + i);
 		if (ret < 0) {
 			ndd_print(NDD_ERROR, "func:%s blockid[%d] line:%d ret=%d\n",__func__,blockid,__LINE__, ret);
 			return ret;
