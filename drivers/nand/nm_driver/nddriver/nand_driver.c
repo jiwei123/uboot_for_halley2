@@ -589,7 +589,7 @@ static int try_to_get_nand_id(int rb_gpio,nand_flash_id *fid)
 	fid->id = ((nand_id[0] << 8) | nand_id[1]);
 	fid->extid = ((nand_id[4] << 16) | (nand_id[3] << 8) | nand_id[2]);
 
-//	printf("-------------->>>> id = 0x%x extid = 0x%x\n",fid->id,fid->extid);
+	//printf("-------------->>>> id = 0x%x extid = 0x%x\n",fid->id,fid->extid);
 }
 
 extern int __ndd_dump_nand_id(nfi_base *base, unsigned int cs_id,nand_flash_id *fid);
@@ -612,7 +612,20 @@ static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int 
 	
 	return 0;
 }
+#if 0
+static void print_errorpc()
+{
+	unsigned int errpc;
+	__asm__ __volatile__(
+			"mfc0 %0,$30 \n\t"
+			"nop"
+			: "=r" (errpc)
+			:
+			);
+	printf("errpc = %x\n",errpc);
 
+}
+#endif
 /* ############################################################################################ *\
  * nand driver main functions
 \* ############################################################################################ */
@@ -709,19 +722,6 @@ int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm
 	
 	get_nandflash_info(&(ndd_private.base->nfi),nand_info_ids,nand_nm);
 
-#if 0
-	{
-		unsigned int errpc;
-		__asm__ __volatile__(
-				"mfc0 %0,$30 \n\t"
-				"nop"
-				: "=r" (errpc)
-				:
-				);
-		printf("errpc = %x\n",errpc);
-
-	}
-#endif
 	burn_nandmanager_init(pinfo,eraseall,pt_startadd_offset,ops_pt_cnt);
 
 	/* nand api init */

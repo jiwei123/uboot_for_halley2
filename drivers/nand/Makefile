@@ -16,7 +16,7 @@ LIB	:= $(obj)libnand.o
 
 NAND_DRIVER_DIR := .
 
-LOCAL_CFLAGS  += -I$(TOPDIR)/include/ingenic_nand_mgr -I$(TOPDIR)/drivers/nand/include -I$(TOPDIR)/drivers/nand/nm_driver/nddriver/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc_os -DCONFIG_SOC_4775	-U__KERNEL__  #-Werror
+LOCAL_CFLAGS  += -I$(TOPDIR)/include/ingenic_nand_mgr -I$(TOPDIR)/drivers/nand/include -I$(TOPDIR)/drivers/nand/nm_driver/nddriver/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc_os -U__KERNEL__  #-Werror
 
 CFLAGS  += $(LOCAL_CFLAGS)
 CPPFLAGS  += $(LOCAL_CFLAGS) 

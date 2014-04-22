@@ -2,10 +2,11 @@
 #include <nand_debug.h>
 #include <nand_bch.h>
 #include <cpu_trans.h>
+#include <config.h>
 
-#ifdef CONFIG_SOC_4780
+#ifdef CONFIG_JZ4780
 #include <soc/jz4780_bch.h>
-#elif defined(CONFIG_SOC_4775)
+#elif defined(CONFIG_JZ4775)
 #include <soc/jz4775_bch.h>
 #endif
 

@@ -1,9 +1,10 @@
 #include <nand_chip.h>
+#include <config.h>
 
-#ifdef CONFIG_SOC_4780
+#ifdef CONFIG_JZ4780
 #define CS_PER_NFI		4
 #define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
-#elif defined(CONFIG_SOC_4775)
+#elif defined(CONFIG_JZ4775)
 #define CS_PER_NFI		2
 #define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
 #endif

@@ -1,4 +1,5 @@
 #include <malloc.h>
+#include <config.h>
 #include <ingenic_nand_mgr/nand_param.h>
 #include "nand_chip.h"
 #include "lpartition.h"
@@ -170,11 +171,11 @@ void fill_nand_basic_info(nand_flash_param *nand_info) {
 	ndparams.ndbaseinfo.options		= nand_info->options;
 
 }
-#define NAND_SPL_SIZE_4775	(16 * 1024)
-#define NAND_PARAMS_OFFSET_4775	NAND_SPL_SIZE_4775
-#define REBUILD_SPL_SIZE_4775	(NAND_SPL_SIZE_4775 + (1 * 1024))	// 16K nand_spl.bin + 1K nand basic params
+#define NAND_SPL_SIZE	(16 * 1024)
+#define NAND_PARAMS_OFFSET	NAND_SPL_SIZE
+#define REBUILD_SPL_SIZE	(NAND_SPL_SIZE + (1 * 1024))	// 16K nand_spl.bin + 1K nand basic params
 // (16 * 1024) is max support pagesize, used to write a full page data to nand
-#define SPL_BUF_SIZE		(NAND_SPL_SIZE_4775 + 16 * 1024)
+#define SPL_BUF_SIZE		(NAND_SPL_SIZE + 16 * 1024)
 
 //#define DEBUG_PTWRITE
 #define NEW_SPL
@@ -223,7 +224,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 	}
 #ifdef NEW_SPL
 	if (startaddr == 0) {
-		if (totalbytes < NAND_SPL_SIZE_4775) {
+		if (totalbytes < NAND_SPL_SIZE) {
 			printf("%s ERROR: nand_spl.bin not write at once!\n",__func__);
 			return -1;
 		} else {
@@ -235,6 +236,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			 **/
 			nand_basic_info *ndinfo = &ndparams.ndbaseinfo;
 			int pagesize_flag;
+#ifdef CONFIG_JZ4775
 			struct parm_buf {
 				void *bw_buf;
 				void *tp_buf;
@@ -243,9 +245,19 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 				void *pf1_buf;
 				void *pf0_buf;
 			} parm_buf = {spl_buf, spl_buf + 64, spl_buf + 128, spl_buf + 160, spl_buf + 192, spl_buf + 224};
+#elif defined(CONFIG_JZ4780)
+			struct parm_buf {
+				void *tp_buf;
+				void *rc_buf;
+				void *pf2_buf;
+				void *pf1_buf;
+				void *pf0_buf;
+			} parm_buf = {spl_buf, spl_buf + 64, spl_buf + 96, spl_buf + 128, spl_buf + 160};
 
-			memset(spl_buf + NAND_PARAMS_OFFSET_4775, 0xff, SPL_BUF_SIZE - NAND_SPL_SIZE_4775);
-			memcpy(spl_buf, databuf, NAND_SPL_SIZE_4775);
+#endif
+
+			memset(spl_buf + NAND_PARAMS_OFFSET, 0xff, SPL_BUF_SIZE - NAND_SPL_SIZE);
+			memcpy(spl_buf, databuf, NAND_SPL_SIZE);
 
 			/* rebuild the first 256Bytes of nand_spl.bin */
 			switch (ndinfo->pagesize) {
@@ -268,7 +280,9 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 				printf("%s ERROR: unsupport nand pagesize %d!\n", __func__, ndinfo->pagesize);
 				return -1;
 			}
+#ifdef CONFIG_JZ4775
 			memset(parm_buf.bw_buf, (ndinfo->buswidth == 16) ? 0xAA : 0x55, 64);
+#endif
 			memset(parm_buf.tp_buf, (REBUILD_GET_NAND_TYPE(ndinfo->options) == NAND_TYPE_TOGGLE) ? 0xAA : 0x55, 64);
 			memset(parm_buf.rc_buf, (ndinfo->rowcycles == 3) ? 0xAA : 0x55, 32);
 			memset(parm_buf.pf2_buf, (pagesize_flag >> 2 & 1) ? 0xAA : 0x55, 32);
@@ -280,7 +294,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			ndparams.kernel_offset = g_handle.m_ppt[pt_index + 1].startPage;
 			/* update maxvalidblocks after initing nand_driver successfully */
 			ndparams.ndbaseinfo.maxvalidblocks = get_nandflash_maxvalidblocks();
-			memcpy(spl_buf + NAND_PARAMS_OFFSET_4775, &ndparams, sizeof(nand_params));
+			memcpy(spl_buf + NAND_PARAMS_OFFSET, &ndparams, sizeof(nand_params));
 		}
 	}
 #endif 
@@ -302,7 +316,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 	}
 
 	if (startaddr == 0) {
-		spl_align_sectorcount = ((REBUILD_SPL_SIZE_4775 + g_handle.pagesize - 1) / g_handle.pagesize * g_handle.pagesize) / 512;
+		spl_align_sectorcount = ((REBUILD_SPL_SIZE + g_handle.pagesize - 1) / g_handle.pagesize * g_handle.pagesize) / 512;
 		NandManger_ptIoctrl(pHandle, NANDMANAGER_SET_XBOOT_OFFSET, spl_align_sectorcount * 512);
 	}
 
@@ -323,7 +337,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		sl->startSector = g_handle.sectorid;
 #ifdef NEW_SPL
 		if (startaddr == 0) {
-			wlen = NAND_SPL_SIZE_4775;
+			wlen = NAND_SPL_SIZE;
 			sl->pData = (void*)spl_buf;
 			// write lengh align to pagesize
 			sl->sectorCount = spl_align_sectorcount;
@@ -349,7 +363,7 @@ rewrite:
 			if (startaddr == 0) {
 				sl->sectorCount = spl_align_sectorcount;
 				// only used to set startaddr != 0
-				startaddr = (REBUILD_SPL_SIZE_4775 + g_handle.pagesize - 1) / g_handle.pagesize;
+				startaddr = (REBUILD_SPL_SIZE + g_handle.pagesize - 1) / g_handle.pagesize;
 			} else
 				sl->sectorCount = (wlen + 511)/ 512;
 		}
