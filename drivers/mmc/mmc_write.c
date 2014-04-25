@@ -12,7 +12,7 @@
 #include <part.h>
 #include "mmc_private.h"
 
-static ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt)
+ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt)
 {
 	struct mmc_cmd cmd;
 	ulong end;

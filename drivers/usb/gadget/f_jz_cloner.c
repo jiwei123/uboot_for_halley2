@@ -56,6 +56,10 @@
 #define VR_SYNC_TIME		0x15
 #define VR_REBOOT		0x16
 
+#define MMC_ERASE_ALL	1
+#define MMC_ERASE_PART	2
+#define MMC_ERASE_CNT_MAX	10
+
 enum medium_type {
 	MEMORY = 0,
 	NAND,
@@ -77,20 +81,27 @@ struct i2c_args {
 	int value[0];
 };
 
+struct mmc_erase_range {
+	uint32_t start;
+	uint32_t end;
+};
+
 struct arguments {
 	int use_nand_mgr;
 	int use_mmc;
 
+	int nand_erase;
 	int nand_erase_count;
 	unsigned int offsets[32];
 
 	int mmc_open_card;
-	int mmc_force_erase;
-	int mmc_erase_all;
-	int mmc_erase_part;
-	int nand_erase;
+	int mmc_erase;
+	uint32_t mmc_erase_range_count;
+	struct mmc_erase_range mmc_erase_range[MMC_ERASE_CNT_MAX];
+
 	int transfer_data_chk;
 	int write_back_chk;
+
 	PartitionInfo PartInfo;
 	int nr_nand_args;
 	nand_flash_param nand_params[0];
@@ -285,6 +296,91 @@ int i2c_program(struct cloner *cloner)
 	return 0;
 }
 
+#define MMC_BYTE_PER_BLOCK 512
+extern ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt);
+static int mmc_erase(struct cloner *cloner)
+{
+	int curr_device = 0;
+	struct mmc *mmc = find_mmc_device(0);
+	uint32_t blk, blk_end, blk_cnt;
+	uint32_t erase_cnt = 0;
+	int timeout = 30000;
+	int i;
+	int ret;
+
+	if (!mmc) {
+		printf("no mmc device at slot %x\n", curr_device);
+		return -ENODEV;
+	}
+
+	mmc_init(mmc);
+
+	if (mmc_getwp(mmc) == 1) {
+		printf("Error: card is write protected!\n");
+		return -EPERM;
+	}
+	if (cloner->args->mmc_erase == MMC_ERASE_ALL) {
+		blk = 0;
+		blk_cnt = mmc->capacity / MMC_BYTE_PER_BLOCK;
+
+		printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
+		       curr_device, blk, blk_cnt);
+
+		ret = mmc_erase_t(mmc, blk, blk_cnt);
+		if (ret) {
+			printf("mmc erase error\n");
+			return ret;
+		}
+		ret = mmc_send_status(mmc, timeout);
+		if(ret){
+			printf("mmc erase error\n");
+			return ret;
+		}
+
+		printf("mmc all erase ok, blocks %d\n", blk_cnt);
+		return 0;
+	} else if (cloner->args->mmc_erase != MMC_ERASE_PART) {
+		return -EINVAL;
+	}
+
+	/*mmc part erase */
+	erase_cnt = (cloner->args->mmc_erase_range_count >MMC_ERASE_CNT_MAX) ?
+		MMC_ERASE_CNT_MAX : cloner->args->mmc_erase_range_count;
+
+	for (i = 0; erase_cnt > 0; i++, erase_cnt--) {
+		blk = cloner->args->mmc_erase_range[i].start / MMC_BYTE_PER_BLOCK;
+		blk_end = cloner->args->mmc_erase_range[i].end / MMC_BYTE_PER_BLOCK;
+		blk_cnt = blk_end - blk + 1;
+
+		printf("MMC erase: dev # %d, start block # 0x%x, count 0x%x ... \n",
+		       curr_device, blk, blk_cnt);
+
+		if ((blk % mmc->erase_grp_size) || (blk_cnt % mmc->erase_grp_size)) {
+			printf("\n\nCaution! Your devices Erase group is 0x%x\n"
+			       "The erase block range would be change to "
+			       "0x" LBAF "~0x" LBAF "\n\n",
+			       mmc->erase_grp_size, blk & ~(mmc->erase_grp_size - 1),
+			       ((blk + blk_cnt + mmc->erase_grp_size)
+				& ~(mmc->erase_grp_size - 1)) - 1);
+		}
+
+		ret = mmc_erase_t(mmc, blk, blk_cnt);
+		if (ret) {
+			printf("mmc erase error\n");
+			return ret;
+		}
+		ret = mmc_send_status(mmc, timeout);
+		if(ret){
+			printf("mmc erase error\n");
+			return ret;
+		}
+
+		printf("mmc part erase, part %d ok\n", i);
+	}
+	printf("mmc erase ok\n", i);
+	return 0;
+}
+
 int cloner_init(struct cloner *cloner)
 {
 	if(cloner->args->use_nand_mgr) {
@@ -294,8 +390,11 @@ int cloner_init(struct cloner *cloner)
 				cloner->args->nand_erase,cloner->args->offsets,cloner->args->nand_erase_count);
 	}
 
-	if(cloner->args->use_mmc)
-		;
+	if (cloner->args->use_mmc) {
+		if (cloner->args->mmc_erase) {
+			mmc_erase(cloner);
+		}
+	}
 }
 
 int nand_program(struct cloner *cloner)
@@ -385,10 +484,8 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 	if(cloner->cmd_type == VR_UPDATE_CFG) {
 		cloner->ack = 0;
 		printf("nand_erase:%d\n",cloner->args->nand_erase);
-		printf("mmc_erase:%d\n",cloner->args->mmc_force_erase);
+		printf("mmc_erase:%d\n",cloner->args->mmc_erase);
 		printf("mmc_open_card:%d\n",cloner->args->mmc_open_card);
-		printf("mmc_erase_all:%d\n",cloner->args->mmc_erase_all);
-		printf("mmc_erase_part:%d\n",cloner->args->mmc_erase_part);
 		return;
 	}
 
