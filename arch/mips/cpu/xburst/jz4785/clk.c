@@ -1,5 +1,5 @@
 /*
- * Jz4775 clock common interface
+ * Jz4785 clock common interface
  *
  * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
@@ -42,7 +42,7 @@ void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 		if (cgu_clks[i].en_bit && cgu_clks[i].busy_bit) {
 			writel(xcdr | cgu_clks[i].div | (1 << cgu_clks[i].en_bit), reg);
 			while (readl(reg) & (1 << cgu_clks[i].busy_bit))
-				printf("wait cgu %x\n",reg);
+				debug("wait cgu %x\n",reg);
 		}
 #ifdef DUMP_CGU_SELECT
 		printf("0x%X: value=0x%X\n",
@@ -54,16 +54,27 @@ void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 static unsigned int pll_get_rate(int pll)
 {
 	unsigned int cpxpcr = cpm_inl(CPM_CPAPCR);
-	unsigned int m, n, od;
+	unsigned int m, n, od0, od1;
 
-	m = ((cpxpcr >> 24) & 0x7f) + 1;
-	n = ((cpxpcr >> 18) & 0x1f) + 1;
-	od = (cpxpcr >> 16) & 0x3;
-	od = 1 << od;
+	switch (pll) {
+	case APLL:
+		cpxpcr = cpm_inl(CPM_CPAPCR);
+		break;
+	case MPLL:
+		cpxpcr = cpm_inl(CPM_CPMPCR);
+		break;
+	default:
+		return 0;
+	}
+
+	m = (cpxpcr >> 20) & 0xfff;
+	n = (cpxpcr >> 14) & 0x3f;
+	od1 = (cpxpcr >> 11) & 0x7;
+	od0 = (cpxpcr >> 8) & 0x7;
 #ifdef CONFIG_BURNER
-	return (unsigned int)((unsigned long)gd->arch.gi->extal * m / n / od);
+	return (unsigned int)((unsigned long)gd->arch.gi->extal * m / n / od0 / od1);
 #else
-	return (unsigned int)((unsigned long)CONFIG_SYS_EXTAL * m / n / od);
+	return (unsigned int)((unsigned long)CONFIG_SYS_EXTAL * m / n / od0 / od1);
 #endif
 }
 
@@ -100,11 +111,11 @@ static unsigned int get_msc_rate(unsigned int xcdr)
 	unsigned int mscxcdr  = cpm_inl(xcdr);
 	unsigned int ret = 1;
 
-	switch ((msc0cdr >> 30) & 3) {
-	case 1:
+	switch (msc0cdr >> 31) {
+	case 0:
 		ret = pll_get_rate(APLL) / (((mscxcdr & 0xff) + 1) * 2);
 		break;
-	case 2:
+	case 1:
 		ret = pll_get_rate(MPLL) / (((mscxcdr & 0xff) + 1) * 2);
 		break;
 	default:
@@ -117,6 +128,22 @@ static unsigned int get_msc_rate(unsigned int xcdr)
 #endif
 }
 
+unsigned int cpm_get_h2clk(void)
+{
+	int h2clk_div;
+	unsigned int cpccr  = cpm_inl(CPM_CPCCR);
+
+	h2clk_div = (cpccr >> 12) & 0xf;
+
+	switch ((cpccr >> 24) & 3) {
+		case 1:
+			return pll_get_rate(APLL) / (h2clk_div + 1);
+		case 2:
+			return pll_get_rate(MPLL) / (h2clk_div + 1);
+	}
+
+}
+
 unsigned int clk_get_rate(int clk)
 {
 	switch (clk) {
@@ -125,6 +152,8 @@ unsigned int clk_get_rate(int clk)
 		return get_ddr_rate();
 	case CPU:
 		return get_cclk_rate();
+	case H2CLK:
+		return cpm_get_h2clk();
 #endif
 	case MSC0:
 		return get_msc_rate(CPM_MSC0CDR);
@@ -136,6 +165,23 @@ unsigned int clk_get_rate(int clk)
 
 	return 0;
 }
+
+#ifndef CONFIG_SPL_BUILD
+static unsigned int set_bch_rate(int clk, unsigned long rate)
+{
+	unsigned int pll_rate = pll_get_rate(APLL);
+
+	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
+		? (pll_rate / rate)
+		: (pll_rate / rate + 1)) - 1;
+
+	cpm_outl(cdr | (1 << 29), CPM_BCHCDR);
+
+	while (cpm_inl(CPM_BCHCDR) & (1 << 28));
+
+	return 0;
+}
+#endif
 
 static unsigned int set_msc_rate(int clk, unsigned long rate)
 {
@@ -159,11 +205,11 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 		break;
 	}
 
-	switch ((msc0cdr >> 30) & 3) {
-	case 1:
+	switch (msc0cdr >> 31) {
+	case 0:
 		pll_rate = pll_get_rate(APLL);
 		break;
-	case 2:
+	case 1:
 		pll_rate = pll_get_rate(MPLL);
 		break;
 	default:
@@ -191,6 +237,9 @@ void clk_set_rate(int clk, unsigned long rate)
 	case MSC2:
 		set_msc_rate(clk, rate);
 		return;
+	case BCH:
+		set_bch_rate(clk, rate);
+		return;
 	default:
 		break;
 	}
@@ -205,15 +254,15 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	 */
 	[0] = {CPM_DDRCDR, 1, 30, 29, 28, 0},
 #ifdef CONFIG_JZ_MMC_MSC0
-	{CPM_MSC0CDR, 1, 30, 29, 28, CGU_MSC_DIV},
+	{CPM_MSC0CDR, 0, 31, 29, 28, CGU_MSC_DIV},
 #endif
 #ifdef CONFIG_JZ_MMC_MSC1
-	{CPM_MSC1CDR, 1, 30, 29, 28, CGU_MSC_DIV},
+	{CPM_MSC1CDR, 0, 31, 29, 28, CGU_MSC_DIV},
 #endif
 #ifdef CONFIG_NAND
 	{CPM_BCHCDR, 2, 30, 29, 28, CGU_BCH_DIV},
 #endif
-#ifdef CONFIG_VIDEO_JZ4775
+#ifdef CONFIG_VIDEO_JZ4785
 	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
 #endif
 	{CPM_I2SCDR, 2, 30, 0, 0, 0},
@@ -232,11 +281,8 @@ void clk_init(void)
 #ifdef CONFIG_JZ_MMC_MSC2
 		| CPM_CLKGR_MSC2
 #endif
-#ifdef CONFIG_VIDEO_JZ4775
+#ifdef CONFIG_VIDEO_JZ4785
 		| CPM_CLKGR_LCD
-#endif
-#ifdef CONFIG_NET_JZ4775
-		| CPM_CLKGR_GMAC
 #endif
 		;
 
@@ -257,6 +303,7 @@ void enable_uart_clk(void)
 		_CASE(1, CPM_CLKGR_UART1);
 		_CASE(2, CPM_CLKGR_UART2);
 		_CASE(3, CPM_CLKGR_UART3);
+		_CASE(4, CPM_CLKGR_UART4);
 	default:
 		break;
 	}

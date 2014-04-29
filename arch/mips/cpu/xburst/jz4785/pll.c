@@ -1,5 +1,5 @@
 /*
- * JZ4775 pll configuration
+ * JZ4785 pll configuration
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
@@ -77,21 +77,12 @@ unsigned int get_pllreg_value(int pll)
 	switch (pll) {
 	case APLL:
 		cpapcr.d32 = 0;
-		pll_out = gd->arch.gi->cpufreq / 1000000;
-		if (pll_out > 600) {
-			cpapcr.b.BS = 1;
-		} else if ((pll_out > 155) && (pll_out <= 300)) {
-			cpapcr.b.PLLOD = 1;
-		} else if (pll_out > 76) {
-			cpapcr.b.PLLOD = 2;
-		} else if (pll_out > 47) {
-			cpapcr.b.PLLOD = 3;
-		}
-		cpapcr.b.PLLN = 0;
-		cpapcr.b.PLLM = (gd->arch.gi->cpufreq / gd->arch.gi->extal)
-			* (cpapcr.b.PLLN + 1)
-			* (1 << cpapcr.b.PLLOD)
-			- 1;
+		cpapcr.b.APLLOD0 = 1;
+		cpapcr.b.APLLOD1 = 2;
+
+		cpapcr.b.APLLN = 1;
+		cpapcr.b.APLLM = (gd->arch.gi->cpufreq * cpapcr.b.APLLN * cpapcr.b.APLLOD0
+				  * cpapcr.b.APLLOD1) / gd->arch.gi->extal;
 		ret = cpapcr.d32;
 	case MPLL:
 		/* MPLL is not used */
@@ -107,10 +98,14 @@ void pll_init(void)
 	unsigned int cpccr = 0;
 
 	debug("pll init...");
-
+#ifdef CONFIG_BURNER
+	cpccr = (0x95 << 24) | (7 << 20);
+	cpm_outl(cpccr,CPM_CPCCR);
+	while(cpm_inl(CPM_CPCSR) & 0x7);
+#endif
 	/* Only apll is init here */
-	cpm_outl(get_pllreg_value(APLL) | (0x1 << 8) | 0x20,CPM_CPAPCR);
-	while(!(cpm_inl(CPM_CPAPCR) & (0x1<<10)));
+	cpm_outl(get_pllreg_value(APLL) | (0x1 << 0), CPM_CPAPCR);
+	while(!(cpm_inl(CPM_CPAPCR) & (0x1 << 3)));
 	debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
 
 	cpccr = (cpm_inl(CPM_CPCCR) & (0xff << 24))
@@ -121,6 +116,7 @@ void pll_init(void)
 
 	cpccr = (CPCCR_CFG & (0xff << 24)) | (cpm_inl(CPM_CPCCR) & ~(0xff << 24));
 	cpm_outl(cpccr,CPM_CPCCR);
+	while(cpm_inl(CPM_CPCSR) & 0x7);
 
 	debug("ok\n");
 }

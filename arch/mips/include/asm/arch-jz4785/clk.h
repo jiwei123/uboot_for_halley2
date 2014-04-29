@@ -55,17 +55,18 @@ typedef union cpm_cpapcr {
 	uint32_t d32;
 	/** register bits */
 	struct {
-		unsigned PLLST:8;
-		unsigned PLLEN:1;
-		unsigned PLLBP:1;
-		unsigned ON:1;
-		unsigned reserved11_14:4;
-		unsigned LOCK0:1;
-		unsigned PLLOD:2;
-		unsigned PLLN:5;
-		unsigned reserved23:1;
-		unsigned PLLM:7;
-		unsigned BS:1;
+		unsigned APLLEN:1;
+		unsigned reserved1:1;
+		unsigned ALOCK:1;
+		unsigned APLL_ON:1;
+		unsigned A_VCOPD:1;
+		unsigned A_POSTDIVPD:1;
+		unsigned A_PHASEPD:1;
+		unsigned A_DSMPD:1;
+		unsigned APLLOD0:3;
+		unsigned APLLOD1:3;
+		unsigned APLLN:6;
+		unsigned APLLM:12;
 	} b; /* CPAPCR */
 } cpm_cpapcr_t;
 
