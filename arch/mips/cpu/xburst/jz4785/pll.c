@@ -72,7 +72,7 @@ DECLARE_GLOBAL_DATA_PTR;
 unsigned int get_pllreg_value(int pll)
 {
 	cpm_cpapcr_t cpapcr;
-	unsigned int pll_out, ret = 0;
+	unsigned int ret = 0;
 
 	switch (pll) {
 	case APLL:
