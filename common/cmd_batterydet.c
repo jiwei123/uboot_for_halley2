@@ -34,7 +34,8 @@
 #include <lcd.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
+#define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
+#define RLE_LOGO_BASE_ADDR  (0x00000000)	//need to fixed!
 /*
 extern void board_powerdown_device(void);
 */
@@ -156,7 +157,7 @@ static int keys_pressed(void)
 static void get_cpu_id(void)
 {
 #ifdef CONFIG_ADC_SUPPORT_ADJUST
-	/* jz4780 support adc adjust*/
+	/* jz4780 support adc adjust */
 	unsigned int tmp;
 	char slop_r;
 	char cut_r;
@@ -164,14 +165,16 @@ static void get_cpu_id(void)
 	tmp = readl(EFUSE_BASE + EFUSE_EFUCFG);
 	tmp &= ~(EFUSE_EFUCFG_RD_ADJ_MASK | EFUSE_EFUCFG_RD_STROBE_MASK);
 	tmp |= (RD_ADJ << EFUSE_EFUCFG_RD_ADJ_BIT) |
-		(RD_STROBE << EFUSE_EFUCFG_RD_STROBE_BIT);
+	    (RD_STROBE << EFUSE_EFUCFG_RD_STROBE_BIT);
 	writel(tmp, EFUSE_BASE + EFUSE_EFUCFG);
 	tmp = readl(EFUSE_BASE + EFUSE_EFUCFG);
 	if (tmp & EFUSE_EFUCFG_RD_STROBE_MASK == EFUSE_EFUCFG_RD_STROBE_MASK) {
 		tmp = readl(EFUSE_BASE + EFUSE_EFUCFG);
-		tmp &= ~(EFUSE_EFUCFG_RD_ADJ_MASK | EFUSE_EFUCFG_RD_STROBE_MASK);
-		tmp |= (RD_ADJ << EFUSE_EFUCFG_RD_ADJ_BIT) |
-			(RD_STROBE << EFUSE_EFUCFG_RD_STROBE_BIT);
+		tmp &=
+		    ~(EFUSE_EFUCFG_RD_ADJ_MASK | EFUSE_EFUCFG_RD_STROBE_MASK);
+		tmp |=
+		    (RD_ADJ << EFUSE_EFUCFG_RD_ADJ_BIT) | (RD_STROBE <<
+							   EFUSE_EFUCFG_RD_STROBE_BIT);
 		writel(tmp, EFUSE_BASE + EFUSE_EFUCFG);
 	}
 
@@ -264,7 +267,8 @@ int jz_pm_do_hibernate(void)
 	rtc_write_reg(RTC_HCR, RTC_HCR_PD);
 
 	while (a--) {
-		printf("We should not come here, please check the jz4760rtc.h!!!\n");
+		printf
+		    ("We should not come here, please check the jz4760rtc.h!!!\n");
 	};
 
 	/* We can't get here */
@@ -302,10 +306,7 @@ void jz_pm_do_idle(void)
 			  "sync\n\t"
 			  "wait\n\t"
 			  "nop\n\t"
-			  "nop\n\t"
-			  "nop\n\t"
-			  "nop\n\t"
-			  ".set mips32");
+			  "nop\n\t" "nop\n\t" "nop\n\t" ".set mips32");
 	printf("out  sleep mode\n");
 
 #ifdef CONFIG_GPIO_USB_DETECT
@@ -457,6 +458,7 @@ static int charge_detect(void)
 		mdelay(10);
 		ret += __charge_detect();
 	}
+	printf("ret = %d\n", ret);
 	return ret;
 }
 
@@ -496,45 +498,29 @@ static int battery_is_low(void)
 		return 0;
 }
 
-static int show_charge_logo_bmp(int bmp_num)
+static int show_charge_logo_rle(int rle_num)
 {
-	int i, j;
-	unsigned int *fb32;
-	unsigned int lcd_width = lcd_get_pixel_width();
-	unsigned int lcd_height = lcd_get_pixel_height();
-	unsigned width = CHARGE_LOGO_WIDTH;
-	unsigned height = CHARGE_LOGO_HEIGHT;
 	void *lcd_base = (void *)gd->fb_base;
-	int lcd_bpp = jzfb_get_controller_bpp(NBITS(panel_info.vl_bpix));
-
-	if (bmp_num < 0 && bmp_num > 6)
+	if (rle_num < 0 && rle_num > 6)
 		return -EINVAL;
-	fb32 = (unsigned int *)(lcd_base + (lcd_height / 2 - height / 2) *
-				lcd_line_length + (lcd_width / 2 - width / 2) *
-				lcd_bpp / 8);
-
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j++) {
-			fb32[j] = charge_logo_bitmap[bmp_num][i * width + j];
-		}
-		fb32 += lcd_width;
-	}
+	load_565_image(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR,
+		       lcd_base);
 	return 0;
 }
 
-static int voltage_to_bmp_num(void)
+static int voltage_to_rle_num(void)
 {
 	unsigned int voltage;
-	int bmp_num_base;
+	int rle_num_base;
 	voltage = read_battery_voltage();
 	if (voltage < 3600) {
-		bmp_num_base = 0;
+		rle_num_base = 0;
 	} else if (voltage < 4200) {
-		bmp_num_base = (voltage - 3600) / 100 - 1;
+		rle_num_base = (voltage - 3600) / 100 - 1;
 	} else {
-		bmp_num_base = 5;
+		rle_num_base = 5;
 	}
-	return bmp_num_base;
+	return rle_num_base;
 }
 
 static void show_charging_logo(void)
@@ -545,8 +531,8 @@ static void show_charging_logo(void)
 
 	int show_flash;
 	int kpressed = 0;
-	int bmp_num = 0;
-	int bmp_num_base = 0;
+	int rle_num = 0;
+	int rle_num_base = 0;
 	unsigned long start_time;
 	unsigned long timeout = FLASH_INTERVAL_TIME;
 
@@ -554,11 +540,13 @@ static void show_charging_logo(void)
 	/* board_powerdown_device(); */
 
 	key_init_gpio();
-	bmp_num_base = voltage_to_bmp_num();
-	bmp_num = bmp_num_base;
+	rle_num_base = voltage_to_rle_num();
+	rle_num = rle_num_base;
 	start_time = get_timer(0);
 	show_flash = 1;
+
 	lcd_clear_black();
+	lcd_enable();
 	while (1) {
 		if (kpressed == 0) {
 			kpressed = keys_pressed();
@@ -580,20 +568,22 @@ static void show_charging_logo(void)
 				return;
 			}
 		}
-		/* During the charge process ,User extract the USB cable ,Enter hibernate mode */
+		// During the charge process ,User extract the USB cable ,Enter hibernate mode 
 		if (!(__usb_detected() || __dc_detected())) {
 			debug("charge is stop\n");
-			show_charge_logo_bmp(bmp_num_base);
+			show_charge_logo_rle(rle_num_base);
 			mdelay(3000);
 			jz_pm_do_hibernate();
 		}
 		/* show the charge flash */
 		if (show_flash && (get_timer(start_time) > timeout)) {
-			show_charge_logo_bmp(bmp_num);
+			show_charge_logo_rle(rle_num);
+			flush_cache_all();
+			mdelay(10);
 			kpressed = 0;
-			bmp_num++;
-			if (bmp_num >= 6)
-				bmp_num = bmp_num_base;
+			rle_num++;
+			if (rle_num >= 6)
+				rle_num = rle_num_base;
 
 			timeout += FLASH_INTERVAL_TIME;
 			if (timeout > FLASH_SHOW_TIME) {
@@ -603,9 +593,9 @@ static void show_charging_logo(void)
 				jz_pm_do_idle();
 				mdelay(10);
 				lcd_open_backlight();
-				bmp_num_base = voltage_to_bmp_num();
-				bmp_num = bmp_num_base;
-				debug("bmp_num_base = %d\n", bmp_num_base);
+				rle_num_base = voltage_to_rle_num();
+				rle_num = rle_num_base;
+				debug("rle_num_base = %d\n", rle_num_base);
 				show_flash = 1;
 				timeout = FLASH_INTERVAL_TIME;
 				start_time = get_timer(0);
@@ -617,13 +607,14 @@ static void show_charging_logo(void)
 static void show_battery_low_logo(void)
 {
 	lcd_clear_black();
-	show_charge_logo_bmp(0);
+	show_charge_logo_rle(0);
 	mdelay(5000);
 	lcd_close_backlight();
 }
 
 void battery_detect(void)
 {
+
 	if (charge_detect()) {
 		show_charging_logo();
 	} else if (battery_is_low()) {
@@ -632,17 +623,15 @@ void battery_detect(void)
 		printf("Battery low level,Into hibernate mode ... \n");
 		jz_pm_do_hibernate();
 	}
+
 }
 
-static int do_battery_detect(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	battery_detect();
 	return 0;
 }
 
-U_BOOT_CMD(
-	batterydet,	1,	1,	do_battery_detect,
-	"detect battery and show charge logo",
-	""
-);
+U_BOOT_CMD(batterydet, 1, 1, do_battery_detect,
+	   "detect battery and show charge logo", "");
