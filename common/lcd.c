@@ -66,8 +66,9 @@
 /************************************************************************/
 /* ** FONT DATA								*/
 /************************************************************************/
-#include <video_font.h>		/* Get font data, width and height      */
+#include <video_font.h>		/* Get font data, width and height	*/
 #include <video_font_data.h>
+
 
 /************************************************************************/
 /* ** LOGO DATA								*/
@@ -76,7 +77,7 @@
 #ifdef CONFIG_RLE_LCD_LOGO
 #include <rle_logo.h>
 #else
-# include <bmp_logo.h>		/* Get logo data, width and height      */
+# include <bmp_logo.h>		/* Get logo data, width and height	*/
 # include <bmp_logo_data.h>
 /*the new uboot do not support jzfb format
 # if (CONSOLE_COLOR_WHITE >= BMP_LOGO_OFFSET) && (LCD_BPP != LCD_COLOR16)
@@ -125,9 +126,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static void lcd_drawchars(ushort x, ushort y, uchar * str, int count);
-static inline void lcd_puts_xy(ushort x, ushort y, uchar * s);
-static inline void lcd_putc_xy(ushort x, ushort y, uchar c);
+static void lcd_drawchars(ushort x, ushort y, uchar *str, int count);
+static inline void lcd_puts_xy(ushort x, ushort y, uchar *s);
+static inline void lcd_putc_xy(ushort x, ushort y, uchar  c);
 
 static int lcd_init(void *lcdbase);
 
@@ -147,7 +148,7 @@ static short console_col;
 static short console_row;
 
 static void *lcd_console_address;
-static void *lcd_base;		/* Start of framebuffer memory  */
+static void *lcd_base;			/* Start of framebuffer memory	*/
 
 static char lcd_flush_dcache;	/* 1 to flush dcache after each lcd update */
 extern int flush_cache_all(void);
@@ -166,9 +167,8 @@ void lcd_sync(void)
 	int line_length;
 
 	if (lcd_flush_dcache)
-		flush_dcache_range((u32) lcd_base,
-				   (u32) (lcd_base +
-					  lcd_get_size(&line_length)));
+		flush_dcache_range((u32)lcd_base,
+			(u32)(lcd_base + lcd_get_size(&line_length)));
 #endif
 }
 
@@ -181,7 +181,7 @@ void lcd_set_flush_dcache(int flush)
 
 static void console_scrollup(void)
 {
-	/*rows is the number of row we will move,default 1 */
+	/*rows is the number of row we will move,default 1*/
 	const int rows = CONFIG_CONSOLE_SCROLL_LINES;
 
 	/* Copy up rows ignoring those that will be overwritten */
@@ -191,10 +191,11 @@ static void console_scrollup(void)
 
 	/* Clear the last rows */
 	memset(lcd_console_address + CONSOLE_SIZE - CONSOLE_ROW_SIZE * rows,
-	       COLOR_MASK(lcd_color_bg), CONSOLE_ROW_SIZE * rows);
+		COLOR_MASK(lcd_color_bg),
+		CONSOLE_ROW_SIZE * rows);
 
 	lcd_sync();
-	/*console_row is the number of rest rows */
+	/*console_row is the number of rest rows*/
 	console_row -= rows;
 }
 
@@ -203,13 +204,13 @@ static void console_scrollup(void)
 static inline void console_back(void)
 {
 	if (--console_col < 0) {
-		console_col = CONSOLE_COLS - 1;
+		console_col = CONSOLE_COLS-1 ;
 		if (--console_row < 0)
 			console_row = 0;
 	}
 
 	lcd_putc_xy(console_col * VIDEO_FONT_WIDTH,
-		    console_row * VIDEO_FONT_HEIGHT, ' ');
+		console_row * VIDEO_FONT_HEIGHT, ' ');
 }
 
 /*----------------------------------------------------------------------*/
@@ -235,8 +236,8 @@ void lcd_putc(const char c)
 		return;
 	}
 /*the rest of lcd do not display a line console*/
-	if (BMP_LOGO_HEIGHT > (panel_info.vl_row - 2 * VIDEO_FONT_HEIGHT))
-		return;
+if ( BMP_LOGO_HEIGHT > (panel_info.vl_row - 2*VIDEO_FONT_HEIGHT))
+		return ;
 
 	switch (c) {
 	case '\r':
@@ -247,8 +248,8 @@ void lcd_putc(const char c)
 		console_newline();
 
 		return;
-	case '\t':		/* Tab (8 chars alignment) */
-		console_col += 8;
+	case '\t':	/* Tab (8 chars alignment) */
+		console_col +=  8;
 		console_col &= ~7;
 
 		if (console_col >= CONSOLE_COLS)
@@ -261,7 +262,7 @@ void lcd_putc(const char c)
 		return;
 	default:
 		lcd_putc_xy(console_col * VIDEO_FONT_WIDTH,
-			    console_row * VIDEO_FONT_HEIGHT, c);
+			console_row * VIDEO_FONT_HEIGHT, c);
 		if (++console_col >= CONSOLE_COLS)
 			console_newline();
 	}
@@ -301,7 +302,7 @@ void lcd_printf(const char *fmt, ...)
 /* ** Low-Level Graphics Routines					*/
 /************************************************************************/
 
-static void lcd_drawchars(ushort x, ushort y, uchar * str, int count)
+static void lcd_drawchars(ushort x, ushort y, uchar *str, int count)
 {
 	uchar *dest;
 	ushort row;
@@ -311,17 +312,16 @@ static void lcd_drawchars(ushort x, ushort y, uchar * str, int count)
 #endif
 
 #if LCD_BPP == LCD_MONOCHROME
-	ushort off = x * (1 << LCD_BPP) % 8;
+	ushort off  = x * (1 << LCD_BPP) % 8;
 #endif
 
-	dest =
-	    (uchar *) (lcd_base + y * lcd_line_length + x * (1 << LCD_BPP) / 8);
+	dest = (uchar *)(lcd_base + y * lcd_line_length + x * (1 << LCD_BPP) / 8);
 
 	for (row = 0; row < VIDEO_FONT_HEIGHT; ++row, dest += lcd_line_length) {
 		uchar *s = str;
 		int i;
 #if LCD_BPP == LCD_COLOR16
-		ushort *d = (ushort *) dest;
+		ushort *d = (ushort *)dest;
 #else
 		uchar *d = dest;
 #endif
@@ -337,44 +337,44 @@ static void lcd_drawchars(ushort x, ushort y, uchar * str, int count)
 			bits = video_fontdata[c * VIDEO_FONT_HEIGHT + row];
 
 #if LCD_BPP == LCD_MONOCHROME
-			sym = (COLOR_MASK(lcd_color_fg) & bits) |
-			    (COLOR_MASK(lcd_color_bg) & ~bits);
+			sym  = (COLOR_MASK(lcd_color_fg) & bits) |
+				(COLOR_MASK(lcd_color_bg) & ~bits);
 
 			*d++ = rest | (sym >> off);
-			rest = sym << (8 - off);
+			rest = sym << (8-off);
 #elif LCD_BPP == LCD_COLOR8
 			for (c = 0; c < 8; ++c) {
 				*d++ = (bits & 0x80) ?
-				    lcd_color_fg : lcd_color_bg;
+						lcd_color_fg : lcd_color_bg;
 				bits <<= 1;
 			}
 #elif LCD_BPP == LCD_COLOR16
 			for (c = 0; c < 8; ++c) {
 				*d++ = (bits & 0x80) ?
-				    lcd_color_fg : lcd_color_bg;
+						lcd_color_fg : lcd_color_bg;
 				bits <<= 1;
 			}
 #elif LCD_BPP == LCD_COLOR32
-			uint *m = (uint *) d;
-			for (c = 0; c < 8; ++c) {
+			uint *m = (uint *)d;
+			for (c=0; c< 8 ; ++c) {
 				*m++ = (bits & 0x80) ?
-				    lcd_color_fg : lcd_color_bg;
-				d += 4;
+					lcd_color_fg : lcd_color_bg;
+				d+=4;
 				bits <<= 1;
 			}
 #endif
 		}
 #if LCD_BPP == LCD_MONOCHROME
-		*d = rest | (*d & ((1 << (8 - off)) - 1));
+		*d  = rest | (*d & ((1 << (8 - off)) - 1));
 #endif
 	}
-	flush_cache_all();
+	        flush_cache_all();
 
 }
 
 /*----------------------------------------------------------------------*/
 
-static inline void lcd_puts_xy(ushort x, ushort y, uchar * s)
+static inline void lcd_puts_xy(ushort x, ushort y, uchar *s)
 {
 	lcd_drawchars(x, y, s, strlen((char *)s));
 }
@@ -395,21 +395,21 @@ static inline void lcd_putc_xy(ushort x, ushort y, uchar c)
 #define	N_BLK_HOR	3
 
 static int test_colors[N_BLK_HOR * N_BLK_VERT] = {
-	CONSOLE_COLOR_RED, CONSOLE_COLOR_GREEN, CONSOLE_COLOR_YELLOW,
-	CONSOLE_COLOR_BLUE, CONSOLE_COLOR_MAGENTA, CONSOLE_COLOR_CYAN,
+	CONSOLE_COLOR_RED,	CONSOLE_COLOR_GREEN,	CONSOLE_COLOR_YELLOW,
+	CONSOLE_COLOR_BLUE,	CONSOLE_COLOR_MAGENTA,	CONSOLE_COLOR_CYAN,
 };
 
 static void test_pattern(void)
 {
-	ushort v_max = panel_info.vl_row;
-	ushort h_max = panel_info.vl_col;
+	ushort v_max  = panel_info.vl_row;
+	ushort h_max  = panel_info.vl_col;
 	ushort v_step = (v_max + N_BLK_VERT - 1) / N_BLK_VERT;
-	ushort h_step = (h_max + N_BLK_HOR - 1) / N_BLK_HOR;
+	ushort h_step = (h_max + N_BLK_HOR  - 1) / N_BLK_HOR;
 	ushort v, h;
-	uchar *pix = (uchar *) lcd_base;
+	uchar *pix = (uchar *)lcd_base;
 
 	printf("[LCD] Test Pattern: %d x %d [%d x %d]\n",
-	       h_max, v_max, h_step, v_step);
+		h_max, v_max, h_step, v_step);
 
 	/* WARNING: Code silently assumes 8bit/pixel */
 	for (v = 0; v < v_max; ++v) {
@@ -421,6 +421,7 @@ static void test_pattern(void)
 	}
 }
 #endif /* LCD_TEST_PATTERN */
+
 
 /************************************************************************/
 /* ** GENERIC Initialization Routines					*/
@@ -437,18 +438,18 @@ int drv_lcd_init(void)
 	struct stdio_dev lcddev;
 	int rc;
 
-	lcd_base = (void *)gd->fb_base;
+	lcd_base = (void *) gd->fb_base;
 
-	lcd_init(lcd_base);	/* LCD initialization */
+	lcd_init(lcd_base);		/* LCD initialization */
 
 	/* Device initialization */
 	memset(&lcddev, 0, sizeof(lcddev));
 
 	strcpy(lcddev.name, "lcd");
-	lcddev.ext = 0;		/* No extensions */
+	lcddev.ext   = 0;			/* No extensions */
 	lcddev.flags = DEV_FLAGS_OUTPUT;	/* Output only */
-	lcddev.putc = lcd_putc;	/* 'putc' function */
-	lcddev.puts = lcd_puts;	/* 'puts' function */
+	lcddev.putc  = lcd_putc;		/* 'putc' function */
+	lcddev.puts  = lcd_puts;		/* 'puts' function */
 
 	rc = stdio_register(&lcddev);
 
@@ -459,7 +460,7 @@ int drv_lcd_init(void)
 void lcd_clear_black(void)
 {
 	unsigned int i;
-	int *lcdbase_p = (int *)gd->fb_base;
+	int *lcdbase_p = (int *) gd->fb_base;
 	for (i = 0; i < lcd_line_length * panel_info.vl_row / 4; i++) {
 		*lcdbase_p++ = 0x0;
 	}
@@ -491,32 +492,32 @@ void lcd_clear(void)
 #else
 	lcd_setfgcolor(CONSOLE_COLOR_WHITE);
 	lcd_setbgcolor(CONSOLE_COLOR_BLACK);
-#endif /* CONFIG_SYS_WHITE_ON_BLACK */
+#endif	/* CONFIG_SYS_WHITE_ON_BLACK */
 
 #ifdef	LCD_TEST_PATTERN
 	test_pattern();
 #else
 	/* set framebuffer to background color */
 	/*
-	   memset ((char *)lcd_base,
-	   COLOR_MASK(lcd_getbgcolor()),
-	   lcd_line_length * panel_info.vl_row);
-	 */
+	memset ((char *)lcd_base,
+		COLOR_MASK(lcd_getbgcolor()),
+		lcd_line_length * panel_info.vl_row);
+	*/
 #if LCD_BPP == LCD_COLOR16
 	long long i;
 	short *lcdbase_p = (short *)lcd_base;
-	for (i = 0; i < lcd_line_length * panel_info.vl_row / 2; i++)
+	for(i=0;i<lcd_line_length*panel_info.vl_row/2;i++)
 		*lcdbase_p++ = COLOR_MASK(lcd_getbgcolor());
 
 #elif LCD_BPP == 32
 	long long i;
 	int *lcdbase_p = (int *)lcd_base;
-	for (i = 0; i < lcd_line_length * panel_info.vl_row / 4; i++)
+	for(i=0;i<lcd_line_length*panel_info.vl_row/4;i++)
 		*lcdbase_p++ = COLOR_MASK(lcd_getbgcolor());
 #else
-	memset((char *)lcd_base,
-	       COLOR_MASK(lcd_getbgcolor()),
-	       lcd_line_length * panel_info.vl_row);
+	memset ((char *)lcd_base,
+		COLOR_MASK(lcd_getbgcolor()),
+		lcd_line_length*panel_info.vl_row);
 #endif
 #endif
 
@@ -529,14 +530,18 @@ void lcd_clear(void)
 	lcd_sync();
 }
 
-static int do_lcd_clear(cmd_tbl_t * cmdtp, int flag, int argc,
+static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 			char *const argv[])
 {
 	lcd_clear();
 	return 0;
 }
 
-U_BOOT_CMD(cls, 1, 1, do_lcd_clear, "clear screen", "");
+U_BOOT_CMD(
+	cls,	1,	1,	do_lcd_clear,
+	"clear screen",
+	""
+);
 
 /*----------------------------------------------------------------------*/
 
@@ -581,6 +586,7 @@ static int lcd_init(void *lcdbase)
 	return 0;
 }
 
+
 /************************************************************************/
 /* ** ROM capable initialization part - needed to reserve FB memory	*/
 /************************************************************************/
@@ -597,11 +603,11 @@ ulong lcd_setmem(ulong addr)
 	int line_length;
 
 	debug("LCD panel info: %d x %d, %d bit/pix\n", panel_info.vl_col,
-	      panel_info.vl_row, NBITS(panel_info.vl_bpix));
+		panel_info.vl_row, NBITS(panel_info.vl_bpix));
 
 	size = lcd_get_size(&line_length);
 	/* Round up to nearest full page, or MMU section if defined */
-	size = (size + PAGE_SIZE + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
+	 size = (size + PAGE_SIZE + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
 
 	/* Allocate pages for the frame buffer. */
 	addr -= size;
@@ -646,29 +652,29 @@ static inline ushort *configuration_get_cmap(void)
 {
 #if defined CONFIG_CPU_PXA
 	struct pxafb_info *fbi = &panel_info.pxa;
-	return (ushort *) fbi->palette;
+	return (ushort *)fbi->palette;
 #elif defined(CONFIG_MPC823)
 	immap_t *immr = (immap_t *) CONFIG_SYS_IMMR;
 	cpm8xx_t *cp = &(immr->im_cpm);
-	return (ushort *) & (cp->lcd_cmap[255 * sizeof(ushort)]);
+	return (ushort *)&(cp->lcd_cmap[255 * sizeof(ushort)]);
 #elif defined(CONFIG_ATMEL_LCD)
-	return (ushort *) (panel_info.mmio + ATMEL_LCDC_LUT(0));
+	return (ushort *)(panel_info.mmio + ATMEL_LCDC_LUT(0));
 #elif !defined(CONFIG_ATMEL_HLCD) && !defined(CONFIG_EXYNOS_FB)
 	return panel_info.cmap;
-#elif defined(CONFIG_LCD_LOGO) && !defined(CONFIG_RLE_LCD_LOGO)
+#elif defined(CONFIG_LCD_LOGO)
 	return bmp_logo_palette;
 #else
 	return NULL;
 #endif
 }
 
-#ifdef CONFIG_LCD_LOGO
+#if defined (CONFIG_LCD_LOGO) && !defined (CONFIG_RLE_LCD_LOGO)
 void bitmap_plot(int x, int y)
 {
 #ifdef CONFIG_ATMEL_LCD
-	uint *cmap = (uint *) bmp_logo_palette;
+	uint *cmap = (uint *)bmp_logo_palette;
 #else
-	ushort *cmap = (ushort *) bmp_logo_palette;
+	ushort *cmap = (ushort *)bmp_logo_palette;
 #endif
 	ushort i, j;
 #if (BMP_LOGO_NBIT == 24)
@@ -686,11 +692,11 @@ void bitmap_plot(int x, int y)
 	unsigned bpix = NBITS(panel_info.vl_bpix);
 
 	debug("Logo: width %d  height %d  colors %d  cmap %d\n",
-	      BMP_LOGO_WIDTH, BMP_LOGO_HEIGHT, BMP_LOGO_COLORS,
-	      ARRAY_SIZE(bmp_logo_palette));
+		BMP_LOGO_WIDTH, BMP_LOGO_HEIGHT, BMP_LOGO_COLORS,
+		ARRAY_SIZE(bmp_logo_palette));
 
 	bmap = &bmp_logo_bitmap[0];
-	fb = (uchar *) (lcd_base + y * lcd_line_length + x * bpix / 8);
+	fb   = (uchar *)(lcd_base + y * lcd_line_length + x * bpix / 8);
 
 	if (bpix < 12) {
 		/* Leave room for default color map
@@ -699,11 +705,9 @@ void bitmap_plot(int x, int y)
 		 * This avoids even more ifdefs in the next stanza
 		 */
 #if defined(CONFIG_MPC823)
-		cmap =
-		    (ushort *) & (cp->
-				  lcd_cmap[BMP_LOGO_OFFSET * sizeof(ushort)]);
+		cmap = (ushort *) &(cp->lcd_cmap[BMP_LOGO_OFFSET * sizeof(ushort)]);
 #elif defined(CONFIG_ATMEL_LCD)
-		cmap = (uint *) configuration_get_cmap();
+		cmap = (uint *)configuration_get_cmap();
 #else
 		cmap = configuration_get_cmap();
 #endif
@@ -717,10 +721,12 @@ void bitmap_plot(int x, int y)
 			uint lut_entry;
 #ifdef CONFIG_ATMEL_LCD_BGR555
 			lut_entry = ((colreg & 0x000F) << 11) |
-			    ((colreg & 0x00F0) << 2) | ((colreg & 0x0F00) >> 7);
+					((colreg & 0x00F0) <<  2) |
+					((colreg & 0x0F00) >>  7);
 #else /* CONFIG_ATMEL_LCD_RGB565 */
 			lut_entry = ((colreg & 0x000F) << 1) |
-			    ((colreg & 0x00F0) << 3) | ((colreg & 0x0F00) << 4);
+					((colreg & 0x00F0) << 3) |
+					((colreg & 0x0F00) << 4);
 #endif
 			*(cmap + BMP_LOGO_OFFSET) = lut_entry;
 			cmap++;
@@ -740,48 +746,46 @@ void bitmap_plot(int x, int y)
 			bmap += BMP_LOGO_WIDTH;
 			fb += panel_info.vl_col;
 		}
-	} else {		/* true color mode */
-		if (NBITS(panel_info.vl_bpix) == 16) {
+	}
+	else { /* true color mode */
+		if(NBITS(panel_info.vl_bpix) == 16){
 			u16 col16;
-			fb16 = (ushort *) fb;
+			fb16 = (ushort *)fb;
 			for (i = 0; i < BMP_LOGO_HEIGHT; ++i) {
 				for (j = 0; j < BMP_LOGO_WIDTH; j++) {
-					col16 =
-					    bmp_logo_palette[(bmap[j] - 16)];
+					col16 = bmp_logo_palette[(bmap[j]-16)];
 					fb16[j] =
-					    ((col16 & 0x000F) << 1) |
-					    ((col16 & 0x00F0) << 3) |
-					    ((col16 & 0x0F00) << 4);
-				}
+						((col16 & 0x000F) << 1) |
+						((col16 & 0x00F0) << 3) |
+						((col16 & 0x0F00) << 4);
+					}
 				bmap += BMP_LOGO_WIDTH;
 				fb16 += panel_info.vl_col;
 			}
-		} else if (NBITS(panel_info.vl_bpix) == 32) {
+		}
+		else if (NBITS(panel_info.vl_bpix) == 32){
 			u16 col16;
-			fb32 = (uint *) (lcd_base + y * lcd_line_length + x);
+			fb32 = (uint *)(lcd_base + y * lcd_line_length + x);
 
-			for (i = 0; i < BMP_LOGO_HEIGHT; ++i) {
+			for (i=0; i<BMP_LOGO_HEIGHT; ++i) {
 
-				for (j = 0; j < BMP_LOGO_WIDTH; j++) {
-					col16 =
-					    bmp_logo_palette[(bmap[j] - 16)];
-					/*the bitmap is 12bit,4bit each color.we should change the 12bit to 24bit(888) */
+				for (j=0; j<BMP_LOGO_WIDTH; j++) {
+					col16 = bmp_logo_palette[(bmap[j]-16)];
+					/*the bitmap is 12bit,4bit each color.we should change the 12bit to 24bit(888)*/
 #if (BMP_LOGO_NBIT == 24)
-					fb32[j] =
-					    bmp_logo_bitmap[BMP_LOGO_WIDTH *
-							    (BMP_LOGO_HEIGHT -
-							     i - 1) + j];
+					fb32[j] = bmp_logo_bitmap[BMP_LOGO_WIDTH * (BMP_LOGO_HEIGHT - i - 1) + j];
 #else
 					fb32[j] =
-					    ((col16 & 0x000F) << 4) |
-					    ((col16 & 0x00F0) << 8) |
-					    ((col16 & 0x0F00) << 12);
+						((col16 & 0x000F) << 4) |
+						((col16 & 0x00F0) << 8) |
+						((col16 & 0x0F00) << 12);
 #endif
 				}
 				bmap += BMP_LOGO_WIDTH;
 				fb32 += panel_info.vl_col;
 			}
-		} else
+		}
+		else
 			printf("The U-boot do not support this bpix!\n");
 	}
 
@@ -789,9 +793,7 @@ void bitmap_plot(int x, int y)
 	lcd_sync();
 }
 #else
-static inline void bitmap_plot(int x, int y)
-{
-}
+static inline void bitmap_plot(int x, int y) {}
 #endif /* CONFIG_LCD_LOGO */
 
 /*----------------------------------------------------------------------*/
@@ -805,7 +807,7 @@ static inline void bitmap_plot(int x, int y)
 #define BMP_ALIGN_CENTER	0x7FFF
 
 static void splash_align_axis(int *axis, unsigned long panel_size,
-			      unsigned long picture_size)
+					unsigned long picture_size)
 {
 	unsigned long panel_picture_delta = panel_size - picture_size;
 	unsigned long axis_alignment;
@@ -821,6 +823,7 @@ static void splash_align_axis(int *axis, unsigned long panel_size,
 }
 #endif
 
+
 #ifdef CONFIG_LCD_BMP_RLE8
 
 #define BMP_RLE8_ESCAPE		0
@@ -828,7 +831,7 @@ static void splash_align_axis(int *axis, unsigned long panel_size,
 #define BMP_RLE8_EOBMP		1
 #define BMP_RLE8_DELTA		2
 
-static void draw_unencoded_bitmap(ushort ** fbp, uchar * bmap, ushort * cmap,
+static void draw_unencoded_bitmap(ushort **fbp, uchar *bmap, ushort *cmap,
 				  int cnt)
 {
 	while (cnt > 0) {
@@ -837,7 +840,7 @@ static void draw_unencoded_bitmap(ushort ** fbp, uchar * bmap, ushort * cmap,
 	}
 }
 
-static void draw_encoded_bitmap(ushort ** fbp, ushort c, int cnt)
+static void draw_encoded_bitmap(ushort **fbp, ushort c, int cnt)
 {
 	ushort *fb = *fbp;
 	int cnt_8copy = cnt >> 3;
@@ -864,8 +867,8 @@ static void draw_encoded_bitmap(ushort ** fbp, ushort c, int cnt)
 /*
  * Do not call this function directly, must be called from lcd_display_bitmap.
  */
-static void lcd_display_rle8_bitmap(bmp_image_t * bmp, ushort * cmap,
-				    uchar * fb, int x_off, int y_off)
+static void lcd_display_rle8_bitmap(bmp_image_t *bmp, ushort *cmap, uchar *fb,
+				    int x_off, int y_off)
 {
 	uchar *bmap;
 	ulong width, height;
@@ -875,7 +878,7 @@ static void lcd_display_rle8_bitmap(bmp_image_t * bmp, ushort * cmap,
 
 	width = le32_to_cpu(bmp->header.width);
 	height = le32_to_cpu(bmp->header.height);
-	bmap = (uchar *) bmp + le32_to_cpu(bmp->header.data_offset);
+	bmap = (uchar *)bmp + le32_to_cpu(bmp->header.data_offset);
 
 	x = 0;
 	y = height - 1;
@@ -901,9 +904,7 @@ static void lcd_display_rle8_bitmap(bmp_image_t * bmp, ushort * cmap,
 				y -= bmap[3];
 				/* 16bpix, 2-byte per pixel, x should *2 */
 				fb = (uchar *) (lcd_base + (y + y_off - 1)
-						* lcd_line_length + (x +
-								     x_off) *
-						2);
+					* lcd_line_length + (x + x_off) * 2);
 				bmap += 4;
 				break;
 			default:
@@ -916,11 +917,9 @@ static void lcd_display_rle8_bitmap(bmp_image_t * bmp, ushort * cmap,
 							cnt = width - x;
 						else
 							cnt = runlen;
-						draw_unencoded_bitmap((ushort
-								       **) & fb,
-								      bmap,
-								      cmap,
-								      cnt);
+						draw_unencoded_bitmap(
+							(ushort **)&fb,
+							bmap, cmap, cnt);
 					}
 					x += runlen;
 				}
@@ -944,8 +943,8 @@ static void lcd_display_rle8_bitmap(bmp_image_t * bmp, ushort * cmap,
 						cnt = width - x;
 					else
 						cnt = runlen;
-					draw_encoded_bitmap((ushort **) & fb,
-							    cmap[bmap[1]], cnt);
+					draw_encoded_bitmap((ushort **)&fb,
+						cmap[bmap[1]], cnt);
 				}
 				x += runlen;
 			}
@@ -963,20 +962,21 @@ static void lcd_display_rle8_bitmap(bmp_image_t * bmp, ushort * cmap,
 
 #if defined(CONFIG_BMP_16BPP)
 #if defined(CONFIG_ATMEL_LCD_BGR555)
-static inline void fb_put_word(uchar ** fb, uchar ** from)
+static inline void fb_put_word(uchar **fb, uchar **from)
 {
 	*(*fb)++ = (((*from)[0] & 0x1f) << 2) | ((*from)[1] & 0x03);
 	*(*fb)++ = ((*from)[0] & 0xe0) | (((*from)[1] & 0x7c) >> 2);
 	*from += 2;
 }
 #else
-static inline void fb_put_word(uchar ** fb, uchar ** from)
+static inline void fb_put_word(uchar **fb, uchar **from)
 {
 	*(*fb)++ = *(*from)++;
 	*(*fb)++ = *(*from)++;
 }
 #endif
 #endif /* CONFIG_BMP_16BPP */
+
 
 int lcd_display_bitmap(ulong bmp_image, int x, int y)
 {
@@ -986,7 +986,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	ushort *cmap_base = NULL;
 	ushort i, j;
 	uchar *fb;
-	bmp_image_t *bmp = (bmp_image_t *) bmp_image;
+	bmp_image_t *bmp=(bmp_image_t *)bmp_image;
 	uchar *bmap;
 	ushort padded_width;
 	unsigned long width, height, byte_width;
@@ -994,7 +994,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	unsigned colors, bpix, bmp_bpix;
 
 	if (!bmp || !(bmp->header.signature[0] == 'B' &&
-		      bmp->header.signature[1] == 'M')) {
+		bmp->header.signature[1] == 'M')) {
 		printf("Error: no valid bmp image at %lx\n", bmp_image);
 
 		return 1;
@@ -1008,22 +1008,23 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	bpix = NBITS(panel_info.vl_bpix);
 
 	if (bpix != 1 && bpix != 8 && bpix != 16 && bpix != 32) {
-		printf("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
-		       bpix, bmp_bpix);
+		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
+			bpix, bmp_bpix);
 
 		return 1;
 	}
 
 	/* We support displaying 8bpp BMPs on 16bpp LCDs */
 	if (bpix != bmp_bpix && !(bmp_bpix == 8 && bpix == 16)) {
-		printf("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
-		       bpix, le16_to_cpu(bmp->header.bit_count));
+		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
+			bpix,
+			le16_to_cpu(bmp->header.bit_count));
 
 		return 1;
 	}
 
 	debug("Display-bmp: %d x %d  with %d colors\n",
-	      (int)width, (int)height, (int)colors);
+		(int)width, (int)height, (int)colors);
 
 #if !defined(CONFIG_MCC200)
 	/* MCC200 LCD doesn't need CMAP, supports 1bpp b&w only */
@@ -1036,9 +1037,9 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 			bmp_color_table_entry_t cte = bmp->color_table[i];
 #if !defined(CONFIG_ATMEL_LCD)
 			ushort colreg =
-			    (((cte.red) << 8) & 0xf800) |
-			    (((cte.green) << 3) & 0x07e0) |
-			    (((cte.blue) >> 3) & 0x001f);
+				( ((cte.red)   << 8) & 0xf800) |
+				( ((cte.green) << 3) & 0x07e0) |
+				( ((cte.blue)  >> 3) & 0x001f) ;
 #ifdef CONFIG_SYS_INVERT_COLORS
 			*cmap = 0xffff - colreg;
 #else
@@ -1069,8 +1070,8 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 #if defined(CONFIG_MCC200)
 	if (bpix == 1) {
 		width = ((width + 7) & ~7) >> 3;
-		x = ((x + 7) & ~7) >> 3;
-		pwidth = ((pwidth + 7) & ~7) >> 3;
+		x     = ((x + 7) & ~7) >> 3;
+		pwidth= ((pwidth + 7) & ~7) >> 3;
 	}
 #endif
 
@@ -1087,11 +1088,11 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		height = panel_info.vl_row - y;
 
 	bmap = (uchar *) bmp + le32_to_cpu(bmp->header.data_offset);
-	fb = (uchar *) (lcd_base +
-			(y + height - 1) * lcd_line_length + x * bpix / 8);
+	fb   = (uchar *) (lcd_base +
+		(y + height - 1) * lcd_line_length + x * bpix / 8);
 
 	switch (bmp_bpix) {
-	case 1:		/* pass through */
+	case 1: /* pass through */
 	case 8:
 #ifdef CONFIG_LCD_BMP_RLE8
 		if (le32_to_cpu(bmp->header.compression) == BMP_BI_RLE8) {
@@ -1116,7 +1117,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 				if (bpix != 16) {
 					FB_PUT_BYTE(fb, bmap);
 				} else {
-					*(uint16_t *) fb = cmap_base[*(bmap++)];
+					*(uint16_t *)fb = cmap_base[*(bmap++)];
 					fb += sizeof(uint16_t) / sizeof(*fb);
 				}
 			}
@@ -1161,19 +1162,23 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 #endif
 
 #ifdef CONFIG_CMD_RLE
-int lcd_display_rle(unsigned short *src_buf)
+int  lcd_display_rle(unsigned short *src_buf)
 {
-	if (src_buf == NULL)
+	if(src_buf == NULL )
 		return -1;
 	lcd_is_enabled = 0;
+	lcd_clear_black();
 	rle_plot(src_buf, lcd_base);
 	lcd_sync();
 	return 0;
 }
 
-int lcd_console_enable(int val)
+int  lcd_console_enable(int val)
 {
 	lcd_console_address = (void *)gd->fb_base;
+	console_row = 1;
+	console_col = 0;
+
 	lcd_clear_black();
 	lcd_is_enabled = val ? 1 : 0;
 	return 0;
@@ -1194,7 +1199,7 @@ static void *lcd_logo(void)
 		if (splash_screen_prepare())
 			return (void *)lcd_base;
 
-		addr = simple_strtoul(s, NULL, 16);
+		addr = simple_strtoul (s, NULL, 16);
 
 		splash_get_pos(&x, &y);
 
@@ -1204,8 +1209,7 @@ static void *lcd_logo(void)
 #endif /* CONFIG_SPLASH_SCREEN */
 
 #if defined(CONFIG_RLE_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
-	//rle_plot(RLE_LOGO_DEFAULT_ADDR_OFFSET, lcd_base);     
-	rle_plot(jz_logo_file, lcd_base);
+	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
 #else
 	bitmap_plot(0, 0);
 #endif
@@ -1217,7 +1221,7 @@ static void *lcd_logo(void)
 #endif /* CONFIG_LCD_INFO */
 
 #if defined(CONFIG_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
-	return (void *)((ulong) lcd_base + BMP_LOGO_HEIGHT * lcd_line_length);
+	return (void *)((ulong)lcd_base + BMP_LOGO_HEIGHT * lcd_line_length);
 #else
 	return (void *)lcd_base;
 #endif /* CONFIG_LCD_LOGO && !defined(CONFIG_LCD_INFO_BELOW_LOGO) */
@@ -1225,7 +1229,7 @@ static void *lcd_logo(void)
 
 #ifdef CONFIG_SPLASHIMAGE_GUARD
 static int on_splashimage(const char *name, const char *value, enum env_op op,
-			  int flags)
+	int flags)
 {
 	ulong addr;
 	int aligned;
@@ -1237,8 +1241,7 @@ static int on_splashimage(const char *name, const char *value, enum env_op op,
 	/* See README.displaying-bmps */
 	aligned = (addr % 4 == 2);
 	if (!aligned) {
-		printf
-		    ("Invalid splashimage value. Value must be 16 bit aligned, but not 32 bit aligned\n");
+		printf("Invalid splashimage value. Value must be 16 bit aligned, but not 32 bit aligned\n");
 		return -1;
 	}
 
@@ -1282,9 +1285,9 @@ static int lcd_dt_simplefb_configure_node(void *blob, int off)
 	int ret;
 	static const char format[] =
 #if LCD_BPP == LCD_COLOR16
-	    "r5g6b5";
+		"r5g6b5";
 #else
-	    "";
+		"";
 #endif
 
 	if (!format[0])

@@ -1,28 +1,5 @@
 /*
- * (C) Copyright 2002
- * Detlev Zundel, DENX Software Engineering, dzu@denx.de.
- *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- */
-
-/*
- * BMP handling routines
+ * RLE handling routines
  */
 
 #include <common.h>
@@ -34,8 +11,10 @@
 #include <splash.h>
 #include <video.h>
 
-#include <jz_logo_file.h>
-#define RLE_LOGO_BASE_ADDR   (0x00000000)	// need to fixed!
+extern unsigned char rle_default_logo_addr[];
+int rle_display(unsigned int addr_offset);
+#define RLE_LOGO_DEFAULT_ADDR  rle_default_logo_addr	//need to fixed!
+#define RLE_LOGO_BASE_ADDR     0x0	//need to fixed!
 /* print the logo base info including width, height, size*/
 static int do_rle_info(cmd_tbl_t * cmdtp, int flag, int argc,
 		       char *const argv[])
@@ -50,7 +29,6 @@ static int do_rle_display(cmd_tbl_t * cmdtp, int flag, int argc,
 			  char *const argv[])
 {
 	ulong addr;
-	int console_en;
 
 	switch (argc) {
 /*	case 1:		// fixed! display a default logo if logo address offset is not set!   
@@ -125,7 +103,10 @@ U_BOOT_CMD(rle, 4, 1, do_logo,
 	   "manipulate rle image data",
 	   "\tinfo <rle_AddrOffset>      - print logo info\n"
 	   "\tdisplay  <rle_AddrOffset>  - display logo on display panel\n"
-	   "\tconsole  <is_enabled> - display logo on display panel\n");
+#ifdef CONFIG_LCD_INFO_BELOW_LOGO
+	   "\tconsole  <is_enabled> - display logo on display panel\n"
+#endif
+);
 
 /*
  * Subroutine:  rle_display
@@ -146,7 +127,7 @@ int rle_display(unsigned int addr_offset)
 	unsigned short *logo_addr =
 	    (unsigned short *)(addr_offset + RLE_LOGO_BASE_ADDR);
 	//ret = lcd_display_rle(logo_addr);
-	ret = lcd_display_rle(jz_logo_file);
+	ret = lcd_display_rle(RLE_LOGO_DEFAULT_ADDR);
 #elif defined(CONFIG_VIDEO)
 /*	ret = video_display_rle(addr, x, y);*/
 #else

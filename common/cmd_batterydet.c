@@ -503,8 +503,7 @@ static int show_charge_logo_rle(int rle_num)
 	void *lcd_base = (void *)gd->fb_base;
 	if (rle_num < 0 && rle_num > 6)
 		return -EINVAL;
-	load_565_image(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR,
-		       lcd_base);
+	rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
 	return 0;
 }
 

@@ -30,8 +30,28 @@ MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
 GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin
 SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
+IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
+BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
+LOGO-$(CONFIG_LCD_LOGO) += $(RLE_LOGO_C) #added by ykliu
+RLE_LOGO_C = $(OBJTREE)/common/rle_logo.c #added by ykliu
 
-TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y) $(SPL-y)
+#### Use jpg to make logo, added by ykliu ####
+ifeq ($(LOGO_JPG),)
+LOGO_JPG= $(OBJTREE)/tools/logos/ingenic.jpg
+LOGO_RLE= $(LOGO_JPG).rle
+# Use board logo and fallback to vendor
+ifneq ($(wildcard logos/$(BOARD).jpg),)
+LOGO_JPG= $(OBJTREE)/tools/logos/$(BOARD).jpg
+LOGO_RLE= $(LOGO_JPG).rle
+else
+ifneq ($(wildcard logos/$(VENDOR).bmp),)
+LOGO_JPG= $(OBJTREE)/tools/logos/$(VENDOR).jpg
+LOGO_RLE= $(LOGO_JPG).rle
+endif
+endif
+endif
+
+TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y) $(SPL-y) $(IMG2RLE-y) $(BIN2ARRAY-y) $(LOGO-y)
 TOOLS	:= $(addprefix $(obj),$(TOOLS))
 
 all:	$(obj).depend $(TOOLS)
@@ -77,6 +97,24 @@ $(obj)spi_checksum:	spi_checksum.c
 $(obj)spl_params_fixer:	spl_params_fixer.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
+
+
+$(obj)img2rle:	img2rle.c
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -ljpeg -lpng12 -o $@ $^
+	$(HOSTSTRIP) $@
+
+$(obj)bin2array: bin2array.c
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+
+#-------  added by ykliu -----#
+$(LOGO_RLE):  $(obj)img2rle $(LOGO_JPG)
+	$(obj)./img2rle  $(LOGO_JPG) $@
+
+$(RLE_LOGO_C):	$(obj)bin2array $(LOGO_RLE)
+	$(obj)./bin2array $(LOGO_RLE) $@
+
+
+
 
 clean:
 	rm -f $(TOOLS) $(obj).depend
