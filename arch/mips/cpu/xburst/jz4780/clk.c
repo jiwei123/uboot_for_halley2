@@ -130,7 +130,7 @@ unsigned int cpm_get_h2clk(void)
 			return pll_get_rate(APLL) / (h2clk_div + 1);
 		case 2:
 			return pll_get_rate(MPLL) / (h2clk_div + 1);
-	}   
+	}
 
 }
 
@@ -328,3 +328,56 @@ void enable_uart_clk(void)
 	cpm_outl(clkgr1, CPM_CLKGR1);
 }
 
+void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {
+#ifndef CONFIG_SPL_BUILD
+	int tmp_reg = 0;
+
+	tmp_reg = cpm_inl(CPM_USBPCR1);
+	tmp_reg &= ~(USBPCR1_REFCLKSEL_MSK | USBPCR1_REFCLKDIV_MSK);
+	tmp_reg |= USBPCR1_USB_SEL | USBPCR1_REFCLKSEL_CORE | USBPCR1_WORD_IF0_16_30;
+	switch (extclk/1000000) {
+	case 12:
+		tmp_reg |= USBPCR1_REFCLKDIV_12M;
+		break;
+	case 19:
+		tmp_reg |= USBPCR1_REFCLKDIV_19_2M;
+		break;
+	case 24:
+		tmp_reg |= USBPCR1_REFCLKDIV_24M;
+		break;
+	default:
+		tmp_reg |= USBPCR1_REFCLKDIV_48M;
+	}
+	cpm_outl(tmp_reg,CPM_USBPCR1);
+
+	tmp_reg = cpm_inl(CPM_USBPCR);
+	switch (mode) {
+	case OTG_MODE:
+	case HOST_ONLY_MODE:
+		tmp_reg |= USBPCR_USB_MODE_ORG;
+		tmp_reg &= ~(USBPCR_VBUSVLDEXTSEL|USBPCR_VBUSVLDEXT|USBPCR_OTG_DISABLE);
+		break;
+	case DEVICE_ONLY_MODE:
+		tmp_reg &= ~USBPCR_USB_MODE_ORG;
+		tmp_reg |= USBPCR_VBUSVLDEXTSEL|USBPCR_VBUSVLDEXT|USBPCR_OTG_DISABLE;
+	}
+	cpm_outl(tmp_reg, CPM_USBPCR);
+
+	tmp_reg = cpm_inl(CPM_OPCR);
+	tmp_reg |= OPCR_SPENDN0;
+	cpm_outl(tmp_reg, CPM_OPCR);
+
+	tmp_reg = cpm_inl(CPM_USBPCR);
+	tmp_reg |= USBPCR_POR;
+	cpm_outl(tmp_reg, CPM_USBPCR);
+	udelay(30);
+	tmp_reg = cpm_inl(CPM_USBPCR);
+	tmp_reg &= ~USBPCR_POR;
+	cpm_outl(tmp_reg, CPM_USBPCR);
+	udelay(300);
+
+	tmp_reg = cpm_inl(CPM_CLKGR0);
+	tmp_reg &= ~CPM_CLKGR0_OTG0;
+	cpm_outl(tmp_reg,CPM_CLKGR0);
+#endif
+}

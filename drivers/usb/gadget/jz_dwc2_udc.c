@@ -37,14 +37,13 @@
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
 #include <asm/io.h>
-#include <asm/arch/otg.h>
 
 #include <linux/list.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 
 #include <usb/lin_gadget_compat.h>
-#include <usb/jz_dwc2_udc.h>
+#include "jz47xx_dwc2_regs.h"
 
 #define DRIVER_DESC "JZ47XX DWC2 USB OTG Device Driver, (C) Ingenic Semiconductor"
 #define DRIVER_VERSION "24 October 2013"
@@ -59,6 +58,11 @@ enum {
 
 #define EP_FIFO_SIZE		4096
 #define EP_FIFO0_SIZE		64
+
+#define DEP_RXFIFO_SIZE         1064
+#define DEP_NPTXFIFO_SIZE       1024
+#define DEP_DTXFIFO_SIZE        768
+#define DEP_NUM                 2
 
 /* ep0-control, ep1in-bulk, ep2out-bulk, ep3in-int */
 #define JZ_MAX_ENDPOINTS	4
@@ -252,25 +256,7 @@ static void dwc_otg_select_phy_width(struct jz_udc *dev)
 		reg_tmp = udc_read_reg(GUSB_CFG);
 		reg_tmp &= ~USBCFG_TRDTIME_MASK;
 		udc_write_reg(reg_tmp, GUSB_CFG);
-
-		if (dwc_get_utmi_width() == 0) {
-			debug_cond(DEBUG_SETUP != 0, "8BIT UTMI+.\n");
-			fun_8bits();
-		} else if (dwc_get_utmi_width() == 1) {
-			debug_cond(DEBUG_SETUP != 0, "16BIT UTMI+.\n");
-			fun_16bits();
-                } else if (dwc_get_utmi_width() == 2) {
-			debug_cond(DEBUG_SETUP != 0, "8BIT OR 16BIT UTMI+.\n");
-
-			if (UTMI_PHY_WIDTH == 8) {
-				debug_cond(DEBUG_SETUP != 0, "8BIT UTMI+.\n");
-				fun_8bits();
-			}else {
-				debug_cond(DEBUG_SETUP != 0, "16BIT UTMI+.\n");
-				fun_16bits();
-			}
-		}
-
+		fun_16bits();
 	} else
 		debug_cond(DEBUG_INTR != 0, "Unkonwn USB PHY Type\n");
 }
@@ -412,11 +398,11 @@ void disable_all_ep(void)
 
 	for (i = 0; i < DEP_NUM; i++) {
 		reg_tmp = udc_read_reg(DIEP_CTL(i));
-		reg_tmp |= (DEP_DISENA_BIT | DEP_SET_NAK);
+		reg_tmp |= (DEPCTL_EPDIS | DEPCTL_SNAK);
 		udc_write_reg(reg_tmp, DIEP_CTL(i));
 
 		reg_tmp = udc_read_reg(DOEP_CTL(i));
-		reg_tmp |= (DEP_DISENA_BIT | DEP_SET_NAK);
+		reg_tmp |= (DEPCTL_EPDIS | DEPCTL_SNAK);
 		udc_write_reg(reg_tmp, DOEP_CTL(i));
 
 		udc_write_reg(0, DIEP_SIZE(i));
@@ -675,7 +661,7 @@ static void jz_udc_ep_activate(struct jz_ep *ep)
 		reg_tmp = udc_read_reg(DOEP_CTL(epnum));
 	}
 
-	reg_tmp &= ~(DEPCTL_MPS_MASK | DEP_ENA_BIT);
+	reg_tmp &= ~(DEPCTL_MPS_MASK | DEPCTL_EPENA);
 	reg_tmp |= (ep->ep.maxpacket << DEPCTL_MPS_BIT);
 
 	reg_tmp |= DEPCTL_USBACTEP;
@@ -685,7 +671,7 @@ static void jz_udc_ep_activate(struct jz_ep *ep)
 	reg_tmp &=~DEPCTL_TYPE_MASK;
 	reg_tmp |= (eptype << DEPCTL_TYPE_BIT);
 
-	reg_tmp |= (DEP_DISENA_BIT | DEP_SET_NAK);//queue will enable this endpoint
+	reg_tmp |= (DEPCTL_EPDIS | DEPCTL_SNAK);//queue will enable this endpoint
 
 	if (ep_is_in(ep)) {
 		reg_tmp &= ~DIEPCTL_TX_FIFO_NUM_MASK;
@@ -760,10 +746,10 @@ void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
 		int tmp = 0;
 		if (dir) {
 			tmp = udc_read_reg(DIEP_CTL(epnum));
-			if (tmp & DEP_ENA_BIT) {
+			if (tmp & DEPCTL_EPENA) {
 				/*check it*/
-				tmp &= ~DEP_ENA_BIT;
-				tmp |= DEP_DISENA_BIT | DEP_SET_NAK;
+				tmp &= ~DEPCTL_EPENA;
+				tmp |= DEPCTL_EPDIS | DEPCTL_SNAK;
 				udc_write_reg(tmp, DIEP_CTL(epnum));
 				while(!(udc_read_reg(DIEP_INT(epnum)) & DEP_EPDIS_INT))
 				udc_write_reg(DEP_EPDIS_INT,DIEP_INT(epnum));
@@ -771,7 +757,7 @@ void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
 		} else {
 			tmp = udc_read_reg(DOEP_CTL(epnum));
 
-			if (tmp & DEP_ENA_BIT) {
+			if (tmp & DEPCTL_EPENA) {
 				/*set global out nak*/
 				udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
 				while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
@@ -780,8 +766,8 @@ void jz_udc_disable_bootrom_ep(struct usb_ep *_ep)
 					}
 				}
 				/*disable endpoint*/
-				tmp &= ~DEP_ENA_BIT;
-				tmp |= DEP_DISENA_BIT | DEP_SET_NAK;
+				tmp &= ~DEPCTL_EPENA;
+				tmp |= DEPCTL_EPDIS | DEPCTL_SNAK;
 				udc_write_reg(tmp, DOEP_CTL(epnum));
 				while(!(udc_read_reg(DOEP_INT(epnum)) & DEP_EPDIS_INT));
 				udc_write_reg(DEP_EPDIS_INT,DOEP_INT(epnum));
@@ -1012,7 +998,7 @@ static void handle_ep_data_in_phase(struct jz_ep *ep, struct jz_request *req)
 	udc_write_reg(pktcnt << 19 | xfersize, DIEP_SIZE(epnum));
 	asm volatile ("nop\n\t");
 	reg_tmp = udc_read_reg(DIEP_CTL(epnum));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+	reg_tmp |= DEPCTL_EPENA | DEPCTL_CNAK;
 	udc_write_reg(reg_tmp, DIEP_CTL(epnum));
 	debug_cond(DEBUG_REG != 0, "%s: IEP_CTL is 0x%x, epnum is %d\n",
 			__func__, udc_read_reg(DIEP_CTL(epnum)),epnum);
@@ -1049,7 +1035,7 @@ void handle_ep_data_out_phase(struct jz_ep *ep, struct jz_request *req)
 	udc_write_reg(pktcnt << 19 | xfersize, DOEP_SIZE(epnum));
 	asm volatile ("nop\n\t");
 	reg_tmp = udc_read_reg(DOEP_CTL(epnum));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+	reg_tmp |= DEPCTL_EPENA | DEPCTL_CNAK;
 	udc_write_reg(reg_tmp, DOEP_CTL(epnum));
 }
 
@@ -1179,7 +1165,7 @@ static void dwc_out_endpoint(int epnum)
 {
 	int timeout = 5000;
 	unsigned int ctl = udc_read_reg(DOEP_CTL(epnum));
-	udc_write_reg(ctl | (DEP_DISENA_BIT | DEP_SET_NAK),DOEP_CTL(epnum));
+	udc_write_reg(ctl | (DEPCTL_EPDIS | DEPCTL_SNAK),DOEP_CTL(epnum));
 
 	do {
 		udelay(1);
@@ -1189,7 +1175,7 @@ static void dwc_out_endpoint(int epnum)
 
 void dwc_stop_out_transfer(int ep)
 {
-	if (!(udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT))
+	if (!(udc_read_reg(DOEP_CTL(ep)) & DEPCTL_EPENA))
 		return;
 
 	unsigned int reg_tmp = udc_read_reg(GINT_MASK);
@@ -1207,7 +1193,7 @@ void dwc_stop_out_transfer(int ep)
 	dwc_out_endpoint(ep);
 	udc_write_reg(DCTL_CLR_GONAK,OTG_DCTL);
 #if 0
-	if (udc_read_reg(DOEP_CTL(ep)) & DEP_ENA_BIT)
+	if (udc_read_reg(DOEP_CTL(ep)) & DEPCTL_EPENA)
 		printf("ep%d dwc_stop_out_transfer failed.\n",ep);
 	else
 		printf("ep%d dwc_stop_out_transfer ok.\n",ep);
@@ -1391,6 +1377,7 @@ int jz_udc_probe(void)
 	struct jz_udc *dev = &memory;
 	int retval = 0;
 
+	printf("jz_dwc2_udc\n");
 	dev->gadget.is_dualspeed = 1;	/* Hack only*/
 	dev->gadget.is_otg = 0;
 	dev->gadget.is_a_peripheral = 0;
@@ -1428,10 +1415,10 @@ static void handle_reset_intr(struct jz_udc *dev)
 
 	/* Step 1: SET NAK for all OUT ep */
 	reg_tmp = udc_read_reg(DOEP_CTL(0));
-	reg_tmp |= DEP_SET_NAK;
+	reg_tmp |= DEPCTL_SNAK;
 	udc_write_reg(reg_tmp, DOEP_CTL(0));
 	reg_tmp = udc_read_reg(DOEP_CTL(1));
-	reg_tmp |= DEP_SET_NAK;
+	reg_tmp |= DEPCTL_SNAK;
 	udc_write_reg(reg_tmp, DOEP_CTL(1));
 
 	/* Step 2: unmask intr. */
@@ -1445,7 +1432,7 @@ static void handle_reset_intr(struct jz_udc *dev)
 	udc_write_reg(reg_tmp, DOEP_MASK);
 
 	reg_tmp = udc_read_reg(DIEP_MASK);
-	reg_tmp |= XFERCOMPIMSK_BIT;
+	reg_tmp |= DEPMSK_XFERCOMLMSK;
 	/* reg_tmp |= (1 << 0) | (1 << 3); */
 	udc_write_reg(reg_tmp, DIEP_MASK);
 
@@ -1459,14 +1446,14 @@ static void handle_reset_intr(struct jz_udc *dev)
 	udc_write_reg(reg_tmp, OTG_DCFG);
 
 	/*Step 6: setup EP0 to receive SETUP packets*/
-	udc_write_reg(DOEPSIZE0_SUPCNT_3 | DOEPSIZE0_PKTCNT_BIT | (8 * 3),
+	udc_write_reg(DOEPSIZE0_SUPCNT_3 | DOEPSIZE0_PKTCNT | (8 * 3),
 			DOEP_SIZE(0));
 	udc_write_reg(GINTSTS_USB_RESET, GINT_STS);
 
 #if 0
 	/* flush all txfifos */
 	dwc_otg_flush_tx_fifo(0x10);
-	udc_write_reg(DEP_ENA_BIT | DEP_CLEAR_NAK, DOEP_CTL(0));
+	udc_write_reg(DEPCTL_EPENA | DEPCTL_CNAK, DOEP_CTL(0));
 
 #endif
 }
@@ -1516,11 +1503,11 @@ void handle_enum_done_intr(struct jz_udc *dev)
 	udc_write_reg(reg_tmp,GINT_MASK);
 
 	reg_tmp = udc_read_reg(DIEP_CTL(0));
-	reg_tmp |= DEP_EP0_MPS_64 | DIEPCTL_TX_FIFO_NUM(0);
+	reg_tmp |= DEPCTL_EP0_MPS_64 | DIEPCTL_TX_FIFO_NUM(0);
 	udc_write_reg(reg_tmp,  DIEP_CTL(0));
 
 	reg_tmp = udc_read_reg(DOEP_CTL(0));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK | DEP_EP0_MPS_64;
+	reg_tmp |= DEPCTL_EPENA | DEPCTL_CNAK | DEPCTL_EP0_MPS_64;
 	udc_write_reg(reg_tmp, DOEP_CTL(0));
 
 	udc_write_reg(GINTSTS_ENUM_DONE, GINT_STS);
@@ -1594,13 +1581,13 @@ static int udc_setup_status(int epnum,
 		udc_write_reg(1 << 19, DIEP_SIZE(epnum));
 		asm volatile ("nop\n\t");
 		reg_tmp = udc_read_reg(DIEP_CTL(epnum));
-		reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+		reg_tmp |= DEPCTL_EPENA | DEPCTL_CNAK;
 		udc_write_reg(reg_tmp, DIEP_CTL(epnum));
 	} else {
 		udc_write_reg((1 << 19),DOEP_SIZE(epnum));
 		asm volatile ("nop\n\t");
 		reg_tmp = udc_read_reg(DOEP_CTL(epnum));
-		reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+		reg_tmp |= DEPCTL_EPENA | DEPCTL_CNAK;
 		udc_write_reg(reg_tmp, DOEP_CTL(epnum));
 	}
 	return 0;
@@ -1610,7 +1597,7 @@ void udc_start_new_setup(int epnum)
 {
 	int reg_tmp = 0;
 	reg_tmp = udc_read_reg(DOEP_CTL(epnum));
-	reg_tmp |= DEP_ENA_BIT | DEP_CLEAR_NAK;
+	reg_tmp |= DEPCTL_EPENA | DEPCTL_CNAK;
 	udc_write_reg(reg_tmp, DOEP_CTL(epnum));
 }
 
@@ -1901,12 +1888,7 @@ static void udc_read_fifo_ep(struct jz_ep *ep, u32 fifo_count)
 static void udc_read_fifo_ep0_crq(struct usb_ctrlrequest *crq)
 {
 	unsigned char *buf = (unsigned char *)crq;
-
 	read_ep_fifo(EP_FIFO(0), buf, sizeof(struct usb_ctrlrequest));
-	debug_cond(DEBUG_INTR != 0,
-		"bRequestType=0x%x, bRequest=0x%x, wValue=0x%x, "
-		"wIndex=0x%x, wLength=0x%x\n",	crq->bRequestType,
-		crq->bRequest, crq->wValue, crq->wIndex, crq->wLength);
 }
 
 void handle_rxfifo_nempty(struct jz_udc *dev)
@@ -1950,7 +1932,6 @@ void handle_rxfifo_nempty(struct jz_udc *dev)
 		debug_cond(DEBUG_INTR != 0, "%s: Warring, have not intr\n", __func__);
                 break;
         }
-
 	udc_write_reg(GINTSTS_RXFIFO_NEMPTY, GINT_STS);
 }
 
@@ -2040,10 +2021,10 @@ static void dwc_set_in_nak(int epnum)
 	int  timeout = 5000;
 	unsigned int diep_ctl = udc_read_reg(DIEP_CTL(epnum));
 
-	if (!(diep_ctl & DEP_ENA_BIT))
+	if (!(diep_ctl & DEPCTL_EPENA))
 		return ;
 
-	udc_write_reg(DEP_SET_NAK,DIEP_CTL(epnum));
+	udc_write_reg(DEPCTL_SNAK,DIEP_CTL(epnum));
 
 	do
 	{
@@ -2061,10 +2042,10 @@ static void dwc_disable_in_ep(int epnum)
 	int  timeout = 100000;
 	unsigned int diep_ctl = udc_read_reg(DIEP_CTL(epnum));
 
-	if (!(diep_ctl & DEP_ENA_BIT))
+	if (!(diep_ctl & DEPCTL_EPENA))
 		return;
 
-	udc_write_reg(diep_ctl | DEP_DISENA_BIT,DIEP_CTL(epnum));
+	udc_write_reg(diep_ctl|DEPCTL_EPDIS, DIEP_CTL(epnum));
 
 	do
 	{
@@ -2170,11 +2151,9 @@ void handle_inep_intr(struct jz_udc *dev)
 	u32 ep_empmsk;
 	u32 reg_tmp;
 
-	debug_cond(DEBUG_INTR != 0, "%s: Handle inep intr.\n", __func__);
-
 	ep_intr = udc_read_reg(OTG_DAINT);
 	debug_cond(DEBUG_REG != 0, "%s: DAINT = 0x%x.\n", __func__, ep_intr);
-	ep_intr &= 0xffff;
+	ep_intr &= DAINT_IN_MASK;
 
         while(ep_intr) {
 		if(!(ep_intr & (0x1 << epnum))) {
@@ -2257,11 +2236,8 @@ int handle_outep_intr(struct jz_udc *dev)
 	u32 ep_intr, intr;
 	int epnum = 15;
 
-	debug_cond(DEBUG_INTR != 0, "%s: Handle outep intr.\n", __func__);
-
 	ep_intr = udc_read_reg(OTG_DAINT);
-	debug_cond(DEBUG_REG != 0, "%s: DAINT is 0x%x.\n", __func__, ep_intr);
-	ep_intr = (ep_intr >> DAINT_OUT_BIT) & DAINT_OUT_MASK;
+	ep_intr = (ep_intr & DAINT_OUT_MASK) >> DAINT_OUT_BIT;
 
 	while (ep_intr) {
 

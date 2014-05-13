@@ -526,7 +526,8 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 	}
 
 	if (req->actual != req->length) {
-		printf("cmd transfer length is errr\n");
+		printf("cmd transfer length is err req->actual = %d, req->length = %d\n",
+				req->actual,req->length);
 		cloner->ack = -EIO;
 		return;
 	}
@@ -675,7 +676,7 @@ int f_cloner_set_alt(struct usb_function *f,
 	debug_cond(BURNNER_DEBUG,"set interface %d alt %d\n",interface,alt);
 	epin_desc = ep_choose(cloner->gadget,&hs_bulk_in_desc,&fs_bulk_in_desc);
 	epout_desc = ep_choose(cloner->gadget,&hs_bulk_out_desc,&fs_bulk_out_desc);
-
+	
 	status += usb_ep_enable(cloner->ep_in,epin_desc);
 	status += usb_ep_enable(cloner->ep_out,epout_desc);
 
@@ -696,6 +697,13 @@ void f_cloner_unbind(struct usb_configuration *c,struct usb_function *f)
 
 void f_cloner_disable(struct usb_function *f)
 {
+	struct cloner *cloner = func_to_cloner(f);
+	int status = 0;
+	status += usb_ep_disable(cloner->ep_in);
+	status += usb_ep_disable(cloner->ep_out);
+	if (status < 0)
+		printf("usb disable ep failed");
+	return;
 }
 
 int cloner_function_bind_config(struct usb_configuration *c)

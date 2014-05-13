@@ -81,5 +81,11 @@ void clk_set_rate(int clk, unsigned long rate);
 void cgu_clks_init(struct cgu *cgu_sel, int nr_cgu_clks);
 void clk_init(void);
 void enable_uart_clk(void);
+enum otg_mode_t {
+	OTG_MODE = 0,
+	DEVICE_ONLY_MODE,
+	HOST_ONLY_MODE,
+};
+void otg_phy_init(enum otg_mode_t mode,unsigned extclk);
 
 #endif /* __CLK_H__ */

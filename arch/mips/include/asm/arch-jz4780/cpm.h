@@ -139,33 +139,30 @@
 #define cpm_set_bit(bit,off)	(cpm_outl((cpm_inl(off) | 0x1<<(bit)),off))
 #define cpm_clear_bit(bit,off)	(cpm_outl(cpm_inl(off) & ~(0x1 << bit), off))
 
-#define arch_suspend_usb()	cpm_clear_bit(7,CPM_OPCR) /* port0(otg)*/
-#define arch_enable_usb()	cpm_set_bit(7,CPM_OPCR)
+/*USBPCR*/
+#define USBPCR_USB_MODE_ORG	(1 << 31)
+#define USBPCR_VBUSVLDEXT	(1 << 24)
+#define USBPCR_VBUSVLDEXTSEL	(1 << 23)
+#define USBPCR_POR		(1 << 22)
+#define USBPCR_OTG_DISABLE	(1 << 20)
 
-/* selects utmi data bus width of port0/1 */
-#define arch_select_utmi8bit()		\
-do{					\
-	cpm_clear_bit(18,CPM_USBPCR1);	\
-	cpm_clear_bit(19,CPM_USBPCR1);	\
-}while(0)
+/*USBPCR1*/
+#define USBPCR1_USB_SEL		(1 << 28)
+#define USBPCR1_REFCLKSEL_BIT	(26)
+#define USBPCR1_REFCLKSEL_MSK	(0x3 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKSEL_CORE	(0x2 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKSEL_EXT	(0x1 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKSEL_CSL	(0x0 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKDIV_BIT	(24)
+#define USBPCR1_REFCLKDIV_MSK	(0X3 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_19_2M	(0x3 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_48M	(0x2 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_24M	(0x1 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_12M	(0x0 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_WORD_IF0_16_30	(1 << 19)
 
-#define arch_select_utmi16bit()		\
-do{					\
-	cpm_set_bit(18,CPM_USBPCR1);	\
-	cpm_set_bit(19,CPM_USBPCR1);	\
-}while(0)
-
-#define arch_otg_init() 		\
-do{					\
-	cpm_set_bit(28,CPM_USBPCR1);	\
-	cpm_clear_bit(31,CPM_USBPCR);	\
-	cpm_set_bit(24,CPM_USBPCR);	\
-	cpm_set_bit(22,CPM_USBPCR);	\
-	udelay(30);			\
-	cpm_clear_bit(22,CPM_USBPCR);	\
-	udelay(300);			\
-	arch_enable_usb();		\
-}while(0)
+/*OPCR*/
+#define OPCR_SPENDN0		(1 << 7)
 
 /* CPM scratch pad protected register(CPSPPR) */
 #define CPSPPR_CPSPR_WRITABLE   (0x00005a5a)

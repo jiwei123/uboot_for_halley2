@@ -309,3 +309,89 @@ void enable_uart_clk(void)
 	}
 	cpm_outl(clkgr, CPM_CLKGR);
 }
+
+void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {
+#ifndef CONFIG_SPL_BUILD
+	int ext_sel = 0;
+	int tmp_reg = 0;
+	int timeout = 0x7fffff;
+
+	tmp_reg = cpm_inl(CPM_USBPCR1);
+	tmp_reg &= ~(USBPCR1_REFCLKSEL_MSK | USBPCR1_REFCLKDIV_MSK);
+	tmp_reg |= USBPCR1_REFCLKSEL_CORE | USBPCR1_WORD_IF0_16_30;
+	switch (extclk/1000000) {
+	case 12:
+		tmp_reg |= USBPCR1_REFCLKDIV_12M;
+		break;
+	case 19:
+		tmp_reg |= USBPCR1_REFCLKDIV_19_2M;
+		break;
+	case 48:
+		tmp_reg |= USBPCR1_REFCLKDIV_48M;
+		break;
+	default:
+		ext_sel = 1;
+	case 24:
+		tmp_reg |= USBPCR1_REFCLKDIV_24M;
+		break;
+	}
+	cpm_outl(tmp_reg,CPM_USBPCR1);
+
+	/*set usb cdr clk*/
+	tmp_reg = cpm_inl(CPM_USBCDR);
+	tmp_reg &= ~USBCDR_UCS_PLL;
+	cpm_outl(tmp_reg, CPM_USBCDR);
+	if (ext_sel) {
+		unsigned int pll_rate = pll_get_rate(APLL);	//FIXME: default apll
+		unsigned int cdr = pll_rate/24000000;
+		cdr = cdr ? cdr - 1 : cdr;
+		tmp_reg |= (cdr & USBCDR_USBCDR_MSK) | USBCDR_CE_USB;
+		tmp_reg &= ~USBCDR_USB_STOP;
+		cpm_outl(tmp_reg, CPM_USBCDR);
+		while ((cpm_inl(CPM_USBCDR) & USBCDR_USB_BUSY) || timeout--);
+		tmp_reg = cpm_inl(CPM_USBCDR);
+		tmp_reg &= ~USBCDR_UPCS_MPLL;
+		tmp_reg |= USBCDR_UCS_PLL;
+		cpm_outl(tmp_reg, CPM_USBCDR);
+	} else {
+		tmp_reg |= USBCDR_USB_STOP;
+		cpm_outl(tmp_reg, CPM_USBCDR);
+		while ((cpm_inl(CPM_USBCDR) & USBCDR_USB_BUSY) || timeout--);
+	}
+	tmp_reg = cpm_inl(CPM_USBCDR);
+	tmp_reg &= ~USBCDR_USB_DIS;
+	cpm_outl(tmp_reg, CPM_USBCDR);
+	if (!timeout)
+		printf("USBCDR wait busy bit failed\n");
+
+	tmp_reg = cpm_inl(CPM_USBPCR);
+	switch (mode) {
+	case OTG_MODE:
+	case HOST_ONLY_MODE:
+		tmp_reg |= USBPCR_USB_MODE_ORG;
+		tmp_reg &= ~(USBPCR_VBUSVLDEXTSEL|USBPCR_VBUSVLDEXT|USBPCR_OTG_DISABLE);
+		break;
+	case DEVICE_ONLY_MODE:
+		tmp_reg &= ~USBPCR_USB_MODE_ORG;
+		tmp_reg |= USBPCR_VBUSVLDEXTSEL|USBPCR_VBUSVLDEXT|USBPCR_OTG_DISABLE;
+	}
+	cpm_outl(tmp_reg, CPM_USBPCR);
+
+	tmp_reg = cpm_inl(CPM_OPCR);
+	tmp_reg |= OPCR_SPENDN0;
+	cpm_outl(tmp_reg, CPM_OPCR);
+
+	tmp_reg = cpm_inl(CPM_USBPCR);
+	tmp_reg |= USBPCR_POR;
+	cpm_outl(tmp_reg, CPM_USBPCR);
+	udelay(30);
+	tmp_reg = cpm_inl(CPM_USBPCR);
+	tmp_reg &= ~USBPCR_POR;
+	cpm_outl(tmp_reg, CPM_USBPCR);
+	udelay(300);
+
+	tmp_reg = cpm_inl(CPM_CLKGR);
+	tmp_reg &= ~CPM_CLKGR_OTG;
+	cpm_outl(tmp_reg, CPM_CLKGR);
+#endif
+}

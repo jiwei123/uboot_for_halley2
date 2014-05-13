@@ -29,7 +29,6 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 #include <asm/jz_uart.h>
-#include <usb/jz_dwc2_udc.h>
 
 #ifndef CONFIG_SPL_BUILD
 DECLARE_GLOBAL_DATA_PTR;
@@ -47,6 +46,7 @@ int board_early_init_f(void)
 }
 
 #ifdef CONFIG_USB_GADGET
+int jz_udc_probe(void);
 void board_usb_init(void)
 {
 	printf("USB_udc_probe\n");

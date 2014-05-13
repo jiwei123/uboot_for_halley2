@@ -36,12 +36,10 @@
 
 #define MANUFACTURER_IDX	0
 #define PRODUCT_IDX		1
-#define SERIALNUMBER_IDX	2
 
 static const char shortname[] = {"jz_usb_burner_"};
 static const char manufacturer[] = {"Ingenic"};
-static const char product[] = {"Usb burntool Gadget"};
-static const char serialnumber[] = {"Version 1.7"};
+static const char product[] = {CONFIG_BURNER_PRIDUCT_INFO};
 
 struct usb_device_descriptor device_desc= {
 	.bLength = sizeof(device_desc),
@@ -55,7 +53,6 @@ struct usb_device_descriptor device_desc= {
 struct usb_string g_bt_string_defs[] = {
 	[MANUFACTURER_IDX].s = manufacturer,
 	[PRODUCT_IDX].s = product,
-	[SERIALNUMBER_IDX].s = serialnumber,
 	{}
 };
 
@@ -132,11 +129,7 @@ static int burntool_bind(struct usb_composite_dev * cdev)
 	g_bt_string_defs[PRODUCT_IDX].id = id;
 	device_desc.iProduct = id;
 
-	id = usb_string_id(cdev);
-	if (id < 0)
-		return id;
-	g_bt_string_defs[SERIALNUMBER_IDX].id = id;
-	device_desc.iSerialNumber = id;
+	device_desc.iSerialNumber = 0;
 
 	g_cdev = cdev;
 	ret = g_burntool_config(cdev);
