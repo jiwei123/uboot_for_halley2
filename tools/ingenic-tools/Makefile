@@ -125,7 +125,7 @@ $(obj)spl_params_fixer:	spl_params_fixer.c
 
 
 $(obj)img2rle:	img2rle.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -ljpeg -lpng12 -o $@ $^
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) $^ -ljpeg -lpng12 -o $@
 	$(HOSTSTRIP) $@
 
 $(obj)bin2array: bin2array.c
