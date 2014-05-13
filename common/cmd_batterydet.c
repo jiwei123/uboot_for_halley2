@@ -30,12 +30,13 @@
 #include <asm/arch/rtc.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/sadc.h>
-#include <charge_logo.h>
 #include <lcd.h>
+#include <rle_charge_logo.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
 #define RLE_LOGO_BASE_ADDR  (0x00000000)	//need to fixed!
+#define LOGO_CHARGE_NUM     (6)
 /*
 extern void board_powerdown_device(void);
 */
@@ -67,8 +68,8 @@ extern void board_powerdown_device(void);
 
 static long slop = 0;
 static long cut = 0;
-extern vidinfo_t panel_info;
-extern int jzfb_get_controller_bpp(unsigned int bpp);
+static	unsigned char  *logo_addr;
+static	unsigned char  logo_id;
 
 static void lcd_close_backlight(void)
 {
@@ -498,12 +499,62 @@ static int battery_is_low(void)
 		return 0;
 }
 
+void * malloc_charge_logo(int buf_size)
+{
+	void *addr;
+	addr=malloc(buf_size * LOGO_CHARGE_NUM);
+	memset(addr, 0x00, buf_size * LOGO_CHARGE_NUM);
+	return addr;
+}
+
+void free_logo(void *addr)
+{
+	free(addr);
+}
+
+void fb_fill(int *logo_buf, int *fb_addr, int count)
+{
+	//memcpy(logo_buf, fb_addr, count);
+	int i;
+	int *dest_addr = fb_addr;
+	for(i = 0; i < count; i = i + 4){
+		*dest_addr =  *logo_buf;
+		logo_buf++;
+		dest_addr++;
+	}
+}
+
 static int show_charge_logo_rle(int rle_num)
 {
 	void *lcd_base = (void *)gd->fb_base;
+	int vm_width = panel_info.vl_col;
+	int vm_height = panel_info.vl_row;
+	int bpp = NBITS(panel_info.vl_bpix);
+	int buf_size = vm_height * vm_width * bpp / 8;
+
 	if (rle_num < 0 && rle_num > 6)
 		return -EINVAL;
-	rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
+	//rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
+	if(logo_id != LOGO_CHARGE_NUM ){
+		if(logo_addr == NULL) {
+			logo_addr = (unsigned char *)malloc_charge_logo(buf_size);
+			if(logo_addr == NULL){
+				printf("famebuffer malloc failed\n");
+				goto orig;
+			}
+		}
+		logo_id += 1;
+		debug("logo_id == %d\n", logo_id);
+		rle_plot(rle_charge_logo_addr[rle_num], logo_addr + rle_num * buf_size);
+		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
+	}else if(logo_addr != NULL){
+		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
+	}else{
+		goto orig;
+	}
+	return 0;
+orig:
+	rle_plot(rle_charge_logo_addr[rle_num], lcd_base);
 	return 0;
 }
 
@@ -545,7 +596,7 @@ static void show_charging_logo(void)
 	show_flash = 1;
 
 	lcd_clear_black();
-	lcd_enable();
+
 	while (1) {
 		if (kpressed == 0) {
 			kpressed = keys_pressed();
@@ -574,11 +625,11 @@ static void show_charging_logo(void)
 			mdelay(3000);
 			jz_pm_do_hibernate();
 		}
+
 		/* show the charge flash */
 		if (show_flash && (get_timer(start_time) > timeout)) {
 			show_charge_logo_rle(rle_num);
-			flush_cache_all();
-			mdelay(10);
+			mdelay(1000);
 			kpressed = 0;
 			rle_num++;
 			if (rle_num >= 6)
