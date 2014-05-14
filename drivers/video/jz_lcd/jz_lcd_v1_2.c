@@ -1,5 +1,5 @@
  /*
-  * JZ4780 LCDC DRIVER
+  * JZ4785  LCDC DRIVER
   *
   * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
   * Author: Huddy <hyli@ingenic.cn>
@@ -26,10 +26,10 @@
 #include <common.h>
 #include <lcd.h>
 #include <asm/arch/lcdc.h>
+#include <asm/lcd/jz_dsim.h>
 #include <asm/arch/gpio.h>
-#include <jz_lcd/jz4780_lcd.h>
+#include <jz_lcd/jz_lcd_v1_2.h>
 
-int lcd_line_length;
 int lcd_color_fg;
 int lcd_color_bg;
 /* Frame buffer memory information */
@@ -38,6 +38,11 @@ void *lcd_console_address;	/* Start of console buffer      */
 short console_col;
 short console_row;
 struct jzfb_config_info lcd_config_info;
+#ifdef CONFIG_JZ_MIPI_DSI
+#include "../jz_mipi_dsi/jz_mipi_dsi_regs.h"
+#include "../jz_mipi_dsi/jz_mipi_dsih_hal.h"
+struct dsi_device *dsi;
+#endif
 static int lcd_enable_state = 0;
 void board_set_lcd_power_on(void);
 void flush_cache_all(void);
@@ -270,7 +275,6 @@ int jzfb_get_controller_bpp(unsigned int bpp)
 	}
 }
 
-
 static void jzfb_config_fg0(struct jzfb_config_info *info)
 {
 	unsigned int rgb_ctrl, cfg;
@@ -301,7 +305,7 @@ static void jzfb_config_tft_lcd_dma(struct jzfb_config_info *info)
 	framedesc->fdadr = virt_to_phys((void *)info->dmadesc_fbhigh);
 	framedesc->fsadr = virt_to_phys((void *)info->screen);
 	framedesc->fidr = 0xda0;
-	framedesc->ldcmd = LCDC_CMD_SOFINT | LCDC_CMD_EOFINT | LCDC_CMD_FRM_EN;
+	framedesc->ldcmd = LCDC_CMD_EOFINT | LCDC_CMD_FRM_EN;
 	framedesc->ldcmd |= BYTES_PER_PANEL / 4;
 	framedesc->offsize = 0;
 	framedesc->page_width = 0;
@@ -541,6 +545,82 @@ static void slcd_set_mcu_register(struct jzfb_config_info *info,
 	slcd_send_mcu_data(info, data);
 }
 
+void dump_lcd_reg()
+{
+	int tmp;
+	printf("LCDC_CFG: \t0x%08x\n", reg_read(LCDC_CFG));
+	printf("LCDC_CTRL:\t0x%08x\n", reg_read(LCDC_CTRL));
+	printf("LCDC_STATE:\t0x%08x\n", reg_read(LCDC_STATE));
+	printf("LCDC_OSDC:\t0x%08x\n", reg_read(LCDC_OSDC));
+	printf("LCDC_OSDCTRL:\t0x%08x\n", reg_read(LCDC_OSDCTRL));
+	printf("LCDC_OSDS:\t0x%08x\n", reg_read(LCDC_OSDS));
+	printf("LCDC_BGC0:\t0x%08x\n", reg_read(LCDC_BGC0));
+	printf("LCDC_BGC1:\t0x%08x\n", reg_read(LCDC_BGC1));
+	printf("LCDC_KEY0:\t0x%08x\n", reg_read(LCDC_KEY0));
+	printf("LCDC_KEY1:\t0x%08x\n", reg_read(LCDC_KEY1));
+	printf("LCDC_ALPHA:\t0x%08x\n", reg_read(LCDC_ALPHA));
+	printf("==================================\n");
+	tmp = reg_read(LCDC_VAT);
+	printf("LCDC_VAT: \t0x%08x, HT = %ld, VT = %ld\n", tmp,
+	       (tmp & LCDC_VAT_HT_MASK) >> LCDC_VAT_HT_BIT,
+	       (tmp & LCDC_VAT_VT_MASK) >> LCDC_VAT_VT_BIT);
+	tmp = reg_read(LCDC_DAH);
+	printf("LCDC_DAH: \t0x%08x, HDS = %ld, HDE = %ld\n", tmp,
+	       (tmp & LCDC_DAH_HDS_MASK) >> LCDC_DAH_HDS_BIT,
+	       (tmp & LCDC_DAH_HDE_MASK) >> LCDC_DAH_HDE_BIT);
+	tmp = reg_read(LCDC_DAV);
+	printf("LCDC_DAV: \t0x%08x, VDS = %ld, VDE = %ld\n", tmp,
+	       (tmp & LCDC_DAV_VDS_MASK) >> LCDC_DAV_VDS_BIT,
+	       (tmp & LCDC_DAV_VDE_MASK) >> LCDC_DAV_VDE_BIT);
+	tmp = reg_read(LCDC_HSYNC);
+	printf("LCDC_HSYNC:\t0x%08x, HPS = %ld, HPE = %ld\n", tmp,
+	       (tmp & LCDC_HSYNC_HPS_MASK) >> LCDC_HSYNC_HPS_BIT,
+	       (tmp & LCDC_HSYNC_HPE_MASK) >> LCDC_HSYNC_HPE_BIT);
+	tmp = reg_read(LCDC_VSYNC);
+	printf("LCDC_VSYNC:\t0x%08x, VPS = %ld, VPE = %ld\n", tmp,
+	       (tmp & LCDC_VSYNC_VPS_MASK) >> LCDC_VSYNC_VPS_BIT,
+	       (tmp & LCDC_VSYNC_VPE_MASK) >> LCDC_VSYNC_VPE_BIT);
+	printf("==================================\n");
+	printf("LCDC_XYP0:\t0x%08x\n", reg_read(LCDC_XYP0));
+	printf("LCDC_XYP1:\t0x%08x\n", reg_read(LCDC_XYP1));
+	printf("LCDC_SIZE0:\t0x%08x\n", reg_read(LCDC_SIZE0));
+	printf("LCDC_SIZE1:\t0x%08x\n", reg_read(LCDC_SIZE1));
+	printf("LCDC_RGBC \t0x%08x\n", reg_read(LCDC_RGBC));
+	printf("LCDC_PS:  \t0x%08x\n", reg_read(LCDC_PS));
+	printf("LCDC_CLS: \t0x%08x\n", reg_read(LCDC_CLS));
+	printf("LCDC_SPL: \t0x%08x\n", reg_read(LCDC_SPL));
+	printf("LCDC_REV: \t0x%08x\n", reg_read(LCDC_REV));
+	printf("LCDC_IID: \t0x%08x\n", reg_read(LCDC_IID));
+	printf("==================================\n");
+	printf("LCDC_DA0: \t0x%08x\n", reg_read(LCDC_DA0));
+	printf("LCDC_SA0: \t0x%08x\n", reg_read(LCDC_SA0));
+	printf("LCDC_FID0:\t0x%08x\n", reg_read(LCDC_FID0));
+	printf("LCDC_CMD0:\t0x%08x\n", reg_read(LCDC_CMD0));
+	printf("LCDC_OFFS0:\t0x%08x\n", reg_read(LCDC_OFFS0));
+	printf("LCDC_PW0: \t0x%08x\n", reg_read(LCDC_PW0));
+	printf("LCDC_CNUM0:\t0x%08x\n", reg_read(LCDC_CNUM0));
+	printf("LCDC_DESSIZE0:\t0x%08x\n", reg_read(LCDC_DESSIZE0));
+	printf("==================================\n");
+	printf("LCDC_DA1: \t0x%08x\n", reg_read(LCDC_DA1));
+	printf("LCDC_SA1: \t0x%08x\n", reg_read(LCDC_SA1));
+	printf("LCDC_FID1:\t0x%08x\n", reg_read(LCDC_FID1));
+	printf("LCDC_CMD1:\t0x%08x\n", reg_read(LCDC_CMD1));
+	printf("LCDC_OFFS1:\t0x%08x\n", reg_read(LCDC_OFFS1));
+	printf("LCDC_PW1: \t0x%08x\n", reg_read(LCDC_PW1));
+	printf("LCDC_CNUM1:\t0x%08x\n", reg_read(LCDC_CNUM1));
+	printf("LCDC_DESSIZE1:\t0x%08x\n", reg_read(LCDC_DESSIZE1));
+	printf("==================================\n");
+	printf("LCDC_PCFG:\t0x%08x\n", reg_read(LCDC_PCFG));
+	printf("==================================\n");
+	printf("SLCDC_CFG: \t0x%08x\n", reg_read(SLCDC_CFG));
+	printf("SLCDC_CTRL: \t0x%08x\n", reg_read(SLCDC_CTRL));
+	printf("SLCDC_STATE: \t0x%08x\n", reg_read(SLCDC_STATE));
+	printf("SLCDC_DATA: \t0x%08x\n", reg_read(SLCDC_DATA));
+	printf("SLCDC_CFG_NEW: \t0x%08x\n", reg_read(SLCDC_CFG_NEW));
+	printf("SLCDC_WTIME: \t0x%08x\n", reg_read(SLCDC_WTIME));
+	printf("SLCDC_TAS: \t0x%08x\n", reg_read(SLCDC_TAS));
+}
+
 void lcd_enable(void)
 {
 	unsigned ctrl;
@@ -551,7 +631,7 @@ void lcd_enable(void)
 		ctrl |= LCDC_CTRL_ENA;
 		ctrl &= ~LCDC_CTRL_DIS;
 		reg_write(LCDC_CTRL, ctrl);
-		serial_puts("dump_lcdc_registers\n");
+		serial_puts("enable lcdc \n");
 	}
 	lcd_enable_state = 1;
 }
@@ -635,6 +715,8 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	unsigned cfg, ctrl;
 	unsigned size0, size1;
 	unsigned smart_cfg = 0, smart_ctrl = 0;;
+	uint32_t smart_new_cfg = 0;
+	uint32_t smart_wtime = 0, smart_tas = 0;
 	unsigned pcfg;
 
 	hds = mode->hsync_len + mode->left_margin;
@@ -648,7 +730,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	/*
 	 * configure LCDC config register
 	 * use 8words descriptor, not use palette
-	 * ! JZ4780 JZ4780 NOT SUPPORT PALETTE FUNCTION, DO NOT SET LCDC_CFG_PALBP(BIT27), IT CAUGHT BPP16 COLOR ERROR.
+	 * ! JZ4785 JZ4785 NOT SUPPORT PALETTE FUNCTION, DO NOT SET LCDC_CFG_PALBP(BIT27), IT CAUGHT BPP16 COLOR ERROR.
 	 */
 	cfg = LCDC_CFG_NEWDES | LCDC_CFG_RECOVER;
 	cfg |= info->lcd_type;
@@ -685,8 +767,38 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 			smart_cfg |= SLCDC_CFG_CS_ACTIVE_HIGH;
 		/* SLCD DMA mode select 0 */
 		smart_ctrl = SLCDC_CTRL_DMA_MODE | SLCDC_CTRL_DMA_EN;
+		smart_new_cfg |= lcd_config_info.smart_config.data_new_width |
+		    lcd_config_info.smart_config.data_new_times;
+
+		if (lcd_config_info.smart_config.newcfg_6800_md)
+			smart_new_cfg |= SLCDC_NEW_CFG_6800_MD;
+		if (lcd_config_info.smart_config.newcfg_datatx_type
+		    && lcd_config_info.smart_config.newcfg_cmdtx_type)
+			smart_new_cfg |=
+			    SLCDC_NEW_CFG_DTYPE_SERIAL |
+			    SLCDC_NEW_CFG_CTYPE_SERIAL;
+		if (lcd_config_info.smart_config.newcfg_cmd_9bit)
+			smart_new_cfg |= SLCDC_NEW_CFG_CMD_9BIT;
+
+		smart_wtime = 0;
+		smart_tas = 0;
 	}
 	if (info->lcd_type != LCD_TYPE_LCM) {
+/*		if (mode->flag & FB_MODE_IS_VGA) {
+			if ((hde + 8) <= ht)
+				hde += 8;
+			else if ((hde + 1) <= ht)
+				hde += 1;
+			//
+			//   if(vds > 2 && (vde + 2) <= vt){
+			 //  vds -= 2;
+			  // vde += 2;
+			  // }
+			 //
+			info->fix.line_length = info->var.bits_per_pixel *
+			    ALIGN(mode->xres, PIXEL_ALIGN) >> 3;
+		}
+*/
 		reg_write(LCDC_VAT, (ht << 16) | vt);
 		reg_write(LCDC_DAH, (hds << 16) | hde);
 		reg_write(LCDC_DAV, (vds << 16) | vde);
@@ -694,6 +806,16 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		reg_write(LCDC_HSYNC, mode->hsync_len);
 		reg_write(LCDC_VSYNC, mode->vsync_len);
 	} else {
+#ifdef CONFIG_JZ_MIPI_DSI
+		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG, 0xffffff0);
+		lcd_panel_init(dsi, dsi->cmd_list, dsi->cmd_packet_len);
+		smart_cfg |= 1 << 16;
+		smart_new_cfg |= 4 << 13;
+		smart_ctrl |= 1 << 7 | 1 << 6;
+		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG, 1);
+		/*0:enable video mode, 1:enable cmd mode */
+		mipi_dsih_hal_gen_set_mode(dsi, 1);
+#endif
 		reg_write(LCDC_VAT, (mode->xres << 16) | mode->yres);
 		reg_write(LCDC_DAH, mode->xres);
 		reg_write(LCDC_DAV, mode->yres);
@@ -703,6 +825,10 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 
 		reg_write(SLCDC_CFG, smart_cfg);
 		reg_write(SLCDC_CTRL, smart_ctrl);
+
+		reg_write(SLCDC_CFG_NEW, smart_new_cfg);
+		reg_write(SLCDC_WTIME, smart_wtime);
+		reg_write(SLCDC_TAS, smart_tas);
 	}
 
 	reg_write(LCDC_CFG, cfg);
@@ -719,6 +845,8 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	size1 = size0;
 	reg_write(LCDC_SIZE0, size0);
 	reg_write(LCDC_SIZE1, size1);
+	printf("size0 = %08x, size1 = %08x\n ", reg_read(LCDC_SIZE0),
+	       reg_read(LCDC_SIZE1));
 
 	jzfb_config_fg0(info);
 
@@ -727,6 +855,19 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	if (info->lcd_type == LCD_TYPE_LCM) {
 		jzfb_slcd_mcu_init(info);
 	}
+#ifdef CONFIG_JZ_MIPI_DSI
+	else {
+		cfg |= 1 << 24;
+		reg_write(LCDC_CFG, cfg);
+		smart_ctrl = reg_read(SLCDC_CTRL);
+
+		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG, 0xffffff0);
+		lcd_panel_init(dsi, dsi->cmd_list, dsi->cmd_packet_len);
+		dsi->video_cfg(dsi);
+	}
+
+#endif
+
 	return 0;
 }
 
@@ -783,14 +924,12 @@ void lcd_ctrl_init(void *lcd_base)
 {
 	/* init registers base address */
 	lcd_config_info = jzfb1_init_data;
-#if defined(CONFIG_FB_JZ4780_LCDC0)
-	lcd_config_info.lcdbaseoff = 0;
-#elif defined(CONFIG_FB_JZ4780_LCDC1)
-	lcd_config_info.lcdbaseoff = LCDC1_BASE - LCDC0_BASE;
-#else
-	printf("error, LCDC init data is NULL\n");
-	return;
+#ifdef CONFIG_JZ_MIPI_DSI
+	struct dsi_device *dsi = &jz_dsi;
 #endif
+	board_set_lcd_power_on();
+	lcd_config_info.lcdbaseoff = 0;
+
 	lcd_close_backlight();
 	panel_pin_init();
 
@@ -813,8 +952,9 @@ void lcd_ctrl_init(void *lcd_base)
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);
-	puts("80");
+	puts("80\n");
 #endif
+
 	return;
 }
 

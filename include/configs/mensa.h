@@ -115,6 +115,8 @@
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 #define CONFIG_LCD_LOGO
+#define CONFIG_RLE_LCD_LOGO
+/*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
@@ -236,7 +238,8 @@
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
-/* #define CONFIG_CMD_BATTERYDET */  	/* detect battery and show charge logo */
+#define CONFIG_CMD_BATTERYDET  	/* detect battery and show charge logo */
+#define CONFIG_CMD_RLE	/*display the logo using rle command*/
 
 /* USB */
 #ifdef CONFIG_BOOT_ANDROID

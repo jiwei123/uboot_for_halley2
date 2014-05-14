@@ -567,11 +567,7 @@ static int lcd_init(void *lcdbase)
 	lcd_line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
 	lcd_is_enabled = 1;
 
-#ifdef CONFIG_CMD_BATTERYDET
-	lcd_clear_black();
-#else
 	lcd_clear();
-#endif
 	lcd_enable();
 
 	/* Initialize the console */

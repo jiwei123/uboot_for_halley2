@@ -3,7 +3,7 @@
 #include <config.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
-#include <asm/lcd/byd_8991.h>
+#include <jz_lcd/byd_8991.h>
 
 //#define DEBUG
 

@@ -1,5 +1,5 @@
 /*
- * Ingenic mensa lcd code
+ * Ingenic f4785 lcd code
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
@@ -19,17 +19,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-
-#include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz4775_lcd.h>
+#include <jz_lcd/jz_lcd_v1_2.h>
 
 void board_set_lcd_power_on(void)
 {
-	char *id = "OUT7";
-	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_set_voltage(lcd_regulator, 3300000, 3300000);
-	regulator_enable(lcd_regulator);
+	gpio_direction_output(CONFIG_GPIO_LCD_POWERON, 1);
 }
 
 struct jzfb_config_info jzfb1_init_data = {
@@ -61,7 +56,7 @@ struct jzfb_config_info jzfb1_init_data = {
 #ifdef CONFIG_VIDEO_BYD_BM8766U
 #include <jz_lcd/byd_bm8766u.h>
 struct byd_bm8766u_data byd_bm8766u_pdata = {
-	.gpio_lcd_disp = GPIO_PB(30),
+	.gpio_lcd_disp = GPIO_PD(11),
 	.gpio_lcd_de = 0,	//GPIO_PC(9),   /* chose sync mode */
 	.gpio_lcd_vsync = 0,	//GPIO_PC(19),
 	.gpio_lcd_hsync = 0,	//GPIO_PC(18),
@@ -71,7 +66,7 @@ struct byd_bm8766u_data byd_bm8766u_pdata = {
 #ifdef CONFIG_VIDEO_BM347WV_F_8991FTGF
 #include <jz_lcd/byd_8991.h>
 struct byd_8991_data byd_8991_pdata = {
-	.gpio_lcd_disp = GPIO_PB(30),
+	.gpio_lcd_disp = GPIO_PD(11),
 	.gpio_lcd_de = 0,
 	.gpio_lcd_vsync = 0,
 	.gpio_lcd_hsync = 0,

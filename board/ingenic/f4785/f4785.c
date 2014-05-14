@@ -1,5 +1,5 @@
 /*
- * Ingenic mensa setup code
+ * Ingenic f4785 setup code
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
@@ -127,7 +127,7 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: mensa (Ingenic XBurst JZ4775 SoC)\n");
+	puts("Board: f4785 (Ingenic XBurst JZ4785 SoC)\n");
 	return 0;
 }
 

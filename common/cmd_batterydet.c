@@ -32,6 +32,7 @@
 #include <asm/arch/sadc.h>
 #include <lcd.h>
 #include <rle_charge_logo.h>
+#include <malloc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!

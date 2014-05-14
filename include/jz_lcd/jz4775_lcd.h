@@ -1,5 +1,5 @@
 /*
- * JZ4780 common routines
+ * JZ4775 common routines
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
@@ -20,17 +20,16 @@
  * MA 02111-1307 USA
  */
 
-
-#ifndef __JZ4780_LCD_H__
-#define __JZ4780_LCD_H__
+#ifndef __JZ4775_LCD_H__
+#define __JZ4775_LCD_H__
 
 #include <common.h>
 #include <linux/types.h>
 
-void lcd_display_pin_init(void);
-void lcd_display_on(void);
-void lcd_display_off(void);
-void set_lcd_power_on(void);
+void panel_pin_init(void);
+void panel_power_on(void);
+void panel_power_off(void);
+void board_set_lcd_power_on(void);
 #if PWM_BACKLIGHT_CHIP
 void lcd_set_backlight_level(int num);
 void lcd_close_backlight(void);
@@ -42,17 +41,15 @@ void lcd_close_backlight(void);
 #endif
 
 struct jz_fb_dma_descriptor {
-	u_long	fdadr;		/* Frame descriptor address register */
-	u_long	fsadr;		/* Frame source address register */
-	u_long	fidr;		/* Frame ID register */
-	u_long	ldcmd;		/* Command register */
-	u_long	offsize;       	/* Stride Offsize(in word) */
-	u_long	page_width; 	/* Stride Pagewidth(in word) */
-	u_long	cmd_num; 	/* Command Number(for SLCD) */
-	u_long	desc_size; 	/* Foreground Size */
+	u_long fdadr;		/* Frame descriptor address register */
+	u_long fsadr;		/* Frame source address register */
+	u_long fidr;		/* Frame ID register */
+	u_long ldcmd;		/* Command register */
+	u_long offsize;		/* Stride Offsize(in word) */
+	u_long page_width;	/* Stride Pagewidth(in word) */
+	u_long cmd_num;		/* Command Number(for SLCD) */
+	u_long desc_size;	/* Foreground Size */
 };
-
-
 
 #ifdef CONFIG_TWO_FRAME_BUFFERS
 #define NUM_FRAME_BUFFERS 2
@@ -67,19 +64,19 @@ struct jz_fb_dma_descriptor {
 
 #define PICOS2KHZ(a) (1000000000/(a))
 #define KHZ2PICOS(a) (1000000000/(a))
-#define FB_SYNC_HOR_HIGH_ACT    1   /* horizontal sync high active  */
-#define FB_SYNC_VERT_HIGH_ACT   2   /* vertical sync high active    */
-#define FB_SYNC_EXT		4   /* external sync        */
-#define FB_SYNC_COMP_HIGH_ACT   8   /* composite sync high active   */
-#define FB_SYNC_BROADCAST	16  /* broadcast video timings      */
+#define FB_SYNC_HOR_HIGH_ACT    1	/* horizontal sync high active  */
+#define FB_SYNC_VERT_HIGH_ACT   2	/* vertical sync high active    */
+#define FB_SYNC_EXT		4	/* external sync        */
+#define FB_SYNC_COMP_HIGH_ACT   8	/* composite sync high active   */
+#define FB_SYNC_BROADCAST	16	/* broadcast video timings      */
 /* vtotal = 144d/288n/576i => PAL  */
 /* vtotal = 121d/242n/484i => NTSC */
-#define FB_SYNC_ON_GREEN	32  /* sync on green */
+#define FB_SYNC_ON_GREEN	32	/* sync on green */
 
-#define FB_VMODE_NONINTERLACED  0   /* non interlaced */
-#define FB_VMODE_INTERLACED	1   /* interlaced	*/
-#define FB_VMODE_DOUBLE		2   /* double scan */
-#define FB_VMODE_ODD_FLD_FIRST	4   /* interlaced: top line first */
+#define FB_VMODE_NONINTERLACED  0	/* non interlaced */
+#define FB_VMODE_INTERLACED	1	/* interlaced       */
+#define FB_VMODE_DOUBLE		2	/* double scan */
+#define FB_VMODE_ODD_FLD_FIRST	4	/* interlaced: top line first */
 #define FB_VMODE_MASK		255
 struct jzfb_config_info lcd_config_info;
 enum jzfb_format_order {
@@ -111,58 +108,58 @@ enum data_format {
 
 /* Output data start-edge tuning in 1x clock output mode. TXCTRL: 15-13 bit */
 enum data_start_edge {
-        START_EDGE_0 = 0x0, /*0 of T7X*/
-        START_EDGE_1, /*1 of T7X*/
-        START_EDGE_2, /*2 of T7X*/
-        START_EDGE_3, /*3 of T7X*/
-        START_EDGE_4, /*4 of T7X*/
-        START_EDGE_5, /*5 of T7X*/
-        START_EDGE_6, /*6 of T7X*/
-        START_EDGE_7, /*7 of T7X*/
+	START_EDGE_0 = 0x0,	/*0 of T7X */
+	START_EDGE_1,		/*1 of T7X */
+	START_EDGE_2,		/*2 of T7X */
+	START_EDGE_3,		/*3 of T7X */
+	START_EDGE_4,		/*4 of T7X */
+	START_EDGE_5,		/*5 of T7X */
+	START_EDGE_6,		/*6 of T7X */
+	START_EDGE_7,		/*7 of T7X */
 };
 
 /* LVDS controller working mode */
 enum operate_mode {
 	LVDS_7X_CLKOUT = (1 << 30) | (1 << 29) | (1 << 12) | (1 << 0),
 	LVDS_1X_CLKOUT = (1 << 30) | (1 << 29) | (1 << 0),
-        CMOS_OUTPUT = (1 << 30) | (1 << 29) | (1 << 11) | (1 << 1) | (1 << 0),
+	CMOS_OUTPUT = (1 << 30) | (1 << 29) | (1 << 11) | (1 << 1) | (1 << 0),
 	OUTPUT_HI_Z = (1 << 30) | (1 << 29) | (0 << 0),
 	OUTPUT_ZERO = (1 << 30) | (1 << 29) | (1 << 1) | (0 << 0),
 };
 
 /* LVDS_TX Input Clock Edge-Delay Control. TXCTRL: 10-8 bit */
 enum input_edge_delay {
-        DELAY_0_1NS = 0x0, /*0.1ns*/
-        DELAY_0_2NS, /*0.2ns*/
-        DELAY_0_5NS, /*0.5ns*/
-        DELAY_1NS, /*1ns*/
-        DELAY_1_5NS, /*1.5ns*/
-        DELAY_2NS, /*2.0ns*/
-        DELAY_2_5NS, /*2.5ns*/
-        DELAY_3NS, /*3.0ns*/
+	DELAY_0_1NS = 0x0,	/*0.1ns */
+	DELAY_0_2NS,		/*0.2ns */
+	DELAY_0_5NS,		/*0.5ns */
+	DELAY_1NS,		/*1ns */
+	DELAY_1_5NS,		/*1.5ns */
+	DELAY_2NS,		/*2.0ns */
+	DELAY_2_5NS,		/*2.5ns */
+	DELAY_3NS,		/*3.0ns */
 };
 
 /* LVDS_TX Output Amplitude Control. TXCTRL: 7 6; 5-3 2 bit */
 enum output_amplitude {
-       VOD_FIX_200MV  = 0xfe,  /* fix output 200mv, 0xfe is used as a flag*/
-       VOD_FIX_350MV  = 0xff,  /* fix output 350mv, 0xff is used as a flag*/
+	VOD_FIX_200MV = 0xfe,	/* fix output 200mv, 0xfe is used as a flag */
+	VOD_FIX_350MV = 0xff,	/* fix output 350mv, 0xff is used as a flag */
 
-       VOD_150MV  = 0x0,/* 150mv is swing */
-       VOD_200MV = 0x2, /* 200mv is swing */
-       VOD_250MV = 0x4, /* 250mv is swing */
-       VOD_300MV = 0x6, /* 300mv is swing */
-       VOD_350MV = 0x8, /* 350mv is swing */
-       VOD_400MV = 0xA, /* 400mv is swing */
-       VOD_500MV = 0xC, /* 500mv is swing */
-       VOD_600MV = 0xE, /* 600mv is swing */
-       VOD_650MV = 0x1, /* 650mv is swing */
-       VOD_700MV = 0x3, /* 700mv is swing */
-       VOD_750MV = 0x5, /* 750mv is swing */
-       VOD_800MV = 0x7, /* 800mv is swing */
-       VOD_850MV = 0x9, /* 850mv is swing */
-       VOD_900MV = 0xB, /* 900mv is swing */
-       VOD_1000MV = 0xD, /* 1000mv is swing */
-       VOD_1100MV = 0xF, /* 1100mv is swing */
+	VOD_150MV = 0x0,	/* 150mv is swing */
+	VOD_200MV = 0x2,	/* 200mv is swing */
+	VOD_250MV = 0x4,	/* 250mv is swing */
+	VOD_300MV = 0x6,	/* 300mv is swing */
+	VOD_350MV = 0x8,	/* 350mv is swing */
+	VOD_400MV = 0xA,	/* 400mv is swing */
+	VOD_500MV = 0xC,	/* 500mv is swing */
+	VOD_600MV = 0xE,	/* 600mv is swing */
+	VOD_650MV = 0x1,	/* 650mv is swing */
+	VOD_700MV = 0x3,	/* 700mv is swing */
+	VOD_750MV = 0x5,	/* 750mv is swing */
+	VOD_800MV = 0x7,	/* 800mv is swing */
+	VOD_850MV = 0x9,	/* 850mv is swing */
+	VOD_900MV = 0xB,	/* 900mv is swing */
+	VOD_1000MV = 0xD,	/* 1000mv is swing */
+	VOD_1100MV = 0xF,	/* 1100mv is swing */
 };
 
 /* PLL post divider control bits A */
@@ -175,29 +172,29 @@ enum pll_post_divider {
 
 /*Note: This may not be the correct corresponding*/
 enum pll_charge_pump {
-        CHARGE_PUMP_4UA = 0x7, /*4uA*/
-        CHARGE_PUMP_2UA = 0x3, /*2uA, N_fbk:32-40 */
-        CHARGE_PUMP_2_5UA = 0x2, /*2.5uA N_fbk:42-60 */
-        CHARGE_PUMP_3_3UA = 0x1, /*3.3uA N_fbk:62-80 */
-        CHARGE_PUMP_5UA = 0x6, /*5uA   N_fbk:82-110 */
-	CHARGE_PUMP_6_7_UA = 0x5, /*6.7uA N_fbk:112-158 */
-        CHARGE_PUMP_10UA = 0x4, /*10uA  N_fbk:160-258 */
+	CHARGE_PUMP_4UA = 0x7,	/*4uA */
+	CHARGE_PUMP_2UA = 0x3,	/*2uA, N_fbk:32-40 */
+	CHARGE_PUMP_2_5UA = 0x2,	/*2.5uA N_fbk:42-60 */
+	CHARGE_PUMP_3_3UA = 0x1,	/*3.3uA N_fbk:62-80 */
+	CHARGE_PUMP_5UA = 0x6,	/*5uA   N_fbk:82-110 */
+	CHARGE_PUMP_6_7_UA = 0x5,	/*6.7uA N_fbk:112-158 */
+	CHARGE_PUMP_10UA = 0x4,	/*10uA  N_fbk:160-258 */
 };
 
 /*PLL KVCO (F_vco)*/
 enum pll_vco_gain {
-        VCO_GAIN_900M_1G = 0x0, /* 150M-400M VCO Frequency Range */
-        VCO_GAIN_650M_900M = 0x1, /* 400M-650M VCO Frequency Range */
-        VCO_GAIN_400M_650M = 0x2, /* 650M-900M VCO Frequency Range */
-        VCO_GAIN_150M_400M = 0x3, /* 900M-1G VCO Frequency Range */
+	VCO_GAIN_900M_1G = 0x0,	/* 150M-400M VCO Frequency Range */
+	VCO_GAIN_650M_900M = 0x1,	/* 400M-650M VCO Frequency Range */
+	VCO_GAIN_400M_650M = 0x2,	/* 650M-900M VCO Frequency Range */
+	VCO_GAIN_150M_400M = 0x3,	/* 900M-1G VCO Frequency Range */
 };
 
 /* vco output current */
 enum pll_vco_biasing_current {
-	VCO_BIASING_1_25UA = 0x0, /* 1.25uA*/
-        VCO_BIASING_2_5UA = 0x1, /* 2.5uA*/
-        VCO_BIASING_3_75UA = 0x2, /* 3.75uA*/
-        VCO_BIASING_5UA = 0x3, /* 5uA*/
+	VCO_BIASING_1_25UA = 0x0,	/* 1.25uA */
+	VCO_BIASING_2_5UA = 0x1,	/* 2.5uA */
+	VCO_BIASING_3_75UA = 0x2,	/* 3.75uA */
+	VCO_BIASING_5UA = 0x3,	/* 5uA */
 };
 
 /* Internal LDO output voltage configure */
@@ -233,10 +230,10 @@ struct lvds_txctrl {
 struct lvds_txpll0 {
 	unsigned ssc_enable:1;
 	unsigned ssc_mode_center_spread:1;
-	enum pll_post_divider post_divider; /* N_out : 1-4 */
-	unsigned int feedback_divider; /* N_fbk : 8-260 */
+	enum pll_post_divider post_divider;	/* N_out : 1-4 */
+	unsigned int feedback_divider;	/* N_fbk : 8-260 */
 	unsigned input_divider_bypass:1;
-	unsigned int input_divider; /* N_in : 2-34 */
+	unsigned int input_divider;	/* N_in : 2-34 */
 };
 
 /*
@@ -250,8 +247,8 @@ struct lvds_txpll1 {
 	enum pll_charge_pump charge_pump;
 	enum pll_vco_gain vco_gain;
 	enum pll_vco_biasing_current vco_biasing_current;
-        unsigned int sscn;       /* 3-130, if ssc enable */
-        unsigned int ssc_counter;
+	unsigned int sscn;	/* 3-130, if ssc enable */
+	unsigned int ssc_counter;
 };
 
 /* struct lvds_txectrl - used to configure LVDS TXECTRL register */
@@ -304,8 +301,8 @@ struct smart_lcd_data_table {
 };
 
 struct fb_videomode {
-	const char *name;   /* optional */
-	u32 refresh;        /* optional */
+	const char *name;	/* optional */
+	u32 refresh;		/* optional */
 	u32 xres;
 	u32 yres;
 	u32 pixclock;
@@ -323,38 +320,38 @@ struct fb_videomode {
 struct jzfb_config_info {
 
 	int num_modes;
-	struct fb_videomode *modes;		/* valid video modes */
+	struct fb_videomode *modes;	/* valid video modes */
 	enum jzfb_format_order fmt_order;	/* frame buffer pixel format order */
-	int lcdbaseoff;				/* lcd register base offset from LCD_BASE*/
+	int lcdbaseoff;		/* lcd register base offset from LCD_BASE */
 
-	enum jzfb_lcd_type lcd_type;		/* lcd type */
-	unsigned int bpp;			/* bits per pixel for the lcd */
-	unsigned pinmd:1;			/* 16bpp lcd data pin mapping. 0: LCD_D[15:0],1: LCD_D[17:10] LCD_D[8:1]*/
+	enum jzfb_lcd_type lcd_type;	/* lcd type */
+	unsigned int bpp;	/* bits per pixel for the lcd */
+	unsigned pinmd:1;	/* 16bpp lcd data pin mapping. 0: LCD_D[15:0],1: LCD_D[17:10] LCD_D[8:1] */
 
-	unsigned pixclk_falling_edge:1;		/* pixclk_falling_edge: pixel clock at falling edge */
-	unsigned date_enable_active_low:1;  	/* data enable active low */
+	unsigned pixclk_falling_edge:1;	/* pixclk_falling_edge: pixel clock at falling edge */
+	unsigned date_enable_active_low:1;	/* data enable active low */
 
-	unsigned lvds:1;			/* using LVDS controller. 0: not use, 1: use */
-	struct lvds_txctrl txctrl;		/* the configure of LVDS Transmitter Control Register */
-	struct lvds_txpll0 txpll0;		/* the configure of LVDS Transmitter's PLL Control Register 0 */
-	struct lvds_txpll1 txpll1;		/* the configure of LVDS Transmitter's PLL Control Register 1 */
-	struct lvds_txectrl txectrl;		/* the configure of LVDS Transmitter's Enhance Control */
+	unsigned lvds:1;	/* using LVDS controller. 0: not use, 1: use */
+	struct lvds_txctrl txctrl;	/* the configure of LVDS Transmitter Control Register */
+	struct lvds_txpll0 txpll0;	/* the configure of LVDS Transmitter's PLL Control Register 0 */
+	struct lvds_txpll1 txpll1;	/* the configure of LVDS Transmitter's PLL Control Register 1 */
+	struct lvds_txectrl txectrl;	/* the configure of LVDS Transmitter's Enhance Control */
 
 	struct {
-		enum smart_lcd_type smart_type;		/* smart lcd transfer type, 0: parrallel, 1: serial */
+		enum smart_lcd_type smart_type;	/* smart lcd transfer type, 0: parrallel, 1: serial */
 		enum smart_lcd_cwidth cmd_width;	/* smart lcd command width */
 		enum smart_lcd_dwidth data_width;	/* smart lcd data Width */
 
 		unsigned clkply_active_rising:1;	/* smart lcd clock polarity:
-												0: Active edge is Falling,1: Active edge is Rasing */
-		unsigned rsply_cmd_high:1;		/* smart lcd RS polarity.
-												0: Command_RS=0, Data_RS=1; 1: Command_RS=1, Data_RS=0 */
-		unsigned csply_active_high:1;		/* smart lcd CS Polarity.
-												0: Active level is low, 1: Active level is high */
-		unsigned long write_gram_cmd;		/* write graphic ram command */
-		unsigned bus_width;			/* bus width in bit */
-		unsigned int length_data_table;		/* array size of data_table */
-		struct smart_lcd_data_table *data_table;/* init data table */
+							   0: Active edge is Falling,1: Active edge is Rasing */
+		unsigned rsply_cmd_high:1;	/* smart lcd RS polarity.
+						   0: Command_RS=0, Data_RS=1; 1: Command_RS=1, Data_RS=0 */
+		unsigned csply_active_high:1;	/* smart lcd CS Polarity.
+						   0: Active level is low, 1: Active level is high */
+		unsigned long write_gram_cmd;	/* write graphic ram command */
+		unsigned bus_width;	/* bus width in bit */
+		unsigned int length_data_table;	/* array size of data_table */
+		struct smart_lcd_data_table *data_table;	/* init data table */
 	} smart_config;
 
 	unsigned dither_enable:1;	/* enable dither function: 1, disable dither function: 0 */
@@ -372,20 +369,20 @@ struct jzfb_config_info {
 		unsigned rev;	/* special_tft REV signal register setting */
 	} special_tft_config;
 
-	unsigned long	fdadr0;	/* physical address of frame/palette descriptor */
-	unsigned long	fdadr1;	/* physical address of frame descriptor */
+	unsigned long fdadr0;	/* physical address of frame/palette descriptor */
+	unsigned long fdadr1;	/* physical address of frame descriptor */
 
 	/* DMA descriptors */
-	struct	jz_fb_dma_descriptor *	dmadesc_fblow;
-	struct	jz_fb_dma_descriptor *	dmadesc_fbhigh;
-	struct	jz_fb_dma_descriptor *	dmadesc_palette;
-	struct	jz_fb_dma_descriptor *	dmadesc_cmd;
-	struct	jz_fb_dma_descriptor *	dmadesc_cmd_tmp;
+	struct jz_fb_dma_descriptor *dmadesc_fblow;
+	struct jz_fb_dma_descriptor *dmadesc_fbhigh;
+	struct jz_fb_dma_descriptor *dmadesc_palette;
+	struct jz_fb_dma_descriptor *dmadesc_cmd;
+	struct jz_fb_dma_descriptor *dmadesc_cmd_tmp;
 
-	unsigned long	screen;		/* address of frame buffer */
-	unsigned long	palette;	/* address of palette memory */
-	unsigned int	palette_size;
-	unsigned long	dma_cmd_buf;	/* address of dma command buffer */
+	unsigned long screen;	/* address of frame buffer */
+	unsigned long palette;	/* address of palette memory */
+	unsigned int palette_size;
+	unsigned long dma_cmd_buf;	/* address of dma command buffer */
 
 	void *par;
 };
@@ -394,4 +391,4 @@ int jzfb_get_controller_bpp(unsigned int);
 extern struct jzfb_config_info lcd_config_info;
 extern struct jzfb_config_info jzfb1_init_data;
 extern struct fb_videomode jzfb1_videomode;
-#endif /*__JZ4780_LCD_H__*/
+#endif /*__JZ4775_LCD_H__*/

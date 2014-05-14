@@ -1,9 +1,8 @@
  /*
- * JZ4775 BACKLIGHT
+ * JZ BACKLIGHT
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
- * Based on: xboot/boot/lcd/jz4775_lcd.c
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -26,7 +25,7 @@
 #include <asm/types.h>
 #include <asm/arch/tcu.h>
 #include <asm/arch/gpio.h>
-#include <asm/lcd/jz4780_lcd.h>
+
 
 /*
  * LCD backlight
@@ -114,6 +113,5 @@ void lcd_close_backlight(void)
 {
 		gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
 		gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
-	} while (0)
-
+}
 #endif

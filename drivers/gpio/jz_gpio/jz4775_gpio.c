@@ -67,7 +67,8 @@ static struct jz_gpio_func_def gpio_func[] = {
 #endif
 #endif
 
-#ifndef CONFIG_DISABLE_LVDS_FUNCTION
+#ifdef CONFIG_ENABLE_LVDS_FUNCTION
+	 { .port = GPIO_PORT_C, .func = GPIO_OUTPUT0, .pins = 0x0fffffff, }
 #else
 	{ .port = GPIO_PORT_C, .func = GPIO_FUNC_0, .pins = 0x0fffffff, },
 #endif

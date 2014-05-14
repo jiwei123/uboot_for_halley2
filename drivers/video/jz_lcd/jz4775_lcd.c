@@ -1,5 +1,5 @@
  /*
-  * JZ4780 LCDC DRIVER
+  * JZ4775 LCDC DRIVER
   *
   * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
   * Author: Huddy <hyli@ingenic.cn>
@@ -27,7 +27,7 @@
 #include <lcd.h>
 #include <asm/arch/lcdc.h>
 #include <asm/arch/gpio.h>
-#include <jz_lcd/jz4780_lcd.h>
+#include <jz_lcd/jz4775_lcd.h>
 
 int lcd_line_length;
 int lcd_color_fg;
@@ -270,7 +270,6 @@ int jzfb_get_controller_bpp(unsigned int bpp)
 	}
 }
 
-
 static void jzfb_config_fg0(struct jzfb_config_info *info)
 {
 	unsigned int rgb_ctrl, cfg;
@@ -301,7 +300,7 @@ static void jzfb_config_tft_lcd_dma(struct jzfb_config_info *info)
 	framedesc->fdadr = virt_to_phys((void *)info->dmadesc_fbhigh);
 	framedesc->fsadr = virt_to_phys((void *)info->screen);
 	framedesc->fidr = 0xda0;
-	framedesc->ldcmd = LCDC_CMD_SOFINT | LCDC_CMD_EOFINT | LCDC_CMD_FRM_EN;
+	framedesc->ldcmd = LCDC_CMD_EOFINT | LCDC_CMD_FRM_EN;
 	framedesc->ldcmd |= BYTES_PER_PANEL / 4;
 	framedesc->offsize = 0;
 	framedesc->page_width = 0;
@@ -447,6 +446,12 @@ static int jzfb_prepare_dma_desc(struct jzfb_config_info *info)
 	info->dmadesc_fbhigh =
 	    (struct jz_fb_dma_descriptor *)((unsigned long)info->palette -
 					    1 * 32);
+	info->dmadesc_cmd =
+	    (struct jz_fb_dma_descriptor *)((unsigned long)info->palette -
+					    3 * 32);
+	info->dmadesc_cmd_tmp =
+	    (struct jz_fb_dma_descriptor *)((unsigned long)info->palette -
+					    4 * 32);
 	if (info->lcd_type != LCD_TYPE_LCM) {
 		jzfb_config_tft_lcd_dma(info);
 	} else {
@@ -648,7 +653,6 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	/*
 	 * configure LCDC config register
 	 * use 8words descriptor, not use palette
-	 * ! JZ4780 JZ4780 NOT SUPPORT PALETTE FUNCTION, DO NOT SET LCDC_CFG_PALBP(BIT27), IT CAUGHT BPP16 COLOR ERROR.
 	 */
 	cfg = LCDC_CFG_NEWDES | LCDC_CFG_RECOVER;
 	cfg |= info->lcd_type;
@@ -783,14 +787,8 @@ void lcd_ctrl_init(void *lcd_base)
 {
 	/* init registers base address */
 	lcd_config_info = jzfb1_init_data;
-#if defined(CONFIG_FB_JZ4780_LCDC0)
 	lcd_config_info.lcdbaseoff = 0;
-#elif defined(CONFIG_FB_JZ4780_LCDC1)
-	lcd_config_info.lcdbaseoff = LCDC1_BASE - LCDC0_BASE;
-#else
-	printf("error, LCDC init data is NULL\n");
-	return;
-#endif
+
 	lcd_close_backlight();
 	panel_pin_init();
 
@@ -813,7 +811,6 @@ void lcd_ctrl_init(void *lcd_base)
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);
-	puts("80");
 #endif
 	return;
 }
