@@ -37,7 +37,10 @@
 DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
 #define RLE_LOGO_BASE_ADDR  (0x00000000)	//need to fixed!
-#define LOGO_CHARGE_NUM     (6)
+
+#define BATTERY_DEFAULT_MIN         (3600)
+#define BATTERY_DEFAULT_MAX         (4200)
+#define BATTERY_DEFAULT_SCALE       (100)
 /*
 extern void board_powerdown_device(void);
 */
@@ -71,6 +74,12 @@ static long slop = 0;
 static long cut = 0;
 static	unsigned char  *logo_addr;
 static	unsigned char  logo_id;
+
+static unsigned int battery_voltage_min;
+static unsigned int battery_voltage_max;
+static unsigned int battery_voltage_scale;
+
+
 
 static void lcd_close_backlight(void)
 {
@@ -241,7 +250,7 @@ static int ppreset_occurred(void)
 	return (rtc_read_reg(RTC_HWRSR) & RTC_HWRSR_PPR);
 }
 
-int jz_pm_do_hibernate(void)
+static int jz_pm_do_hibernate(void)
 {
 	int a = 1000;
 	printf("jz_do_hibernate...\n");
@@ -277,7 +286,7 @@ int jz_pm_do_hibernate(void)
 	return 0;
 }
 
-void jz_pm_do_idle(void)
+static void jz_pm_do_idle(void)
 {
 	/* set wait to sleep */
 	unsigned int regval;
@@ -396,7 +405,7 @@ static void bat_voltage_filter(unsigned int *voltage)
 	return;
 }
 
-unsigned int read_battery_voltage(void)
+static unsigned int read_battery_voltage(void)
 {
 	unsigned int voltage = 0;
 	int min = 0xffff, max = 0, tmp;
@@ -493,34 +502,36 @@ static int battery_is_low(void)
 	if (voltage <= LOW_BATTERY_MIN)
 		return 1;
 #else
-	if (voltage <= 3600)
+	if (voltage <= battery_voltage_min)
 		return 1;
 #endif
 	else
 		return 0;
 }
 
-void * malloc_charge_logo(int buf_size)
+static void * malloc_charge_logo(int buf_size)
 {
 	void *addr;
-	addr=malloc(buf_size * LOGO_CHARGE_NUM);
-	memset(addr, 0x00, buf_size * LOGO_CHARGE_NUM);
+	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
+	addr=malloc(buf_size * logo_charge_num);
+	memset(addr, 0x00, buf_size * logo_charge_num);
 	return addr;
 }
 
-void free_logo(void *addr)
+static void free_charge_logo(void *addr)
 {
 	free(addr);
 }
 
-void fb_fill(int *logo_buf, int *fb_addr, int count)
+static void fb_fill(void *logo_addr, void *fb_addr, int count)
 {
 	//memcpy(logo_buf, fb_addr, count);
 	int i;
-	int *dest_addr = fb_addr;
+	int *dest_addr = (int *)fb_addr;
+	int *src_addr = (int *)logo_addr;
 	for(i = 0; i < count; i = i + 4){
-		*dest_addr =  *logo_buf;
-		logo_buf++;
+		*dest_addr =  *src_addr;
+		src_addr++;
 		dest_addr++;
 	}
 }
@@ -532,11 +543,13 @@ static int show_charge_logo_rle(int rle_num)
 	int vm_height = panel_info.vl_row;
 	int bpp = NBITS(panel_info.vl_bpix);
 	int buf_size = vm_height * vm_width * bpp / 8;
+	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
 
-	if (rle_num < 0 && rle_num > 6)
+
+	if (rle_num < 0 && rle_num > logo_charge_num)
 		return -EINVAL;
 	//rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
-	if(logo_id != LOGO_CHARGE_NUM ){
+	if(logo_id < logo_charge_num ){
 		if(logo_addr == NULL) {
 			logo_addr = (unsigned char *)malloc_charge_logo(buf_size);
 			if(logo_addr == NULL){
@@ -564,10 +577,10 @@ static int voltage_to_rle_num(void)
 	unsigned int voltage;
 	int rle_num_base;
 	voltage = read_battery_voltage();
-	if (voltage < 3600) {
+	if (voltage < battery_voltage_min) {
 		rle_num_base = 0;
-	} else if (voltage < 4200) {
-		rle_num_base = (voltage - 3600) / 100 - 1;
+	} else if (voltage < battery_voltage_max) {
+		rle_num_base = (voltage - battery_voltage_min) / battery_voltage_scale - 1;
 	} else {
 		rle_num_base = 5;
 	}
@@ -586,6 +599,7 @@ static void show_charging_logo(void)
 	int rle_num_base = 0;
 	unsigned long start_time;
 	unsigned long timeout = FLASH_INTERVAL_TIME;
+	unsigned int charge_logo_num = (battery_voltage_max - battery_voltage_min) / battery_voltage_scale;
 
 	/* Shut some modules power down,cdma,gsm e.g. */
 	/* board_powerdown_device(); */
@@ -597,7 +611,6 @@ static void show_charging_logo(void)
 	show_flash = 1;
 
 	lcd_clear_black();
-
 	while (1) {
 		if (kpressed == 0) {
 			kpressed = keys_pressed();
@@ -633,7 +646,7 @@ static void show_charging_logo(void)
 			mdelay(1000);
 			kpressed = 0;
 			rle_num++;
-			if (rle_num >= 6)
+			if (rle_num >= charge_logo_num)
 				rle_num = rle_num_base;
 
 			timeout += FLASH_INTERVAL_TIME;
@@ -660,12 +673,11 @@ static void show_battery_low_logo(void)
 	lcd_clear_black();
 	show_charge_logo_rle(0);
 	mdelay(5000);
-	lcd_close_backlight();
+	lcd_lose_backlight();
 }
 
-void battery_detect(void)
+static void battery_detect(void)
 {
-
 	if (charge_detect()) {
 		show_charging_logo();
 	} else if (battery_is_low()) {
@@ -676,13 +688,47 @@ void battery_detect(void)
 	}
 
 }
+static int  voltage_argument_init(int argc, char *const argv[])
+{
+	if(argc == 1) {
+#ifdef CONFIG_BATTERY_VOLTAGE_MIN
+		battery_voltage_min = CONFIG_BATTERY_VOLTAGE_MIN;
+#else
+		battery_voltage_min = BATTERY_DEFAULT_MIN;
+#endif
+#ifdef CONFIG_BATTERY_VOLTAGE_MAX
+		battery_voltage_max = CONFIG_BATTERY_VOLTAGE_MAX;
+#else
+		battery_voltage_max = BATTERY_DEFAULT_MAX;
+#endif
+#ifdef CONFIG_BATTERY_VOLTAGE_SCALE
+		battery_voltage_scale = CONFIG_BATTERY_VOLTAGE_SCALE;
+#else
+		battery_voltage_scale = BATTERY_DEFAULT_SCALE;
+#endif
+	}else if(argc == 4) {
+		battery_voltage_min = simple_strtoul(argv[1], NULL, 10);
+		battery_voltage_max = simple_strtoul(argv[2], NULL, 10);
+		battery_voltage_scale = simple_strtoul(argv[3], NULL, 10);
+		printf("battery_voltage_min = %d\nbattery_voltage_max = %d\nbattery_voltage_scale = %d\ncharge_logo_num = %d\n", battery_voltage_min, battery_voltage_max, battery_voltage_scale, (battery_voltage_max - battery_voltage_min) / battery_voltage_scale );
+	}else{
+		return -1;
+	}
+	return 0;
+}
 
 static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 			     char *const argv[])
 {
+	int ret = 0;
+	ret = voltage_argument_init(argc, argv);
+	if(ret != 0){
+		return ret;
+	}
+
 	battery_detect();
-	return 0;
+	return ret;
 }
 
-U_BOOT_CMD(batterydet, 1, 1, do_battery_detect,
-	   "detect battery and show charge logo", "");
+U_BOOT_CMD(batterydet, 4, 1, do_battery_detect,
+	   "battery and show charge logo", "[<battery_min> <battery_max>, <battery_scale>]");

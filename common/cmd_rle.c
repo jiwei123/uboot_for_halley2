@@ -84,7 +84,7 @@ void logo_reloc(void)
  */
 static int do_logo(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
-	cmd_tbl_t *c;
+cmd_tbl_t *c;
 
 	/* Strip off leading 'logo' command argument */
 	argc--;

@@ -30,7 +30,7 @@
  */
 
 #include <stdio.h>
-#include "jpeglib.h"
+#include <jpeglib.h>
 //#include <setjmp.h>
 #define PNG_SKIP_SETJMP_CHECK
 #include <png.h>
