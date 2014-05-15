@@ -673,7 +673,7 @@ static void show_battery_low_logo(void)
 	lcd_clear_black();
 	show_charge_logo_rle(0);
 	mdelay(5000);
-	lcd_lose_backlight();
+	lcd_close_backlight();
 }
 
 static void battery_detect(void)
