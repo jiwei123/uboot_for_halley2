@@ -163,7 +163,7 @@ void lcd_sync(void)
 	 * architectures do not actually implement it. Is there a way to find
 	 * out whether it exists? For now, ARM is safe.
 	 */
-#if defined(CONFIG_ARM) && !defined(CONFIG_SYS_DCACHE_OFF)
+#if defined(CONFIG_ARM) && !defined(CONFIG_SYS_DCACHE_OFF) || defined(CONFIG_MIPS32)
 	int line_length;
 
 	if (lcd_flush_dcache)
