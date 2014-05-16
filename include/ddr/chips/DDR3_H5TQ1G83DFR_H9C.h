@@ -9,7 +9,9 @@
  */
 /* DDR3 paramters */
 #define DDR_ROW     14  /* ROW : 12 to 18 row address ,1G only 512MB*/
+#define DDR_ROW1     14  /* ROW : 12 to 18 row address ,1G only 512MB*/
 #define DDR_COL     10  /* COL :  8 to 14 column address */
+#define DDR_COL1     10  /* COL :  8 to 14 column address */
 #define DDR_BANK8   1 	/* Banks each chip: 0-4bank, 1-8bank */
 
 #ifdef CONFIG_SYS_DDR_DLL_OFF
