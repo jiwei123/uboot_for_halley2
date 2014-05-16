@@ -16,7 +16,6 @@ struct Spl {
         int bch_context;
         nand_data *nddata;
         chip_info *cinfo;
-        nand_timing *timing;
         int bchsize;
         unsigned char *bchbuf;
 };
@@ -34,7 +33,7 @@ static int nand_wait_busy(struct Spl *spl)
 
         ret = spl->nddata->wait_rb(0, 500);
 
-        ndd_ndelay(spl->cinfo->timing->tRR);
+        ndd_ndelay(spl->cinfo->ops_timing.tRR);
         return ret;
 }
 
@@ -43,7 +42,7 @@ static int nand_read_status(struct Spl *spl)
         int ret = SUCCESS;
         unsigned char status;
 
-        nand_io_send_cmd(spl->io_context, CMD_READ_STATUS_1ST, spl->cinfo->timing->tWHR);
+        nand_io_send_cmd(spl->io_context, CMD_READ_STATUS_1ST, spl->cinfo->ops_timing.tWHR);
         nand_io_receive_data(spl->io_context, &status, 1);
 	ret = (status & 0x1 ? 1 : 0);
 
@@ -56,13 +55,13 @@ static void nand_write_start(struct Spl *spl, int pageid, int offset)
 	if (spl->cinfo->pagesize == 512)
 		nand_io_send_cmd(spl->io_context, CMD_PAGE_READ_1ST, 0);
         nand_io_send_cmd(spl->io_context, CMD_PAGE_PROGRAM_1ST, 0);
-        nand_io_send_addr(spl->io_context, offset, pageid, spl->cinfo->timing->tADL);
+        nand_io_send_addr(spl->io_context, offset, pageid, spl->cinfo->ops_timing.tADL);
 }
 
 static void nand_write_random(struct Spl *spl, int offset)
 {
-        nand_io_send_cmd(spl->io_context, CMD_RANDOM_INPUT_1ST, spl->cinfo->timing->tCWAW);
-        nand_io_send_addr(spl->io_context, offset, -1, spl->cinfo->timing->tADL);
+        nand_io_send_cmd(spl->io_context, CMD_RANDOM_INPUT_1ST, spl->cinfo->ops_timing.tCWAW);
+        nand_io_send_addr(spl->io_context, offset, -1, spl->cinfo->ops_timing.tADL);
 }
 
 static void nand_write_data(struct Spl *spl, unsigned char *buf, int size)
@@ -81,7 +80,7 @@ static int nand_write_finish(struct Spl *spl)
 {
         int ret = SUCCESS;
 	nand_busy_clear(spl);
-        nand_io_send_cmd(spl->io_context, CMD_PAGE_PROGRAM_2ND, spl->cinfo->timing->tWB);
+        nand_io_send_cmd(spl->io_context, CMD_PAGE_PROGRAM_2ND, spl->cinfo->ops_timing.tWB);
         ret = nand_wait_busy(spl);
         if (ret < 0)
                 return TIMEOUT;
@@ -94,7 +93,7 @@ static void nand_read_random(struct Spl *spl, int offset)
 {
         nand_io_send_cmd(spl->io_context, CMD_RANDOM_OUTPUT_1ST, 0);
         nand_io_send_addr(spl->io_context, offset, -1, 0);
-        nand_io_send_cmd(spl->io_context, CMD_RANDOM_OUTPUT_2ND, spl->cinfo->timing->tWHR2);
+        nand_io_send_cmd(spl->io_context, CMD_RANDOM_OUTPUT_2ND, spl->cinfo->ops_timing.tWHR2);
 }
 
 static void nand_read_data(struct Spl *spl, unsigned char *buf, int size)
@@ -115,7 +114,7 @@ static int nand_read_start(struct Spl *spl, int pageid, int offset)
 	nand_busy_clear(spl);
         nand_io_send_addr(spl->io_context, offset, pageid, 0);
 	if (spl->cinfo->pagesize != 512)
-		nand_io_send_cmd(spl->io_context, CMD_PAGE_READ_2ND, spl->cinfo->timing->tWB);
+		nand_io_send_cmd(spl->io_context, CMD_PAGE_READ_2ND, spl->cinfo->ops_timing.tWB);
 
         ret = nand_wait_busy(spl);
         if (ret < 0)
@@ -158,7 +157,7 @@ static struct AlignList *aligned_list(PageList *pl)
                         alignlist->next = NULL;
                 }
         }
-        //dump_alignedlist();
+        dump_alignedlist();
         return alist;
 }
 
@@ -432,6 +431,7 @@ int spl_write(int handle, PageList *pl)
         struct Spl *spl = (struct Spl *)handle;
         struct AlignList *al = NULL;
         int ret = SUCCESS;
+
         al = aligned_list(pl);
         ret = __spl_write(spl, al);
 

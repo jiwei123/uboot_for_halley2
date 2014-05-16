@@ -1,11 +1,14 @@
 #include <nand_chip.h>
-#include <config.h>
+#include <os_config.h>
 
-#ifdef CONFIG_JZ4780
+#ifdef CONFIG_SOC_4780
 #define CS_PER_NFI		4
 #define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
-#elif defined(CONFIG_JZ4775)
+#elif defined(CONFIG_SOC_4775)
 #define CS_PER_NFI		2
+#define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
+#elif defined(CONFIG_SOC_4785)
+#define CS_PER_NFI		4
 #define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
 #endif
 
@@ -59,6 +62,7 @@ extern nand_sharing_params share_parms;
 typedef struct __nfi_base {
 	void *gate;
 	unsigned long rate;
+	unsigned long cycle;
 	unsigned int irq;
 	void *iomem;
 	void *cs_iomem[CS_PER_NFI];
@@ -177,32 +181,46 @@ typedef struct __os_clib {
 } os_clib;
 
 /**
+ * struct nand_api_platdependent:
+ *
+ * @nandflash:
+ * @rbinfo:
+ * @platptinfo:
+ * @gpio_wp:
+ * @drv_strength:
+ * @erasemode: there are four modes. 0: none, 1: normal-erase, 2, force-erase, 3: factory-erase
+ * @update_errpt:
+ **/
+struct nand_api_platdependent {
+	nand_flash *nandflash;
+	rb_info *rbinfo;
+	plat_ptinfo *platptinfo;
+	unsigned short gpio_wp;
+	unsigned char drv_strength;
+	unsigned char erasemode;
+};
+
+/**
  * struct nand_api_osdependent:
  *
- * @rbinfo:
  * @base:
- * @erasemode: there are three modes. force-erase, normal-erase and factory-erase
- * @gpio_wp:
+ * @clib:
  * @wp_enable:
  * @wp_disable:
+ * @clear_rb_state:
  * @wait_rb_timeout:
+ * @try_wait_rb:
+ * @gpio_irq_request:
+ * @ndd_gpio_request:
  **/
 struct nand_api_osdependent {
 	io_base *base;
-	rb_info *rbinfo;
-	plat_ptinfo platptinfo;
-	int erasemode;
-	unsigned short gpio_wp;
-	unsigned char drv_strength;
 	os_clib clib;
 	void (*wp_enable) (int);
 	void (*wp_disable) (int);
 	void (*clear_rb_state)(rb_item *);
 	int (*wait_rb_timeout) (rb_item *, int);
 	int (*try_wait_rb) (rb_item *, int);
-	int (*gpio_irq_request)(unsigned short gpio, unsigned short *irq, int rb_comp);
+	int (*gpio_irq_request)(unsigned short gpio, unsigned short *irq, void **irq_private);
 	int (*ndd_gpio_request)(unsigned int gpio, const char *lable);
-	rb_info* (*get_rbinfo_memory)(void);
-	void (*abandon_rbinfo_memory)(rb_info *);
-	nand_flash * (*get_nand_flash) (void);
 };

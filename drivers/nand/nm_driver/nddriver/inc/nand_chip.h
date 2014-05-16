@@ -1,6 +1,9 @@
 #ifndef __NAND_CHIP_H__
 #define __NAND_CHIP_H__
 
+#include <nfi_nand_timing.h>
+#include <emc_nand_timing.h>
+
 /* NAND Flash Manufacturer ID Codes */
 #define NAND_MFR_TOSHIBA	0x98	// Toshiba
 #define NAND_MFR_SAMSUNG	0xec	// Samsung
@@ -91,24 +94,16 @@ typedef struct __optionalcmd {
     unsigned char interbnk1status;		// the command may be 0xf2/0x78/...
 } optionalcmd;
 
-/**
- * struct __nand_timing - NAND Flash Device timing
- **/
-typedef struct __nand_timing {
-        unsigned int tALS;	/* ... duration/width/time */
-        unsigned int tALH;	/* ... duration/width/time */
-        unsigned int tRP;	/* ... duration/width/time */
-        unsigned int tWP;	/* ... duration/width/time */
-        unsigned int tRHW;	/* ... duration/width/time */
-        unsigned int tWHR;	/* ... duration/width/time */
-	unsigned int tWHR2;	/* ... duration/width/time */
-	unsigned int tRR;	/* ... duration/width/time */
-	unsigned int tWB;	/* ... duration/width/time */
-	unsigned int tADL;	/* ... duration/width/time */
-	unsigned int tCWAW;	/* ... duration/width/time */
-        unsigned int tCS;	/* ... duration/width/time */
-        unsigned int tCLH;	/* ... duration/width/time */
+typedef union __nand_timing {
+	emc_nand_timing emc;
+	nfi_nand_timing nfi;
 } nand_timing;
+
+typedef union __nand_extra_timing {
+	nfi_toggle_timing nfi_toggle;
+	nfi_onfi_timing   nfi_onfi;
+	emc_toggle_timing emc_toggle;
+} nand_extra_timing;
 
 /**
  * struct __nand_flash - NAND Flash Device attr Structure
@@ -133,7 +128,8 @@ typedef struct __nand_flash {
 	unsigned char planeoffset; //multi-plane block address offset
         unsigned int options;
 	nand_timing timing;
-	optionalcmd *optcmd;
+	nand_extra_timing nand_extra;
+	//optionalcmd *optcmd;
 } nand_flash;
 
 struct nand_basic_info {

@@ -8,13 +8,14 @@
 #include "ndcommand.h"
 #include "nand_io.h"
 
-extern int (*__try_wait_rb) (rb_item *, int);
+extern void (*__clear_rb_state)(rb_item *);
 extern int (*__wait_rb_timeout) (rb_item *, int); /* return 0 -> ok; !0 -> timeout */
+extern int (*__try_wait_rb) (rb_item *, int);
 
 static void dump_retry_parms(retry_parms *retryparms)
 {
 	int i;
-	unsigned char *data = retryparms->data;
+	unsigned char *data = (unsigned char *)(retryparms->data);
 
 	ndd_debug("\ndump retry parms, recycle = %d, regcnt = %d",
 		  retryparms->cycle, retryparms->regcnt);
@@ -44,6 +45,14 @@ static rb_item* wait_unknown_rb_timeout(rb_info *rbinfo, int timeout)
 		return &(rbinfo->rbinfo_table[i % rbinfo->totalrbs]);
 }
 
+static void clear_all_rb_state(rb_info *rbinfo)
+{
+	int rb_index;
+
+	for (rb_index = 0; rb_index < rbinfo->totalrbs; rb_index++)
+		__clear_rb_state(&rbinfo->rbinfo_table[rb_index]);
+}
+
 rb_item* get_rbitem(nfi_base *base, unsigned int cs_id, rb_info *rbinfo)
 {
 	int context, ret;
@@ -56,6 +65,8 @@ rb_item* get_rbitem(nfi_base *base, unsigned int cs_id, rb_info *rbinfo)
 	ret = nand_io_chip_select(context, cs_id);
 	if (ret)
 		RETURN_ERR(NULL, "nand io chip select error, cs = [%d]", cs_id);
+
+	clear_all_rb_state(rbinfo);
 
 	ret = nand_io_send_cmd(context, CMD_RESET_1ST, 300);
 	if (ret)
@@ -117,7 +128,7 @@ struct hy_rr_msg hy_rr_f26_32g = {
 struct hy_rr_msg hy_rr_f20_64g_a = {
 	2,
 	{0xff, 0xcc},
-	{0x40, 0x4c},
+	{0x40, 0x4d},
 	{0x00, 0x00, 0x00, 0x02, 0x00},
 	{0xcc, 0xbf, 0xaa, 0xab, 0xcd, 0xad, 0xae, 0xaf},
 };
@@ -153,7 +164,7 @@ struct hy_rr_msg hy_rr_f1y_64g = {
 static int set_retry_f26(int context, retry_parms *retryparms, struct hy_rr_msg *msg, int index)
 {
 	int i = 0;
-	unsigned char *oridata = retryparms->data;
+	unsigned char *oridata = (unsigned char *)(retryparms->data);
 	unsigned char setf26data[4] = {0, 0, 0, 0};
 	unsigned char f26mlc[7][4] = {
 		{0x00, 0x00, 0x00, 0x00},
@@ -189,7 +200,7 @@ static int set_retry_othermode(int context, retry_parms *retryparms, struct hy_r
 {
 	int i = 0;
 	unsigned char regcnt = retryparms->regcnt;
-	unsigned char *oridata = retryparms->data;
+	unsigned char *oridata = (unsigned char *)(retryparms->data);
 	nand_io_send_cmd(context, 0x36, 300);
 	for(i = 0;  i < regcnt; i++){
 		nand_io_send_spec_addr(context, msg->setaddr[i], 1, 300);
@@ -206,7 +217,7 @@ int set_retry_feature(int data, unsigned int cs_id, int cycle)
 	chip_info *cinfo = ndata->cinfo;
 	io_base *iobase = ndata->base;
 	retry_parms *retryparms = cinfo->retryparms;
-	
+
 	/* io open */
 	context = nand_io_open(&(iobase->nfi), NULL);
 	if (!context)
@@ -250,7 +261,7 @@ ERR_LABLE(chip_select_setretry):
 }
 int get_retry_f26_data(int context, retry_parms *retryparms, struct hy_rr_msg *msg)
 {
-	unsigned char *buf = retryparms->data;
+	unsigned char *buf = (unsigned char *)(retryparms->data);
 	unsigned int i = 0;
 	nand_io_send_cmd(context, 0x37, 300);
 	for (i = 0; i < retryparms->regcnt; i++) {
@@ -265,7 +276,7 @@ int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_p
 	int retry_flag, retrycnt = 0;
 	struct hy_rr_msg *msg = NULL;
 	unsigned char inversed_val[RETRY_DATA_SIZE];
-	unsigned char *buf = retryparms->data;
+	unsigned char *buf = (unsigned char *)(retryparms->data);
         unsigned char cmd[4] = {0x16, 0x17, 0x04, 0x19};
 
 	switch (retryparms->mode) {
@@ -310,6 +321,7 @@ int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_p
 
 	/* reset */
 #if 0
+	clear_all_rb_state(rbinfo);
 	nand_io_send_cmd(context, CMD_RESET_1ST, 300);
 	if ((wait_unknown_rb_timeout(rbinfo, 8)) == NULL) {
 		ret = TIMEOUT;
@@ -335,6 +347,8 @@ int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_p
 	nand_io_send_cmd(context, CMD_PAGE_READ_1ST, 300);
 	for (i = 0; i < 5; i++)
 		nand_io_send_spec_addr(context, msg->addr2[i], 1, 300);
+
+	clear_all_rb_state(rbinfo);
 	nand_io_send_cmd(context, CMD_PAGE_READ_2ND, 300);
 	if ((wait_unknown_rb_timeout(rbinfo, 8)) == NULL) {
 		ret = TIMEOUT;
@@ -370,6 +384,7 @@ retry:
 	}
 
 	/* reset */
+	clear_all_rb_state(rbinfo);
 	nand_io_send_cmd(context, CMD_RESET_1ST, 300);
 	if ((wait_unknown_rb_timeout(rbinfo, 8)) == NULL) {
 		ret = TIMEOUT;
@@ -391,9 +406,12 @@ retry:
 		for (i = 0; i < 5; i++)
 			nand_io_send_spec_addr(context, msg->addr2[i], 1, 300);
 #endif
+		clear_all_rb_state(rbinfo);
 		nand_io_send_cmd(context, CMD_PAGE_READ_2ND, 300);
-	} else
+	} else {
+		clear_all_rb_state(rbinfo);
 		nand_io_send_cmd(context, 0x38, 300);
+	}
 
 	if ((wait_unknown_rb_timeout(rbinfo, 8)) == NULL) {
 		ret = TIMEOUT;
@@ -412,25 +430,25 @@ ERR_LABLE(chip_select):
 	return ret;
 }
 
-int __set_features(int io_context, rb_item *rbitem, const nand_timing *timing,
+int __set_features(int io_context, rb_item *rbitem, nand_ops_timing *timing,
 		   unsigned char addr, unsigned char *data, int len)
 {
 	nand_io_send_cmd(io_context, CMD_SET_FEATURES, 0);
 	nand_io_send_spec_addr(io_context, addr, 1, timing->tADL);
 	nand_io_send_data(io_context, data, len);
 	ndd_ndelay(timing->tWB);
-	if (__wait_rb_timeout(rbitem, TRY_RB_DELAY) < 0)
+	if (__wait_rb_timeout(rbitem, 500) < 0)
 		RETURN_ERR(TIMEOUT, "nand io wait rb timeout");
 
 	return 0;
 }
 
-int __get_features(int io_context, rb_item *rbitem, const nand_timing *timing,
+int __get_features(int io_context, rb_item *rbitem, nand_ops_timing *timing,
 		   unsigned char addr, unsigned char *data, int len)
 {
 	nand_io_send_cmd(io_context, CMD_GET_FEATURES, 0);
 	nand_io_send_spec_addr(io_context, addr, 1, timing->tWB);
-	if (__wait_rb_timeout(rbitem, TRY_RB_DELAY) < 0)
+	if (__wait_rb_timeout(rbitem, 500) < 0)
 		RETURN_ERR(TIMEOUT, "nand io wait rb timeout");
 	ndd_ndelay(timing->tRR);
 	nand_io_receive_data(io_context, data, len);
@@ -438,7 +456,7 @@ int __get_features(int io_context, rb_item *rbitem, const nand_timing *timing,
 	return 0;
 }
 
-static int __nand_set_features(int io_context, rb_item *rbitem, const nand_timing *timing,
+static int __nand_set_features(int io_context, rb_item *rbitem, nand_ops_timing *timing,
 			unsigned char addr, unsigned char *data, int len)
 {
 	int i, ret;
@@ -465,7 +483,7 @@ int nand_set_features(nfi_base *base, unsigned int cs_id, rb_item *rbitem, chip_
 {
 	int io_context, ret;
 	unsigned char data[4] = {0x00};
-	const nand_timing *timing = cinfo->timing;
+	nand_ops_timing *timing = &cinfo->ops_timing;
 
 	io_context = nand_io_open(base, NULL);
 	if (!io_context)
@@ -527,6 +545,54 @@ int nand_set_features(nfi_base *base, unsigned int cs_id, rb_item *rbitem, chip_
 		RETURN_ERR(ret, "nand io chip deselect error, cs = [%d]", cs_id);
 
 	nand_io_close(io_context);
+
+	return 0;
+}
+
+/**
+ * get_nand_id: get nand id
+ *
+ * @cid: contain nand id and extid
+ * @return: 0: success, !0: fail
+ **/
+int get_nand_id(nfi_base *base, nand_flash_id *id, unsigned int cs_id)
+{
+	int context, ret;
+	unsigned char nand_id[6];
+
+	context = nand_io_open(base, NULL);
+	if (!context)
+		RETURN_ERR(ENAND, "nand io open error");
+
+	ret = nand_io_chip_select(context, cs_id);
+	if (ret)
+		RETURN_ERR(ENAND, "nand io chip select error, cs = [%d]", cs_id);
+
+	ret = nand_io_send_cmd(context, CMD_RESET_1ST, 300);
+	if (ret)
+		RETURN_ERR(ret, "nand io sent cmd error, cs = [%d], cmd = [%d]", cs_id, CMD_RESET_1ST);
+
+	ndd_ndelay(5 * 1000 * 1000);
+	ret = nand_io_send_cmd(context, CMD_READ_ID_1ST, 300);
+	if (ret)
+		RETURN_ERR(ret, "nand io sent cmd error, cs = [%d], cmd = [%d]", cs_id, CMD_READ_ID_1ST);
+
+	nand_io_send_spec_addr(context, 0x00, 1, 1 * 1000 * 1000);
+
+	ret = nand_io_receive_data(context, nand_id, sizeof(nand_id));
+	if (ret)
+		RETURN_ERR(ret, "nand io receive data error, cs = [%d]", cs_id);
+
+	ret = nand_io_chip_deselect(context, cs_id);
+	if (ret)
+		RETURN_ERR(ret, "nand io chip deselect error, cs = [%d]", cs_id);
+
+	nand_io_close(context);
+
+	id->id = ((nand_id[0] << 8) | nand_id[1]);
+	id->extid = ((nand_id[4] << 16) | (nand_id[3] << 8) | nand_id[2]);
+
+	ndd_debug("get nand io chip[%d] id: id = [%04x], extid = [%08x]!\n", cs_id, id->id, id->extid);
 
 	return 0;
 }

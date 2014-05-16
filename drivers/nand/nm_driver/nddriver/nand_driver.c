@@ -4,7 +4,7 @@
 #define __KERNEL__
 #include <common.h>
 #include <malloc.h>
-#undef __KERNEL__ 
+#undef __KERNEL__
 
 #include <ingenic_nand_mgr/nand_param.h>
 #include <asm/arch/clk.h>
@@ -24,7 +24,8 @@ extern int printf(const char *fmt, ...);
 
 #define DRIVER_MEM_SIZE 4*1024*1024
 //char driver_mem[DRIVER_MEM_SIZE];
-struct nand_api_osdependent ndd_private;
+struct nand_api_osdependent osdep;
+struct nand_api_platdependent platdep;
 nand_sharing_params share_parms;
 nand_flash nand_flash_info;
 
@@ -57,19 +58,19 @@ static void dump_nand_flash_info(void)
 	printf("\t options =      %x\n",nand_flash_info.options);
 
 	printf("\ndump nand flash timing:\n");
-	printf("\t tals =     %d \n",nand_flash_info.timing.tALS);
-	printf("\t talh =     %d \n",nand_flash_info.timing.tALH);
-	printf("\t trp  =     %d \n",nand_flash_info.timing.tRP);
-	printf("\t twp  =     %d \n",nand_flash_info.timing.tWP);
-	printf("\t trhw =     %d \n",nand_flash_info.timing.tRHW);
-	printf("\t twhr =     %d \n",nand_flash_info.timing.tWHR);
-	printf("\t twhr2 =    %d \n",nand_flash_info.timing.tWHR2);
-	printf("\t trr =      %d \n",nand_flash_info.timing.tRR);
-	printf("\t twb =      %d \n",nand_flash_info.timing.tWB);
-	printf("\t tadl =     %d \n",nand_flash_info.timing.tADL);
-	printf("\t tCWAW =    %d \n",nand_flash_info.timing.tCWAW);
-	printf("\t tcs =      %d \n",nand_flash_info.timing.tCS);
-	printf("\t tCLH =     %d \n",nand_flash_info.timing.tCLH);
+	printf("\t tals =     %d \n",nand_flash_info.timing.emc.tALS);
+	printf("\t talh =     %d \n",nand_flash_info.timing.emc.tALH);
+	printf("\t trp  =     %d \n",nand_flash_info.timing.emc.tRP);
+	printf("\t twp  =     %d \n",nand_flash_info.timing.emc.tWP);
+	printf("\t trhw =     %d \n",nand_flash_info.timing.emc.tRHW);
+	printf("\t twhr =     %d \n",nand_flash_info.timing.emc.tWHR);
+	printf("\t twhr2 =    %d \n",nand_flash_info.timing.emc.tWHR2);
+	printf("\t trr =      %d \n",nand_flash_info.timing.emc.tRR);
+	printf("\t twb =      %d \n",nand_flash_info.timing.emc.tWB);
+	printf("\t tadl =     %d \n",nand_flash_info.timing.emc.tADL);
+	printf("\t tCWAW =    %d \n",nand_flash_info.timing.emc.tCWAW);
+	printf("\t tcs =      %d \n",nand_flash_info.timing.emc.tCS);
+	printf("\t tCLH =     %d \n",nand_flash_info.timing.emc.tCLH);
 }
 
 void fill_nand_flash_info(nand_flash_param *nand_info)
@@ -289,33 +290,29 @@ static int ndd_try_wait_rb(rb_item *rbitem, int delay)
 		return 0;
 }
 
-static nand_flash* ndd_get_nand_flash(void)
-{
-	return &nand_flash_info;
-}
 static int nfi_readl(int reg)
 {
-	void *iomem = ndd_private.base->nfi.iomem;
+	void *iomem = osdep.base->nfi.iomem;
 
 	return __raw_readl(iomem + reg);
 }
 
 static void nfi_writel(int reg, int val)
 {
-	void *iomem = ndd_private.base->nfi.iomem;
+	void *iomem = osdep.base->nfi.iomem;
 	__raw_writel((val), iomem + reg);
 }
 
 static int bch_readl(int reg)
 {
-	void *iomem = ndd_private.base->bch.iomem;
+	void *iomem = osdep.base->bch.iomem;
 
 	return __raw_readl(iomem + reg);
 }
 
 static void bch_writel(int reg, int val)
 {
-	void *iomem = ndd_private.base->bch.iomem;
+	void *iomem = osdep.base->bch.iomem;
 
 	__raw_writel((val), iomem + reg);
 }
@@ -341,7 +338,7 @@ static void bch_clk_disable(void)
 /* ############################################################################################ *\
  * sub functions for driver probe
 \* ############################################################################################ */
-static int gpio_irq_request(unsigned short gpio, unsigned short *irq, int rbcomp)
+static int gpio_irq_request(unsigned short gpio, unsigned short *irq, void **irq_private)
 {
 	return 0;
 }
@@ -427,12 +424,6 @@ static int ndd_gpio_request(unsigned int gpio, const char *lable)
 	return 0;
 }
 
-static rb_info* get_rbinfo_memory(void)
-{
-	printf("%s shouldn't be called !!!!\n",__func__);
-	return NULL;
-}
-
 void fill_rbinfo_table(PartitionInfo *pinfo, rb_info *rbinfo)
 {
 	int rb_index;
@@ -465,6 +456,7 @@ void fill_plat_ptinfo(PartitionInfo *pinfo, plat_ptinfo * plat_info)
 	Nandppt *uipt = pinfo->ndppt;
 	int pt_index = 0, part_num;
 
+	memset(plat_info->pt_table, 0, pinfo->ptcount * sizeof(plat_ptitem));
 	plat_info->ptcount = pinfo->ptcount;
 	for(pt_index = 0; pt_index < plat_info->ptcount; pt_index++){
 		part_num = 0;
@@ -531,7 +523,7 @@ static void nand_enable(int cs)
 	udelay(1);
 
 }
-static void nand_reset()
+static void nand_reset(void)
 {
 	__nand_cmd(0xff);
 }
@@ -590,13 +582,14 @@ static int try_to_get_nand_id(int rb_gpio,nand_flash_id *fid)
 	fid->extid = ((nand_id[4] << 16) | (nand_id[3] << 8) | nand_id[2]);
 
 	//printf("-------------->>>> id = 0x%x extid = 0x%x\n",fid->id,fid->extid);
+	return 0;
 }
 
 extern int __ndd_dump_nand_id(nfi_base *base, unsigned int cs_id,nand_flash_id *fid);
 extern void fill_nand_basic_info(nand_flash_param *nand_info);
 extern int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall,unsigned int *ops_pt_startaddrs,int erase_pt_cnt);
 
-extern void my_print_epc();
+extern void my_print_epc(void);
 
 static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int nand_nm)
 {
@@ -609,7 +602,7 @@ static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int 
 
 	fill_nand_flash_info(nand_info);
 	fill_nand_basic_info(nand_info);
-	
+
 	return 0;
 }
 #if 0
@@ -631,113 +624,99 @@ static void print_errorpc()
 \* ############################################################################################ */
 int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int ops_pt_cnt)
 {
-	void *heap; 
-	void *h = NULL;
-	int i, ret;
-	rb_info *rbinfo = NULL;
+	int ret;
 	int rbcnt = pinfo->rbcount, ptcnt = pinfo->ptcount;
 
-	heap = (void*)malloc(DRIVER_MEM_SIZE);
-	if(!heap){
-		printf("ERROR:alloc heap error!\n");
-		goto err_alloc_base;
-	}
-	h = Nand_MemoryInit(heap, DRIVER_MEM_SIZE, 0);
-	if (h == NULL) {
-		printf("ERROR:Nand memory manager init error, %s(%d)\n",
-				__FUNCTION__, __LINE__);
-		return 0;
-	}
-
+	/**************************** STEP1: nand api init *****************************/
 	/* alloc memory for io_base and fill nand base */
-	ndd_private.base = malloc(sizeof(io_base));
-	if (!ndd_private.base)
+	osdep.base = malloc(sizeof(io_base));
+	if (!osdep.base)
 		goto err_alloc_base;
 
-	ret = fill_io_base(ndd_private.base);
+	ret = fill_io_base(osdep.base);
 	if (ret)
 		goto err_fill_base;
 
-
-	/**********************************************************************************/
-	/* ------------------------------ WARNING --------------------------------------- */
-	/*if rbinfo and plat_ptinfo is NULL, then these info will be read from errpt later*/
-	/**********************************************************************************/
-
-	/*fill rb_info*/
-	rbinfo = malloc(sizeof(rb_info) + rbcnt * sizeof(rb_item) + rbcnt * sizeof(int));
-	if(!rbinfo)
-		goto err_alloc_rbinfo;
-	else{
-		unsigned char *rb_comp_base;
-		rbinfo->rbinfo_table = (rb_item *)((unsigned char *)rbinfo + sizeof(rb_info));
-		rb_comp_base = (unsigned char *)rbinfo->rbinfo_table + rbcnt * sizeof(rb_item);
-		for(i = 0; i < rbcnt; i++)
-			(rbinfo->rbinfo_table + i)->irq_private = rb_comp_base + i * sizeof(int);
-	}
-	fill_rbinfo_table(pinfo, rbinfo);
-	ndd_private.rbinfo = rbinfo;
-	/*fill plat_ptinfo*/
-	ndd_private.platptinfo.pt_table = (plat_ptitem*)malloc(ptcnt * sizeof(plat_ptitem));
-	if(!(ndd_private.platptinfo.pt_table))
-		goto err_alloc_ptinfo;
-	else{
-		memset(ndd_private.platptinfo.pt_table, 0, ptcnt * sizeof(plat_ptitem));
-		ndd_private.platptinfo.ptcount = ptcnt;
-	}
-	fill_plat_ptinfo(pinfo, &(ndd_private.platptinfo));
-	//dump_partitioninfo(pinfo);
-	//dump_platptinfo(&(ndd_private.platptinfo));
-	/* get write protect pin */
-	ndd_private.gpio_wp = gpio_request(pinfo->gpio_wp,"nand_wp");
-
-	/* get drv_strength and rb pulldown strength */
-	ndd_private.drv_strength = pinfo->nand_driver_strength;//DRV_STRENGTH_DEFAULT;
-
 	/* fill fun points */
-	ndd_private.wp_enable = ndd_wp_enable;
-	ndd_private.wp_disable = ndd_wp_disable;
-	ndd_private.clear_rb_state = ndd_clear_rb_state;
-	ndd_private.wait_rb_timeout = ndd_wait_rb_timeout;
-	ndd_private.try_wait_rb = ndd_try_wait_rb;
-	ndd_private.gpio_irq_request = gpio_irq_request;
-	ndd_private.ndd_gpio_request = ndd_gpio_request;
-	ndd_private.get_rbinfo_memory = get_rbinfo_memory;
-	ndd_private.abandon_rbinfo_memory = NULL;
-	ndd_private.get_nand_flash = ndd_get_nand_flash;
+	osdep.wp_enable = ndd_wp_enable;
+	osdep.wp_disable = ndd_wp_disable;
+	osdep.clear_rb_state = ndd_clear_rb_state;
+	osdep.wait_rb_timeout = ndd_wait_rb_timeout;
+	osdep.try_wait_rb = ndd_try_wait_rb;
+	osdep.gpio_irq_request = gpio_irq_request;
+	osdep.ndd_gpio_request = ndd_gpio_request;
 	/* clib */
-	ndd_private.clib.ndelay = ndd_ndelay;
-	ndd_private.clib.div_s64_32 = ndd_div_s64_32;
-	ndd_private.clib.continue_alloc = ndd_continue_alloc;
-	ndd_private.clib.continue_free = ndd_continue_free;
-	ndd_private.clib.printf = printf;
-	ndd_private.clib.memcpy = memcpy;
-	ndd_private.clib.memset = memset;
-	ndd_private.clib.strcmp = strcmp;
-	ndd_private.clib.get_vaddr = ndd_get_vaddr;
-	ndd_private.clib.dma_cache_wback = nand_dma_cache_wback;
-	ndd_private.clib.dma_cache_inv = nand_dma_cache_wback;//ndd_dma_cache_inv;
-	ndd_private.clib.get_time_nsecs = ndd_get_time_nsecs;
-	ndd_private.erasemode = eraseall;
-	
-	get_nandflash_info(&(ndd_private.base->nfi),nand_info_ids,nand_nm);
-
-	burn_nandmanager_init(pinfo,eraseall,pt_startadd_offset,ops_pt_cnt);
+	osdep.clib.ndelay = ndd_ndelay;
+	osdep.clib.div_s64_32 = ndd_div_s64_32;
+	osdep.clib.continue_alloc = ndd_continue_alloc;
+	osdep.clib.continue_free = ndd_continue_free;
+	osdep.clib.printf = printf;
+	osdep.clib.memcpy = memcpy;
+	osdep.clib.memset = memset;
+	osdep.clib.strcmp = strcmp;
+	osdep.clib.get_vaddr = ndd_get_vaddr;
+	osdep.clib.dma_cache_wback = nand_dma_cache_wback;
+	osdep.clib.dma_cache_inv = nand_dma_cache_wback;//ndd_dma_cache_inv;
+	osdep.clib.get_time_nsecs = ndd_get_time_nsecs;
 
 	/* nand api init */
-	ret = nand_api_init(&ndd_private);
+	ret = nand_api_init(&osdep);
 	if (ret)
 		goto err_api_init;
+
+	/**************************** STEP2: nand api reinit *****************************/
+	/* fill nand_flash */
+	get_nandflash_info(&(osdep.base->nfi), nand_info_ids, nand_nm);
+	platdep.nandflash = &nand_flash_info;
+
+	/* fill rb_info
+	 * WARNING: if rbinfo and plat_ptinfo is NULL,
+	 * then these info will be read from errpt later
+	 */
+	platdep.rbinfo = malloc(sizeof(rb_info) + rbcnt * sizeof(rb_item));
+	if(!platdep.rbinfo)
+		goto err_alloc_rbinfo;
+	else
+		platdep.rbinfo->rbinfo_table = (rb_item *)((unsigned char *)platdep.rbinfo + sizeof(rb_info));
+	fill_rbinfo_table(pinfo, platdep.rbinfo);
+
+	/*fill plat_ptinfo*/
+	platdep.platptinfo = ndd_continue_alloc(sizeof(plat_ptinfo) + ptcnt * sizeof(plat_ptitem));
+	if(!platdep.platptinfo)
+		goto err_alloc_ptinfo;
+	else
+		platdep.platptinfo->pt_table = (plat_ptitem*)((unsigned char *)platdep.platptinfo + sizeof(plat_ptinfo));
+	fill_plat_ptinfo(pinfo, platdep.platptinfo);
+	//dump_partitioninfo(pinfo);
+	//dump_platptinfo(&(ndd_private.platptinfo));
+
+	/* get write protect pin */
+	platdep.gpio_wp = gpio_request(pinfo->gpio_wp, "nand_wp");
+
+	/* get drv_strength and rb pulldown strength */
+	platdep.drv_strength = pinfo->nand_driver_strength;//DRV_STRENGTH_DEFAULT;
+
+	platdep.erasemode = eraseall;
+
+	/* nandmanager init */
+	burn_nandmanager_init(pinfo, eraseall, pt_startadd_offset, ops_pt_cnt);
+
+	/* nand api reinit */
+	ret = nand_api_reinit(&platdep);
+	if (ret)
+		goto err_api_reinit;
+
 	printf("%s end!!!!\n",__func__);
 	return 0;
 
-err_api_init:
-	free(ndd_private.platptinfo.pt_table);
+err_api_reinit:
+	free(platdep.platptinfo);
 err_alloc_ptinfo:
-	free(ndd_private.rbinfo);
+	free(platdep.rbinfo);
 err_alloc_rbinfo:
+err_api_init:
 err_fill_base:
-	free(ndd_private.base);
+	free(osdep.base);
 err_alloc_base:
 	return -1;
 }

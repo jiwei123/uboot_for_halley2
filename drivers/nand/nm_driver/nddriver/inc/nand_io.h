@@ -53,6 +53,7 @@ void nand_io_send_spec_addr(int context, int addr, unsigned int cycle, unsigned 
 int nand_io_send_data(int context, unsigned char *src, unsigned int len);
 int nand_io_receive_data(int context, unsigned char *dst, unsigned int len);
 void nand_io_setup_default_16bit(nfi_base *base);
+int nand_io_send_waitcomplete(int context, chip_info *cinfo);
 
 int nand_io_open(nfi_base *base, chip_info *cinfo);
 void nand_io_close(int context);

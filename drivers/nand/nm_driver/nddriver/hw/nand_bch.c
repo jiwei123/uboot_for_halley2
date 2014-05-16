@@ -2,14 +2,8 @@
 #include <nand_debug.h>
 #include <nand_bch.h>
 #include <cpu_trans.h>
-#include <config.h>
 
-#ifdef CONFIG_JZ4780
-#include <soc/jz4780_bch.h>
-#elif defined(CONFIG_JZ4775)
-#include <soc/jz4775_bch.h>
-#endif
-
+#include <soc/jz_bch.h>
 /*****  the operation of bch registers  *****/
 static int ref_cnt = 0;
 

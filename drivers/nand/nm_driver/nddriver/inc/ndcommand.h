@@ -63,7 +63,7 @@
 
 #define CMD_BLOCK_ERASE_1ST				0x60        //  Erase phase 1
 #define CMD_BLOCK_ERASE_2ND				0xD0        //  Erase phase 2,Erase confirm
-#define CMD_2P_BLOCK_ERASE_1ST			0x60	//  Two-plane erase phase before addr 1 
+#define CMD_2P_BLOCK_ERASE_1ST			0x60	//  Two-plane erase phase before addr 1
 #define CMD_2P_BLOCK_ERASE_2ND			0x60	//  Two-plane erase phase before addr 2
 #define CMD_2P_BLOCK_ERASE_3RD			0xD0	//	Two-plane erase confirm
 
@@ -71,21 +71,6 @@
 
 #define	CMD_SET_FEATURES				0xEF
 #define	CMD_GET_FEATURES				0xEE
-struct lib_nandtiming{
-        unsigned int tALS;	/* ... duration/width/time */
-        unsigned int tALH;	/* ... duration/width/time */
-        unsigned int tRP;	/* ... duration/width/time */
-        unsigned int tWP;	/* ... duration/width/time */
-        unsigned int tRHW;	/* ... duration/width/time */
-        unsigned int tWHR;	/* ... duration/width/time */
-	unsigned int tWHR2;	/* ... duration/width/time */
-	unsigned int tRR;	/* ... duration/width/time */
-	unsigned int tWB;	/* ... duration/width/time */
-	unsigned int tADL;	/* ... duration/width/time */
-	unsigned int tCWAW;	/* ... duration/width/time */
-        unsigned int tCS;	/* ... duration/width/time */
-        unsigned int tCLH;	/* ... duration/width/time */
-};
 
 typedef struct __nand_basic_command {
 	/* common command */
@@ -124,21 +109,21 @@ typedef struct __nand_extend_command {
 
 typedef struct __nand_extend_ops {
 	/* 2p_read */
-	int (* cmd_2p_read)(struct task_msg *, unsigned int, const struct lib_nandtiming *, unsigned int, unsigned int);
+	int (* cmd_2p_read)(struct task_msg *, unsigned int, nand_ops_timing *, unsigned int, unsigned int);
 	int (* getret_cmd_2p_read)(unsigned char *, unsigned int, unsigned char *);
-	int (* cmd_2p_changeplane)(struct task_msg *, unsigned int, const struct lib_nandtiming *, unsigned int);
+	int (* cmd_2p_changeplane)(struct task_msg *, unsigned int, nand_ops_timing *, unsigned int);
 	int (* getret_cmd_2p_changeplane)(unsigned char *, unsigned int, unsigned char *);
 	/* 2p_write */
-	int (* cmd_2p_write_page0_start)(struct task_msg *, unsigned int, const struct lib_nandtiming *, unsigned short , unsigned int);
+	int (* cmd_2p_write_page0_start)(struct task_msg *, unsigned int, nand_ops_timing *, unsigned short , unsigned int);
 	int (* getret_cmd_2p_write_page0_start)(unsigned char *, unsigned int, unsigned char *);
-	int (* cmd_2p_write_page0_confirm)(struct task_msg *, unsigned int, const struct lib_nandtiming *);
+	int (* cmd_2p_write_page0_confirm)(struct task_msg *, unsigned int,nand_ops_timing *);
 	int (* getret_cmd_2p_write_page0_confirm)(unsigned char *, unsigned int, unsigned char *);
-	int (* cmd_2p_write_page1_start)(struct task_msg *, unsigned int, const struct lib_nandtiming *, unsigned short, unsigned int);
+	int (* cmd_2p_write_page1_start)(struct task_msg *, unsigned int, nand_ops_timing *, unsigned short, unsigned int);
 	int (* getret_cmd_2p_write_page1_start)(unsigned char *, unsigned int, unsigned char *);
-	int (* cmd_2p_write_page1_confirm)(struct task_msg *, unsigned int, const struct lib_nandtiming *);
+	int (* cmd_2p_write_page1_confirm)(struct task_msg *, unsigned int, nand_ops_timing *);
 	int (* getret_cmd_2p_write_page1_confirm)(unsigned char *, unsigned int, unsigned char *);
 	/* 2p_erase */
-	int (* cmd_2p_erase)(struct task_msg *, unsigned int, const struct lib_nandtiming *, unsigned int,unsigned int);
+	int (* cmd_2p_erase)(struct task_msg *, unsigned int, nand_ops_timing *, unsigned int,unsigned int);
 	int (* getret_cmd_2p_erase)(unsigned char *, unsigned int, unsigned char *);
 
 } NandExtendOps;
@@ -178,24 +163,24 @@ typedef struct __nand_extend_ops {
         (NAND_NO_PADDING | NAND_CACHEPRG | NAND_COPYBACK)
 
 /* 1p_read*/
-int command_1p_read(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time, unsigned short offset, unsigned int pageid);
+int command_1p_read(struct task_msg *msg, unsigned int flag, nand_ops_timing *time, unsigned short offset, unsigned int pageid);
 int getret_cmd_1p_read(unsigned char *ret, unsigned int index, unsigned char *value);
 /* random output */
-int command_random_data_output(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time, unsigned short offset);
+int command_random_data_output(struct task_msg *msg, unsigned int flag, nand_ops_timing *time, unsigned short offset);
 int getret_cmd_random_data_output(unsigned char *ret, unsigned int index, unsigned char *value);
 /* 1p_write */
-int command_1p_write_start(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time, unsigned short, unsigned int);
+int command_1p_write_start(struct task_msg *msg, unsigned int flag, nand_ops_timing *time, unsigned short, unsigned int);
 int getret_cmd_1p_write_start(unsigned char *ret, unsigned int index, unsigned char *value);
-int command_1p_write_confirm(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time);
+int command_1p_write_confirm(struct task_msg *msg, unsigned int flag, nand_ops_timing *time);
 int getret_cmd_1p_write_confirm(unsigned char *ret, unsigned int index, unsigned char *value);
 /* random input */
-int command_random_data_input(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time, unsigned short offset);
+int command_random_data_input(struct task_msg *msg, unsigned int flag, nand_ops_timing *time, unsigned short offset);
 int getret_cmd_random_data_input(unsigned char *ret, unsigned int index, unsigned char *value);
 /* read_status */
-int command_read_status(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time);
+int command_read_status(struct task_msg *msg, unsigned int flag, nand_ops_timing *time);
 int getret_cmd_read_status(unsigned char *ret, unsigned int index, unsigned char *value);
 /*  1p_erase */
-int command_1p_erase(struct task_msg *msg, unsigned int flag, const struct lib_nandtiming *time, unsigned int pageid);
+int command_1p_erase(struct task_msg *msg, unsigned int flag, nand_ops_timing *time, unsigned int pageid);
 int getret_cmd_1p_erase(unsigned char *ret, unsigned int index, unsigned char *value);
 
 int micron_extend_cmd_init(NandExtendOps *ops);

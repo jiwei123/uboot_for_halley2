@@ -9,8 +9,8 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef __JZ4780_BCH_H__
-#define __JZ4780_BCH_H__
+#ifndef __JZ_BCH_H__
+#define __JZ_BCH_H__
 
 #define BCH_CR			0x000 /* BCH Control register */
 #define BCH_CRS			0x004 /* BCH Control Set register */
@@ -202,4 +202,4 @@
 
 #define BCH_CLK_NAME    "bch"
 #define BCH_CGU_CLK_NAME    "cgu_bch"
-#endif /* __JZ4780_BCH_H__ */
+#endif /* __JZ_BCH_H__ */

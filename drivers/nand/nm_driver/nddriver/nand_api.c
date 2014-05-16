@@ -32,9 +32,11 @@ int (*__wait_rb_timeout) (rb_item *, int);
 int (*__try_wait_rb) (rb_item *, int);
 void (*__wp_enable) (int);
 void (*__wp_disable) (int);
-nand_flash * (*__get_nand_flash) (void);
+int (*__gpio_irq_request)(unsigned short, unsigned short *, void **);
+int (*__ndd_gpio_request)(unsigned int, const char *);
 
 extern int os_clib_init(os_clib *clib);
+
 /*========================= NandInterface =========================*/
 /**
  * if block is 'X', it is virtual
@@ -829,11 +831,13 @@ static cs_info* get_csinfo(nfi_base *base, rb_info *rbinfo)
 	return csinfo;
 }
 
-static void free_csinfo(cs_info *csinfo)
+static void free_csinfo(cs_info **csinfo)
 {
-	ndd_free(csinfo);
+	ndd_free(*csinfo);
+	*csinfo = NULL;
 }
 
+extern void nand_controll_adpt(chip_info *cinfo, const nand_flash *ndflash);//from nand_io.c
 static int fill_cinfo(nand_data *nddata, const nand_flash *ndflash)
 {
 	nfi_base *base = &(nddata->base->nfi);
@@ -871,15 +875,16 @@ static int fill_cinfo(nand_data *nddata, const nand_flash *ndflash)
 	} else
 		cinfo->retryparms = NULL;
 
-	cinfo->timing = &(ndflash->timing);
+	//cinfo->timing = &(ndflash->timing);
+	nand_controll_adpt(cinfo,ndflash);
 	cinfo->flash = (void *)ndflash;
 
 	return 0;
 }
 
-static io_base* get_base(struct nand_api_osdependent *private)
+static io_base* get_base(struct nand_api_osdependent *osdep)
 {
-	return private->base;
+	return osdep->base;
 }
 
 static int nandflash_setup(nfi_base *base, cs_info *csinfo, rb_info *rbinfo, chip_info *cinfo)
@@ -939,7 +944,7 @@ static int get_nand_sharing_params(nand_flash *ndflash)
 {
 	struct nand_basic_info *src_parms = &(share_parms.nandinfo);
 
-	if (share_parms.magic != 0x646e616e)
+	if (share_parms.magic != NAND_MAGIC)
 		RETURN_ERR(ENAND, "get nand sharing params error, magic = [%x]", share_parms.magic);
 
 	ndflash->id = src_parms->id;
@@ -963,241 +968,60 @@ static int get_nand_sharing_params(nand_flash *ndflash)
 	return 0;
 }
 
-static int get_cinfo_rbinfo_from_errpt(nand_data *nddata, struct nand_api_osdependent *private)
+static int get_platinfo_from_errpt(nand_data *nddata, struct nand_api_platdependent *platdep)
 {
-	int ret = 0, rb_index = 0;
-	nand_flash *ndflash;
-	rb_item *rbinfo_table = NULL;
-
-	ndflash = (nand_flash *)ndd_alloc(sizeof(nand_flash));
-	if(!ndflash){
-		ret = -1;
-		GOTO_ERR(alloc_ndflash);
-	}
+	int ret = 0;
+	nand_flash *ndflash = platdep->nandflash;
 
 	/* get sharing parms of nand */
 	ret = get_nand_sharing_params(ndflash);
-	if(ret < 0){
-		ret = -1;
-		GOTO_ERR(get_sharing_parms);
-	}
+	if(ret < 0)
+		RETURN_ERR(ret, "get sharing params from memory error!\n");
 
-	/* init operations of errpt */
-	nand_errpt_init(ndflash);
-
+	/* init eccsize */
 	if(ndflash->pagesize >= DEFAULT_ECCSIZE)
 		nddata->eccsize = DEFAULT_ECCSIZE;
 	else
 		nddata->eccsize = 512;
 	nddata->spl_eccsize = SPL_ECCSIZE;
 
-	/* alloc rbinfo memory */
-	nddata->rbinfo = private->get_rbinfo_memory();
-	if(!nddata->rbinfo){
-		GOTO_ERR(get_rbinfo);
-	}
-	rbinfo_table = nddata->rbinfo->rbinfo_table;
+	/* init operations of errpt */
+	nand_errpt_init(ndflash);
 
 	/* get rbinfo and nandflash parameters */
-	ndd_debug("\nread head info from errpt:\n");
-	ret = get_errpt_head(nddata, &(private->platptinfo), ndflash);
+	ret = get_errpt_head(nddata, platdep);
 	if (ret < 0)
-		GOTO_ERR(get_errpt_head);
-	ndd_dump_nandflash(ndflash);
+		ret = ENAND;
 
-	/* alloc ptinfo memory */
-	ret = init_platptitem_memory(&(private->platptinfo));
-	if(ret < 0)
-		GOTO_ERR(init_platptinfo);
-
-	/* init irq of rb */
-	ret = private->ndd_gpio_request(nddata->gpio_wp, "nand_wp");
-	if(ret < 0)
-		GOTO_ERR(request_wp);
-
-	for(rb_index = 0; rb_index < nddata->rbinfo->totalrbs; rb_index++){
-		ret = private->gpio_irq_request(rbinfo_table[rb_index].gpio,
-				&(rbinfo_table[rb_index].irq), (int)(rbinfo_table[rb_index].irq_private));
-		if(ret < 0)
-			GOTO_ERR(request_rb_irq);
-	}
-
-	/* init csinfo */
-	ndd_debug("\nget csinfo:\n");
-	nddata->csinfo = get_csinfo(&(nddata->base->nfi), nddata->rbinfo);
-	if (!nddata->csinfo)
-		GOTO_ERR(get_csinfo);
-
-	/* init cinfo */
-	ret = fill_cinfo(nddata, ndflash);
-	if (ret < 0)
-		GOTO_ERR(fill_cinfo);
-	ndd_dump_chip_info(nddata->cinfo);
-
-	ndd_debug("\nget plat_ptinfo from errpt:\n");
-	/* get information of paritions */
-	ret = get_errpt_ppainfo(nddata, &(private->platptinfo), ndflash);
-	if(ret < 0)
-		GOTO_ERR(get_ppainfo);
-
+	/* deinit operations of errpt */
 	nand_errpt_deinit();
 
-	return 0;
-
-ERR_LABLE(get_ppainfo):
-	ndd_free(nddata->csinfo);
-ERR_LABLE(fill_cinfo):
-	free_csinfo(nddata->csinfo);
-	nddata->csinfo = NULL;
-ERR_LABLE(get_csinfo):
-ERR_LABLE(request_rb_irq):
-ERR_LABLE(request_wp):
-	if(nddata->cinfo->retryparms)
-		ndd_free(nddata->cinfo->retryparms);
-ERR_LABLE(get_errpt_head):
-	private->abandon_rbinfo_memory(nddata->rbinfo);
-ERR_LABLE(get_rbinfo):
-	deinit_platptitem_memory(&(private->platptinfo));
-ERR_LABLE(init_platptinfo):
-	nand_errpt_deinit();
-ERR_LABLE(get_sharing_parms):
-ERR_LABLE(alloc_ndflash):
 	return ret;
 }
 
-static int get_cinfo_rbinfo_from_burntool(nand_data *nddata, struct nand_api_osdependent *private)
+static int get_ppainfo_from_errpt(nand_data *nddata, struct nand_api_platdependent *platdep)
 {
 	int ret = 0;
-	nand_flash *ndflash = NULL;
-
-	ndflash = __get_nand_flash();
-	if (!ndflash)
-		GOTO_ERR(no_flash);
-	ndd_dump_nandflash(ndflash);
+	nand_flash *ndflash = platdep->nandflash;
 
 	/* init operations of errpt */
 	nand_errpt_init(ndflash);
 
-	if(ndflash->pagesize >= DEFAULT_ECCSIZE)
-		nddata->eccsize = DEFAULT_ECCSIZE;
-	else
-		nddata->eccsize = 512;;
+	/* get information of paritions */
+	ret = get_errpt_ppainfo(nddata, platdep);
+	if(ret < 0)
+		RETURN_ERR(ret, "get ppainfo from errpt error!\n");
 
-	nddata->spl_eccsize = SPL_ECCSIZE;
-	nddata->cinfo->drv_strength = private->drv_strength;
-	nddata->gpio_wp = private->gpio_wp;
-
-	nddata->rbinfo = private->rbinfo;
-
-	ndd_debug("\nget csinfo:\n");
-	nddata->csinfo = get_csinfo(&(nddata->base->nfi), nddata->rbinfo);
-	if (!nddata->csinfo)
-		GOTO_ERR(get_csinfo);
-
-	ret = fill_cinfo(nddata, ndflash);
-	if (ret)
-		GOTO_ERR(fill_cinfo);
-
-	ndd_dump_chip_info(nddata->cinfo);
-
-#if 0
-	switch(private->erasemode){
-		case NAND_NORMAL_ERASE_MODE:
-			ret = nand_write_errpt(nddata, &(private->platptinfo), ndflash);
-			break;
-		case NAND_FORCE_ERASE_MODE;
-			ret = nand_write_errpt(nddata, &(private->platptinfo), ndflash);
-			break;
-		case NAND_FACTORY_ERASE_MODE;
-			ret = nand_write_errpt(nddata, &(private->platptinfo), ndflash);
-			break;
-		default:
-			/* get rbinfo and nandflash parameters */
-			ret = get_errpt_head(nddata, *(private->platptinfo), ndflash);
-			if(ret >= 0){
-				nddata->cinfo->maxvalidblocks = ndflash->maxvalidblocks / ndflash->chips;
-				nddata->cinfo->maxvalidpages = nddata->cinfo->maxvalidblocks * nddata->cinfo->ppblock;
-			}
-			break;
-	}
-#else
-	if (private->erasemode) {
-		ret = nand_write_errpt(nddata, &(private->platptinfo), ndflash, private->erasemode);
-	} else {
-		/* get rbinfo and nandflash parameters */
-		ret = get_errpt_head(nddata, &(private->platptinfo), ndflash);
-		if(ret >= 0){
-			nddata->cinfo->maxvalidblocks = ndflash->maxvalidblocks / ndflash->chips;
-			nddata->cinfo->maxvalidpages = nddata->cinfo->maxvalidblocks * nddata->cinfo->ppblock;
-			ret = get_errpt_ppainfo(nddata, &(private->platptinfo), ndflash);
-		}
-	}
-#endif
-
-ERR_LABLE(fill_cinfo):
-	if(ret < 0){
-		free_csinfo(nddata->csinfo);
-		nddata->csinfo = NULL;
-	}
-ERR_LABLE(get_csinfo):
-ERR_LABLE(no_flash):
+	/* deinit operations of errpt */
 	nand_errpt_deinit();
-	return ret;
+
+	return 0;
 }
 
-int nand_api_init(struct nand_api_osdependent *private)
-{
-	int ret;
-	int cs_index;
-	
-	os_clib_init(&(private->clib));
-	//ndd_dump_status();
-
-	__clear_rb_state = private->clear_rb_state;
-	__wait_rb_timeout = private->wait_rb_timeout;
-	__try_wait_rb = private->try_wait_rb;
-	__wp_enable = private->wp_enable;
-	__wp_disable = private->wp_disable;
-	__get_nand_flash = private->get_nand_flash;
-
-	nddata = ndd_alloc(sizeof(nand_data));
-	if (!nddata)
-		RETURN_ERR(ENAND, "alloc memory for nddata error");
-
-	nddata->cinfo = ndd_alloc(sizeof(chip_info));
-	if(!nddata->cinfo)
-		GOTO_ERR(alloc_cinfo);
-
-	nddata->base = get_base(private);
-	if (!nddata->base)
-		GOTO_ERR(get_base);
-
-	for (cs_index = 0; cs_index < CS_PER_NFI; cs_index++) {
-		ret = early_nand_prepare(&(nddata->base->nfi), cs_index);
-		if(ret != SUCCESS)
-			GOTO_ERR(nand_prepare);
-	}
-
-	nddata->clear_rb = clear_rb_state;
-	nddata->wait_rb = wait_rb_timeout;
-	ndd_debug("\nget nand rb info and chip info:\n");
-	if (!private->get_nand_flash)
-		ret = get_cinfo_rbinfo_from_errpt(nddata, private);
-	else
-		ret = get_cinfo_rbinfo_from_burntool(nddata,private);
-	if(ret < 0)
-		GOTO_ERR(get_cinfo_rbinfo);
-
-	ndd_debug("\nnand flash setup:\n");
-	ret = nandflash_setup(&(nddata->base->nfi), nddata->csinfo, nddata->rbinfo, nddata->cinfo);
-	if (ret){
-		ndd_print(NDD_ERROR,"WARNING:nand set feature failed!\n");
-		//GOTO_ERR(setup_nandflash);
-	}
-
+static int nand_api_later_init(nand_data *nddata, plat_ptinfo *platptinfo) {
 	ndd_debug("\nget ndpartition:\n");
 	nddata->ptinfo = get_ptinfo(nddata->cinfo, nddata->csinfo->totalchips,
-				    nddata->rbinfo->totalrbs, &(private->platptinfo));
+				    nddata->rbinfo->totalrbs, platptinfo);
 	if (!nddata->ptinfo)
 		GOTO_ERR(get_ptinfo);
 
@@ -1209,24 +1033,263 @@ int nand_api_init(struct nand_api_osdependent *private)
 	ndd_debug("\nregister NandManger:\n");
 	Register_NandDriver(&nand_interface);
 
-
-//	printf(" ==================== >>>> %s %d \n",__func__,__LINE__);
-	ndd_debug("nand driver init ok!\n");
+	ndd_print(NDD_DEBUG, "nand driver later init ok!\n");
 	return 0;
 
 ERR_LABLE(ops_init):
 	free_ptinfo(nddata->ptinfo);
 ERR_LABLE(get_ptinfo):
-//ERR_LABLE(setup_nandflash):
-ERR_LABLE(get_cinfo_rbinfo):
-	if(nddata->csinfo)
-		free_csinfo(nddata->csinfo);
-ERR_LABLE(nand_prepare):
+	return ENAND;
+}
+
+static int early_nand_init(nand_data *nddata) {
+	int ret = 0, cs_index;
+
+	for (cs_index = 0; cs_index < CS_PER_NFI; cs_index++) {
+		ret = early_nand_prepare(&(nddata->base->nfi), cs_index);
+		if(ret != SUCCESS)
+			ndd_print(NDD_WARNING, "WARNING: early nand prepare faild, cs_index = %d\n", cs_index);
+	}
+
+	return 0;
+}
+
+static struct nand_api_platdependent* alloc_platdep_memory(void) {
+	struct nand_api_platdependent *platdep;
+
+	platdep = ndd_alloc(sizeof(struct nand_api_platdependent) + sizeof(nand_flash) +
+			    sizeof(rb_info) + sizeof(plat_ptinfo));
+	if (platdep) {
+		platdep->nandflash = (nand_flash *)((unsigned char *)platdep + sizeof(struct nand_api_platdependent));
+		platdep->rbinfo = (rb_info *)((unsigned char *)platdep->nandflash + sizeof(nand_flash));
+		platdep->platptinfo = (plat_ptinfo *)((unsigned char *)platdep->rbinfo + sizeof(rb_info));
+	}
+
+	return platdep;
+}
+
+static void free_platdep_memory(struct nand_api_platdependent **platdep) {
+	ndd_free(*platdep);
+	*platdep = NULL;
+}
+
+int nand_api_init(struct nand_api_osdependent *osdep)
+{
+	int ret;
+
+	os_clib_init(&(osdep->clib));
+	ndd_dump_status();
+
+	__clear_rb_state = osdep->clear_rb_state;
+	__wait_rb_timeout = osdep->wait_rb_timeout;
+	__try_wait_rb = osdep->try_wait_rb;
+	__wp_enable = osdep->wp_enable;
+	__wp_disable = osdep->wp_disable;
+	__gpio_irq_request = osdep->gpio_irq_request;
+	__ndd_gpio_request = osdep->ndd_gpio_request;
+
+	nddata = ndd_alloc(sizeof(nand_data));
+	if (!nddata)
+		RETURN_ERR(ENAND, "alloc memory for nddata error");
+	nddata->clear_rb = clear_rb_state;
+	nddata->wait_rb = wait_rb_timeout;
+
+	nddata->cinfo = ndd_alloc(sizeof(chip_info));
+	if(!nddata->cinfo)
+		GOTO_ERR(alloc_cinfo);
+
+	nddata->base = get_base(osdep);
+	if (!nddata->base)
+		GOTO_ERR(get_base);
+
+	ret = early_nand_init(nddata);
+	if (ret < 0)
+		GOTO_ERR(early_nand_init);
+
+	ndd_print(NDD_DEBUG, "nand driver init ok!\n");
+	if (share_parms.magic == NAND_MAGIC) {
+		int rb_index, totalrbs;
+		rb_item *rbinfo_table;
+
+		ndd_debug("\nget memory for platdependent:\n");
+		nddata->platdep = alloc_platdep_memory();
+		if (!nddata->platdep)
+			GOTO_ERR(alloc_platdep_memory);
+		nddata->rbinfo = nddata->platdep->rbinfo;
+
+		ndd_debug("\nget platinfo from errpt:\n");
+		ret = get_platinfo_from_errpt(nddata, nddata->platdep);
+		if (ret < 0)
+			GOTO_ERR(get_platinfo);
+		nddata->gpio_wp = nddata->platdep->gpio_wp;
+		nddata->cinfo->drv_strength = nddata->platdep->drv_strength;
+
+		ndd_debug("\ninit wp gpio:\n");
+		ret = __ndd_gpio_request(nddata->gpio_wp, "nand_wp");
+		if(ret < 0)
+			GOTO_ERR(request_wp);
+
+		ndd_debug("\ninit irq of rb:\n");
+		totalrbs = nddata->rbinfo->totalrbs;
+		rbinfo_table = nddata->rbinfo->rbinfo_table;
+		for (rb_index = 0; rb_index < totalrbs; rb_index++) {
+			ret = __gpio_irq_request(rbinfo_table[rb_index].gpio,
+						 &(rbinfo_table[rb_index].irq),
+						 &(rbinfo_table[rb_index].irq_private));
+			if(ret < 0)
+				GOTO_ERR(request_rb_irq);
+		}
+
+		ndd_debug("\nfill cinfo:\n");
+		ret = fill_cinfo(nddata, nddata->platdep->nandflash);
+		if (ret < 0)
+			GOTO_ERR(fill_cinfo);
+		ndd_dump_chip_info(nddata->cinfo);
+
+		ndd_debug("\nget csinfo:\n");
+		nddata->csinfo = get_csinfo(&(nddata->base->nfi), nddata->rbinfo);
+		if (!nddata->csinfo)
+			GOTO_ERR(get_csinfo);
+
+		ndd_debug("\nnand flash setup:\n");
+		ret = nandflash_setup(&(nddata->base->nfi), nddata->csinfo, nddata->rbinfo, nddata->cinfo);
+		if (ret)
+			ndd_print(NDD_ERROR,"WARNING:nand set feature failed!\n");
+
+		ndd_debug("\nget ppainfo from errpt:\n");
+		ret = get_ppainfo_from_errpt(nddata, nddata->platdep);
+		if (ret < 0)
+			GOTO_ERR(get_ppainfo);
+
+		ndd_debug("\nnand api later init:\n");
+		ret = nand_api_later_init(nddata, nddata->platdep->platptinfo);
+		if (ret < 0)
+			GOTO_ERR(nand_api_later_init);
+	} else
+		ndd_print(NDD_DEBUG, "no share_parms, please call the nand_api_reinit()!\n");
+
+	return 0;
+
+ERR_LABLE(nand_api_later_init):
+ERR_LABLE(get_ppainfo):
+	free_csinfo(&(nddata->csinfo));
+ERR_LABLE(get_csinfo):
+ERR_LABLE(fill_cinfo):
+ERR_LABLE(request_rb_irq):
+ERR_LABLE(request_wp):
+ERR_LABLE(get_platinfo):
+	free_platdep_memory(&(nddata->platdep));
+ERR_LABLE(alloc_platdep_memory):
+ERR_LABLE(early_nand_init):
 ERR_LABLE(get_base):
 	ndd_free(nddata->cinfo);
 ERR_LABLE(alloc_cinfo):
 	ndd_free(nddata);
-	return -1;
+	return ENAND;
+}
+
+/**
+ * nand_api_reinit():
+ * WARNING: this function can only used in usbburntool or card burntool.
+ * NOTE1: if (platdep->erasemode == 0) && (platdep->update_errpt == 0), it
+ * will just run the nandmanager with platdep, errpt will be ignored.
+ * NOTE2: if use in burntool and (platdep->erasemode == 0), platdep->update_errpt
+ * must be set true.
+ **/
+int nand_api_reinit(struct nand_api_platdependent *platdep)
+{
+	int ret;
+	int rb_index, totalrbs;
+	rb_item *rbinfo_table;
+	nand_flash *ndflash = platdep->nandflash;
+
+	if (ndflash->pagesize >= DEFAULT_ECCSIZE)
+		nddata->eccsize = DEFAULT_ECCSIZE;
+	else
+		nddata->eccsize = 512;;
+	nddata->spl_eccsize = SPL_ECCSIZE;
+	nddata->cinfo->drv_strength = platdep->drv_strength;
+	nddata->gpio_wp = platdep->gpio_wp;
+	nddata->rbinfo = platdep->rbinfo;
+
+	ndd_debug("\ninit wp gpio:\n");
+	ret = __ndd_gpio_request(nddata->gpio_wp, "nand_wp");
+	if(ret < 0)
+		GOTO_ERR(request_wp);
+
+	ndd_debug("\ninit irq of rb:\n");
+	totalrbs = nddata->rbinfo->totalrbs;
+	rbinfo_table = nddata->rbinfo->rbinfo_table;
+	for (rb_index = 0; rb_index < totalrbs; rb_index++) {
+		ret = __gpio_irq_request(rbinfo_table[rb_index].gpio,
+					 &(rbinfo_table[rb_index].irq),
+					 &(rbinfo_table[rb_index].irq_private));
+		if(ret < 0)
+			GOTO_ERR(request_rb_irq);
+	}
+
+	ndd_debug("\nfill cinfo:\n");
+	ret = fill_cinfo(nddata, ndflash);
+	if (ret)
+		GOTO_ERR(fill_cinfo);
+	ndd_dump_chip_info(nddata->cinfo);
+
+	ndd_debug("\nget csinfo:\n");
+	nddata->csinfo = get_csinfo(&(nddata->base->nfi), nddata->rbinfo);
+	if (!nddata->csinfo)
+		GOTO_ERR(get_csinfo);
+
+	ndd_debug("\nnand flash setup:\n");
+	ret = nandflash_setup(&(nddata->base->nfi), nddata->csinfo, nddata->rbinfo, nddata->cinfo);
+	if (ret)
+		ndd_print(NDD_ERROR,"WARNING:nand set feature failed!\n");
+
+	if (platdep->erasemode) {
+		/* init operations of errpt */
+		nand_errpt_init(ndflash);
+		ndd_debug("\nwrite errpt:\n");
+		ret = nand_write_errpt(nddata, platdep->platptinfo, ndflash, platdep->erasemode);
+		/* deinit operations of errpt */
+		nand_errpt_deinit();
+		if (ret < 0)
+			GOTO_ERR(write_errpt);
+	} else {
+		/* init operations of errpt */
+		nand_errpt_init(ndflash);
+		ndd_debug("\nupdate errpt:\n");
+		ret = get_errpt_head(nddata, platdep);
+		if (ret >= 0) {
+			nddata->cinfo->maxvalidblocks = ndflash->maxvalidblocks / ndflash->chips;
+			nddata->cinfo->maxvalidpages = nddata->cinfo->maxvalidblocks * nddata->cinfo->ppblock;
+			ret = get_errpt_ppainfo(nddata, platdep);
+		}
+		/* deinit operations of errpt */
+		nand_errpt_deinit();
+		if (ret < 0)
+			GOTO_ERR(update_errpt);
+	}
+
+	ndd_debug("\nnand api later init:\n");
+	nddata->platdep = platdep;
+	ret = nand_api_later_init(nddata, nddata->platdep->platptinfo);
+	if (ret < 0)
+		GOTO_ERR(nand_api_later_init);
+
+	return 0;
+
+ERR_LABLE(nand_api_later_init):
+ERR_LABLE(update_errpt):
+ERR_LABLE(write_errpt):
+ERR_LABLE(get_csinfo):
+ERR_LABLE(fill_cinfo):
+ERR_LABLE(request_rb_irq):
+ERR_LABLE(request_wp):
+	return ENAND;
+}
+
+int nand_api_get_nandflash_id(nand_flash_id *id)
+{
+	return get_nand_id(&(nddata->base->nfi), id, 0);
 }
 
 int nand_api_suspend(void)

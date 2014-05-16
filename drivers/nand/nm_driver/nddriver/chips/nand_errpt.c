@@ -1,6 +1,6 @@
 #include <os_clib.h>
 #include "errptinfo.h"
-#include "nand_debug.h"
+#include <nand_debug.h>
 #include "nand_io.h"
 #include "nand_bch.h"
 #include "ppartition.h"
@@ -67,9 +67,6 @@ extern void (*__wp_disable) (int);
 
 int nd_raw_boundary;
 errpt_info nd_errpt_info;
-
-extern PPartArray *ppat_test;
-
 static void dump_pheadinfo(ppa_head *phead)
 {
 	int i;
@@ -142,15 +139,19 @@ static void nand_io_bch_close(void)
 	nand_io_close(nd_errpt_info.io_context);
 	nand_bch_close(nd_errpt_info.bch_context);
 }
+static void nand_busy_clear(nand_data *nddata, int chip_index)
+{
+	nddata->clear_rb(chip_index);
+}
 static int nand_wait_ready(nand_data *nddata, int chip_index)
 {
-	volatile int timeout = 10;
+	volatile int timeout = 500;
 	int ret = SUCCESS;
 	ret = nddata->wait_rb(chip_index, timeout);
 	if (ret < 0)
 		ret = TIMEOUT;
 
-	ndd_ndelay(nddata->cinfo->timing->tRR);
+	ndd_ndelay(nddata->cinfo->ops_timing.tRR);
 
 	return ret;
 }
@@ -204,18 +205,22 @@ static int read_badblock(nand_data *nddata, nand_flash *ndflash,int chip_index, 
 	unsigned int badblockpos = (ndflash->pagesize != 512) ? ndflash->pagesize + ndflash->oobsize - 4 : ndflash->oobsize - 4;
 
 	nand_io_chip_select(nd_errpt_info.io_context, chip_index);
-	if(rb_ready == RB_READY)
-		nddata->clear_rb(chip_index);
 	if(ndflash->pagesize != 512)
 		nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_READ0, NO_DELAY);
 	else
 		nand_io_send_cmd(nd_errpt_info.io_context, CMD_OOB_READ_1ST_512, NO_DELAY);
+	if (rb_ready)
+		nand_busy_clear(nddata,chip_index);
 	errpt_nand_io_send_addr(nd_errpt_info.io_context, ndflash, badblockpos, pageid, NO_DELAY);
 	if(ndflash->pagesize != 512)
 		nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_READSTART, 100);
 
 	if(rb_ready){
 		ret = nand_wait_ready(nddata,chip_index);
+		if (ret < 0) {
+			ndd_print(NDD_ERROR, "func:%s line:%d wait rb timeout ret=%d\n",__func__, __LINE__, ret);
+			goto err;
+		}
 	}else
 		ndd_ndelay(5 * 1000 * 1000);
 	ret = nand_io_receive_data(nd_errpt_info.io_context,badblockbuf,4);
@@ -237,17 +242,22 @@ static int read_badblock(nand_data *nddata, nand_flash *ndflash,int chip_index, 
 	unsigned int badblockpos = (ndflash->pagesize != 512) ? ndflash->pagesize + ndflash->oobsize - 4 : ndflash->oobsize - 4;
 
 	nand_io_chip_select(nd_errpt_info.io_context, csinfo_table->id);
-	nddata->clear_rb(chip_index);
 	if(ndflash->pagesize != 512)
 		nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_READ0, NO_DELAY);
 	else
 		nand_io_send_cmd(nd_errpt_info.io_context, CMD_OOB_READ_1ST_512, NO_DELAY);
+	if(rb_ready)
+		nand_busy_clear(nddata,chip_index);
 	errpt_nand_io_send_addr(nd_errpt_info.io_context, ndflash, badblockpos, pageid, NO_DELAY);
 	if(ndflash->pagesize != 512)
 		nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_READSTART, 100);
 
 	if(rb_ready){
 		ret = nand_wait_ready(nddata,chip_index);
+		if (ret < 0) {
+			ndd_print(NDD_ERROR, "func:%s line:%d wait rb timeout ret=%d\n",__func__, __LINE__, ret);
+			goto err;
+		}
 	}else
 		ndd_ndelay(5 * 1000 * 1000);
 	ret = nand_io_receive_data(nd_errpt_info.io_context,badblockbuf,4);
@@ -267,21 +277,21 @@ static int write_badblock(nand_data *nddata, nand_flash *ndflash, int chip_index
 	unsigned char badblockbuf[4] = {0x00};
 	unsigned int badblockpos = (ndflash->pagesize != 512) ? ndflash->pagesize + ndflash->oobsize - 4 : ndflash->oobsize - 4;
 
-	nddata->clear_rb(chip_index);
 	/* if pagesize == 512, write 0x50 to reset pointer to 512 before program */
 	if (ndflash->pagesize == 512)
 		nand_io_send_cmd(nd_errpt_info.io_context, CMD_OOB_READ_1ST_512, NO_DELAY);
 	nand_io_send_cmd(nd_errpt_info.io_context, CMD_PAGE_PROGRAM_1ST, NO_DELAY);
-	errpt_nand_io_send_addr(nd_errpt_info.io_context, ndflash, badblockpos, pageid, ndflash->timing.tADL);
+	errpt_nand_io_send_addr(nd_errpt_info.io_context, ndflash, badblockpos, pageid, nddata->cinfo->ops_timing.tADL);
 	nand_io_send_data(nd_errpt_info.io_context, badblockbuf, 4);
-	nand_io_send_cmd(nd_errpt_info.io_context, CMD_PAGE_PROGRAM_2ND, ndflash->timing.tWB);
+	nand_busy_clear(nddata,chip_index);
+	nand_io_send_cmd(nd_errpt_info.io_context, CMD_PAGE_PROGRAM_2ND, nddata->cinfo->ops_timing.tWB);
 	ret = nand_wait_ready(nddata,chip_index);
 	if (ret < 0) {
 		ndd_print(NDD_ERROR, "func:%s line:%d ret=%d\n",__func__, __LINE__, ret);
 		goto err;
 	}
 
-	ret = nand_io_send_cmd(nd_errpt_info.io_context, CMD_READ_STATUS_1ST, ndflash->timing.tWHR);
+	ret = nand_io_send_cmd(nd_errpt_info.io_context, CMD_READ_STATUS_1ST, nddata->cinfo->ops_timing.tWHR);
 	if (ret & NAND_STATUS_FAIL)
 		ret = -1;
 	else if(!(ret & NAND_STATUS_WP))
@@ -303,8 +313,7 @@ static int nand_erase_block(nand_data *nddata, nand_flash *ndflash, int chip_ind
 	nand_io_chip_select(nd_errpt_info.io_context, csitem->id);
 	nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_ERASE1, 0);
 	errpt_nand_io_send_addr(nd_errpt_info.io_context, ndflash, -1, pageid, 0);
-//ndd_print(NDD_DEBUG,"  === %s %d blockid = %d\n",__func__,__LINE__,blockid);
-	nddata->clear_rb(chip_index);
+	nand_busy_clear(nddata,chip_index);
 	nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_ERASE2, 100);
 	ret = nand_wait_ready(nddata, chip_index);
 	if(ret < 0)
@@ -346,7 +355,8 @@ static int is_bad_block(nand_data *nddata, nand_flash *ndflash, int chip_index, 
 		if (count > 64){
 			ndd_debug("%s ret=-1\n",__func__);
 			return -1;
-		}		count = 0;
+		}
+		count = 0;
 		if(planes){
 			pageid += ppblock;
 		}
@@ -398,14 +408,16 @@ static int nand_force_eraseall(nand_data *nddata, nand_flash *ndflash)
 					ndd_print(NDD_ERROR,"%s %d the nand's state is write_protect !!\n",__func__,__LINE__);
 					goto err;
 				}
-				if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
-					ndd_debug("%s----------->erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
-					continue;
-				}
 				ret = mark_bad_block(nddata, ndflash, chip_index, blockid);
 				if(ret < 0){
-					ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",__func__,__LINE__,blockid);
-					goto err;
+					if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
+						ndd_debug("%s erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
+						continue;
+					} else {
+						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
+							  __func__,__LINE__,blockid);
+						goto err;
+					}
 				}
 			}
 		}
@@ -432,8 +444,14 @@ static int nand_normal_eraseall(nand_data *nddata, nand_flash *ndflash)
 				}
 				ret = mark_bad_block(nddata, ndflash, chip_index, blockid);
 				if(ret < 0){
-					ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",__func__,__LINE__,blockid);
-					goto err;
+					if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
+						ndd_debug("%s erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
+						continue;
+					} else {
+						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
+							  __func__,__LINE__,blockid);
+						goto err;
+					}
 				}
 			}
 		}
@@ -462,8 +480,14 @@ static int nand_factory_eraseall(nand_data *nddata, nand_flash *ndflash)
 				inherent = 0;
 				ret = mark_bad_block(nddata, ndflash, chip_index, blockid);
 				if(ret < 0){
-					ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",__func__,__LINE__,blockid);
-					goto err;
+					if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
+						ndd_debug("%s erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
+						continue;
+					} else {
+						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
+							  __func__,__LINE__,blockid);
+						goto err;
+					}
 				}
 			}
 		}
@@ -483,7 +507,6 @@ static int nand_write_pagedata(nand_data *nddata, nand_flash *ndflash, int chip_
 
 	__wp_disable(nddata->gpio_wp);
 	nand_io_chip_select(nd_errpt_info.io_context, csitem->id);
-	nddata->clear_rb(chip_index);
 	if (ndflash->pagesize == 512)
 		nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_READ0, NO_DELAY);
 	nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_WRITE, 0);
@@ -498,6 +521,7 @@ static int nand_write_pagedata(nand_data *nddata, nand_flash *ndflash, int chip_
 	len = oobsize - i * eccbytes;
 	if(len > 0)
 		nand_io_send_data(nd_errpt_info.io_context, nd_errpt_info.bchbuf + i * eccbytes, len);
+	nand_busy_clear(nddata,chip_index);
 	nand_io_send_cmd(nd_errpt_info.io_context, NAND_CMD_PROGRAM, 0);
 	ret = nand_wait_ready(nddata,chip_index);
 	if(ret < 0){
@@ -586,6 +610,8 @@ static int nand_read_errpt_headpage(nand_data *nddata, nand_flash *ndflash, int 
 
 	ndd_debug("%s pageid[%d] chip_index[%d] rb_ready[%d]\n",__func__,pageid,chip_index,rb_ready);
 	nand_io_chip_select(nd_errpt_info.io_context, chip_index);
+	if (rb_ready)
+		nand_busy_clear(nddata,chip_index);
 	sent_readcmd_start(nddata, ndflash, 0, pageid);
 	if(rb_ready){
 		ret = nand_wait_ready(nddata, chip_index);
@@ -635,7 +661,8 @@ static int nand_read_errpt_headpage(nand_data *nddata, nand_flash *ndflash, int 
 
 	ndd_debug("%s pageid[%d] chip_index[%d] rb_ready[%d]\n",__func__,pageid,chip_index,rb_ready);
 	nand_io_chip_select(nd_errpt_info.io_context, chipid);
-	nddata->clear_rb(chip_index);
+	if (rb_ready)
+		nand_busy_clear(nddata,chip_index);
 	sent_readcmd_start(nddata, ndflash, 0, pageid);
 	if(rb_ready){
 		ret = nand_wait_ready(nddata, chip_index);
@@ -690,9 +717,10 @@ static int nand_read_page(nand_data *nddata, nand_flash *ndflash, int chip_index
 	int retry_cnt = 0;
 
 	ndd_debug("%s pageid[%d] chip_index[%d] rb_ready[%d]\n",__func__,pageid,chip_index,rb_ready);
-	nand_io_chip_select(nd_errpt_info.io_context, chipid);
 read_retry:
-	nddata->clear_rb(chip_index);
+	nand_io_chip_select(nd_errpt_info.io_context, chipid);
+	if (rb_ready)
+		nand_busy_clear(nddata,chip_index);
 	sent_readcmd_start(nddata, ndflash, 0, pageid);
 	if(rb_ready){
 		ret = nand_wait_ready(nddata, chip_index);
@@ -732,14 +760,14 @@ read_retry:
 			break;
 		}
 	}
-	if(ret == ECC_ERROR && retry_flag && retry_cnt < 9){
+	if((ret == ECC_ERROR) && (retry_flag) && (retry_cnt < 9)){
 		set_retry_feature((int)nddata, chipid, 1);
 		retry_cnt++;
 		goto read_retry;
 	}
 read_page_finish:
 	nand_io_chip_deselect(nd_errpt_info.io_context, chipid);
-	ndd_debug("%s ret= %d\n",__func__,ret);
+	ndd_debug("%s ret= %d, retry_cnt= %d\n",__func__,ret,retry_cnt);
 	return ret;
 }
 
@@ -1152,7 +1180,7 @@ static int prepare_pt_info(nand_data *nddata, nand_flash *ndflash, PPartition *p
 	int chip_index, blk_index, pt_index;
 	int ept_startblk = ndflash->totalblocks / ndflash->chips - 1;
 	int ept_endblk = ndflash->maxvalidblocks / ndflash->chips - 1;
-	int ptcount = nddata->ptinfo->ptcount - REDUN_PT_NUM; 
+	int ptcount = nddata->ptinfo->ptcount - REDUN_PT_NUM;
 	int totalrbs = nddata->rbinfo->totalrbs;
 	int chipprb = nddata->csinfo->totalchips / totalrbs;
 	int pageid, startpageid;
@@ -1222,8 +1250,15 @@ static int epterase_writebadblockinfo(nand_data *nddata, nand_flash *ndflash, un
 			if(ret < 0){
 				ret = mark_bad_block(nddata, ndflash, chip_index, blkid);
 				if(ret < 0){
-					ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",__func__,__LINE__,blkid);
-					goto err;
+					if (is_bad_block(nddata, ndflash, chip_index, blkid, 1, RB_READY) != 0){
+						ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
+							  __func__, blkid);
+						continue;
+					} else {
+						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
+							  __func__,__LINE__,blkid);
+						goto err;
+					}
 				}
 			}
 			for(i = 0; i < sumpage; i++){
@@ -1238,8 +1273,15 @@ static int epterase_writebadblockinfo(nand_data *nddata, nand_flash *ndflash, un
 					nand_erase_block(nddata, ndflash, chip_index, blkid);
 					ret = mark_bad_block(nddata, ndflash, chip_index, blkid);
 					if(ret < 0){
-						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",__func__,__LINE__,blkid);
-						goto err;
+						if (is_bad_block(nddata, ndflash, chip_index, blkid, 1, RB_READY) != 0){
+							ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
+								  __func__, blkid);
+							continue;
+						} else {
+							ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
+								  __func__,__LINE__,blkid);
+							goto err;
+						}
 					}
 					break;
 				}
@@ -1251,118 +1293,152 @@ err:
 }
 
 /******************************** OPERATE ERRPT INTERFACE *********************************/
-int get_errpt_head(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash)
+int get_errpt_head(nand_data *nddata, struct nand_api_platdependent *platdep)
 {
+	int ret = ENAND;
 	unsigned char *databuf;
-	rb_info *rbinfo = nddata->rbinfo;
 	ppa_head *ppahead = NULL;
-	int i, rb_index, ret = -1;
-	int pageid;
-	int ppblock = ndflash->blocksize / ndflash->pagesize;
-	int startblk = ndflash->totalblocks / ndflash->chips -1;
-	int endblk = ndflash->maxvalidblocks / ndflash->chips- 1;
-	int cs_index = 0;
+	int rb_ready = 0;
+	int blockid, cs_index = 0, rb_index;
 	nm_version version;
+	nand_flash *ndflash = platdep->nandflash;
+	int ppblock = ndflash->blocksize / ndflash->pagesize;
+	int errpt_startblk = ndflash->totalblocks / ndflash->chips -1;
+	int errpt_endblk = ndflash->maxvalidblocks / ndflash->chips- 1;
+	rb_info *rbinfo = platdep->rbinfo;
+
 	nand_io_bch_open(nddata->base, NULL, nddata->eccsize, ndflash->buswidth);
+
 	databuf = ndd_alloc(ndflash->pagesize);
-	if(!databuf){
-		ndd_print(NDD_ERROR,"%s %d alloc databuf error!\n",__func__,__LINE__);
-		ret = -1;
-		goto ending;
-	}
-	for(cs_index = 0; cs_index < CS_PER_NFI; cs_index++){
-		for(i = startblk; i > endblk; i--){
+	if (!databuf)
+		GOTO_ERR(alloc_databuf);
+
+	//for (cs_index = 0; (cs_index < CS_PER_NFI) && (ppahead == NULL); cs_index++)
+	for (blockid = errpt_startblk; blockid > errpt_endblk; blockid--) {
 #ifndef NAND_ERRPT_BURNTOOL
-			if(is_bad_block(nddata, ndflash, cs_index, i, 1, RB_NO_READY) < 0)
-				continue;
-			pageid = i * ppblock;
-			ret = nand_read_errpt_headpage(nddata, ndflash, cs_index, pageid, databuf, RB_NO_READY);
+		rb_ready = RB_NO_READY;
 #else
-			if(is_bad_block(nddata, ndflash, cs_index, i, 1, RB_READY) < 0)
-				continue;
-			pageid = i * ppblock;
-			ret = nand_read_errpt_headpage(nddata, ndflash, cs_index, pageid, databuf, RB_READY);
+		rb_ready = RB_READY;
 #endif
-			if(ret < 0){
-				ndd_print(NDD_INFO,"%s %d read errpt blk[%d] pagid[%d] error!\n",__func__,__LINE__,i,pageid);
-				continue;
-			}
-			ppahead = (ppa_head *)databuf;
-			/*check head info magicid*/
-			if(ppahead->magicid == 0x646e616e){
-				break;
-			}else
-				ppahead = NULL;
+		if (is_bad_block(nddata, ndflash, cs_index, blockid, 1, rb_ready))
+			continue;
+		ret = nand_read_errpt_headpage(nddata, ndflash, cs_index, blockid * ppblock, databuf, rb_ready);
+		if (ret < 0) {
+			ndd_print(NDD_WARNING, "read errpt blk[%d] pagid[%d] error!\n", blockid, blockid * ppblock);
+			continue;
 		}
-		if(ppahead != NULL)
+
+		/* get ppahead and check head info magicid */
+		ppahead = (ppa_head *)databuf;
+		if (ppahead->magicid == 0x646e616e)
 			break;
+		else
+			ppahead = NULL;
 	}
-	/*fill rbinfo*/
-	if(ppahead){
-		/* compared versions of nandmanager, one is from libnm, other one is from errpt */
-		Get_NandManagerVersion(&version);
-		if(version.major != ppahead->version.major || version.minor != ppahead->version.minor){
-			ndd_print(NDD_ERROR,"%s %d versions of nandmanager are mismatching!\n",__func__,__LINE__);
-			ndd_print(NDD_ERROR,"libnm.version:[%d.%d.%d];errpt.version:[%d.%d.%d]\n",
-				version.major, version.minor, version.revision,
-				ppahead->version.major, ppahead->version.minor, ppahead->version.revision);
-			goto error_version;
-		}
-		for(rb_index = 0; rb_index < CS_PER_NFI; rb_index++){
-			if(ppahead->rbmsg[rb_index].gpio == 0xffff){
-				break;
-			}
-			(rbinfo->rbinfo_table + rb_index)->id = rb_index;
-			(rbinfo->rbinfo_table + rb_index)->gpio = ppahead->rbmsg[rb_index].gpio;
-			(rbinfo->rbinfo_table + rb_index)->pulldown_strength = ppahead->rbmsg[rb_index].strength;
-		}
-		rbinfo->totalrbs = rb_index;
-		nddata->gpio_wp = ppahead->gpio_wp;
-		ptinfo->ptcount = ppahead->ptcount;
-		nd_raw_boundary = ppahead->raw_boundary;
-		nddata->cinfo->drv_strength = ppahead->drv_strength;
-		ndd_memcpy(ndflash, (databuf + NANDFLASH_OFFSET_IN_ERRPTHEAD), sizeof(nand_flash));
-		dump_pheadinfo(ppahead);
+
+	if (!ppahead)
+		GOTO_ERR(get_errpt_head);
+
+	/* compared versions of nandmanager, one is from libnm, other one is from errpt */
+	Get_NandManagerVersion(&version);
+	if(version.major != ppahead->version.major || version.minor != ppahead->version.minor){
+		ndd_print(NDD_ERROR,"ERROR: nandmanager version mismatching!\n",
+			  "libnm.version:[%d.%d.%d]; errpt.version:[%d.%d.%d]\n",
+			  version.major, version.minor, version.revision, ppahead->version.major,
+			  ppahead->version.minor, ppahead->version.revision);
+		GOTO_ERR(mismatch_version);
 	}
-error_version:
+
+	/**************** fill nandflash *****************/
+	ndd_memcpy(ndflash, (databuf + NANDFLASH_OFFSET_IN_ERRPTHEAD), sizeof(nand_flash));
+
+	/****************** fill rbinfo ******************/
+	/* get rb count */
+	rbinfo->totalrbs = 0;
+	for (rb_index = 0; rb_index < MAX_RB_COUNT; rb_index++) {
+		if (ppahead->rbmsg[rb_index].gpio == 0xffff)
+			break;
+		rbinfo->totalrbs++;
+	}
+
+	/* alloc rbinfo_table memory,
+	 * NOTE: here may caused memory not be freed when errors
+	 * at fllowed functions, but we do't care here */
+	rbinfo->rbinfo_table = ndd_alloc(sizeof(rb_item) * rbinfo->totalrbs);
+	if (!rbinfo->rbinfo_table)
+		GOTO_ERR(alloc_rbinfo_table);
+
+	/* fill rb table */
+	for (rb_index = 0; rb_index < rbinfo->totalrbs; rb_index++) {
+		(rbinfo->rbinfo_table + rb_index)->id = rb_index;
+		(rbinfo->rbinfo_table + rb_index)->gpio = ppahead->rbmsg[rb_index].gpio;
+		(rbinfo->rbinfo_table + rb_index)->pulldown_strength = ppahead->rbmsg[rb_index].strength;
+	}
+
+	/**************** fill nandflash *****************/
+	platdep->platptinfo->ptcount = ppahead->ptcount;
+	platdep->gpio_wp = ppahead->gpio_wp;
+	platdep->drv_strength = ppahead->drv_strength;
+	platdep->erasemode = 0;
+
+	/* get raw boundary */
+	nd_raw_boundary = ppahead->raw_boundary;
+
+	/* dump */
+	ndd_dump_nandflash(ndflash);
+	dump_pheadinfo(ppahead);
+	ret = 0;
+
+ERR_LABLE(alloc_rbinfo_table):
+ERR_LABLE(mismatch_version):
+ERR_LABLE(get_errpt_head):
 	ndd_free(databuf);
-ending:
+ERR_LABLE(alloc_databuf):
 	nand_io_bch_close();
+
 	return ret;
 }
 
-int get_errpt_ppainfo(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash)
+int get_errpt_ppainfo(nand_data *nddata, struct nand_api_platdependent *platdep)
 {
+	int ret = ENAND;
 	unsigned char *databuf;
 	unsigned int *badblockbuf;
-	int i, ret = -1, chip_index, pt_index;
-	int startblk = ndflash->totalblocks / ndflash->chips -1;
-	int endblk = nddata->cinfo->maxvalidblocks - 1;
 	int startpageid, pageid;
+	int blockid, chip_index, pt_index;
+	plat_ptinfo *ptinfo = platdep->platptinfo;
+	nand_flash *ndflash = platdep->nandflash;
+	int errpt_startblk = ndflash->totalblocks / ndflash->chips -1;
+	int errpt_endblk = nddata->cinfo->maxvalidblocks - 1;
 
 	nand_io_bch_open(nddata->base, nddata->cinfo, nddata->eccsize, ndflash->buswidth);
+
 	databuf = ndd_alloc(nddata->cinfo->pagesize);
-	if(!databuf){
-		ret = -1;
+	if (!databuf)
 		GOTO_ERR(alloc_databuf);
-	}
+
+	/* alloc plat pt table memory and badblockbuf of plat pt table
+	 * NOTE: here may caused memory not be freed when errors
+	 * at fllowed functions, but we do't care here */
+	ptinfo->pt_table = ndd_alloc(ptinfo->ptcount * sizeof(plat_ptitem));
+	if (!ptinfo->pt_table)
+		GOTO_ERR(init_platptinfo);
 	ret = init_badblockbuf(nddata, ptinfo);
-	if(ret < 0){
-		ret = -1;
-		GOTO_ERR(initbuf);
-	}
+	if(ret < 0)
+		GOTO_ERR(init_badblockbuf);
+
         /*init pt_badblock_info*/
-	for(chip_index = 0; chip_index < nddata->csinfo->totalchips; chip_index++){
-		for(i = startblk; i > endblk; i--){
-			if(is_bad_block(nddata, ndflash, chip_index, i, 1, RB_READY) < 0)
+	for (chip_index = 0; chip_index < nddata->csinfo->totalchips; chip_index++) {
+		for (blockid = errpt_startblk; blockid > errpt_endblk; blockid--) {
+			if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY))
 				continue;
-			startpageid = i * nddata->cinfo->ppblock + PT_HEADINFO_CNT;
-			for(pt_index = 0; pt_index < ptinfo->ptcount; pt_index++){
+			startpageid = blockid * nddata->cinfo->ppblock + PT_HEADINFO_CNT;
+			for (pt_index = 0; pt_index < ptinfo->ptcount; pt_index++) {
 				badblockbuf = (ptinfo->pt_table + pt_index)->pt_badblock_info;
 				pageid = startpageid + pt_index * PT_INFO_CNT;
 				ret = read_partition_info(nddata, ndflash, chip_index, badblockbuf, pageid, databuf);
 				if(ret < 0){
-					ndd_print(NDD_INFO,"%s %d read_partition_info pagid[%d]failed! try again!\n",
+					ndd_print(NDD_WARNING,"%s %d read_partition_info pagid[%d]failed! try again!\n",
 						  __func__,__LINE__,pageid);
 					ndd_memset(ptinfo, 0xff, sizeof(plat_ptinfo));
 					break;
@@ -1370,11 +1446,17 @@ int get_errpt_ppainfo(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflas
 				fill_partition_info(ptinfo, databuf, pt_index);
 			}
 			if(ret >= 0 && pt_index == ptinfo->ptcount)
-				goto ending;
+				goto exit;
 		}
 	}
-ending:
-ERR_LABLE(initbuf):
+	dump_platptinfo(ptinfo);
+
+	ret = 0;
+
+ERR_LABLE(init_badblockbuf):
+	ndd_free(ptinfo->pt_table);
+ERR_LABLE(init_platptinfo):
+exit:
 	ndd_free(databuf);
 ERR_LABLE(alloc_databuf):
 	nand_io_bch_close();
@@ -1467,7 +1549,7 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 	for(chip_index = 0; chip_index < csinfo->totalchips; chip_index++){
 		for(pt_index = 0; pt_index < ptinfo->ptcount; pt_index++){
 			for(blk_index = ept_startblk; blk_index > ept_endblk; blk_index--){
-				if(is_bad_block(nddata, ndflash, chip_index, ndflash->totalblocks - blk_index, 1, RB_READY) < 0)
+				if(is_bad_block(nddata, ndflash, chip_index, blk_index, 1, RB_READY) < 0)
 					continue;
 				if(pt_index == 0){
 					/*write errpt head*/
@@ -1486,9 +1568,15 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 				if (ret < 0){
 					nand_erase_block(nddata, ndflash, chip_index, blk_index);
 					if(mark_bad_block(nddata, ndflash, chip_index, blk_index) < 0){
-						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
-								__func__,__LINE__,blk_index);
-						goto err3;
+						if (is_bad_block(nddata, ndflash, chip_index, blk_index, 1, RB_READY) != 0){
+							ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
+								  __func__, blk_index);
+							continue;
+						} else {
+							ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
+								  __func__,__LINE__, blk_index);
+							goto err3;
+						}
 					}
 				}
 			}
@@ -1544,6 +1632,7 @@ int nand_errpt_init(nand_flash *ndflash)
 {
 	if (!ndflash)
 		RETURN_ERR(ENAND, "arguments error, ndflash = NULL");
+
 	nd_errpt_info.bchbuf = ndd_alloc(ndflash->oobsize);
 	if (!nd_errpt_info.bchbuf)
 		RETURN_ERR(ENAND, "alloc bchbuf error");

@@ -13,6 +13,7 @@
 #include "pagelist.h"
 #include "blocklist.h"
 #include "vnandinfo.h"
+#include <nand_ops_timing.h>
 
 enum nandops_opsmodel{
 	NANDOPS_READ,
@@ -48,20 +49,9 @@ struct lib_nandchipinfo{
 	unsigned int totalblocks;
 	unsigned int totalpages;
 	unsigned int pagesize;
-        unsigned int tALS;	/* ... duration/width/time */
-        unsigned int tALH;	/* ... duration/width/time */
-        unsigned int tRP;	/* ... duration/width/time */
-        unsigned int tWP;	/* ... duration/width/time */
-        unsigned int tRHW;	/* ... duration/width/time */
-        unsigned int tWHR;	/* ... duration/width/time */
-	unsigned int tWHR2;	/* ... duration/width/time */
-	unsigned int tRR;	/* ... duration/width/time */
-	unsigned int tWB;	/* ... duration/width/time */
-	unsigned int tADL;	/* ... duration/width/time */
-	unsigned int tCWAW;	/* ... duration/width/time */
-        unsigned int tCS;	/* ... duration/width/time */
-        unsigned int tCLH;	/* ... duration/width/time */
+	nand_ops_timing *ops_timing;
 };
+
 struct lib_nandioinfo{
 	unsigned short rb_cnt;
 	unsigned short chipprb;

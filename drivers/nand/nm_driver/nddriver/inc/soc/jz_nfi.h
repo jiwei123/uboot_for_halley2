@@ -5,8 +5,8 @@
  *
  * Copyright (C) 2012 Ingenic Semiconductor Co., Ltd.
  */
-#ifndef __JZ4785NFI_H__
-#define __JZ4785NFI_H__
+#ifndef __JZNFI_H__
+#define __JZNFI_H__
 
 #define NFI_BASE	0xB3410000
 
@@ -277,4 +277,4 @@
 #define NAND_NFIBS1_CB5(n)	((n) << NAND_NFIBS1_CB5_BIT)
 
 #define NAND_IO_CLK_NAME "nfi"
-#endif /* __JZ4780NEMC_H__ */
+#endif /* __JZNFI_H__ */

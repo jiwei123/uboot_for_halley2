@@ -59,7 +59,7 @@ static int wait_nand_busy(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 
 	ret = nddata->wait_rb(cpu_msg->current_cs, 500);
 
-	ndd_ndelay(cpu_msg->cinfo->timing->tRR);
+	ndd_ndelay(cpu_msg->cinfo->ops_timing.tRR);
 
 	return ret;
 }
@@ -131,7 +131,7 @@ static void send_read_random(struct cpu_msg_ops *cpu_msg, int offset)
 {
 	int io_context = cpu_msg->io_context;
 	chip_info *cinfo = cpu_msg->cinfo;
-	const nand_timing *timing = cinfo->timing;
+	nand_ops_timing *timing = &cinfo->ops_timing;
 	// (cinfo->buswidth / 8): bytes of column
 	int fix_offset = offset / (cinfo->buswidth / 8);
 
@@ -289,7 +289,6 @@ static int nand_write_data(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 	int bytes = msg->msgdata.data.bytes;
 	int eccbit = cpu_msg->eccbit;
 	int eccsize = cpu_msg->eccsize;
-	const nand_timing *ndtiming = cpu_msg->cinfo->timing;
 	void *pdata = (void *)get_vaddr(msg->msgdata.data.pdata);
 	PipeNode *pipe = &cpu_msg->pipe;
 
@@ -316,7 +315,10 @@ static int nand_write_data(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 #endif
 		nand_io_send_data(io_context, pipe->data, eccsize);
 		nand_io_send_data(io_context, pipe->parity, cpu_msg->par_size);
-		ndd_ndelay(ndtiming->tALS + ndtiming->tALH + ndtiming->tWP);
+
+		ret = nand_io_send_waitcomplete(io_context, cpu_msg->cinfo);
+		if (ret)
+			ndd_print(NDD_ERROR, "wait data nocomplete error!\n");
 #ifdef CFG_NAND_USE_PN
 		pn_disable(io_context);
 #endif
@@ -454,7 +456,7 @@ static int one_plane_read(struct cpu_msg_ops *cpu_msg, struct task_msg *msg, int
 	int io_context = cpu_msg->io_context;
 	chip_info *cinfo = cpu_msg->cinfo;
 	int offset = cinfo->pagesize / (cinfo->buswidth / 8);
-	const nand_timing *timing = cinfo->timing;
+	nand_ops_timing *timing = &cinfo->ops_timing;
 
 	nand_io_send_cmd(io_context, NAND_CMD_READ0, 0);
 	nand_io_send_addr(io_context, offset, pageid, 0);

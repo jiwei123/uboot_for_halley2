@@ -67,6 +67,23 @@ void __ndd_dump_nandflash(nand_flash *ndflash)
 	ndd_print(NDD_DEBUG, "ndflash->planeoffset: %d\n", ndflash->planeoffset);
 	ndd_print(NDD_DEBUG, "ndflash->options: 0x%08x\n", ndflash->options);
 }
+
+void __ndd_dump_rbinfo(rb_info *rbinfo)
+{
+	int rb_index;
+	rb_item *rbitem;
+
+	ndd_print(NDD_DEBUG, "\ndump rbinfo, totalrbs = %d !!!\n", rbinfo->totalrbs);
+	for (rb_index = 0; rb_index < rbinfo->totalrbs; rb_index++) {
+		rbitem = &(rbinfo->rbinfo_table[rb_index]);
+		ndd_print(NDD_DEBUG, "id: [%d]\n", rbitem->id);
+		ndd_print(NDD_DEBUG, "\t gpio = [%d]\n", rbitem->gpio);
+		ndd_print(NDD_DEBUG, "\t irq = [%d]\n", rbitem->irq);
+		ndd_print(NDD_DEBUG, "\t pulldown_strength = [%d]\n", rbitem->pulldown_strength);
+		ndd_print(NDD_DEBUG, "\t irq_private = [%p]\n", rbitem->irq_private);
+	}
+}
+
 void __ndd_dump_plat_partition(plat_ptinfo *plat_ptinfo)
 {
 	int pt_index;
@@ -175,19 +192,22 @@ void __ndd_dump_chip_info(chip_info *cinfo)
 	ndd_print(NDD_DEBUG, "\t options: %08x\n", cinfo->options);
 
 	ndd_print(NDD_DEBUG, "nand flashs timing info:\n");
-	ndd_print(NDD_DEBUG, "\t tALS: %d\n", cinfo->timing->tALS);
-        ndd_print(NDD_DEBUG, "\t tALH: %d\n", cinfo->timing->tALH);
-        ndd_print(NDD_DEBUG, "\t tRP: %d\n", cinfo->timing->tRP);
-        ndd_print(NDD_DEBUG, "\t tWP: %d\n", cinfo->timing->tWP);
-        ndd_print(NDD_DEBUG, "\t tRHW: %d\n", cinfo->timing->tRHW);
-        ndd_print(NDD_DEBUG, "\t tWHR: %d\n", cinfo->timing->tWHR);
-	ndd_print(NDD_DEBUG, "\t tWHR2: %d\n", cinfo->timing->tWHR2);
-	ndd_print(NDD_DEBUG, "\t tRR: %d\n", cinfo->timing->tRR);
-	ndd_print(NDD_DEBUG, "\t tWB: %d\n", cinfo->timing->tWB);
-	ndd_print(NDD_DEBUG, "\t tADL: %d\n", cinfo->timing->tADL);
-	ndd_print(NDD_DEBUG, "\t tCWAW: %d\n", cinfo->timing->tCWAW);
-	ndd_print(NDD_DEBUG, "\t tCS: %d\n", cinfo->timing->tCS);
-	ndd_print(NDD_DEBUG, "\t tCLH: %d\n", cinfo->timing->tCLH);
+
+#define debug_out_cinfo_timing(x) ndd_print(NDD_DEBUG, "\t t"#x": %d",cinfo->ops_timing.t##x)
+	ndd_print(NDD_DEBUG, "\t io_timing = %p\n",cinfo->ops_timing.io_timing);
+	ndd_print(NDD_DEBUG, "\t io_etiming = %p\n",cinfo->ops_timing.io_etiming);
+	debug_out_cinfo_timing(RP);
+	debug_out_cinfo_timing(WP);
+	debug_out_cinfo_timing(WHR);
+	debug_out_cinfo_timing(WHR2);
+	debug_out_cinfo_timing(RR);
+	debug_out_cinfo_timing(WB);
+	debug_out_cinfo_timing(ADL);
+	debug_out_cinfo_timing(CWAW);
+	debug_out_cinfo_timing(CS);
+	debug_out_cinfo_timing(CLH);
+	debug_out_cinfo_timing(WC);
+#undef debug_out_cinfo_timing
 }
 
 void __ndd_dump_csinfo(cs_info *csinfo)
@@ -222,69 +242,6 @@ void __ndd_dump_registers(void)
 	ndd_print(NDD_DEBUG, "\t REG_PAPAT0 = 0x%08x\n", *((volatile unsigned int *)0xb0010040));
 	ndd_print(NDD_DEBUG, "\t REG_PAFLG = 0x%08x\n", *((volatile unsigned int *)0xb0010050));
 	ndd_print(NDD_DEBUG, "\t REG_PAPEN = 0x%08x\n", *((volatile unsigned int *)0xb0010070));
-}
-static void dump_registers(void)
-{
-	ndd_debug("dump registers:\n");
-	ndd_debug("\t GPA int: %x\n", *(unsigned int *)0xb0010010);
-	ndd_debug("\t GPA mask: %x\n", *(unsigned int *)0xb0010020);
-	ndd_debug("\t GPA pat1: %x\n", *(unsigned int *)0xb0010030);
-	ndd_debug("\t GPA pat0: %x\n", *(unsigned int *)0xb0010040);
-	ndd_debug("\t GPA flag: %x\n", *(unsigned int *)0xb0010050);
-	ndd_debug("\t GPA pull: %x\n", *(unsigned int *)0xb0010070);
-	ndd_debug("\t nemc nfcsr: %x\n", *(unsigned int *)0xb3410050);
-	ndd_debug("\t nemc smcr: %x\n", *(unsigned int *)0xb3410014);
-}
-
-/**
- * dump_nand_id: get nand id and extid from device
- *
- * @cid: contain nand id and extid
- * @return: 0: success, !0: fail
- **/
-int __ndd_dump_nand_id(nfi_base *base, unsigned int cs_id)
-{
-	int context, ret;
-	unsigned char nand_id[6];
-	unsigned int id,extid;
-
-	context = nand_io_open(base, NULL);
-	if (!context)
-		RETURN_ERR(ENAND, "nand io open error");
-
-	ret = nand_io_chip_select(context, cs_id);
-	if (ret)
-		RETURN_ERR(ENAND, "nand io chip select error, cs = [%d]", cs_id);
-
-	ret = nand_io_send_cmd(context, CMD_RESET_1ST, 300);
-	if (ret)
-		RETURN_ERR(ret, "nand io sent cmd error, cs = [%d], cmd = [%d]", cs_id, CMD_RESET_1ST);
-
-	ndd_ndelay(5 * 1000 * 1000);
-	ret = nand_io_send_cmd(context, CMD_READ_ID_1ST, 300);
-	if (ret)
-		RETURN_ERR(ret, "nand io sent cmd error, cs = [%d], cmd = [%d]", cs_id, CMD_READ_ID_1ST);
-
-	nand_io_send_spec_addr(context, 0x00, 1, 1 * 1000 * 1000);
-
-	dump_registers();
-
-	ret = nand_io_receive_data(context, nand_id, sizeof(nand_id));
-	if (ret)
-		RETURN_ERR(ret, "nand io receive data error, cs = [%d]", cs_id);
-
-	ret = nand_io_chip_deselect(context, cs_id);
-	if (ret)
-		RETURN_ERR(ret, "nand io chip deselect error, cs = [%d]", cs_id);
-
-	nand_io_close(context);
-
-	id = ((nand_id[0] << 8) | nand_id[1]);
-	extid = ((nand_id[4] << 16) | (nand_id[3] << 8) | nand_id[2]);
-
-	ndd_debug("get nand io chip[%d] id: id = [%04x], extid = [%08x]!\n", cs_id, id, extid);
-
-	return 0;
 }
 
 void __ndd_dump_rewrite(nand_data *nddata, PPartition *ppt, PageList *pl)
@@ -655,7 +612,7 @@ static int read_ndpartition_with_errbit(nand_data *nddata, ndpartition *npt, uns
 /**
  * here we tested used ndpartition 'nderror'
  **/
-extern int __set_features(int io_context, rb_info *rbinfo, const nand_timing *timing,
+extern int __set_features(int io_context, rb_info *rbinfo, nand_ops_timing *timing,
 		   unsigned char addr, unsigned char *data, int len);
 int __ndd_dump_diff_mode_errbit(nand_data *nddata)
 {
@@ -667,7 +624,7 @@ int __ndd_dump_diff_mode_errbit(nand_data *nddata)
 	unsigned int sum_eccbit = 0;
 	int io_context;
 
-	const nand_timing *timing = nddata->cinfo->timing;
+	nand_ops_timing *timing = &nddata->cinfo->ops_timing;
 	unsigned char data[4] = {0x00, 0x00, 0x00, 0x00};
 	/* MT29F64GCBABA, mode 4/3, mode 2, mode 1, mode 0, default */
 	//unsigned int smcr_value[5] = {

@@ -23,7 +23,7 @@ static int wait_nand_busy(void)
 
 	ret = bad_block.nddata->wait_rb(bad_block.current_cs, 5000);
 
-	ndd_ndelay(bad_block.cinfo->timing->tRR);
+	ndd_ndelay(bad_block.cinfo->ops_timing.tRR);
 
 	return ret;
 }
@@ -106,7 +106,7 @@ static int one_plane_read(struct task_msg *msg, int pageid)
 	nand_io_send_addr(bad_block.current_io, offset, pageid, NO_DELAY);
 
 	if (cinfo->pagesize != 512)
-		nand_io_send_cmd(bad_block.current_io, NAND_CMD_READSTART, bad_block.cinfo->timing->tWB);
+		nand_io_send_cmd(bad_block.current_io, NAND_CMD_READSTART, bad_block.cinfo->ops_timing.tWB);
 
 	return wait_nand_busy();
 }
@@ -188,11 +188,11 @@ static int write_badblock(struct task_msg *msg, int pageid)
 #else
 		nand_io_send_cmd(bad_block.current_io, CMD_PAGE_PROGRAM_1ST, NO_DELAY);
 		nand_io_send_addr(bad_block.current_io, bad_block.cinfo->pagesize + bad_block.cinfo->badblkpos
-				, pageid, bad_block.cinfo->timing->tADL);
+				, pageid, bad_block.cinfo->ops_timing.tADL);
 		nand_io_send_data(bad_block.current_io, badblockbuf, 4);
 		nand_busy_clear();
 		nand_io_send_cmd(bad_block.current_io, CMD_PAGE_PROGRAM_2ND
-				, bad_block.cinfo->timing->tWB);
+				, bad_block.cinfo->ops_timing.tWB);
 		ret = wait_nand_busy();
 		if (ret < 0) {
 			ndd_print(NDD_ERROR, "func:%s line:%d ret=%d\n",__func__, __LINE__, ret);
@@ -200,11 +200,11 @@ static int write_badblock(struct task_msg *msg, int pageid)
 		}
 		nand_io_send_cmd(bad_block.current_io, CMD_PAGE_PROGRAM_1ST, NO_DELAY);
 		nand_io_send_addr(bad_block.current_io, bad_block.cinfo->pagesize + bad_block.cinfo->badblkpos
-				, pageid + bad_block.cinfo->ppblock, bad_block.cinfo->timing->tADL);
+				, pageid + bad_block.cinfo->ppblock, bad_block.cinfo->ops_timing.tADL);
 		nand_io_send_data(bad_block.current_io, badblockbuf, 4);
 		nand_busy_clear();
 		nand_io_send_cmd(bad_block.current_io, CMD_PAGE_PROGRAM_2ND
-				, bad_block.cinfo->timing->tWB);
+				, bad_block.cinfo->ops_timing.tWB);
 		ret = wait_nand_busy();
 		if (ret < 0) {
 			ndd_print(NDD_ERROR, "func:%s line:%d ret=%d\n",__func__, __LINE__, ret);
@@ -214,11 +214,11 @@ static int write_badblock(struct task_msg *msg, int pageid)
 	} else {
 		nand_io_send_cmd(bad_block.current_io, CMD_PAGE_PROGRAM_1ST, NO_DELAY);
 		nand_io_send_addr(bad_block.current_io, bad_block.cinfo->pagesize + bad_block.cinfo->badblkpos
-				, pageid, bad_block.cinfo->timing->tADL);
+				, pageid, bad_block.cinfo->ops_timing.tADL);
 		nand_io_send_data(bad_block.current_io, badblockbuf, 4);
 		nand_busy_clear();
 		nand_io_send_cmd(bad_block.current_io, CMD_PAGE_PROGRAM_2ND
-				, bad_block.cinfo->timing->tWB);
+				, bad_block.cinfo->ops_timing.tWB);
 		ret = wait_nand_busy();
 		if (ret < 0) {
 			ndd_print(NDD_ERROR, "func:%s line:%d ret=%d\n",__func__, __LINE__, ret);
@@ -226,7 +226,7 @@ static int write_badblock(struct task_msg *msg, int pageid)
 		}
 	}
 
-	ret = nand_io_send_cmd(bad_block.current_io, CMD_READ_STATUS_1ST, bad_block.cinfo->timing->tWHR);
+	ret = nand_io_send_cmd(bad_block.current_io, CMD_READ_STATUS_1ST, bad_block.cinfo->ops_timing.tWHR);
 	if (ret & NAND_STATUS_FAIL)
 		ret = -1;
 	else if(!(ret & NAND_STATUS_WP))

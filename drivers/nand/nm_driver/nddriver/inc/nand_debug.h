@@ -71,11 +71,8 @@
 #define NDD_FATE_ERROR 		0x3
 #define NDD_DEBUG		0x4
 
-//#undef printf
-
 extern int (*ndd_printf)(const char *fmt, ...);
-#define ndd_print(level, ...) do { if (level >= PRINT_LEVEL) printf(__VA_ARGS__); } while (0)
-//#define ndd_print(level, fmt,y...) do { if (level >= PRINT_LEVEL) ndd_printf(fmt,##y); } while (0)
+#define ndd_print(level, ...) do { if (level >= PRINT_LEVEL) ndd_printf(__VA_ARGS__); } while (0)
 
 #define ndd_debug(...) ndd_print(NDD_INFO, __VA_ARGS__)
 
@@ -103,6 +100,7 @@ void ndd_dump_pagelist(PageList *pl);
 int __ndd_dump_nand_id(nfi_base *base, unsigned int cs_id);
 void __ndd_dump_badblockinfo(ndpartition *pt, unsigned int plat_ptcount);
 void __ndd_dump_nandflash(nand_flash *ndflash);
+void __ndd_dump_rbinfo(rb_info *rbinfo);
 void __ndd_dump_plat_partition(plat_ptinfo *plat_ptinfo);
 void __ndd_dump_ptinfo(pt_info *ptinfo);
 void __ndd_dump_ppartition(PPartition *pt, unsigned int ptcount);
@@ -122,6 +120,7 @@ int ndd_dump_status(void);
 #ifdef DEBUG_INIT_INFO
 #define ndd_dump_badblockinfo(pt, plat_ptcount) __ndd_dump_badblockinfo(pt, plat_ptcount)
 #define ndd_dump_nandflash(ndflash)		__ndd_dump_nandflash(ndflash)
+#define ndd_dump_rbinfo(rbinfo)			__ndd_dump_rbinfo(rbinfo)
 #define ndd_dump_plat_partition(plat_ptinfo)	__ndd_dump_plat_partition(plat_ptinfo)
 #define ndd_dump_ptinfo(ptinfo)			__ndd_dump_ptinfo(ptinfo)
 #define ndd_dump_ppartition(pt, ptcount)	__ndd_dump_ppartition(pt, ptcount)

@@ -21,9 +21,16 @@
 #define REF_ZONE_SIZE 		(4 * 1024 * 1024) //4M
 #define ZONE_COUNT_LIMIT	32 //min ndpartition zone count limit
 #define ERR_PT_TOTALBLOCKS	4 //virtual blocks
-#define  MAX_NAME_SIZE 32
 
-int nand_api_init(struct nand_api_osdependent *private);
+#define MAX_NAME_SIZE		32
+
+#define MAX_RB_COUNT		CS_PER_NFI
+#define MAX_PT_COUNT		16
+#define NAND_MAGIC		0x646e616e // ASCII of "nand"
+
+int nand_api_init(struct nand_api_osdependent *osdep);
+int nand_api_reinit(struct nand_api_platdependent *platdep);
+int nand_api_get_nandflash_id(nand_flash_id *id);
 int nand_api_suspend(void);
 int nand_api_resume(void);
 

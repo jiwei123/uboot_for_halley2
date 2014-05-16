@@ -85,10 +85,10 @@ int os_clib_init(os_clib *clib)
 	if (!ndd_dma_cache_inv)
 		RETURN_ERR(ENAND, "function ndd_dma_cache_inv() not defined!\n");
 
+	/*#############################*/
 	ndd_printf = clib->printf;
 	if (!ndd_printf)
 		RETURN_ERR(ENAND, "function ndd_printf() not defined!\n");
-
 
 	ndd_get_time_nsecs = clib->get_time_nsecs;
 	if (!ndd_get_time_nsecs)

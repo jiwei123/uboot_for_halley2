@@ -88,6 +88,7 @@ typedef struct __nand_data {
 	int (*clear_rb) (int cs);
 	int (*wait_rb) (int cs, int time);
 	unsigned short gpio_wp;
+	struct nand_api_platdependent *platdep;
 } nand_data;
 
 #endif /*__NAND_DATA_H__*/

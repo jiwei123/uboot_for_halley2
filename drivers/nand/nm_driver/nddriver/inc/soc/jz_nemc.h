@@ -9,8 +9,8 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef __JZ4775_NEMC_H__
-#define __JZ4775_NEMC_H__
+#ifndef __JZ_NEMC_H__
+#define __JZ_NEMC_H__
 
 #define NEMC_SMCR_BASE	0x014 /* Static Memory Control Register 1 */
 #define NEMC_SMCR_STEP	0x4
@@ -140,4 +140,4 @@
 
 #define NAND_STATUS_FALL 0x01
 #define NAND_IO_CLK_NAME "nemc"
-#endif /* __JZ4775_NEMC_H__ */
+#endif /* __JZ_NEMC_H__ */

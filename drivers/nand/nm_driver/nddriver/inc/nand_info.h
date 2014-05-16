@@ -3,6 +3,7 @@
 
 #include <nand_chip.h>
 #include <nand_api.h>
+#include <nand_ops_timing.h>
 
 /* chip_info->options */
 #define SUPPROT_CACHE_READ(cinfo)	((cinfo)->options & NAND_CACHE_READ)
@@ -15,6 +16,7 @@
 #define SUPPROT_READ_RETRY(cinfo)	((cinfo)->options & NAND_READ_RETRY)
 #define READ_RETRY_MODE(cinfo)		(((cinfo)->options >> 16) & 0x0f)
 #define TIMING_MODE(cinfo)		(((cinfo)->options >> 20) & 0x0f)
+#define GET_NAND_TYPE(cinfo)	(((cinfo)->options >> 24) & 0x0f)
 
 #define RETRY_DATA_SIZE		64
 
@@ -25,7 +27,7 @@ typedef struct __retry_parms {
 	unsigned char mode;			/* mode */
 	unsigned char cycle;			/* cycle */
 	unsigned char regcnt;			/* regs count */
-	unsigned char data[RETRY_DATA_SIZE];	/* retry level parm table */
+	unsigned int data[(RETRY_DATA_SIZE + 3) / 4];	/* retry level parm table */
 } retry_parms;
 
 /**
@@ -50,7 +52,7 @@ typedef struct __chip_info {
 	unsigned char planeoffset;	/* multi-plane block address offset */
 	unsigned int options;		/* options */
 	retry_parms *retryparms;	/* retry parm */
-	const nand_timing *timing;	/* chip timing */
+	nand_ops_timing ops_timing;	/* chip timing */
 	unsigned short drv_strength;	/* driver strength */
 	void *flash;
 } chip_info;
@@ -60,5 +62,6 @@ int early_nand_prepare(nfi_base *base, unsigned int cs_id);
 int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms);
 int nand_set_features(nfi_base *base, unsigned int cs_id, rb_item *rbitem, chip_info *cinfo);
 int set_retry_feature(int ndata, unsigned int cs_id, int cycle);
+int get_nand_id(nfi_base *base, nand_flash_id *id, unsigned int cs_id);
 
 #endif /*__NAND_INFO_H__*/

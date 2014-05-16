@@ -16,7 +16,7 @@ LIB	:= $(obj)libnand.o
 
 NAND_DRIVER_DIR := .
 
-LOCAL_CFLAGS  += -I$(TOPDIR)/include/ingenic_nand_mgr -I$(TOPDIR)/drivers/nand/include -I$(TOPDIR)/drivers/nand/nm_driver/nddriver/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc_os -U__KERNEL__  #-Werror
+LOCAL_CFLAGS  += -I$(TOPDIR)/include/ingenic_nand_mgr -I$(TOPDIR)/drivers/nand/include -I$(TOPDIR)/drivers/nand/nm_driver/nddriver/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc/os -U__KERNEL__  #-Werror
 
 CFLAGS  += $(LOCAL_CFLAGS)
 CPPFLAGS  += $(LOCAL_CFLAGS) 
@@ -25,10 +25,10 @@ HOSTCFLAGS  += $(LOCAL_CFLAGS)
 
 COBJS-y += do_nand_request.o
 COBJS-y += jzdma/jzdma.o
-COBJS-y += nm_driver/ndmanager/os_src/clib.o
-COBJS-y += nm_driver/ndmanager/os_src/nanddebug.o
-COBJS-y += nm_driver/ndmanager/os_src/NandSemaphore.o
-COBJS-y += nm_driver/ndmanager/os_src/NandThread.o
+COBJS-y += nm_driver/ndmanager/os/clib.o
+COBJS-y += nm_driver/ndmanager/os/nanddebug.o
+COBJS-y += nm_driver/ndmanager/os/NandSemaphore.o
+COBJS-y += nm_driver/ndmanager/os/NandThread.o
 COBJS-y += nm_driver/nddriver/nand_api.o
 COBJS-y += nm_driver/nddriver/nand_driver.o
 COBJS-y += nm_driver/nddriver/utils/nand_debug.o
@@ -42,7 +42,7 @@ COBJS-y += nm_driver/nddriver/ops/handler/dma_msg_handler.o
 COBJS-y += nm_driver/nddriver/ops/handler/spl_rw.o
 COBJS-y += nm_driver/nddriver/ops/handler/spl_rw.o
 COBJS-y += nm_driver/nddriver/hw/nand_bch.o
-COBJS-y += nm_driver/nddriver/hw/nand_io.o
+COBJS-y += nm_driver/nddriver/hw/nand_io_emc.o
 COBJS-y += nm_driver/nddriver/hw/transadaptor/cpu_trans.o
 COBJS-y += nm_driver/nddriver/hw/transadaptor/dma_trans.o
 COBJS-y += nm_driver/nddriver/chips/nand_chip.o
@@ -52,7 +52,7 @@ COBJS-y += nm_driver/nddriver/chips/nand_errpt.o
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
-OBJS	+= libnm.lib  libops.lib
+OBJS	+= libnm.hex  libops.hex
 all:    $(LIB)
 
 $(LIB): $(obj).depend $(OBJS)
