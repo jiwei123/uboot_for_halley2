@@ -142,6 +142,8 @@
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U
 /*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
+/*#define CONFIG_CMD_BATTERYDET*/ 	/* detect battery and show charge logo */
+#define CONFIG_CMD_LOGO_RLE	/*display the logo using the rle command*/
 #endif /* CONFIG_LCD */
 
 /* NAND(mtd) */
@@ -273,8 +275,6 @@
 #define CONFIG_CMD_PING
 #endif
 /*#define CONFIG_CMD_FASTBOOT*/
-#define CONFIG_CMD_BATTERYDET 	/* detect battery and show charge logo */
-#define CONFIG_CMD_RLE	/*display the logo using the rle command*/
 
 /* USB */
 #ifdef CONFIG_BOOT_ANDROID

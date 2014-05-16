@@ -561,14 +561,17 @@ static int show_charge_logo_rle(int rle_num)
 		debug("logo_id == %d\n", logo_id);
 		rle_plot(rle_charge_logo_addr[rle_num], logo_addr + rle_num * buf_size);
 		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
+		lcd_sync();
 	}else if(logo_addr != NULL){
 		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
+		lcd_sync();
 	}else{
 		goto orig;
 	}
 	return 0;
 orig:
 	rle_plot(rle_charge_logo_addr[rle_num], lcd_base);
+	lcd_sync();
 	return 0;
 }
 
@@ -717,6 +720,7 @@ static int  voltage_argument_init(int argc, char *const argv[])
 	return 0;
 }
 
+extern unsigned char rle_default_logo_addr [ 59824 ];
 static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 			     char *const argv[])
 {
@@ -725,7 +729,6 @@ static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 	if(ret != 0){
 		return ret;
 	}
-
 	battery_detect();
 	return ret;
 }

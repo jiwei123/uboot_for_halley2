@@ -114,7 +114,7 @@
 /**
  * Drivers configuration.
  */
-#define CONFIG_LCD
+/*#define CONFIG_LCD*/
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
@@ -127,9 +127,11 @@
 #define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
 #define CONFIG_SYS_PWM_FULL		256
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
-#define CONFIG_VIDEO_JZ4775
+#define CONFIG_VIDEO_JZ4785
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U
+#define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
+#define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
 #endif /* CONFIG_LCD */
 
 /* NAND(mtd) */
@@ -245,7 +247,6 @@
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_EEPROM
-#define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 
 /*eeprom*/
 #ifdef CONFIG_CMD_EEPROM
