@@ -69,11 +69,6 @@ int misc_init_r(void)
 	return 0;
 }
 
-int board_nand_init(struct nand_chip *nand)
-{
-	return 0;
-}
-
 #ifdef CONFIG_USB_GADGET
 int jz_udc_probe(void);
 void board_usb_init(void)

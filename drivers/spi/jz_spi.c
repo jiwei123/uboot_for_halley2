@@ -31,11 +31,7 @@
 #include <asm/arch/spi.h>
 #include <asm/arch/base.h>
 
-#ifdef CONFIG_SPL_SPI_SUPPORT
-#define SSI_BASE SSI0_BASE
-#else
-#define SSI_BASE SSI1_BASE
-#endif
+#define SSI_BASE CONFIG_SSI_BASE
 
 static uint32_t jz_spi_readl(unsigned int offset)
 {
@@ -132,6 +128,7 @@ static inline struct jz_spi_slave *to_jz_spi(struct spi_slave *slave)
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int mode)
 {
+	spi_init();
 	struct jz_spi_slave *ss;
 
 	if (!spi_cs_is_valid(bus, cs))

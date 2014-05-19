@@ -151,7 +151,6 @@
 #define CONFIG_NAND_JZ4780		1
 #define CONFIG_SYS_NAND_BASE		0xbb000000	/* nand chip base */
 #define CONFIG_SYS_NAND_ONFI_DETECTION	1
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_PAGE_SIZE	4096
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(1024 << 10)
 #define CONFIG_SYS_NAND_OOBSIZE		224
@@ -185,17 +184,24 @@
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE	1
 #define CONFIG_SYS_NAND_PAGE_COUNT      (CONFIG_SYS_NAND_BLOCK_SIZE / CONFIG_SYS_NAND_PAGE_SIZE)
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
-#define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:4m(uboot-spl),1m(uboot),1m(uboot-env),2m(skip),-(system)"
+
+/* SPI NAND */
+#define CONFIG_CMD_NAND
+#define CONFIG_MTD_DEVICE
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_MAX_CHIPS	1
+#define CONFIG_JZ_SPI_NANDFLASH
+#define CONFIG_JZ_SPI_FLASH
 
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
 #define CONFIG_JZ_MMC 1
 #define CONFIG_JZ_MMC_MSC0 1
-#ifndef CONFIG_SPL_SPI_SUPPORT
+#if !(defined(CONFIG_SPL_SPI_SUPPORT) || defined(CONFIG_SPI_BURNER))
 #define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
 #endif
 #define CONFIG_JZ_MMC_MSC1 1
@@ -213,12 +219,17 @@
 
 /* SPI */
 #if defined(CONFIG_SPI_BURNER)
+/* CONFIG_SOFT_SPI */
+#ifdef CONFIG_SOFT_SPI
 #undef SPI_INIT
 #define SPI_DELAY
 #define	SPI_SDA(val)    gpio_direction_output(GPIO_PA(21), val)
 #define	SPI_SCL(val)	gpio_direction_output(GPIO_PA(18), val)
 #define	SPI_READ	gpio_get_value(GPIO_PA(20))
-#define CONFIG_SOFT_SPI
+#else
+#define CONFIG_JZ_SPI
+#endif
+#define CONFIG_SSI_BASE SSI0_BASE
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_BUILD
 #define CONFIG_SPI_FLASH_INGENIC
@@ -382,6 +393,7 @@
 #define CONFIG_SPL_TEXT_BASE		0xf4000800
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
 #define CONFIG_JZ_SPI
+#define CONFIG_JZ_SPI_FLASH
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_FLASH_INGENIC
 #define CONFIG_SPI_FLASH

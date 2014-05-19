@@ -33,6 +33,7 @@
 #define SSI_CR1_TFVCK_BIT	28
 #define SSI_CR1_UNFIN		(1 << 23)
 
+#define SSI_SR_BUSY             (1 << 6)
 #define SSI_SR_RFE		(1 << 4)
 #define SSI_SR_TFF		(1 << 5)
 #define SSI_SR_UNDR             (1 << 1)
@@ -52,5 +53,4 @@
 #define CMD_BE 		0xC7	/* Bulk or Chip Erase */
 #define CMD_DP 		0xB9	/* Deep Power-Down */
 #define CMD_RES 	0xAB	/* Release from Power-Down and Read Electronic Signature */
-#define CMD_RDID 	0x9F	/* Read Identification */
 #define CMD_RDID 	0x9F	/* Read Identification */
