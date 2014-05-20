@@ -13,7 +13,6 @@ include $(TOPDIR)/config.mk
 
 LIB	:= $(obj)libnand.o
 
-
 NAND_DRIVER_DIR := .
 
 LOCAL_CFLAGS  += -I$(TOPDIR)/include/ingenic_nand_mgr -I$(TOPDIR)/drivers/nand/include -I$(TOPDIR)/drivers/nand/nm_driver/nddriver/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc -I$(TOPDIR)/drivers/nand/nm_driver/ndmanager/inc/os -U__KERNEL__  #-Werror
@@ -21,7 +20,6 @@ LOCAL_CFLAGS  += -I$(TOPDIR)/include/ingenic_nand_mgr -I$(TOPDIR)/drivers/nand/i
 CFLAGS  += $(LOCAL_CFLAGS)
 CPPFLAGS  += $(LOCAL_CFLAGS) 
 HOSTCFLAGS  += $(LOCAL_CFLAGS)
-
 
 COBJS-y += do_nand_request.o
 COBJS-y += jzdma/jzdma.o

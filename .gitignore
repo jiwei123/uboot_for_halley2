@@ -53,6 +53,9 @@
 # Generated files
 #
 
+/common/rle_logo.c
+/tools/logos/ingenic.jpg.rle
+
 *.depend*
 /LOG
 /errlog

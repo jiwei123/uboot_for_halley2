@@ -136,53 +136,6 @@
 #endif
 #endif /* CONFIG_LCD */
 
-/* NAND(mtd) */
-#define CONFIG_NAND			1
-#define CONFIG_NAND_JZ4780		1
-#define CONFIG_SYS_NAND_BASE		0xbb000000	/* nand chip base */
-#define CONFIG_SYS_NAND_BW8		1
-#define CONFIG_SYS_NAND_TOGGLE		0
-#define CONFIG_SYS_NAND_ROWCYCLE	3
-#define CONFIG_SYS_NAND_PAGE_SIZE	8192
-#define CONFIG_SYS_NAND_ONFI_DETECTION	1
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_BLOCK_SIZE	(1024 << 10)
-#define CONFIG_SYS_NAND_OOBSIZE		224
-#define CONFIG_SYS_NAND_ECCSIZE		1024
-#define CONFIG_SYS_NAND_ECCSTRENGTH	24
-#define CONFIG_SYS_NAND_ECCBYTES	((CONFIG_SYS_NAND_ECCSTRENGTH * 14) / 8)
-#define CONFIG_SYS_NAND_ECC_POS		56
-#define CONFIG_SYS_NAND_ECCPOS { \
-	56, 57, 58, 59, 60, 61, 62, 63, \
-	64, 65, 66, 67, 68, 69, 70, 71, \
-	72, 73, 74, 75, 76, 77, 78, 79, \
-	80, 81, 82, 83, 84, 85, 86, 87, \
-	88, 89, 90, 91, 92, 93, 94, 95, \
-	96, 97, 98, 99, 100, 101, 102, 103, \
-	104, 105, 106, 107, 108, 109, 110, 111, \
-	112, 113, 114, 115, 116, 117, 118, 119, \
-	120, 121, 122, 123, 124, 125, 126, 127, \
-	128, 129, 130, 131, 132, 133, 134, 135, \
-	136, 137, 138, 139, 140, 141, 142, 143, \
-	144, 145, 146, 147, 148, 149, 150, 151, \
-	152, 153, 154, 155, 156, 157, 158, 159, \
-	160, 161, 162, 163, 164, 165, 166, 167, \
-	168, 169, 170, 171, 172, 173, 174, 175, \
-	176, 177, 178, 179, 180, 181, 182, 183, \
-	184, 185, 186, 187, 188, 189, 190, 191, \
-	192, 193, 194, 195, 196, 197, 198, 199, \
-	200, 201, 202, 203, 204, 205, 206, 207, \
-	208, 209, 210, 211, 212, 213, 214, 215, \
-	216, 217, 218, 219, 220, 221, 222, 223 }
-#define CONFIG_SYS_NAND_HW_ECC_OOBFIRST	1
-#define CONFIG_SYS_NAND_5_ADDR_CYCLE	1
-#define CONFIG_SYS_NAND_PAGE_COUNT      (CONFIG_SYS_NAND_BLOCK_SIZE / CONFIG_SYS_NAND_PAGE_SIZE)
-#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT			"nand0=nand"
-#define MTDPARTS_DEFAULT		"mtdparts=nand:4m(uboot-spl),1m(uboot),1m(uboot-env),2m(skip),-(system)"
-
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
@@ -239,14 +192,11 @@
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
-#define CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
-#define CONFIG_CMD_UBI
-#define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_EEPROM
 
