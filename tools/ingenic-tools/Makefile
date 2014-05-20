@@ -30,8 +30,6 @@ MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
 GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin
 SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
-IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
-BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
 LOGO-$(CONFIG_LCD_LOGO) += $(RLE_LOGO_C)
 CHARGE_LOGO-$(CONFIG_CMD_BATTERYDET) += $(RLE_CHARGE_LOGO_H)
 RLE_LOGO_C = $(OBJTREE)/common/rle_logo.c
@@ -123,14 +121,6 @@ $(obj)spl_params_fixer:	spl_params_fixer.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
-
-$(obj)img2rle:	img2rle.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) $^ -ljpeg -lpng12 -o $@
-	$(HOSTSTRIP) $@
-
-$(obj)bin2array: bin2array.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
-
 #-------  added by ykliu -----#
 $(LOGO_RLE):  $(obj)img2rle $(LOGO_JPG)
 	$(obj)./img2rle  $(LOGO_JPG) $@
@@ -157,7 +147,9 @@ $(RLE_CHARGE_LOGO_H):	$(obj)bin2array $(CHARGE_LOGO_RLE_ALL)
 	$(obj)./bin2array --mult $(CHARGE_LOGO_RLE_ALL)  $@
 
 clean:
-	rm -f $(TOOLS) $(obj).depend
+	rm -f $(TOOLS) $(obj).depend  \
+		$(OBJTREE)/tools/logos/*.rle \
+		$(OBJTREE)/tools/charge_logo/*.rle
 
 distclean:	clean
 

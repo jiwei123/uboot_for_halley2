@@ -509,7 +509,7 @@ void lcd_clear(void)
 	for(i=0;i<lcd_line_length*panel_info.vl_row/2;i++)
 		*lcdbase_p++ = COLOR_MASK(lcd_getbgcolor());
 
-#elif LCD_BPP == 32
+#elif LCD_BPP == LCD_COLOR32
 	long long i;
 	int *lcdbase_p = (int *)lcd_base;
 	for(i=0;i<lcd_line_length*panel_info.vl_row/4;i++)
@@ -1157,7 +1157,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 }
 #endif
 
-#ifdef CONFIG_CMD_RLE
+#ifdef CONFIG_CMD_LOGO_RLE
 int  lcd_display_rle(unsigned short *src_buf)
 {
 	if(src_buf == NULL )

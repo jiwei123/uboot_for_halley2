@@ -130,8 +130,10 @@
 #define CONFIG_VIDEO_JZ4785
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U
+#ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
+#endif
 #endif /* CONFIG_LCD */
 
 /* NAND(mtd) */
