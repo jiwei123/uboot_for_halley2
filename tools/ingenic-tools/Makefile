@@ -107,6 +107,10 @@ $(obj)mbr-gpt.bin:	$(obj)gpt_creator
 	$(OBJTREE)/tools/ingenic-tools/gpt_creator		\
 	$(CONFIG_GPT_TABLE_PATH)/partitions.tab mbr-of-gpt.bin gpt.bin
 	cat mbr-of-gpt.bin gpt.bin > $@
+	dd if=/dev/zero of=file.bin bs=512 count=33
+	cat $@ file.bin > file2.bin
+	dd if=file2.bin of=$@ bs=512 count=34
+	rm file* -rf
 else
 $(obj)mbr-gpt.bin:	$(obj)mbr.bin
 	dd if=/dev/zero of=gpt.bin bs=512 count=33

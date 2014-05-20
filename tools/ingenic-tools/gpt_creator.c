@@ -330,7 +330,7 @@ void get_uuid(u8 *uuid)
 #endif
 }
 
-void init_mbr(u8 *mbr, u32 blocks, u32 gpt_header_lba)
+void init_mbr(u8 *mbr, u32 blocks, u32 gpt_header_lba, u32 custom_signature)
 {
 	custom_mbr * temp_mbr;
 
@@ -353,10 +353,11 @@ void init_mbr(u8 *mbr, u32 blocks, u32 gpt_header_lba)
 
 	mbr[0x1fe] = 0x55;
 	mbr[0x1ff] = 0xaa;
-
-	temp_mbr = (custom_mbr*)mbr;
-	temp_mbr->custom_signature = INGENIC_SIGNATURE;
-	temp_mbr->gpt_header_lba = gpt_header_lba;
+	if(!custom_signature) {
+		temp_mbr = (custom_mbr*)mbr;
+		temp_mbr->custom_signature = INGENIC_SIGNATURE;
+		temp_mbr->gpt_header_lba = gpt_header_lba;
+	}
 }
 
 int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
@@ -469,10 +470,10 @@ int main(int argc, char **argv)
 	struct efi_header *hdr = &ptbl.header;
 	u64 disk_size, disk_blocks;
 	u64 gpt_header_lba = GPT_PRIMARY_PARTITION_TABLE_LBA;
-	char * str_disk_size, * str_gpt_lba;
+	char * str_disk_size, * str_gpt_lba, *str_custom_signature;
 	char * mbr_file_name, * gpt_file_name, * config_file_name;
 	group_t * partitions;
-	u32 crc;
+	u32 crc, custom_signature;
 	FILE* fd = NULL;
 
 	//"usage: gpttool <partitions_config_file> <out_mbr_file> <out_gpt_file> \n"
@@ -510,8 +511,15 @@ int main(int argc, char **argv)
 	disk_blocks = disk_size/512;
 	fprintf(stderr,"disk: size = %lld, blocks = %lld\n", disk_size, disk_blocks);
 
+	str_custom_signature = get_item_value("property", "custom_signature");
+	if ((str_custom_signature == NULL) || (str_custom_signature[0] == 0))
+		custom_signature = 0;
+	else
+		custom_signature = (MAKE_SIGNATURE32(str_custom_signature[0], str_custom_signature[1],
+						     str_custom_signature[2], str_custom_signature[3]));
+
 	memset(&ptbl, 0, sizeof(ptbl));
-	init_mbr(ptbl.mbr, disk_blocks - 1, gpt_header_lba);
+	init_mbr(ptbl.mbr, disk_blocks - 1, gpt_header_lba, custom_signature);
 	memcpy(hdr->magic, EFI_MAGIC, sizeof(hdr->magic));
 	hdr->version = EFI_VERSION;
 	hdr->header_sz = sizeof(struct efi_header);

@@ -340,7 +340,6 @@
 #ifdef CONFIG_SPL_NOR_SUPPORT
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-nor-spl.lds"
 #else
-#define CONFIG_SPL_PARAMS_FIXER
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
 #endif
 #define CONFIG_SPL_PAD_TO		26624 /* equal to spl max size in JZ4785 */
@@ -404,7 +403,7 @@
  */
 #ifdef CONFIG_GPT_CREATOR
 #define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
-#ifndef CONFIG_GPT_TABLE_PATH
+#else
 /* USE MBR + zero-GPT-table instead if no gpt table defined*/
 #define CONFIG_MBR_P0_OFF	64mb
 #define CONFIG_MBR_P0_END	556mb
@@ -421,7 +420,6 @@
 #define CONFIG_MBR_P3_OFF	1609mb
 #define CONFIG_MBR_P3_END	7800mb
 #define CONFIG_MBR_P3_TYPE 	fat
-#endif
 #endif
 
 /**

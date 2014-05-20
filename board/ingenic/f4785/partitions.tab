@@ -1,6 +1,7 @@
 property:
     disk_size = 7300m
-    gpt_header_lba = 2m
+    gpt_header_lba = 512
+    custom_signature = 0
 
 partition:
 	#name     =  start,   size, fstype
