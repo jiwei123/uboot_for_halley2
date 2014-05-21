@@ -110,7 +110,7 @@ static void reset_dll(void)
 {
 	writel(3, CPM_DRCG);
 	mdelay(5);
-	writel(1, CPM_DRCG);
+	writel(0x11, CPM_DRCG);
 	mdelay(5);
 }
 #endif
@@ -625,7 +625,12 @@ void sdram_init(void)
 	mem_remap();
 
 	ddr_writel(ddr_readl(DDRC_STATUS) & ~DDRC_DSTATUS_MISS, DDRC_STATUS);
-
+#ifdef CONFIG_DDR_AUTO_SELF-REFRESH
+#ifdef CONFIG_FPGA
+	ddr_writel(0 , DDRC_DLP);
+#endif
+	ddr_writel(0x1 ,DDRC_AUTOSR_EN);
+#endif
 	debug("sdram init finished\n");
 }
 

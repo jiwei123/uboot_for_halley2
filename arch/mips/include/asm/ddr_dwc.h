@@ -40,6 +40,9 @@
 #define DDRC_MMAP1			0x28
 #define DDRC_DLP			0xbc
 #define DDRC_STRB			0x34
+#define DDRC_AUTOSR_CNT     0x308
+#define DDRC_AUTOSR_EN		0x304
+
 
 #define DDRC_TIMING(n)			(0x60 + 4 * (n - 1))
 #define DDRC_REMAP(n)			(0x9c + 4 * (n - 1))
