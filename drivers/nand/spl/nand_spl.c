@@ -58,7 +58,8 @@ void (*ndd_ndelay) (unsigned long nsecs);
 int (*ndd_printf)(const char *fmt, ...);
 extern int printf(const char* fmt, ...);
 static int nand_read_page(unsigned int pageaddr,unsigned char *data_buf,unsigned char *oob_buf);
-
+static int nand_read_spl_page(int page_addr, unsigned char *data_buf, unsigned char *oob_buf,
+		struct spl_basic_param *params, unsigned int offset,unsigned int bytes);
 #define __raw_readl(reg)     \
 	    *((volatile unsigned int *)(reg))
 #define __raw_writel(value,reg)  \
@@ -252,8 +253,8 @@ static void send_read_start_cmd(unsigned int page_addr,unsigned int offset,int d
 
 	nand_io_send_cmd((int)(nandio),NAND_CMD_READ0,delay);
 	nand_io_send_addr((int)(nandio),offset,page_addr,delay);
-
-	nand_io_send_cmd((int)(nandio),NAND_CMD_READSTART,delay);
+	if(pagesize != 512)
+		nand_io_send_cmd((int)(nandio),NAND_CMD_READSTART,delay);
 
 	nand_wait_ready();
 }
