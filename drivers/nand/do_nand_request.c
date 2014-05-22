@@ -6,7 +6,7 @@
 #include "ppartition.h"
 #include "vnandinfo.h"
 #include "nandmanagerinterface.h"
-#include "./nm_driver/nddriver/utils/rebuild_nand_spl.h"
+#include "./driver/utils/rebuild_nand_spl.h"
 
 #define SECTOR_SIZE 512
 #define MAX_PARTITION_NUM 20

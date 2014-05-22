@@ -4,6 +4,16 @@
 #include <cpu_trans.h>
 
 #include <soc/jz_bch.h>
+
+
+//#undef RETURN_ERR
+//#define RETURN_ERR(ret, format, ...)
+
+
+//#undef ndd_print
+//#define ndd_print(level, ...)
+
+
 /*****  the operation of bch registers  *****/
 static int ref_cnt = 0;
 
@@ -55,6 +65,7 @@ static void bch_encode_sync(nand_bch *ndbch)
 
 static void bch_decode_sync(nand_bch *ndbch)
 {
+
 	int (*readl)(int) = ndbch->base->readl;
 	while(!(readl(BCH_INTS) & BCH_INTS_DECF));
 }
@@ -167,7 +178,7 @@ static int bch_decode_correct(nand_bch *ndbch, PipeNode *pipe)
 	}
 
 	if (stat & BCH_INTS_UNCOR) {
-		RETURN_ERR(ECC_ERROR, "Uncorrectable ECC error -- stat = 0x%08x", stat);
+		RETURN_ERR(ECC_ERROR, "Uncorrectable ECC error -- stat = 0x%x", stat);
 	} else {
 		if (stat & BCH_INTS_ERR) {
 			/* Error occurred */
@@ -296,7 +307,6 @@ int nand_bch_decode_prepare(int context, PipeNode *pipe, unsigned char eccbit)
 {
 	int ret = 0;
 	nand_bch *bch = (nand_bch *)context;
-
 	bch_decode_enable(bch, eccbit);
 	//dump_regisers();
 

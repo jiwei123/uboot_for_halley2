@@ -37,39 +37,13 @@ _start:
 	.word 0x4d53504c
 #endif
 
-#ifdef CONFIG_SPL_NAND_SUPPORT
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)
 	/*
 	 * NAND parameters are stored with plenty of redundancy in the
 	 * first 192 bytes of the first page of the SPL image.
 	 */
 
-#ifdef CONFIG_SYS_NAND_TOGGLE
-	.space 64, 0xaa
-#else
-	.space 64, 0x55
-#endif
-
-#if (CONFIG_SYS_NAND_ROWCYCLE == 3)
-	.space 32, 0xaa
-#else
-	.space 32, 0x55
-#endif
-
-#if CONFIG_SYS_NAND_PAGE_SIZE == 512
-	.space 96, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 2048
-	.space 32, 0x55
-	.space 32, 0xaa
-	.space 32, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 4096
-	.space 32, 0xaa
-	.space 64, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 8192
-	.space 64, 0xaa
-	.space 32, 0x55
-#elif CONFIG_SYS_NAND_PAGE_SIZE == 16384
-	.space 96, 0xaa
-#endif
+	.space 192, 0x00
 
 #endif /* CONFIG_SPL_NAND_SUPPORT */
 

@@ -72,7 +72,7 @@ typedef union cpm_cpapcr {
 
 #define CGU_MSC_FREQ 24000000
 #define CGU_MSC_DIV (CONFIG_SYS_APLL_FREQ / CGU_MSC_FREQ / 2 - 1)
-#define CGU_BCH_DIV 0
+#define CGU_BCH_DIV 7
 #define CGU_LCD_DIV (CONFIG_SYS_APLL_FREQ / CONFIG_SYS_PCLK_FREQ - 1)
 
 unsigned int clk_get_rate(int clk);

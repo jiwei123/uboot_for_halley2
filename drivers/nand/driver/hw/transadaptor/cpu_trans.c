@@ -24,6 +24,7 @@ static void src_to_dst_add(unsigned char *src, unsigned char *dst, unsigned int 
 	if(!(len & (sizeof(int) - 1))){
 		for(i = 0; i < len / sizeof(int); i++)
 			((unsigned int *)dst)[i] = *(volatile unsigned int *)src;
+
 	}else if(!(len & (sizeof(short) - 1))){
 		for(i = 0; i < len / sizeof(short); i++)
 			((unsigned short *)dst)[i] = *(volatile unsigned short *)src;

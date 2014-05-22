@@ -249,8 +249,8 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 #ifdef CONFIG_JZ_MMC_MSC1
 	{CPM_MSC1CDR, 1, 30, 29, 28, CGU_MSC_DIV},
 #endif
-#ifdef CONFIG_NAND
-	{CPM_BCHCDR, 2, 30, 29, 28, CGU_BCH_DIV},
+#ifdef CONFIG_JZ_NAND_MGR
+	{CPM_BCHCDR, 1, 30, 29, 28, CGU_BCH_DIV},
 #endif
 #ifdef CONFIG_VIDEO_JZ4775
 	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
@@ -277,6 +277,8 @@ void clk_init(void)
 #ifdef CONFIG_NET_JZ4775
 		| CPM_CLKGR_GMAC
 #endif
+		| CPM_CLKGR_PDMA
+		| CPM_CLKGR_BCH
 		;
 
 	reg_clkgr &= ~gate;

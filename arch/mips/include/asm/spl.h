@@ -18,7 +18,7 @@ extern ulong __bss_end;
 
 static inline u32 spl_boot_device(void)
 {
-#ifdef CONFIG_SPL_NAND_SUPPORT
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)
 	return BOOT_DEVICE_NAND;
 #endif
 #ifdef CONFIG_SPL_MMC_SUPPORT

@@ -181,7 +181,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		spl_mmc_load_image();
 		break;
 #endif
-#ifdef CONFIG_SPL_NAND_SUPPORT
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)
 	case BOOT_DEVICE_NAND:
 		spl_nand_load_image();
 		break;

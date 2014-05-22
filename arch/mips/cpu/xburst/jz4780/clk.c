@@ -249,7 +249,7 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 #ifdef CONFIG_JZ_MMC_MSC1
 	{CPM_MSC1CDR, 2, 30, 29, 28, CGU_MSC_DIV},
 #endif
-#ifdef CONFIG_NAND
+#ifdef CONFIG_JZ_NAND_MGR
 	{CPM_BCHCDR, 2, 30, 29, 28, CGU_BCH_DIV}, /* This must be wrong! */
 #endif
 #ifdef CONFIG_VIDEO_JZ4780
