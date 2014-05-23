@@ -384,7 +384,7 @@ static int mmc_erase(struct cloner *cloner)
 int cloner_init(struct cloner *cloner)
 {
 	if(cloner->args->use_nand_mgr) {
-		nand_probe(&(cloner->args->PartInfo),
+		nand_probe_burner(&(cloner->args->PartInfo),
 				&(cloner->args->nand_params[0]),
 				cloner->args->nr_nand_args,
 				cloner->args->nand_erase,cloner->args->offsets,cloner->args->nand_erase_count);

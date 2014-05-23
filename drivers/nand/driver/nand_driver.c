@@ -30,6 +30,7 @@ nand_sharing_params share_parms;
 nand_flash nand_flash_info;
 
 
+int get_nand_param(void);
 #define __raw_readl(reg)     \
 	*((volatile unsigned int *)(reg))
 #define __raw_writel(value,reg)  \
@@ -340,6 +341,11 @@ static void bch_clk_disable(void)
 \* ############################################################################################ */
 static int gpio_irq_request(unsigned short gpio, unsigned short *irq, void **irq_private)
 {
+	int ret_gpio;
+
+	ret_gpio = gpio_request(gpio,"wait_rb");
+	gpio_as_irq_rise_edge(ret_gpio);
+	gpio_disable_pull(ret_gpio);
 	return 0;
 }
 
@@ -421,7 +427,13 @@ static int fill_io_base(io_base *base)
 
 static int ndd_gpio_request(unsigned int gpio, const char *lable)
 {
-	return 0;
+	int ret = 0;
+	ret = gpio_request(gpio, lable);
+	if (ret < 0) {
+		printf("ERROR: [%s] request gpio error", lable);
+		ret = -1;
+	}
+	return ret;
 }
 
 void fill_rbinfo_table(PartitionInfo *pinfo, rb_info *rbinfo)
@@ -434,9 +446,9 @@ void fill_rbinfo_table(PartitionInfo *pinfo, rb_info *rbinfo)
 	for(rb_index = 0; rb_index < rbinfo->totalrbs; rb_index++){
 		gpio = pinfo->rb_gpio[rb_index];
 
-		ret_gpio = gpio_request(gpio,"wait_rb");
-		gpio_as_irq_rise_edge(ret_gpio);
-		gpio_disable_pull(ret_gpio);
+		//ret_gpio = gpio_request(gpio,"wait_rb");
+		//gpio_as_irq_rise_edge(ret_gpio);
+		//gpio_disable_pull(ret_gpio);
 #if 0
 		REG_GPIO_PXINTS(0) = 1 << gpio_offset;	// used as interrupt
 		REG_GPIO_PXMASKC(0) = 1 << gpio_offset;	// set pin as interrupt source
@@ -605,27 +617,14 @@ static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int 
 
 	return 0;
 }
-#if 0
-static void print_errorpc()
-{
-	unsigned int errpc;
-	__asm__ __volatile__(
-			"mfc0 %0,$30 \n\t"
-			"nop"
-			: "=r" (errpc)
-			:
-			);
-	printf("errpc = %x\n",errpc);
 
-}
-#endif
 /* ############################################################################################ *\
  * nand driver main functions
 \* ############################################################################################ */
-int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int ops_pt_cnt)
+int nand_probe(void)
 {
 	int ret;
-	int rbcnt = pinfo->rbcount, ptcnt = pinfo->ptcount;
+	get_nand_param();
 
 	/**************************** STEP1: nand api init *****************************/
 	/* alloc memory for io_base and fill nand base */
@@ -664,6 +663,24 @@ int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm
 	if (ret)
 		goto err_api_init;
 
+	return 0;
+
+err_fill_base:
+err_api_init:
+	free(osdep.base);
+err_alloc_base:
+	return -1;
+
+}
+
+int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int ops_pt_cnt)
+{
+	int ret;
+	int rbcnt = pinfo->rbcount, ptcnt = pinfo->ptcount;
+
+	ret = nand_probe();
+	if(ret < 0)
+		return ;
 	/**************************** STEP2: nand api reinit *****************************/
 	/* fill nand_flash */
 	get_nandflash_info(&(osdep.base->nfi), nand_info_ids, nand_nm);
@@ -714,9 +731,11 @@ err_api_reinit:
 err_alloc_ptinfo:
 	free(platdep.rbinfo);
 err_alloc_rbinfo:
-err_api_init:
-err_fill_base:
 	free(osdep.base);
-err_alloc_base:
-	return -1;
+}
+
+int get_nand_param(void)
+{
+	memcpy(&share_parms, (unsigned char *)NAND_SHARING_PARMS_ADDR, sizeof(nand_sharing_params));
+	return 0;
 }

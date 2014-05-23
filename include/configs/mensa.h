@@ -101,9 +101,15 @@
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
   #else
+	#ifdef CONFIG_JZ_NAND_MGR
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm" 
+                                                            /*order ops pt offset len dst */
+		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
+	#else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
+	#endif /* endif config_jz_nand_MGR*/
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
 
@@ -189,6 +195,7 @@
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
+#define CONFIG_CMD_ZM_NAND  /* nand zone manager support */
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/

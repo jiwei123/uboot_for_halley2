@@ -113,9 +113,15 @@
 	#ifdef CONFIG_SPL_SPI_SUPPORT
 		#define CONFIG_BOOTCOMMAND "sf probe; sf read 0x80f00000 0x60000 0x340000; bootm 0x80f00000"
 	#else
+		#ifdef CONFIG_JZ_NAND_MGR
+			#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm" 
+																	/*order ops pt offset len dst */
+			/*#define CONFIG_BOOTCOMMAND		"nand_zm read ndboot;bootm"*/
+		#else
 		#define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
+		#endif /* endif CONFIG_JZ_NAND_MGR */
 	#endif
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
@@ -229,6 +235,7 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
+#define CONFIG_CMD_ZM_NAND		/* support nand manager */
 #ifndef CONFIG_SPL_SPI_SUPPORT
 #define CONFIG_CMD_DHCP 	/* DHCP support			*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/

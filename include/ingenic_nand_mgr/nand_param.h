@@ -115,6 +115,6 @@ typedef struct __nand_flash_param {
 } nand_flash_param;
 
 
-int nand_probe(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int   ops_pt_cnt);
+int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int ops_pt_cnt);
 unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned int ops_length,unsigned int offset);
 #endif //__NAND_PARAM_H__

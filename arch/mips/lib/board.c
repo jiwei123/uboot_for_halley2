@@ -310,6 +310,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	puts("NAND:  ");
 	nand_init();		/* go init the NAND */
 #endif
+#ifdef CONFIG_CMD_ZM_NAND
+	puts("NAND_ZM:	");
+	nand_zm_init();
+#endif
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
