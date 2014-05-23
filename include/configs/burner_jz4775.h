@@ -150,7 +150,6 @@
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(TOPDIR)/board/$(BOARDDIR)/u-boot-spl.lds"
-#define CONFIG_SPL_PAD_TO		15872 /* u-boot start addr - mbr size(512) */
 
 #define CONFIG_SPL_GINFO_BASE		0xf4000800
 #define CONFIG_SPL_GINFO_SIZE		0x800

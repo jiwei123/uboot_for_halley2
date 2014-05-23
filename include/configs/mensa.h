@@ -278,7 +278,6 @@
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
 #define CONFIG_SPL_START_S_PATH		"$(CPUDIR)/$(SOC)"
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
-#define CONFIG_SPL_PAD_TO		16384 /* u-boot start addr - mbr size(512) */
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
@@ -319,6 +318,16 @@
 #define CONFIG_SPL_SERIAL_SUPPORT
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
+
+#ifdef CONFIG_SPL_SPI_SUPPORT
+#define CONFIG_SPL_PAD_TO		16384
+#endif
+#ifdef CONFIG_SPL_MMC_SUPPORT
+#define CONFIG_SPL_PAD_TO		15872  /* u-boot start addr - mbr size(512) */
+#endif
+#ifdef CONFIG_JZ_NAND_MGR
+#define CONFIG_SPL_PAD_TO		16384
+#endif
 
 /**
  * MBR configuration
