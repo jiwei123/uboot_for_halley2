@@ -51,11 +51,20 @@ COBJS-y += driver/chips/nand_info.o
 COBJS-y += driver/chips/nand_errpt.o
 
 else
+
+$(shell mkdir -p $(SPLTREE)/drivers/nand/spl)
+$(shell mkdir -p $(SPLTREE)/drivers/nand/manager/os)
+$(shell mkdir -p $(SPLTREE)/drivers/nand/driver/utils)
+$(shell mkdir -p $(SPLTREE)/drivers/nand/driver/ops)
+$(shell mkdir -p $(SPLTREE)/drivers/nand/driver/hw/transadaptor)
+$(shell mkdir -p $(SPLTREE)/drivers/nand/driver/chips)
+
 COBJS-y += spl/nand_spl.o
 COBJS-y += driver/utils/os_clib.o
 COBJS-y += driver/hw/nand_io_emc.o
 COBJS-y += driver/hw/nand_bch.o
 COBJS-y += driver/hw/transadaptor/cpu_trans.o
+
 endif
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
