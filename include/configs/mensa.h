@@ -195,7 +195,6 @@
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
-#define CONFIG_CMD_ZM_NAND  /* nand zone manager support */
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
@@ -333,6 +332,7 @@
 #define CONFIG_SPL_PAD_TO		15872  /* u-boot start addr - mbr size(512) */
 #endif
 #ifdef CONFIG_JZ_NAND_MGR
+#define CONFIG_CMD_ZM_NAND  /* nand zone manager support */
 #define CONFIG_SPL_PAD_TO		16384
 #endif
 

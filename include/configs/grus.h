@@ -235,7 +235,6 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
-#define CONFIG_CMD_ZM_NAND		/* support nand manager */
 #ifndef CONFIG_SPL_SPI_SUPPORT
 #define CONFIG_CMD_DHCP 	/* DHCP support			*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
@@ -336,6 +335,7 @@
 #define CONFIG_SPL_PAD_TO		15872  /* u-boot start addr - mbr size(512) */
 #endif
 #ifdef CONFIG_JZ_NAND_MGR
+#define CONFIG_CMD_ZM_NAND		/* support nand manager */
 #define CONFIG_SPL_PAD_TO		16384
 #endif
 
