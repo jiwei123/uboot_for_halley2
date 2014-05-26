@@ -70,7 +70,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS3,115200 mem=256M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,57600 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -93,7 +93,8 @@
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
-    #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
+    /*#define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"*/
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000" 
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
   #endif
@@ -265,12 +266,34 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
-#else
-#define CONFIG_ENV_IS_NOWHERE
-/*#define CONFIG_ENV_IS_IN_NAND*/
+#endif /* endif CONFIG_ENV_IS_IN_MMC */
+
+#ifdef CONFIG_JZ_NAND_MGR
+
+/* environment  */
+#define CONFIG_ENV_IS_IN_NAND_ZM
+#define CMDLINE_PARTITION	"ndcmdline"
 #define CONFIG_ENV_SIZE			(32 << 10)
-#define CONFIG_ENV_OFFSET		(CONFIG_SYS_NAND_BLOCK_SIZE * 5)
-#endif
+#define CONFIG_ENV_OFFSET		0
+
+/**/
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SPL_NAND_SIMPLE
+#define CONFIG_SPL_NAND_LOAD
+
+/* nand gpio init */
+#define CONFIG_NAND_LOADER
+#define CFG_NAND_BW8    1
+#define CONFIG_NAND_CS  1
+
+/**/
+#define CONFIG_SPL_TEXT_BASE		0xf4000800
+#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+
+/* the NAND SPL is small enough to enable serial */
+#define CONFIG_SPL_SERIAL_SUPPORT
+#endif /* endif CONFIG_JZ_NAND_MGR */
 
 /**
  * SPL configuration
@@ -306,22 +329,6 @@
 
 #define CONFIG_SPL_SERIAL_SUPPORT
 
-#else /* !CONFIG_SPL_MMC_SUPPORT */
-
-/*#define CONFIG_SPL_NAND_SUPPORT*/
-#define CONFIG_SPL_NAND_BASE
-#define CONFIG_SPL_NAND_DRIVERS
-#define CONFIG_SPL_NAND_SIMPLE
-#define CONFIG_SPL_NAND_LOAD
-
-#define CONFIG_NAND_LOADER
-#define CFG_NAND_BW8    1
-#define CONFIG_NAND_CS  1
-#define CONFIG_SPL_TEXT_BASE		0xf4000800
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
-
-/* the NAND SPL is small enough to enable serial */
-#define CONFIG_SPL_SERIAL_SUPPORT
 
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
 

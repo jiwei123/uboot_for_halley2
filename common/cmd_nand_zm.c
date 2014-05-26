@@ -40,7 +40,7 @@ static int get_pt_handle(char *pt_name)
 
 	if(!g_handle.pphandle){
 		printf("ERROR: the partition %s is not open ,pphandle is -1 ,please check the partition name \n");
-		return -1;
+		return CMD_RET_FAILURE;
 	}
 
 	return lpentry->sectorCount * 512;
@@ -135,7 +135,7 @@ static void nand_manager_init(void)
 	void *heap = (void*)malloc(ZM_MEMORY_SIZE);
 	if(!heap){
 		printf("%s %d malloc heap error!\n",__func__,__LINE__);
-		return -1;
+		return CMD_RET_FAILURE;
 	}
 	/* init global structure g_handle*/
 	g_handle.zm_handle = NandManger_Init(heap,ZM_MEMORY_SIZE,0);
@@ -147,8 +147,10 @@ void nand_zm_init(void)
 
 	nand_manager_init();
 	ret = nand_probe();
-	if(ret < 0)
+	if(ret < 0){
 		printf(" nand probe fail ! ret = %d\n",ret);
+		return CMD_RET_FAILURE;
+	}
 
 	NandManger_getPartition(g_handle.zm_handle,&g_handle.lp);
 }
