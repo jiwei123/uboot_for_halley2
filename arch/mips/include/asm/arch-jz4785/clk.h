@@ -71,6 +71,26 @@ typedef union cpm_cpapcr {
 	} b; /* CPAPCR */
 } cpm_cpapcr_t;
 
+typedef union cpm_cpmpcr {
+	/** raw register data */
+	uint32_t d32;
+	/** register bits */
+	struct {
+		unsigned MPLLEN:1;
+		unsigned reserved1:1;
+		unsigned MLOCK:1;
+		unsigned MPLL_ON:1;
+		unsigned M_VCOPD:1;
+		unsigned M_POSTDIVPD:1;
+		unsigned M_PHASEPD:1;
+		unsigned M_DSMPD:1;
+		unsigned MPLLOD0:3;
+		unsigned MPLLOD1:3;
+		unsigned MPLLN:6;
+		unsigned MPLLM:12;
+	} b; /* CPMPCR */
+} cpm_cpmpcr_t;
+
 #define CGU_MSC_FREQ 24000000
 #define CGU_MSC_DIV (CONFIG_SYS_APLL_FREQ / CGU_MSC_FREQ / 2 - 1)
 #define CGU_BCH_DIV 0
