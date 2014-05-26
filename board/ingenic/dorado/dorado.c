@@ -1,5 +1,5 @@
 /*
- * Ingenic doraso setup code
+ * Ingenic dorado setup code
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
@@ -127,7 +127,7 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: doraso (Ingenic XBurst JZ4785 SoC)\n");
+	puts("Board: dorado (Ingenic XBurst JZ4785 SoC)\n");
 	return 0;
 }
 

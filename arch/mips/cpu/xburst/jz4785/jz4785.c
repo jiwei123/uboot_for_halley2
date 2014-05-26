@@ -57,15 +57,17 @@ void board_init_f(ulong dummy)
 	gd = &gdata;
 
 	/* Setup global info */
-#ifndef CONFIG_BURNER
+#ifndef CONFIG_CMD_BURN
 	gd->arch.gi = &ginfo;
+	gd->arch.gi->ddr_div = ((CONFIG_SYS_MPLL_FREQ % gd->arch.gi->ddrfreq) == 0)
+		? (CONFIG_SYS_MPLL_FREQ / gd->arch.gi->ddrfreq)
+		: (CONFIG_SYS_MPLL_FREQ / gd->arch.gi->ddrfreq + 1);
 #else
 	gd->arch.gi = (struct global_info *)CONFIG_SPL_GINFO_BASE;
-#endif
 	gd->arch.gi->ddr_div = ((gd->arch.gi->cpufreq % gd->arch.gi->ddrfreq) == 0)
 		? (gd->arch.gi->cpufreq / gd->arch.gi->ddrfreq)
 		: (gd->arch.gi->cpufreq / gd->arch.gi->ddrfreq + 1);
-
+#endif
 	gpio_init();
 
 #ifndef CONFIG_FPGA
