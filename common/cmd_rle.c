@@ -31,10 +31,10 @@ static int do_rle_display(cmd_tbl_t * cmdtp, int flag, int argc,
 	ulong addr;
 
 	switch (argc) {
-/*	case 1:		// fixed! display a default logo if logo address offset is not set!   
-		addr = RLE_LOGO_BASE_ADDR;
+	case 1:		// fixed! display a default logo if logo address offset is not set!
+		addr = RLE_LOGO_DEFAULT_ADDR;
 		break;
-*/
+
 	case 2:		/* use argument */
 		addr = simple_strtoul(argv[1], NULL, 16);
 		break;
@@ -126,8 +126,7 @@ int rle_display(unsigned int addr_offset)
 #if defined(CONFIG_LCD)
 	unsigned short *logo_addr =
 	    (unsigned short *)(addr_offset + RLE_LOGO_BASE_ADDR);
-	//ret = lcd_display_rle(logo_addr);
-	ret = lcd_display_rle(RLE_LOGO_DEFAULT_ADDR);
+	ret = lcd_display_rle(logo_addr);
 #elif defined(CONFIG_VIDEO)
 /*	ret = video_display_rle(addr, x, y);*/
 #else

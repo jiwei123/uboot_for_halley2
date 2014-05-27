@@ -139,7 +139,10 @@ void rle_plot_biger(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 		}
 	return;
 }
-#ifdef CONFIG_LOGO_EXTEND_RATE
+#ifdef CONFIG_LOGO_EXTEND
+#ifndef  CONFIG_PANEL_DIV_LOGO
+#define  CONFIG_PANEL_DIV_LOGO   (3)
+#endif
 void rle_plot_extend(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 {
 	int vm_width, vm_height;
@@ -150,6 +153,7 @@ void rle_plot_extend(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 	unsigned short *photo_tmp_ptr;
 	unsigned short *photo_ptr;
 	unsigned short *lcd_fb;
+	int rate0, rate1, extend_rate;
 	int i;
 
 	int flag_bit = 1;
@@ -164,9 +168,14 @@ void rle_plot_extend(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 	photo_ptr = (unsigned short *)src_buf;
 	lcd_fb = (unsigned short *)dst_buf;
 
-	photo_width = photo_ptr[0] * CONFIG_LOGO_EXTEND_RATE;
-	photo_height = photo_ptr[1] * CONFIG_LOGO_EXTEND_RATE;
-	photo_size = ( photo_ptr[3] << 16 | photo_ptr[2]) * CONFIG_LOGO_EXTEND_RATE; 	//photo size
+	rate0 =  vm_width/photo_ptr[0] > CONFIG_PANEL_DIV_LOGO ? (vm_width/photo_ptr[0])/CONFIG_PANEL_DIV_LOGO : 1;
+	rate1 =  vm_height/photo_ptr[1] > CONFIG_PANEL_DIV_LOGO ? (vm_width/photo_ptr[1])/CONFIG_PANEL_DIV_LOGO : 1;
+	extend_rate = rate0 < rate1 ?  rate0 : rate1;
+	debug("logo extend rate = %d\n", extend_rate);
+
+	photo_width = photo_ptr[0] * extend_rate;
+	photo_height = photo_ptr[1] * extend_rate;
+	photo_size = ( photo_ptr[3] << 16 | photo_ptr[2]) * extend_rate; 	//photo size
 	debug("photo_size =%d photo_width = %d, photo_height = %d\n", photo_size,
 	      photo_width, photo_height);
 	photo_ptr += 4;
@@ -175,7 +184,7 @@ void rle_plot_extend(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 	dis_height = photo_height < vm_height ? photo_height : vm_height;
 	ewidth = (vm_width - photo_width)/2;
 	eheight = (vm_height - photo_height)/2;
-	compress_count = compress_tmp_count= photo_ptr[0] * CONFIG_LOGO_EXTEND_RATE;
+	compress_count = compress_tmp_count= photo_ptr[0] * extend_rate;
 	compress_val = compress_tmp_val= photo_ptr[1];
 	photo_tmp_ptr = photo_ptr;
 	write_count = 0;
@@ -185,7 +194,7 @@ void rle_plot_extend(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 				lcd_fb += eheight * vm_width * flag_bit;
 			}
 			while (dis_height > 0) {
-				for(i = 0; i < CONFIG_LOGO_EXTEND_RATE && dis_height > 0; i++){
+				for(i = 0; i < extend_rate && dis_height > 0; i++){
 					debug("I am  here\n");
 					photo_ptr = photo_tmp_ptr;
 					debug("1> photo_ptr = %08x, photo_tmp_ptr = %08x\n", photo_ptr, photo_tmp_ptr);
@@ -210,7 +219,7 @@ void rle_plot_extend(unsigned short *src_buf, unsigned short *dst_buf, int bpp)
 						} else {
 							photo_ptr += 2;
 							photo_size -= 2;
-							compress_count = photo_ptr[0] * CONFIG_LOGO_EXTEND_RATE;
+							compress_count = photo_ptr[0] * extend_rate;
 							compress_val = photo_ptr[1];
 						}
 
@@ -368,7 +377,7 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 
 	flag =  photo_ptr[0] * photo_ptr[1] - vm_width * vm_height;
 	if(flag <= 0){
-#ifdef CONFIG_LOGO_EXTEND_RATE
+#ifdef CONFIG_LOGO_EXTEND
 		rle_plot_extend(photo_ptr, lcd_fb, bpp);
 #else
 		rle_plot_smaller(photo_ptr, lcd_fb, bpp);
