@@ -39,34 +39,34 @@ RLE_CHARGE_LOGO_H = $(OBJTREE)/include/rle_charge_logo.h
 
 #### Use jpg to make logo, added by ykliu ####
 ifeq ($(LOGO_JPG),)
-LOGO_JPG= $(OBJTREE)/tools/logos/ingenic.jpg
+LOGO_JPG= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/ingenic.jpg
 LOGO_RLE= $(LOGO_JPG).rle
 # Use board logo and fallback to vendor
-ifneq ($(wildcard logos/$(BOARD).jpg),)
-LOGO_JPG= $(OBJTREE)/tools/logos/$(BOARD).jpg
+ifneq ($(wildcard $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(BOARD).jpg),)
+LOGO_JPG= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(BOARD).jpg
 LOGO_RLE= $(LOGO_JPG).rle
 else
-ifneq ($(wildcard logos/$(VENDOR).bmp),)
-LOGO_JPG= $(OBJTREE)/tools/logos/$(VENDOR).jpg
+ifneq ($(wildcard $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(VENDOR).bmp),)
+LOGO_JPG= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(VENDOR).jpg
 LOGO_RLE= $(LOGO_JPG).rle
 endif
 endif
 endif
 
 ifeq ($(CHARGE_LOGO_JPG),)
-CHARGE_LOGO_JPG1= ../charge_logo/1.jpg
-CHARGE_LOGO_JPG2= ../charge_logo/2.jpg
-CHARGE_LOGO_JPG3= ../charge_logo/3.jpg
-CHARGE_LOGO_JPG4= ../charge_logo/4.jpg
-CHARGE_LOGO_JPG5= ../charge_logo/5.jpg
-CHARGE_LOGO_JPG6= ../charge_logo/6.jpg
+CHARGE_LOGO_JPG1= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_1.jpg
+CHARGE_LOGO_JPG2= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_2.jpg
+CHARGE_LOGO_JPG3= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_3.jpg
+CHARGE_LOGO_JPG4= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_4.jpg
+CHARGE_LOGO_JPG5= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_5.jpg
+CHARGE_LOGO_JPG6= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_6.jpg
 
-CHARGE_LOGO_RLE1= ../charge_logo/1.jpg.rle
-CHARGE_LOGO_RLE2= ../charge_logo/2.jpg.rle
-CHARGE_LOGO_RLE3= ../charge_logo/3.jpg.rle
-CHARGE_LOGO_RLE4= ../charge_logo/4.jpg.rle
-CHARGE_LOGO_RLE5= ../charge_logo/5.jpg.rle
-CHARGE_LOGO_RLE6= ../charge_logo/6.jpg.rle
+CHARGE_LOGO_RLE1= $(CHARGE_LOGO_JPG1).rle
+CHARGE_LOGO_RLE2= $(CHARGE_LOGO_JPG2).rle
+CHARGE_LOGO_RLE3= $(CHARGE_LOGO_JPG3).rle
+CHARGE_LOGO_RLE4= $(CHARGE_LOGO_JPG4).rle
+CHARGE_LOGO_RLE5= $(CHARGE_LOGO_JPG5).rle
+CHARGE_LOGO_RLE6= $(CHARGE_LOGO_JPG6).rle
 
 CHARGE_LOGO_RLE_ALL= $(CHARGE_LOGO_RLE1) \
 		$(CHARGE_LOGO_RLE2) \
@@ -161,8 +161,8 @@ $(RLE_CHARGE_LOGO_H):	$(obj)bin2array $(CHARGE_LOGO_RLE_ALL)
 
 clean:
 	rm -f $(TOOLS) $(obj).depend  \
-		$(OBJTREE)/tools/logos/*.rle \
-		$(OBJTREE)/tools/charge_logo/*.rle
+		$(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/*.rle \
+		$(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/*.rle
 
 distclean:	clean
 
