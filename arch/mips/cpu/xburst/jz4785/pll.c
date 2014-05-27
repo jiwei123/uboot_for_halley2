@@ -63,18 +63,18 @@ DECLARE_GLOBAL_DATA_PTR;
 /* for jz4785, cpu and L2 use apll, AHB2 AHB0 and APB use mpll */
 #define SEL_SRC			SEL_SRC_APLL
 #define SEL_CPLL		SEL_SCLK_A
-#define SEL_H0PLL      		SEL_MPLL
-#define SEL_H2PLL      		SEL_MPLL
+#define SEL_H0PLL      		SEL_SCLK_A
+#define SEL_H2PLL      		SEL_SCLK_A
 /** 
  * divisors
  * L2 : C = 3 : 1 (apll > 200M)
  * APB : AHB2 : AHB0 = 4 : 2 : 1
  */
-#define DIV_L2			3
 #define DIV_CPU			1
-#define DIV_PCLK		4
-#define DIV_H2			2
-#define DIV_H0			1
+#define DIV_L2			3
+#define DIV_H0			4
+#define DIV_H2			4
+#define DIV_PCLK		8
 #endif /* CONFIG_CMD_BURN */
 
 #define CPCCR_CFG		(((SEL_SRC & 0x3) << 30)		\
@@ -100,26 +100,45 @@ unsigned int get_pllreg_value(int pll)
 	cpm_cpapcr_t cpapcr;
 	cpm_cpmpcr_t cpmpcr;
 	unsigned int ret = 0;
+	unsigned int cpufreq = gd->arch.gi->cpufreq / 1000000;
+	unsigned int extal = gd->arch.gi->extal / 1000000;
 
 	switch (pll) {
 	case APLL:
 		cpapcr.d32 = 0;
-
+		cpapcr.b.APLLN = 1;
 		cpapcr.b.APLLOD0 = 1;
-		cpapcr.b.APLLOD1 = 1;
-		cpapcr.b.APLLN = 3;
-		cpapcr.b.APLLM = (gd->arch.gi->cpufreq * cpapcr.b.APLLN * cpapcr.b.APLLOD0
-				  * cpapcr.b.APLLOD1) / gd->arch.gi->extal;
+
+		if (cpufreq > 600)
+			cpapcr.b.APLLM = 100;
+		else
+			cpapcr.b.APLLM = 25;
+
+		cpapcr.b.APLLOD1= extal * cpapcr.b.APLLM / cpapcr.b.APLLOD0
+				  / cpapcr.b.APLLN / cpufreq;
+		if (cpapcr.b.APLLOD1 > 7) {
+			printf("CPAPCR.APLLOD1 > 7 error!\n");
+			return -1;
+		}
 		ret = cpapcr.d32;
+		printf("cpapcr is %x\n",ret);
 		break;
 	case MPLL:
 		cpmpcr.d32 = 0;
-
+		cpmpcr.b.MPLLN = 1;
 		cpmpcr.b.MPLLOD0 = 1;
-		cpmpcr.b.MPLLOD1 = 2;
-		cpmpcr.b.MPLLN = 3;
-		cpmpcr.b.MPLLM = (CONFIG_SYS_MPLL_FREQ * cpmpcr.b.MPLLN * cpmpcr.b.MPLLOD0
-				  * cpmpcr.b.MPLLOD1) / gd->arch.gi->extal;
+
+		if (cpufreq > 600)
+			cpmpcr.b.MPLLM = 100;
+		else
+			cpmpcr.b.MPLLM = 25;
+
+		cpmpcr.b.MPLLOD1= extal * cpmpcr.b.MPLLM / cpmpcr.b.MPLLOD0
+			/ cpmpcr.b.MPLLN / cpufreq;
+		if (cpmpcr.b.MPLLOD1 > 7) {
+			printf("CPMPCR.APLLOD1 > 7 error!\n");
+			return -1;
+		}
 		ret = cpmpcr.d32;
 		break;
 	default:
@@ -172,7 +191,7 @@ void pll_init(void)
 	debug("pll init...");
 
 	apll_init();
-	mpll_init();
+//	mpll_init();
 	cpccr_init();
 
 	debug("ok\n");
