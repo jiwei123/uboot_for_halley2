@@ -410,11 +410,11 @@ int nand_program(struct cloner *cloner)
 	return 0;
 }
 
-int mmc_program(struct cloner *cloner)
+int mmc_program(struct cloner *cloner,int mmc_index)
 {
 #define MMC_BYTE_PER_BLOCK 512
 	int curr_device = 0;
-	struct mmc *mmc = find_mmc_device(0);
+	struct mmc *mmc = find_mmc_device(mmc_index);
 	u32 blk = (cloner->cmd.write.partation + cloner->cmd.write.offset)/MMC_BYTE_PER_BLOCK;
 	u32 cnt = (cloner->cmd.write.length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
 	void *addr = (void *)cloner->write_req->buf;
@@ -505,8 +505,10 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		case OPS(NAND,IMAGE):
 			cloner->ack = nand_program(cloner);
 			break;
-		case OPS(MMC,RAW):
-			cloner->ack = mmc_program(cloner);
+		case OPS(MMC,0):
+		case OPS(MMC,1):
+		case OPS(MMC,2):
+			cloner->ack = mmc_program(cloner,cloner->cmd.write.ops & 0xffff);
 			break;
 		case OPS(MEMORY,RAW):
 			cloner->ack = 0;
