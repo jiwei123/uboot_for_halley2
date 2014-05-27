@@ -30,8 +30,8 @@ MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
 GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin
 SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
-IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
-BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
+#IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
+#BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
 LOGO-$(CONFIG_LCD_LOGO) += $(RLE_LOGO_C)
 CHARGE_LOGO-$(CONFIG_CMD_BATTERYDET) += $(RLE_CHARGE_LOGO_H)
 RLE_LOGO_C = $(OBJTREE)/common/rle_logo.c
@@ -39,27 +39,47 @@ RLE_CHARGE_LOGO_H = $(OBJTREE)/include/rle_charge_logo.h
 
 #### Use jpg to make logo, added by ykliu ####
 ifeq ($(LOGO_JPG),)
-LOGO_JPG= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/ingenic.jpg
-LOGO_RLE= $(LOGO_JPG).rle
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/*.jpg),)
+LOGO_JPG= $(TOPDIR)/board/$(BOARDDIR)/logos/ingenic.jpg
 # Use board logo and fallback to vendor
-ifneq ($(wildcard $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(BOARD).jpg),)
-LOGO_JPG= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(BOARD).jpg
-LOGO_RLE= $(LOGO_JPG).rle
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg),)
+LOGO_JPG= $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg
 else
-ifneq ($(wildcard $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(VENDOR).bmp),)
-LOGO_JPG= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/$(VENDOR).jpg
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/(VENDOR).jpg),)
+LOGO_JPG= $(TOPDIR)/board/$(BOARDDIR)/logo/$(VENDOR).jpg
+endif
+endif
+else #use the default logo
+LOGO_JPG= $(TOPDIR)/tools/logos/ingenic.jpg
+# Use board logo and fallback to vendor
+ifneq ($(wildcard $(TOPDIR)/tools/logos/$(BOARD).jpg),)
+LOGO_JPG= $(TOPDIR)/tools/logos/$(BOARD).jpg
+else
+ifneq ($(wildcard $(TOPDIR)/tools/logos/(VENDOR).jpg),)
+LOGO_JPG= $(TOPDIR)/tools/logos/$(VENDOR).jpg
+endif
+endif
+endif
 LOGO_RLE= $(LOGO_JPG).rle
-endif
-endif
 endif
 
+
 ifeq ($(CHARGE_LOGO_JPG),)
-CHARGE_LOGO_JPG1= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_1.jpg
-CHARGE_LOGO_JPG2= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_2.jpg
-CHARGE_LOGO_JPG3= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_3.jpg
-CHARGE_LOGO_JPG4= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_4.jpg
-CHARGE_LOGO_JPG5= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_5.jpg
-CHARGE_LOGO_JPG6= $(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/charge_6.jpg
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.jpg),)
+CHARGE_LOGO_JPG1= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_1.jpg
+CHARGE_LOGO_JPG2= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_2.jpg
+CHARGE_LOGO_JPG3= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_3.jpg
+CHARGE_LOGO_JPG4= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_4.jpg
+CHARGE_LOGO_JPG5= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_5.jpg
+CHARGE_LOGO_JPG6= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_6.jpg
+else ## use the default logo
+CHARGE_LOGO_JPG1= $(TOPDIR)/tools/charge_logo/charge_1.jpg
+CHARGE_LOGO_JPG2= $(TOPDIR)/tools/charge_logo/charge_2.jpg
+CHARGE_LOGO_JPG3= $(TOPDIR)/tools/charge_logo/charge_3.jpg
+CHARGE_LOGO_JPG4= $(TOPDIR)/tools/charge_logo/charge_4.jpg
+CHARGE_LOGO_JPG5= $(TOPDIR)/tools/charge_logo/charge_5.jpg
+CHARGE_LOGO_JPG6= $(TOPDIR)/tools/charge_logo/charge_6.jpg
+endif
 
 CHARGE_LOGO_RLE1= $(CHARGE_LOGO_JPG1).rle
 CHARGE_LOGO_RLE2= $(CHARGE_LOGO_JPG2).rle
@@ -127,12 +147,12 @@ $(obj)spl_params_fixer:	spl_params_fixer.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
-$(obj)img2rle:	img2rle.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) $^ -ljpeg -lpng12 -o $@
-	$(HOSTSTRIP) $@
+#$(obj)img2rle:	img2rle.c
+#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) $^ -ljpeg -lpng12 -o $@
+#	$(HOSTSTRIP) $@
 
-$(obj)bin2array: bin2array.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+#$(obj)bin2array: bin2array.c
+#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 
 #-------  added by ykliu -----#
 $(LOGO_RLE):  $(obj)img2rle $(LOGO_JPG)
@@ -161,8 +181,10 @@ $(RLE_CHARGE_LOGO_H):	$(obj)bin2array $(CHARGE_LOGO_RLE_ALL)
 
 clean:
 	rm -f $(TOOLS) $(obj).depend  \
-		$(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/*.rle \
-		$(OBJTREE)/board/ingenic/$(BOARD)/lcd_logo/*.rle
+		$(TOPDIR)/tools/logos/*.rle \
+		$(TOPDIR)/tools/charge_logo/*.rle \
+		$(TOPDIR)/board/$(BOARDDIR)/logo/*.rle \
+		$(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.rle
 
 distclean:	clean
 
