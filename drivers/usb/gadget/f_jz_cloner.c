@@ -386,10 +386,12 @@ static int mmc_erase(struct cloner *cloner)
 int cloner_init(struct cloner *cloner)
 {
 	if(cloner->args->use_nand_mgr) {
+#ifdef CONFIG_JZ_NAND_MGR
 		nand_probe_burner(&(cloner->args->PartInfo),
 				&(cloner->args->nand_params[0]),
 				cloner->args->nr_nand_args,
 				cloner->args->nand_erase,cloner->args->offsets,cloner->args->nand_erase_count);
+#endif
 	}
 
 	if (cloner->args->use_mmc) {
@@ -401,6 +403,7 @@ int cloner_init(struct cloner *cloner)
 
 int nand_program(struct cloner *cloner)
 {
+#ifdef CONFIG_JZ_NAND_MGR
 	int curr_device = 0;
 	u32 startaddr = cloner->cmd.write.partation + (cloner->cmd.write.offset);
 	u32 length = cloner->cmd.write.length;
@@ -410,6 +413,9 @@ int nand_program(struct cloner *cloner)
 	do_nand_request(startaddr, databuf, length,cloner->cmd.write.offset);
 
 	return 0;
+#else
+	return -ENODEV;
+#endif
 }
 
 int mmc_program(struct cloner *cloner,int mmc_index)
