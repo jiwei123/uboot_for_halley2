@@ -39,18 +39,16 @@ static int do_efuse(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	void *addr = NULL;
 	int length = 0;
 	off_t offset = 0;
-	int pin = 0;
+	int pin = -1;
 	int enable = 0;
 	int ret = 0;
 
-	if (argc < 3)
-		return CMD_RET_USAGE;
 	state = EFUSE_INVALID;
 	if (argc == 5 && strcmp(argv[1], "read") == 0)
 		state = EFUSE_READ;
 	else if (argc == 5 && strcmp(argv[1], "write") == 0)
 		state = EFUSE_WRITE;
-	else if (argc == 3 && strcmp(argv[1], "init") == 0)
+	else if ((argc == 3 || argc == 2)&& strcmp(argv[1], "init") == 0)
 		state = EFUSE_INIT;
 	else if (argc == 3 && strcmp(argv[1], "debug") == 0)
 		state = EFUSE_DEBUG;
@@ -74,7 +72,13 @@ static int do_efuse(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("efuse ops failed\n");
 		break;
 	case EFUSE_INIT:
-		pin = (int)simple_strtoul(argv[2], NULL, 10);
+		if (argc == 3) {
+			pin = (int)simple_strtoul(argv[2], NULL, 10);
+		} else {
+#if defined(CONFIG_EFUSE_GPIO)
+			pin = CONFIG_EFUSE_GPIO;
+#endif
+		}
 		ret = efuse_init(pin);
 		if (ret)
 			printf("efuse init failed\n");

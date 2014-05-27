@@ -34,8 +34,6 @@ static int efuse_gpio = -1;
 #define EFU_SARADC_REV2	0x21B
 #define EFUDATA_REG_NUM 8
 
-#define RD_ADJ_10TIME	150	//>=15ns
-#define RD_STROBE_1TIME	120	//>=110ns
 #define WR_ADJ_10TIME	65
 #define WR_WR_STROBE_1TIME	10000
 #define WR_WR_STROBE_1TIME_MAX	11000
@@ -51,40 +49,36 @@ int adjust_efuse(int is_wirte)
 		adj = (adj != 0) ? (adj - 1) : adj;
 		strobe = ((WR_WR_STROBE_1TIME/1000)*(h2clk/1000000));
 		strobe = strobe - 1666 - adj;
-		if (strobe < 0) {
+		if (strobe < -1024) {
 			strobe = ((WR_WR_STROBE_1TIME_MAX/1000)*(h2clk/1000000));
 			strobe = strobe - 1666 - adj;
-			if (strobe < 0) {
+			if (strobe < -1024) {
 				error("h2clk is too slow");
 				ret = -EFAULT;
 				goto out;
 			}
 		}
-		if (adj > 0xf || strobe > 0xfff) {
+		if (adj > 0xf || strobe > 0x3ff) {
 			error("h2clk is too fast");
 			ret = -EFAULT;
 			goto out;
 		}
-		efucfg_reg = (adj<<12)|(strobe<<0);
-	} else {
-		adj = ((((RD_ADJ_10TIME*(h2clk/1000000))+10-1)/10)+1000-1)/(1000);
-		adj = (adj != 0) ? (adj - 1) : adj;
-		strobe = ((RD_STROBE_1TIME*(h2clk/1000000)+1000-1))/(1000) - adj - 5;
-		strobe = (strobe > 0) ? strobe : 1;
-		if (adj > 0xf) {
-			error("h2clk is too fast 1");
-			adj = 0xf;
-		}
-		if (strobe > 0xf) {
-			error("h2clk is too fast 2");
-			strobe = 0xf;
-		}
-		efucfg_reg = (adj<<20)|(strobe<<16);
-	}
 
-	writel(efucfg_reg,(EFUSE_BASE + EFUCFG));
+		if (strobe < 0)
+			strobe = (0x400|(strobe&0x3ff));
+		efucfg_reg = (adj<<12)|(strobe<<0);
+		writel(efucfg_reg,(EFUSE_BASE + EFUCFG));
+	} else {
+		efucfg_reg = (0xf<<20)|(0xf<<16);
+		writel(efucfg_reg,(EFUSE_BASE+EFUCFG));
+		efucfg_reg = readl((EFUSE_BASE+EFUCFG));
+		if (((efucfg_reg>>16)&0xf) != 0x7) {
+			efucfg_reg = (0xf<<20)|(0x7<<16);
+			writel(efucfg_reg,(EFUSE_BASE + EFUCFG));
+		}
+	}
 out:
-	printf("h2clk is %d, efucfg_reg 0x%x\n",h2clk,efucfg_reg);
+	printf("h2clk is %d, efucfg_reg 0x%x\n",h2clk,readl((EFUSE_BASE+EFUCFG)));
 	return ret;
 }
 
