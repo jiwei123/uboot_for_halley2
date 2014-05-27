@@ -29,6 +29,7 @@
 #include <mmc.h>
 #include <rtc.h>
 #include <part.h>
+#include <efuse.h>
 #include <ingenic_soft_i2c.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
@@ -65,6 +66,7 @@ enum medium_type {
 	NAND,
 	MMC,
 	I2C,
+	EFUSE,
 };
 
 enum data_type {
@@ -290,7 +292,7 @@ int i2c_program(struct cloner *cloner)
 
 	for(i=0;i<i2c_arg->value_count;i++) {
 		char reg = i2c_arg->value[i] >> 16;
-		char value = i2c_arg->value[i] & 0xff;
+		unsigned char value = i2c_arg->value[i] & 0xff;
 		i2c_write(&i2c,i2c_arg->device,reg,1,&value,1);
 	}
 	return 0;
@@ -377,7 +379,7 @@ static int mmc_erase(struct cloner *cloner)
 
 		printf("mmc part erase, part %d ok\n", i);
 	}
-	printf("mmc erase ok\n", i);
+	printf("mmc erase ok\n");
 	return 0;
 }
 
@@ -461,6 +463,20 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 	return 0;
 }
 
+int efuse_program(struct cloner *cloner)
+{
+	u32 offset = cloner->cmd.write.offset;
+	u32 length = cloner->cmd.write.length;
+	void *addr = (void *)cloner->write_req->buf;
+	u32 r = 0;
+
+	if (r = efuse_write(addr, length, offset)) {
+		printf("efuse write error\n");
+		return r;
+	}
+	return r;
+}
+
 void handle_read(struct usb_ep *ep,struct usb_request *req)
 {
 }
@@ -469,7 +485,6 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
 
-	int infonum;
 	if(req->status == -ECONNRESET) {
 		cloner->ack = -ECONNRESET;
 		return;
@@ -512,6 +527,9 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			break;
 		case OPS(MEMORY,RAW):
 			cloner->ack = 0;
+			break;
+		case OPS(EFUSE,RAW):
+			cloner->ack = efuse_program(cloner);
 			break;
 		default:
 			printf("ops %08x not support yet.\n",cloner->cmd.write.ops);
@@ -573,7 +591,6 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 int f_cloner_setup_handle(struct usb_function *f,
 		const struct usb_ctrlrequest *ctlreq)
 {
-	struct usb_gadget *gadget = f->config->cdev->gadget;
 	struct cloner *cloner = f->config->cdev->req->context;
 	struct usb_request *req = cloner->ep0req;
 

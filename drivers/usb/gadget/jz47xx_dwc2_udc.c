@@ -1084,7 +1084,18 @@ void outep0_transfer_complete(struct dwc2_ep *dep)
 			is_last = 1;
 		if (is_last) {
 			dev->ep0state  = STATUS_STAGE;
-			dwc2_otg_flush_rx_fifo();
+#if 1
+			while (udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY) {
+				int stat = udc_read_reg(GRXSTS_READ);
+				if ((stat&GRXSTSP_PKSTS_MASK)==GRXSTSP_PKSTS_TX_COMP) {
+					handle_rxfifo_nempty(the_controller);
+					udelay(10);
+					//dwc2_otg_flush_rx_fifo();
+				} else {
+					break;
+				}
+			}
+#endif
 			udc_write_reg(DEP_STATUS_PHASE_RECV, DOEP_INT(0));
 			if (!udc_setup_status(1)) {
 				dev->ep0state  = DATA_STAGE;

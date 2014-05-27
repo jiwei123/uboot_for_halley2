@@ -98,7 +98,12 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_BURN		/*ingenic usb burner support*/
+#define CONFIG_CMD_EFUSE	/*efuse*/
 
+#ifdef CONFIG_CMD_EFUSE
+#define	CONFIG_JZ4780_EFUSE
+#define CONFIG_EFUSE_GPIO	GPIO_PE(4)
+#endif
 /**
  * Serial download configuration
  */
