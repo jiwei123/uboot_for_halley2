@@ -93,11 +93,12 @@ void fill_nand_flash_info(nand_flash_param *nand_info)
 	nand_flash_info.badblockpos = nand_info->badblockpos;
 	nand_flash_info.rowcycles = nand_info->rowcycles;
 	nand_flash_info.planeoffset = nand_info->planeoffset;
-	if(nand_info->options != 0)
-		nand_flash_info.options = NAND_TIMING_MODE | NAND_TIMING_MODE_V(nand_info->timingmod) | NAND_DRIVER_STRENGTH
-			| NAND_READ_RETRY | NAND_READ_RETRY_MODE(nand_info->options);
-	else
-		nand_flash_info.options = NAND_TIMING_MODE | NAND_TIMING_MODE_V(nand_info->timingmod) | NAND_DRIVER_STRENGTH;
+	if (nand_info->timingmod) // NOTE: time mode 0 is default, need not to set
+		    nand_flash_info.options |= NAND_TIMING_MODE | NAND_TIMING_MODE_V(nand_info->timingmod);
+	if (nand_info->options & NAND_READ_RETRY)
+		    nand_flash_info.options |= NAND_READ_RETRY | NAND_READ_RETRY_MODE(nand_info->options);
+	if (nand_info->options & NAND_DRIVER_STRENGTH)
+		    nand_flash_info.options |= NAND_DRIVER_STRENGTH;
 
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
 	//dump_nand_flash_info();
@@ -458,7 +459,7 @@ void fill_rbinfo_table(PartitionInfo *pinfo, rb_info *rbinfo)
 		printf("INIT GPIO_PAINT = %x\n", *((volatile unsigned int *)0xb0010010));
 		printf("INIT GPIO_PAFLG = %x\n", *((volatile unsigned int *)0xb0010050));
 		(rbinfo->rbinfo_table + rb_index)->id = rb_index;
-		(rbinfo->rbinfo_table + rb_index)->gpio = ret_gpio;
+		(rbinfo->rbinfo_table + rb_index)->gpio = pinfo->rb_gpio[rb_index];
 		(rbinfo->rbinfo_table + rb_index)->pulldown_strength = pinfo->rb_pulldown_strength[rb_index];
 	}
 }
