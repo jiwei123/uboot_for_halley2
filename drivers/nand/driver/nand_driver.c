@@ -679,6 +679,7 @@ int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int 
 	int ret;
 	int rbcnt = pinfo->rbcount, ptcnt = pinfo->ptcount;
 
+	memset((unsigned char *)NAND_SHARING_PARMS_ADDR,0,sizeof(nand_sharing_params));
 	ret = nand_probe();
 	if(ret < 0)
 		return ;
