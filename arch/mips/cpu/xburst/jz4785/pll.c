@@ -65,7 +65,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SEL_CPLL		SEL_SCLK_A
 #define SEL_H0PLL      		SEL_SCLK_A
 #define SEL_H2PLL      		SEL_SCLK_A
-/** 
+/**
  * divisors
  * L2 : C = 3 : 1 (apll > 200M)
  * APB : AHB2 : AHB0 = 4 : 2 : 1
@@ -100,8 +100,30 @@ unsigned int get_pllreg_value(int pll)
 	cpm_cpapcr_t cpapcr;
 	cpm_cpmpcr_t cpmpcr;
 	unsigned int ret = 0;
-	unsigned int cpufreq = gd->arch.gi->cpufreq / 1000000;
+	unsigned int pllfreq = 100000000;
 	unsigned int extal = gd->arch.gi->extal / 1000000;
+
+	if (CONFIG_CPU_SEL_PLL == pll) {
+		if (CONFIG_DDR_SEL_PLL == pll) {
+			gd->arch.gi->cpufreq = gd->arch.gi->ddr_div * gd->arch.gi->ddrfreq;
+		} else {
+			pllfreq = gd->arch.gi->cpufreq;
+		}
+	} else {
+#if defined(CONFIG_SYS_APLL_FREQ)
+		if (pll == APLL) {
+			pllfreq = CONFIG_SYS_APLL_FREQ > 0 ? CONFIG_SYS_APLL_FREQ : 100;
+		}
+#endif
+#if defined(CONFIG_SYS_MPLL_FREQ)
+		if (pll == MPLL) {
+			pllfreq = CONFIG_SYS_MPLL_FREQ > 0 ? CONFIG_SYS_MPLL_FREQ : 100;
+		}
+#endif
+		if (CONFIG_DDR_SEL_PLL == pll)
+			pllfreq = (pllfreq-(pllfreq%gd->arch.gi->ddrfreq))+gd->arch.gi->ddrfreq;
+	}
+	pllfreq = pllfreq/1000000;
 
 	switch (pll) {
 	case APLL:
@@ -109,13 +131,13 @@ unsigned int get_pllreg_value(int pll)
 		cpapcr.b.APLLN = 1;
 		cpapcr.b.APLLOD0 = 1;
 
-		if (cpufreq > 600)
+		if (pllfreq > 600)
 			cpapcr.b.APLLM = 100;
 		else
 			cpapcr.b.APLLM = 25;
 
 		cpapcr.b.APLLOD1= extal * cpapcr.b.APLLM / cpapcr.b.APLLOD0
-				  / cpapcr.b.APLLN / cpufreq;
+				  / cpapcr.b.APLLN / pllfreq;
 		if (cpapcr.b.APLLOD1 > 7) {
 			printf("CPAPCR.APLLOD1 > 7 error!\n");
 			return -1;
@@ -128,13 +150,13 @@ unsigned int get_pllreg_value(int pll)
 		cpmpcr.b.MPLLN = 1;
 		cpmpcr.b.MPLLOD0 = 1;
 
-		if (cpufreq > 600)
+		if (pllfreq > 600)
 			cpmpcr.b.MPLLM = 100;
 		else
 			cpmpcr.b.MPLLM = 25;
 
 		cpmpcr.b.MPLLOD1= extal * cpmpcr.b.MPLLM / cpmpcr.b.MPLLOD0
-			/ cpmpcr.b.MPLLN / cpufreq;
+			/ cpmpcr.b.MPLLN / pllfreq;
 		if (cpmpcr.b.MPLLOD1 > 7) {
 			printf("CPMPCR.APLLOD1 > 7 error!\n");
 			return -1;

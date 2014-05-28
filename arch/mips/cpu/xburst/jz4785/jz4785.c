@@ -59,18 +59,12 @@ void board_init_f(ulong dummy)
 	/* Setup global info */
 #ifndef CONFIG_CMD_BURN
 	gd->arch.gi = &ginfo;
-	gd->arch.gi->ddr_div = ((CONFIG_SYS_APLL_FREQ % gd->arch.gi->ddrfreq) == 0)
-		? (CONFIG_SYS_APLL_FREQ / gd->arch.gi->ddrfreq)
-		: (CONFIG_SYS_APLL_FREQ / gd->arch.gi->ddrfreq + 1);
 #else
 	gd->arch.gi = (struct global_info *)CONFIG_SPL_GINFO_BASE;
-	if((gd->arch.gi->cpufreq % gd->arch.gi->ddrfreq) == 0) {
-		gd->arch.gi->ddr_div = gd->arch.gi->cpufreq / gd->arch.gi->ddrfreq;
-	} else {
-		gd->arch.gi->ddr_div = gd->arch.gi->cpufreq / gd->arch.gi->ddrfreq + 1;
-		gd->arch.gi->cpufreq = gd->arch.gi->ddrfreq * gd->arch.gi->ddr_div;
-	}
 #endif
+	gd->arch.gi->ddr_div = gd->arch.gi->cpufreq / gd->arch.gi->ddrfreq;
+	gd->arch.gi->ddr_div = (gd->arch.gi->cpufreq % gd->arch.gi->ddrfreq) ? gd->arch.gi->ddr_div + 1:
+		gd->arch.gi->ddr_div;
 	gpio_init();
 
 #ifndef CONFIG_FPGA

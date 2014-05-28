@@ -252,10 +252,10 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	/*
 	 * {offset, sel, sel_bit, en_bit, busy_bit, div}
 	 */
-#ifdef CONFIG_CMD_BURN
-	[0] = {CPM_DDRCDR, 1, 30, 29, 28, 0},
+#if defined(CONFIG_DDR_SEL_PLL)
+	[0] = {CPM_DDRCDR, (CONFIG_DDR_SEL_PLL == APLL) ? 1 : 2, 30, 29, 28, 0},
 #else
-	[0] = {CPM_DDRCDR, 2, 30, 29, 28, 0},
+	[0] = {CPM_DDRCDR, 1, 30, 29, 28, 0},
 #endif
 #ifdef CONFIG_JZ_MMC_MSC0
 	{CPM_MSC0CDR, 0, 31, 29, 28, CGU_MSC_DIV},
