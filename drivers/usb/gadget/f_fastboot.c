@@ -33,11 +33,19 @@
 #include <usb/lin_gadget_compat.h>
 #include <g_fastboot.h>
 
-#define DATA_BUFFER	0x30000000
+#include <boot_img.h>
+#include <mmc.h>
 
+#define DATA_BUFFER	0x30000000
+#define BOOT_START_ADDRESS 0x80f00000
+//#define BOOT_START_ADDRESS 0x10008000
 #define RET_LENGTH	64
 
 #define CMD_COUNT	22
+#define MMC_BYTE_PER_BLOCK 512
+
+struct boot_img_hdr bootimginfo;
+char *boot_buf;
 
 struct fastboot_common {
 	struct usb_gadget	*gadget;	/*Copy of cdev->gadget*/
@@ -174,10 +182,10 @@ static int fastboot_bind(struct usb_configuration *c, struct usb_function *f)
 	fastboot_common->bulk_out = ep;
 
 	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		 fastboot_hs_bulk_in_desc.bEndpointAddress =
-			 fastboot_fs_bulk_in_desc.bEndpointAddress;
-		 fastboot_hs_bulk_out_desc.bEndpointAddress =
-			 fastboot_fs_bulk_out_desc.bEndpointAddress;
+		fastboot_hs_bulk_in_desc.bEndpointAddress =
+			fastboot_fs_bulk_in_desc.bEndpointAddress;
+		fastboot_hs_bulk_out_desc.bEndpointAddress =
+			fastboot_fs_bulk_out_desc.bEndpointAddress;
 	}
 
 	return 0;
@@ -261,7 +269,7 @@ static void fastboot_disable(struct usb_function *f)
 	return;
 }
 
-static int
+	static int
 fastboot_handle(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 {
 	struct usb_gadget *gadget = f->config->cdev->gadget;
@@ -301,9 +309,9 @@ static int fastboot_bind_config(struct usb_configuration *c)
 	fastboot_common->usb_function.set_alt = fastboot_set_alt;
 	fastboot_common->usb_function.disable = fastboot_disable;
 	fastboot_common->usb_function.strings = fastboot_gadget_string_tab,
-	fastboot_common->usb_function.setup = fastboot_handle,
+		fastboot_common->usb_function.setup = fastboot_handle,
 
-	status = usb_add_function(c, &fastboot_common->usb_function);
+		status = usb_add_function(c, &fastboot_common->usb_function);
 	if (status)
 		free(fastboot_common);
 
@@ -321,7 +329,7 @@ int fastboot_add(struct usb_configuration *c)
 	fastboot_intf_desc.iInterface = id;
 
 	debug("%s: cdev: 0x%p gadget:0x%p gadget->ep0: 0x%p\n", __func__,
-	       c->cdev, c->cdev->gadget, c->cdev->gadget->ep0);
+			c->cdev, c->cdev->gadget, c->cdev->gadget->ep0);
 
 	return fastboot_bind_config(c);
 }
@@ -431,125 +439,125 @@ static void handle_download_complete(struct usb_ep *ep,
 static int get_all_var(struct fastboot_dev *fastboot)
 {
 	switch (fastboot->cmd_count) {
-	case 0:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "version-bootloader: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_BOOTLOADER_VER);
-		break;
-	case 1:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "version-baseband: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_BASEBAND_VER);
-		break;
-	case 2:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "version-hardware: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_HARDWARE_VER);
-		break;
-	case 3:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "version-cdma: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_CDMA_VER);
-		break;
-	case 4:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "variant: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_VARIANT);
-		break;
-	case 5:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "serialno: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_SERIALNO);
-		break;
-	case 6:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "product: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PRODUCT);
-		break;
-	case 7:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "secure: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_SECURE);
-		break;
-	case 8:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "unlocked: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_UNLOCKED);
-		break;
-	case 9:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "uart-on: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_UART_ON);
-		break;
-	case 10:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-size:bootloader: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOTLOADER);
-		break;
-	case 11:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-type:bootloader: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_BOOTLOADER);
-		break;
-	case 12:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-size:recovery: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_RECOVERY);
-		break;
-	case 13:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-type:recovery: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_RECOVERY);
-		break;
-	case 14:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-size:boot: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOT);
-		break;
-	case 15:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-type:boot: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_BOOT);
-		break;
-	case 16:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-size:system: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_SYSTEM);
-		break;
-	case 17:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-type:system: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_SYSTEM);
-		break;
-	case 18:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-size:cache: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_CACHE);
-		break;
-	case 19:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-type:cache: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_CACHE);
-		break;
-	case 20:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-size:userdata: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_USERDATA);
-		break;
-	case 21:
-		strcpy(fastboot->ret_buf, "INFO");
-		strcat(fastboot->ret_buf, "partition-type:userdata: ");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_USERDATA);
-		break;
-	case 22:
-		strcpy(fastboot->ret_buf, "OKAY");
-		break;
-	case 23:
-		strcpy(fastboot->ret_buf, "INFO");
-		break;
-	default:
-		printf("%s:Error the command display over\n", __func__);
-		return -1;
+		case 0:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "version-bootloader: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_BOOTLOADER_VER);
+			break;
+		case 1:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "version-baseband: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_BASEBAND_VER);
+			break;
+		case 2:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "version-hardware: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_HARDWARE_VER);
+			break;
+		case 3:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "version-cdma: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_CDMA_VER);
+			break;
+		case 4:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "variant: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_VARIANT);
+			break;
+		case 5:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "serialno: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_SERIALNO);
+			break;
+		case 6:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "product: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PRODUCT);
+			break;
+		case 7:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "secure: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_SECURE);
+			break;
+		case 8:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "unlocked: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_UNLOCKED);
+			break;
+		case 9:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "uart-on: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_UART_ON);
+			break;
+		case 10:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-size:bootloader: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOTLOADER);
+			break;
+		case 11:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-type:bootloader: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_BOOTLOADER);
+			break;
+		case 12:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-size:recovery: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_RECOVERY);
+			break;
+		case 13:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-type:recovery: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_RECOVERY);
+			break;
+		case 14:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-size:boot: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOT);
+			break;
+		case 15:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-type:boot: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_BOOT);
+			break;
+		case 16:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-size:system: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_SYSTEM);
+			break;
+		case 17:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-type:system: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_SYSTEM);
+			break;
+		case 18:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-size:cache: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_CACHE);
+			break;
+		case 19:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-type:cache: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_CACHE);
+			break;
+		case 20:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-size:userdata: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_USERDATA);
+			break;
+		case 21:
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "partition-type:userdata: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_USERDATA);
+			break;
+		case 22:
+			strcpy(fastboot->ret_buf, "OKAY");
+			break;
+		case 23:
+			strcpy(fastboot->ret_buf, "INFO");
+			break;
+		default:
+			printf("%s:Error the command display over\n", __func__);
+			return -1;
 	}
 	return 0;
 }
@@ -566,7 +574,7 @@ static void return_getvar_all_complete(struct usb_ep *ep,
 		if (get_all_var(fastboot))
 			strcpy(fastboot->ret_buf, "FAIL");
 
-	printf("%s %d\n",__func__, __LINE__);
+		printf("%s %d\n",__func__, __LINE__);
 		return_buf(fastboot, return_getvar_all_complete);
 	} else {
 		fastboot->cmd_count = 0;
@@ -793,9 +801,57 @@ static int explain_cmd_download(struct fastboot_dev *fastboot)
 	return 0;
 }
 
+static int flash_partition(u32 blk,struct fastboot_dev *fastboot)
+{
+	int curr_device = 0;
+	struct mmc *mmc = find_mmc_device(0);
+	void *addr = (void *)fastboot->data_buf;
+	u32 cnt = (fastboot->data_length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
+	u32 n;
+
+	if (!mmc) {
+		printf("no mmc device at slot %x\n", curr_device);
+		return -ENODEV;
+	}
+
+	printf("MMC write: dev # %d, block # %d, count %d ... ",
+			curr_device, blk, cnt);
+
+	mmc_init(mmc);
+
+	if (mmc_getwp(mmc) == 1) {
+		printf("Error: card is write protected!\n");
+		return -EPERM;
+	}
+
+	n = mmc->block_dev.block_write(curr_device, blk,
+			cnt, addr);
+	printf("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
+
+	if (n != cnt)
+		return -EIO;
+
+	mmc->block_dev.block_read(curr_device, blk,cnt, addr);
+	if (n != cnt)
+		return -EIO;
+	return 0;
+
+
+}
+
 static int handle_cmd_flash(struct fastboot_dev *fastboot)
 {
+	int i;
 	printf("please add the flash cmd explain roution\n");
+	u32 blk;
+	if(!strncmp(boot_buf+6,"boot",4))
+		blk = 3*1024*1024 / MMC_BYTE_PER_BLOCK;
+	else if(!strncmp(boot_buf + 6,"system",6))
+		blk = 56*1024*1024 / MMC_BYTE_PER_BLOCK;
+	else if(!strncmp(boot_buf + 6,"recovery",8))
+		blk = 11*1024*1024 / MMC_BYTE_PER_BLOCK;
+	if(!flash_partition(blk,fastboot))
+		return 0;
 	return -1;
 }
 
@@ -809,9 +865,64 @@ static void explain_cmd_flash(struct fastboot_dev *fastboot)
 	return_buf(fastboot, return_complete);
 }
 
+extern ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt);
+static int fastboot_mmc_erase(char *partition_buf,struct fastboot_dev *fastboot)
+{
+	int curr_device = 0;
+	struct mmc *mmc = find_mmc_device(0);
+	uint32_t blk, blk_end, blk_cnt;
+	uint32_t erase_cnt = 0;
+	int timeout = 30000;
+	int i;
+	int ret;
+
+	if (!mmc) {
+		printf("no mmc device at slot %x\n", curr_device);
+		return -ENODEV;
+	}
+
+	mmc_init(mmc);
+
+	if (mmc_getwp(mmc) == 1) {
+		printf("Error: card is write protected!\n");
+		return -EPERM;
+	}
+	if(!strncmp(partition_buf+6,"boot",4)){
+		blk = 3*1024*1024 / MMC_BYTE_PER_BLOCK;
+		blk_cnt = (8 * 1014 * 1024) / MMC_BYTE_PER_BLOCK ;
+	}
+	else if(!strncmp(partition_buf + 6,"system",6)){
+		blk = 56*1024*1024 / MMC_BYTE_PER_BLOCK;
+		blk_cnt = (mmc->capacity / MMC_BYTE_PER_BLOCK) - (56 * 1024 * 1024 / MMC_BYTE_PER_BLOCK);
+	}
+	else if(!strncmp(partition_buf + 6,"recovery",8)){
+		blk = 11*1024*1024 / MMC_BYTE_PER_BLOCK;
+		blk_cnt = (45 * 1014 * 1024) / MMC_BYTE_PER_BLOCK ;
+	}
+
+	printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
+			curr_device, blk, blk_cnt);
+
+	ret = mmc_erase_t(mmc, blk, blk_cnt);
+	if (ret) {
+		printf("mmc erase error\n");
+		return ret;
+	}
+	ret = mmc_send_status(mmc, timeout);
+	if(ret){
+		printf("mmc erase error\n");
+		return ret;
+	}
+
+	printf("mmc erase ok\n", i);
+	return 0;
+}
+
 static int handle_cmd_erase(struct fastboot_dev *fastboot)
 {
 	printf("please add the erase cmd explain roution\n");
+	if(!fastboot_mmc_erase(boot_buf ,fastboot))
+		return 0;
 	return -1;
 }
 
@@ -844,6 +955,7 @@ static void explain_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 static int handle_cmd_reboot(struct fastboot_dev *fastboot)
 {
 	printf("please add the reboot cmd explain roution\n");
+	do_reset(NULL,0,0,NULL);
 	return -1;
 }
 
@@ -882,6 +994,9 @@ static void explain_cmd_continue(struct fastboot_dev *fastboot)
 static int handle_cmd_boot(struct fastboot_dev *fastboot)
 {
 	printf("please add the boot cmd explain roution\n");
+	memcpy((char *)(BOOT_START_ADDRESS),fastboot->data_buf,fastboot->data_length);
+	if(!mem_boot((unsigned int)(BOOT_START_ADDRESS)))
+		return 0;
 	return -1;
 }
 
@@ -942,11 +1057,13 @@ static void handle_fastboot_cmd_complete(struct usb_ep *ep,
 	}
 
 	if (!strncmp(req->buf, "flash:", 6)) {
+		boot_buf = req->buf;
 		explain_cmd_flash(fastboot);
 		goto cmd_finish;
 	}
 
 	if (!strncmp(req->buf, "erase:", 6)) {
+		boot_buf = req->buf;
 		explain_cmd_erase(fastboot);
 		goto cmd_finish;
 	}
@@ -1088,3 +1205,4 @@ over1:
 	free(fastboot);
 	fastboot = NULL;
 }
+
