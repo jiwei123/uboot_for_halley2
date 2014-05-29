@@ -33,6 +33,7 @@ COBJS-y += pll.o
 COBJS-y += clk.o
 endif
 COBJS-y += ../ddr_dwc.o
+COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))

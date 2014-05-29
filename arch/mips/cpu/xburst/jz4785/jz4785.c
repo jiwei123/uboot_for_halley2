@@ -98,6 +98,10 @@ void board_init_f(ulong dummy)
 	debug("SDRAM init\n");
 	sdram_init();
 
+#ifdef CONFIG_DDR_TEST
+	ddr_basic_tests();
+#endif
+
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);
