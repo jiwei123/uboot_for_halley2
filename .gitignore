@@ -53,6 +53,7 @@
 # Generated files
 #
 
+/include/rle_charge_logo.h
 /common/rle_logo.c
 /tools/logos/ingenic.jpg.rle
 

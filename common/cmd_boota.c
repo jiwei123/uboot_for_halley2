@@ -97,7 +97,11 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 
 	static u32      *param_addr = 0;
 	static u8       *tmpbuf = 0;
+#ifndef CONFIG_BURNER
 	static u8       cmdline[256] = CONFIG_BOOTARGS;
+#else
+	static u8       cmdline[256] = {0,};
+#endif
 
 	if (data_buf == NULL) {
 		return -EINVAL;
