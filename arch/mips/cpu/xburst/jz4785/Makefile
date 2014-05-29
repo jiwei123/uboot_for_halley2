@@ -28,8 +28,10 @@ LIB	= $(obj)lib$(SOC).o
 
 SOBJS-y	=
 COBJS-y	= $(SOC).o
+ifndef CONFIG_FPGA
 COBJS-y += pll.o
 COBJS-y += clk.o
+endif
 COBJS-y += ../ddr_dwc.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)

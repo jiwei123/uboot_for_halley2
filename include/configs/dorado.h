@@ -53,14 +53,13 @@
 #define CONFIG_SYS_UART_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
-#define CONFIG_DDR_DLL_OFF
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
-#define CONFIG_DDR_TYPE_DDR3
+#define CONFIG_DDR_TYPE_LPDDR2
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
-#define CONFIG_DDR3_TSD34096M1333C9_E
+#define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -214,7 +213,6 @@
 #endif
 
 /* USB */
-#ifdef CONFIG_BOOT_ANDROID
 #define CONFIG_CMD_FASTBOOT
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_GADGET_DUALSPEED
@@ -224,8 +222,6 @@
 #define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
 #define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
 #define CONFIG_USB_GADGET_VBUS_DRAW 500
-#endif  /*CONFIG_CMD_FASTBOOT*/
-
 
 /**
  * Serial download configuration
