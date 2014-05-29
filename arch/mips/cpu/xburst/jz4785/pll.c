@@ -106,9 +106,8 @@ unsigned int get_pllreg_value(int pll)
 	if (CONFIG_CPU_SEL_PLL == pll) {
 		if (CONFIG_DDR_SEL_PLL == pll) {
 			gd->arch.gi->cpufreq = gd->arch.gi->ddr_div * gd->arch.gi->ddrfreq;
-		} else {
-			pllfreq = gd->arch.gi->cpufreq;
 		}
+		pllfreq = gd->arch.gi->cpufreq;
 	} else {
 #if defined(CONFIG_SYS_APLL_FREQ)
 		if (pll == APLL) {
@@ -120,8 +119,6 @@ unsigned int get_pllreg_value(int pll)
 			pllfreq = CONFIG_SYS_MPLL_FREQ > 0 ? CONFIG_SYS_MPLL_FREQ : 100;
 		}
 #endif
-		if (CONFIG_DDR_SEL_PLL == pll)
-			pllfreq = (pllfreq-(pllfreq%gd->arch.gi->ddrfreq))+gd->arch.gi->ddrfreq;
 	}
 	pllfreq = pllfreq/1000000;
 

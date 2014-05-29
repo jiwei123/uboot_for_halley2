@@ -29,8 +29,6 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 
-extern int act8600_regulator_init(void);
-extern int jz_net_initialize(bd_t *bis);
 #ifdef CONFIG_BOOT_ANDROID
 extern void boot_mode_select(void);
 #endif
@@ -44,9 +42,6 @@ static void battery_init_gpio(void)
 int board_early_init_f(void)
 {
 	/* Power on TF-card */
-	gpio_direction_output(GPIO_PB(3), 1);
-	act8600_regulator_init();
-
 	return 0;
 }
 
@@ -93,7 +88,7 @@ int board_mmc_init(bd_t *bd)
 
 int board_eth_init(bd_t *bis)
 {
-	return jz_net_initialize(bis);
+	return 0;
 }
 
 #ifdef CONFIG_SPL_SPI_SUPPORT

@@ -34,7 +34,7 @@
 /*#define CONFIG_FPGA */		/* Jz4785 FPGA */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 
-#define CONFIG_SYS_APLL_FREQ		800000000
+#define CONFIG_SYS_APLL_FREQ		600000000
 #define CONFIG_SYS_MPLL_FREQ		-1
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
@@ -51,8 +51,9 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		1
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			57600
 
+#define CONFIG_DDR_TEST
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_TYPE_LPDDR2
@@ -75,15 +76,15 @@
  * Boot arguments definitions.
  */
 
-#define BOOTARGS_COMMON "console=ttyS0,115200 mem=256M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0"
 
 #ifdef CONFIG_BOOT_ANDROID
-  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc"
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.8.3:/home/nfsroot/bliu/buildroot rw" */
-/*	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init" */
-	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootdelay=2 init=/linuxrc root=/dev/mmcblk0p7 rw"
+	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+/*	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootdelay=2 init=/linuxrc root=/dev/mmcblk0p7 rw"*/
   #else
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
   #endif
@@ -163,23 +164,18 @@
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
 
 
-/* PMU */
+/* PMU
 #define CONFIG_REGULATOR
-#define CONFIG_PMU_ACT8600
-
-/* Ethernet: gmac and 9161 */
-
-#define CONFIG_NET_JZ4775
-#define CONFIG_GPIO_DM9161_RESET	GPIO_PE(10)
-#define CONFIG_GPIO_DM9161_RESET_ENLEVEL	0
+ */
 
 /* DEBUG ETHERNET */
+/*
 #define CONFIG_SERVERIP		192.168.8.3
 #define CONFIG_IPADDR		192.168.10.206
 #define CONFIG_GATEWAYIP        192.168.10.1
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_ETHADDR          00:11:22:33:44:55
-
+*/
 /* GPIO */
 #define CONFIG_JZ_GPIO
 
