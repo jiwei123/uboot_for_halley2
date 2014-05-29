@@ -412,6 +412,7 @@ static int nand_force_eraseall(nand_data *nddata, nand_flash *ndflash)
 				if(ret < 0){
 					if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
 						ndd_debug("%s erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
+						ret = 0;
 						continue;
 					} else {
 						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
@@ -446,6 +447,7 @@ static int nand_normal_eraseall(nand_data *nddata, nand_flash *ndflash)
 				if(ret < 0){
 					if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
 						ndd_debug("%s erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
+						ret = 0;
 						continue;
 					} else {
 						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
@@ -482,6 +484,7 @@ static int nand_factory_eraseall(nand_data *nddata, nand_flash *ndflash)
 				if(ret < 0){
 					if (is_bad_block(nddata, ndflash, chip_index, blockid, 1, RB_READY) != 0){
 						ndd_debug("%s erase fail and is bad block,skip mark[%d]\n",__func__,blockid);
+						ret = 0;
 						continue;
 					} else {
 						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
@@ -760,14 +763,16 @@ read_retry:
 			break;
 		}
 	}
-	if((ret == ECC_ERROR) && (retry_flag) && (retry_cnt < 9)){
-		set_retry_feature((int)nddata, chipid, 1);
+	if((ret == ECC_ERROR) && (retry_cnt < 9)){
+		if (retry_flag)
+			set_retry_feature((int)nddata, chipid, 1);
 		retry_cnt++;
 		goto read_retry;
 	}
 read_page_finish:
 	nand_io_chip_deselect(nd_errpt_info.io_context, chipid);
-	ndd_debug("%s ret= %d, retry_cnt= %d\n",__func__,ret,retry_cnt);
+	if (retry_cnt)
+		ndd_print(NDD_WARNING, "WARNING: %s, pageid [%d] read retry count = [%d]\n", __func__, pageid, retry_cnt);
 	return ret;
 }
 
@@ -1253,6 +1258,7 @@ static int epterase_writebadblockinfo(nand_data *nddata, nand_flash *ndflash, un
 					if (is_bad_block(nddata, ndflash, chip_index, blkid, 1, RB_READY) != 0){
 						ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
 							  __func__, blkid);
+						ret = 0;
 						continue;
 					} else {
 						ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
@@ -1276,6 +1282,7 @@ static int epterase_writebadblockinfo(nand_data *nddata, nand_flash *ndflash, un
 						if (is_bad_block(nddata, ndflash, chip_index, blkid, 1, RB_READY) != 0){
 							ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
 								  __func__, blkid);
+							ret = 0;
 							continue;
 						} else {
 							ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
@@ -1571,6 +1578,7 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 						if (is_bad_block(nddata, ndflash, chip_index, blk_index, 1, RB_READY) != 0){
 							ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
 								  __func__, blk_index);
+							ret = 0;
 							continue;
 						} else {
 							ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",

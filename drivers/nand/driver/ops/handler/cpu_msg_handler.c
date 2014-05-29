@@ -694,7 +694,8 @@ int cpu_msg_handle_init(nand_data *data, Nand_Task *nandtask, int id)
 	cpu_msg->oobsize = cinfo->oobsize;
 	cpu_msg->eccblock_cnt = cinfo->pagesize / cpu_msg->eccsize;
 	cpu_msg->bitmap = 0;
-	cpu_msg->bitmap_mask = ~(0xffffffff << (cinfo->pagesize / NDD_SECTOR_SIZE));
+	cpu_msg->bitmap_mask = (cinfo->pagesize == 16 * 1024) ?
+		0xffffffff : ~(0xffffffff << (cinfo->pagesize / NDD_SECTOR_SIZE));
 	cpu_msg->bch_buf = ndd_alloc(get_parity_size(MAX_BCHSEL));
 	if (!cpu_msg->bch_buf)
 		GOTO_ERR(alloc_bchbuf);

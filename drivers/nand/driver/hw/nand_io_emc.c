@@ -6,15 +6,6 @@
 
 #include <soc/jz_nemc.h>
 
-
-#undef RETURN_ERR
-#define RETURN_ERR(ret, format, ...)
-
-
-#undef ndd_print
-#define ndd_print(level, ...)
-
-
 /******  the operation of nemc registers  ******/
 static int ref_cnt = 0;
 
@@ -84,7 +75,6 @@ static inline void init_nandchip_smcr_n(nfi_base *base, unsigned int cs, unsigne
 static inline void nand_enable(nand_io *io, unsigned int cs)
 {
 	const emc_nand_timing *timing = io->timing;
-
 	ndd_ndelay(timing ? timing->tALH : 500);
 	io->base->writel(NEMC_NFCSR, (NEMC_NFCSR_NFE(cs) | NEMC_NFCSR_NFCE(cs)));
 	ndd_ndelay(timing ? timing->tCS : 500);
@@ -312,7 +302,7 @@ int nand_io_send_data(int context, unsigned char *src, unsigned int len)
 	return 0;
 }
 
-int nand_io_receive_data( int context, unsigned char *dst, unsigned int len)
+int nand_io_receive_data(int context, unsigned char *dst, unsigned int len)
 {
 	int ret = 0;
 	nand_io *io = (nand_io *)context;
@@ -321,6 +311,7 @@ int nand_io_receive_data( int context, unsigned char *dst, unsigned int len)
 	ret = io->trans.prepare_memcpy(io->copy_context,src,dst,len,DSTADD);
 	if(ret < 0)
 		RETURN_ERR(ENAND, "prepare memcpy error");
+
 	ret = io->trans.finish_memcpy(io->copy_context);
 	if(ret < 0)
 		RETURN_ERR(ENAND, "prepare memcpy error");
