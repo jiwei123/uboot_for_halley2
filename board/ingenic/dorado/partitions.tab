@@ -5,7 +5,7 @@ property:
 
 partition:
 	#name     =  start,   size, fstype
-	#xboot    =     0m,     3m,
+	xboot     =     0m,     3m,
 	boot      =     3m,     8m, EMPTY
 	recovery  =    12m,    16m, EMPTY
         pretest   =    28m,    16m, EMPTY
@@ -13,8 +13,6 @@ partition:
 	misc      =    96m,     4m, EMPTY
 	cache     =   100m,   100m, LINUX_FS
 	system    =   200m,   700m, LINUX_FS
-	data      =   900m,  1024m, LINUX_FS
-	storage1  =  1924m,   800m, FAT_FS
-        storage2  =  2724m,  4576m, FAT_FS
+	data      =   900m,  2800m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY

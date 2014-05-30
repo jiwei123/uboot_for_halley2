@@ -78,7 +78,7 @@
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0"
 
 #ifdef CONFIG_BOOT_ANDROID
-  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.8.3:/home/nfsroot/bliu/buildroot rw" */
@@ -372,12 +372,14 @@
 /**
  * Keys.
  */
-#define CONFIG_GPIO_USB_DETECT		GPIO_PA(16)
+#define CONFIG_GPIO_USB_DETECT		GPIO_PA(14)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
 
+/* Wrong keys. */
 #define CONFIG_GPIO_RECOVERY		GPIO_PD(19)	/* SW7 */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	0
 
+/* Wrong keys. */
 #define CONFIG_GPIO_FASTBOOT		GPIO_PG(15)	/* SW2 */
 #define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
 
