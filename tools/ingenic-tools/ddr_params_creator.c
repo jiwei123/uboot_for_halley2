@@ -671,7 +671,7 @@ void fill_in_params(struct ddr_params *ddr_params, int type)
 #endif /* !CONFIG_DDR_TYPE_VARIABLE */
 
 #ifndef CONFIG_DDR_TYPE_VARIABLE
-	memset(params, 0, sizeof(struct ddr_params));
+	memset(params, 0, sizeof(union private_params));
 
 	ddr_params->type = type;
 	ddr_params->freq = CONFIG_SYS_MEM_FREQ;
