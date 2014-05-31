@@ -13,6 +13,6 @@ partition:
 	misc      =    96m,     4m, EMPTY
 	cache     =   100m,   100m, LINUX_FS
 	system    =   200m,   700m, LINUX_FS
-	data      =   900m,  2800m, LINUX_FS
+	data      =   900m,  2500m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY
