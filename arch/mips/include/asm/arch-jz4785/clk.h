@@ -51,45 +51,25 @@ struct cgu {
 	unsigned reserved:16;
 };
 
-typedef union cpm_cpapcr {
+typedef union cpm_cpxpcr {
 	/** raw register data */
 	uint32_t d32;
 	/** register bits */
 	struct {
-		unsigned APLLEN:1;
+		unsigned PLLEN:1;
 		unsigned reserved1:1;
-		unsigned ALOCK:1;
-		unsigned APLL_ON:1;
-		unsigned A_VCOPD:1;
-		unsigned A_POSTDIVPD:1;
-		unsigned A_PHASEPD:1;
-		unsigned A_DSMPD:1;
-		unsigned APLLOD0:3;
-		unsigned APLLOD1:3;
-		unsigned APLLN:6;
-		unsigned APLLM:12;
+		unsigned LOCK:1;
+		unsigned PLL_ON:1;
+		unsigned VCOPD:1;
+		unsigned POSTDIVPD:1;
+		unsigned PHASEPD:1;
+		unsigned DSMPD:1;
+		unsigned PLLOD0:3;
+		unsigned PLLOD1:3;
+		unsigned PLLN:6;
+		unsigned PLLM:12;
 	} b; /* CPAPCR */
-} cpm_cpapcr_t;
-
-typedef union cpm_cpmpcr {
-	/** raw register data */
-	uint32_t d32;
-	/** register bits */
-	struct {
-		unsigned MPLLEN:1;
-		unsigned reserved1:1;
-		unsigned MLOCK:1;
-		unsigned MPLL_ON:1;
-		unsigned M_VCOPD:1;
-		unsigned M_POSTDIVPD:1;
-		unsigned M_PHASEPD:1;
-		unsigned M_DSMPD:1;
-		unsigned MPLLOD0:3;
-		unsigned MPLLOD1:3;
-		unsigned MPLLN:6;
-		unsigned MPLLM:12;
-	} b; /* CPMPCR */
-} cpm_cpmpcr_t;
+} cpm_cpxpcr_t;
 
 #define CGU_MSC_FREQ 24000000
 #define CGU_MSC_DIV (CONFIG_SYS_APLL_FREQ / CGU_MSC_FREQ / 2 - 1)

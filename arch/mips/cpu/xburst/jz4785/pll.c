@@ -20,7 +20,7 @@
  * MA 02111-1307 USA
  */
 
-/* #define DEBUG */
+/* #define DEBUG*/
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -29,160 +29,85 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define STOP_MUX_CLK		0
-#define SEL_SRC_APLL		1
-#define SEL_SRC_EXT		2
-#define SEL_SCLK_A		1
-#define SEL_MPLL		2
+struct pll_cfg {
+	unsigned apll_freq;
+	unsigned mpll_freq;
+	unsigned cdiv;
+	unsigned l2div;
+	unsigned h0div;
+	unsigned h2div;
+	unsigned pdiv;
+} pll_cfg;
 
-#ifndef CONFIG_SYS_CPCCR_SEL
-/**
- * default CPCCR configure.
- * It is suggested if you are NOT sure how it works.
- */
-#ifdef CONFIG_CMD_BURN
-#define SEL_SRC			SEL_SRC_APLL
-#define SEL_CPLL       		SEL_SCLK_A
-#define SEL_H0PLL      		SEL_SCLK_A
-#define SEL_H2PLL      		SEL_SCLK_A
-#if (CONFIG_SYS_APLL_FREQ > 1000000000)
-#define DIV_PCLK		10
-#define DIV_H2			5
-#else
-#define DIV_PCLK		8
-#define DIV_H2			4
-#endif
-#ifdef CONFIG_SYS_MEM_DIV
-#define DIV_H0			CONFIG_SYS_MEM_DIV
-#else
-#define DIV_H0			gd->arch.gi->ddr_div
-#endif
-#define DIV_L2			2
-#define DIV_CPU			1
-#else /* CONFIG_CMD_BURN */
-/* for jz4785, cpu and L2 use apll, AHB2 AHB0 and APB use mpll */
-#define SEL_SRC			SEL_SRC_APLL
-#define SEL_CPLL		SEL_SCLK_A
-#define SEL_H0PLL      		SEL_SCLK_A
-#define SEL_H2PLL      		SEL_SCLK_A
-/**
- * divisors
- * L2 : C = 3 : 1 (apll > 200M)
- * APB : AHB2 : AHB0 = 4 : 2 : 1
- */
-#define DIV_CPU			1
-#define DIV_L2			3
-#define DIV_H0			4
-#define DIV_H2			4
-#define DIV_PCLK		8
-#endif /* CONFIG_CMD_BURN */
+#define SEL_SRC		0X1
+#define SEL_CPLL	((CONFIG_CPU_SEL_PLL == APLL) ? 0x1 : 0x2)
+#define SEL_H0CLK	((CONFIG_DDR_SEL_PLL == APLL) ? 0x1 : 0x2)
+#define SEL_H2CLK	SEL_H0CLK
 
-#define CPCCR_CFG		(((SEL_SRC & 0x3) << 30)		\
-				 | ((SEL_CPLL & 0x3) << 28)		\
-				 | ((SEL_H0PLL & 0x3) << 26)	       	\
-				 | ((SEL_H2PLL & 0x3) << 24)	       	\
-				 | (((DIV_PCLK - 1) & 0xf) << 16)	\
-				 | (((DIV_H2 - 1) & 0xf) << 12)		\
-				 | (((DIV_H0 - 1) & 0xf) << 8)		\
-				 | (((DIV_L2 - 1) & 0xf) << 4)		\
-				 | (((DIV_CPU - 1) & 0xf) << 0))
+#define CPCCR_CFG	\
+	(((SEL_SRC& 3) << 30)                \
+	 | ((SEL_CPLL & 3) << 28)                \
+	 | ((SEL_H0CLK & 3) << 26)                 \
+	 | ((SEL_H2CLK & 3) << 24)                 \
+	 | (((pll_cfg.pdiv- 1) & 0xf) << 16)       \
+	 | (((pll_cfg.h2div - 1) & 0xf) << 12)         \
+	 | (((pll_cfg.h0div - 1) & 0xf) << 8)          \
+	 | (((pll_cfg.l2div - 1) & 0xf) << 4)          \
+	 | (((pll_cfg.cdiv - 1) & 0xf) << 0))
 
-#else	/* CONFIG_SYS_CPCCR_SEL */
-/**
- * Board CPCCR configure.
- * CONFIG_SYS_CPCCR_SEL should be define in [board].h
- */
-#define CPCCR_CFG CONFIG_SYS_CPCCR_SEL
-#endif
-
-unsigned int get_pllreg_value(int pll)
+static unsigned int get_pllreg_value(int freq)
 {
-	cpm_cpapcr_t cpapcr;
-	cpm_cpmpcr_t cpmpcr;
+	cpm_cpxpcr_t cppcr;
 	unsigned int ret = 0;
-	unsigned int pllfreq = 100000000;
+	unsigned int pllfreq = freq / 1000000;
 	unsigned int extal = gd->arch.gi->extal / 1000000;
 
-	if (CONFIG_CPU_SEL_PLL == pll) {
-		if (CONFIG_DDR_SEL_PLL == pll) {
-			gd->arch.gi->cpufreq = gd->arch.gi->ddr_div * gd->arch.gi->ddrfreq;
-		}
-		pllfreq = gd->arch.gi->cpufreq;
-	} else {
-#if defined(CONFIG_SYS_APLL_FREQ)
-		if (pll == APLL) {
-			pllfreq = CONFIG_SYS_APLL_FREQ > 0 ? CONFIG_SYS_APLL_FREQ : 100;
-		}
-#endif
-#if defined(CONFIG_SYS_MPLL_FREQ)
-		if (pll == MPLL) {
-			pllfreq = CONFIG_SYS_MPLL_FREQ > 0 ? CONFIG_SYS_MPLL_FREQ : 100;
-		}
-#endif
-	}
-	pllfreq = pllfreq/1000000;
 
+	cppcr.d32 = 0;
+	cppcr.b.PLLN = 1;
+	cppcr.b.PLLOD0 = 1;
+	
+	if (!pllfreq)
+		return -1;
+
+	if (pllfreq > 600)
+		cppcr.b.PLLM = 100;
+	else
+		cppcr.b.PLLM = 25;
+
+	cppcr.b.PLLOD1= extal * cppcr.b.PLLM / cppcr.b.PLLOD0
+		/ cppcr.b.PLLN / pllfreq;
+	if (cppcr.b.PLLOD1 > 7) {
+		printf("CPAPCR.APLLOD1 > 7 error!\n");
+		return -1;
+	}
+	ret = cppcr.d32;
+	printf("cppcr is %x\n",ret);
+
+	return cppcr.d32;
+}
+
+static void pll_set(int pll,int freq)
+{
+	unsigned int regvalue = get_pllreg_value(freq);
+	if (regvalue == -1)
+		return 0;
 	switch (pll) {
-	case APLL:
-		cpapcr.d32 = 0;
-		cpapcr.b.APLLN = 1;
-		cpapcr.b.APLLOD0 = 1;
-
-		if (pllfreq > 600)
-			cpapcr.b.APLLM = 100;
-		else
-			cpapcr.b.APLLM = 25;
-
-		cpapcr.b.APLLOD1= extal * cpapcr.b.APLLM / cpapcr.b.APLLOD0
-				  / cpapcr.b.APLLN / pllfreq;
-		if (cpapcr.b.APLLOD1 > 7) {
-			printf("CPAPCR.APLLOD1 > 7 error!\n");
-			return -1;
-		}
-		ret = cpapcr.d32;
-		printf("cpapcr is %x\n",ret);
-		break;
-	case MPLL:
-		cpmpcr.d32 = 0;
-		cpmpcr.b.MPLLN = 1;
-		cpmpcr.b.MPLLOD0 = 1;
-
-		if (pllfreq > 600)
-			cpmpcr.b.MPLLM = 100;
-		else
-			cpmpcr.b.MPLLM = 25;
-
-		cpmpcr.b.MPLLOD1= extal * cpmpcr.b.MPLLM / cpmpcr.b.MPLLOD0
-			/ cpmpcr.b.MPLLN / pllfreq;
-		if (cpmpcr.b.MPLLOD1 > 7) {
-			printf("CPMPCR.APLLOD1 > 7 error!\n");
-			return -1;
-		}
-		ret = cpmpcr.d32;
-		break;
-	default:
-		break;
+		case APLL:
+			/* Init APLL */
+			cpm_outl(regvalue | (0x1 << 0), CPM_CPAPCR);
+			while(!(cpm_inl(CPM_CPAPCR) & (0x1 << 3)))
+				;
+			debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
+			break;
+		case MPLL:
+			/* Init MPLL */
+			cpm_outl(regvalue | (0x1 << 0), CPM_CPMPCR);
+			while(!(cpm_inl(CPM_CPMPCR) & (0x1 << 3)))
+				;
+			debug("CPM_CPMPCR %x\n", cpm_inl(CPM_CPMPCR));
+			break;
 	}
-
-	return ret;
-}
-
-static void mpll_init(void)
-{
-	/* Init MPLL */
-	cpm_outl(get_pllreg_value(MPLL) | (0x1 << 0), CPM_CPMPCR);
-	while(!(cpm_inl(CPM_CPMPCR) & (0x1 << 3)))
-		;
-	debug("CPM_CPMPCR %x\n", cpm_inl(CPM_CPMPCR));
-}
-
-static void apll_init(void)
-{
-	/* Init APLL */
-	cpm_outl(get_pllreg_value(APLL) | (0x1 << 0), CPM_CPAPCR);
-	while(!(cpm_inl(CPM_CPAPCR) & (0x1 << 3)))
-		;
-	debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
 }
 
 static void cpccr_init(void)
@@ -194,24 +119,88 @@ static void cpccr_init(void)
 		| (CPCCR_CFG & ~(0xff << 24))
 		| (7 << 20);
 	cpm_outl(cpccr,CPM_CPCCR);
-	while(cpm_inl(CPM_CPCSR) & 0x7)
-		;
+	while(cpm_inl(CPM_CPCSR) & 0x7);
 
 	/* change sel */
 	cpccr = (CPCCR_CFG & (0xff << 24)) | (cpm_inl(CPM_CPCCR) & ~(0xff << 24));
 	cpm_outl(cpccr,CPM_CPCCR);
-	while(cpm_inl(CPM_CPCSR) & 0x7)
-		;
+
+	debug("cppcr 0x%x\n",cpm_inl(CPM_CPCCR));
 }
-void pll_init(void)
+
+#define ALIGN_TO_CPU(freq,cpufreq) ({\
+	unsigned x = -1; \
+	if (!((freq)%(cpufreq)))	{ \
+		pll_cfg.cdiv = (freq)/(cpufreq) ? (freq)/(cpufreq) : 1;	\
+		x = (pll_cfg.cdiv * (cpufreq)); \
+	} else { \
+		error("pll freq is not integer times than cpu freq"); \
+		while (1)	\
+			asm volatile ("wait\n\t");	\
+	} \
+	x; \
+})
+
+#define ALIGN_TO_DDR(freq, ddrfreq) ({	\
+	unsigned x = -1;	\
+	if (!((freq)%(ddrfreq)))	{\
+		gd->arch.gi->ddr_div = (freq)/(ddrfreq) ? (freq)/(ddrfreq) : 1;	\
+		x = (gd->arch.gi->ddr_div * (ddrfreq));	\
+	} else { \
+		error("pll or cpu freq is not integer times than ddr freq"); \
+		while (1)	\
+			asm volatile ("wait\n\t");	\
+	} \
+	x; \
+})
+
+static int freq_correcting(void)
 {
-	unsigned int cpccr = 0;
+	pll_cfg.mpll_freq = CONFIG_SYS_MPLL_FREQ;
+	pll_cfg.apll_freq = CONFIG_SYS_APLL_FREQ;
 
-	debug("pll init...");
+#define SEL_MAP(cpu,ddr) ((cpu<<16)|(ddr&0xffff))
+	switch (SEL_MAP(CONFIG_CPU_SEL_PLL,CONFIG_DDR_SEL_PLL)) {
+	case SEL_MAP(APLL,APLL):
+		gd->arch.gi->cpufreq = ALIGN_TO_DDR(gd->arch.gi->cpufreq, gd->arch.gi->ddrfreq);
+		pll_cfg.apll_freq = ALIGN_TO_CPU(pll_cfg.apll_freq, gd->arch.gi->cpufreq);
+		break;
+	case SEL_MAP(MPLL,MPLL):
+		gd->arch.gi->cpufreq = ALIGN_TO_DDR(gd->arch.gi->cpufreq, gd->arch.gi->ddrfreq);
+		//printf(" gd->arch.gi->cpufreq %d, gd->arch.gi->ddrfreq = %d\n", gd->arch.gi->cpufreq,gd->arch.gi->ddrfreq);
+		pll_cfg.mpll_freq = ALIGN_TO_CPU(pll_cfg.mpll_freq, gd->arch.gi->cpufreq);
+		break;
+	case SEL_MAP(APLL,MPLL):
+		pll_cfg.mpll_freq = ALIGN_TO_DDR(pll_cfg.mpll_freq, gd->arch.gi->ddrfreq);
+		pll_cfg.apll_freq = ALIGN_TO_CPU(pll_cfg.apll_freq, gd->arch.gi->cpufreq);
+		break;
+	case SEL_MAP(MPLL,APLL):
+		pll_cfg.apll_freq = ALIGN_TO_DDR(pll_cfg.apll_freq, gd->arch.gi->ddrfreq);
+		pll_cfg.mpll_freq = ALIGN_TO_CPU(pll_cfg.mpll_freq, gd->arch.gi->cpufreq);
+		break;
+	}
+	if (gd->arch.gi->cpufreq < 0 || pll_cfg.apll_freq < 0 || pll_cfg.mpll_freq < 0)
+		return -1;
 
-	apll_init();
-//	mpll_init();
-	cpccr_init();
-
-	debug("ok\n");
+	pll_cfg.l2div = (pll_cfg.cdiv * 2);
+	pll_cfg.h0div = gd->arch.gi->ddr_div;
+	pll_cfg.h2div = gd->arch.gi->ddr_div;
+	pll_cfg.pdiv = 2 * gd->arch.gi->ddr_div;
+	printf("mpll_freq %d \napll_freq %d \nddr_freq %d \n",
+			pll_cfg.mpll_freq,
+			pll_cfg.apll_freq,
+			gd->arch.gi->ddrfreq);
+	printf("h0div : h2div : pdiv = %d:%d:%d\n cdiv : l2div = %d:%d\n",
+		pll_cfg.h0div,pll_cfg.h2div,pll_cfg.pdiv,
+		pll_cfg.cdiv,pll_cfg.l2div);
+	return 0;
 }
+
+int pll_init(void)
+{
+	freq_correcting();
+	pll_set(APLL,pll_cfg.apll_freq);
+	pll_set(MPLL,pll_cfg.mpll_freq);
+	cpccr_init();
+}
+
