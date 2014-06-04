@@ -53,8 +53,18 @@ void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 
 static unsigned int pll_get_rate(int pll)
 {
-	unsigned int cpxpcr = cpm_inl(CPM_CPAPCR);
+	unsigned int cpxpcr = 0;
 	unsigned int m, n, od;
+
+	switch (pll) {
+	default:
+	case APLL:
+		cpxpcr = cpm_inl(CPM_CPAPCR);
+		break;
+	case MPLL:
+		cpxpcr = cpm_inl(CPM_CPMPCR);
+		break;
+	}
 
 	m = ((cpxpcr >> 24) & 0x7f) + 1;
 	n = ((cpxpcr >> 18) & 0x1f) + 1;

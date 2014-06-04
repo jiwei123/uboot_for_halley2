@@ -27,8 +27,6 @@
 enum {
 	APLL,
 	MPLL,
-	EPLL,
-	VPLL,
 };
 
 enum {
@@ -39,6 +37,8 @@ enum {
 	MSC0,
 	MSC1,
 	MSC2,
+	PLL_A,
+	PLL_M,
 };
 
 struct cgu {

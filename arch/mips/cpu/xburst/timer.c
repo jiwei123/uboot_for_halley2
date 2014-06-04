@@ -46,12 +46,13 @@ static void tcu_writel(uint32_t val, uint32_t off)
 	writel(val, (void __iomem *)TCU_BASE + off);
 }
 
+#define USEC_IN_1SEC 1000000
 int timer_init(void)
 {
 #ifdef CONFIG_BURNER
-	multiple = gd->arch.gi->extal / 1000000 / OST_DIV;
+	multiple = gd->arch.gi->extal / USEC_IN_1SEC / OST_DIV;
 #else
-	multiple = CONFIG_SYS_EXTAL / 1000000 / OST_DIV;
+	multiple = CONFIG_SYS_EXTAL / USEC_IN_1SEC / OST_DIV;
 #endif
 
 	reset_timer();
@@ -77,7 +78,7 @@ static uint64_t get_timer64(void)
 
 ulong get_timer(ulong base)
 {
-	return lldiv(get_timer64(), CONFIG_SYS_HZ * multiple) - base;
+	return lldiv(get_timer64(), (USEC_IN_1SEC/CONFIG_SYS_HZ) * multiple) - base;
 }
 
 void __udelay(unsigned long usec)

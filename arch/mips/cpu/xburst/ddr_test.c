@@ -25,13 +25,15 @@
  * MA 02111-1307 USA
  */
 
-//#define DEBUG
+#define DEBUG
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
 #include <ddr/ddr_common.h>
 #include <generated/ddr_reg_values.h>
+#if defined(CONFIG_DDR_TEST_DMA) || defined(CONFIG_DDR_TEST_CPU_DMA)
 #include <asm/arch/dma.h>
+#endif
 #include <asm/arch/cpm.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -215,11 +217,10 @@ static int test_ddr(unsigned int addr_start, unsigned int addr_end,
 	for (i = addr_start; i <= addr_end; i += 4) {
 		src = readl(i);
 		if (src != i) {
-			debug("Error: the want value is 0x%x\n", i);
-			debug("But the real value is 0x%x\n", src);
+			debug("Error: the want value is 0x%x \n", i);
+			debug("But the real value is 0x%x \n", src);
 			debug("The address is 0x%x, remap status:%d(1:unremap;0:remap)\n",
 					i, with_remap);
-
 			return 1;
 		}
 	}
@@ -278,10 +279,6 @@ static int ddr_test(unsigned int cache_flag, unsigned int test_flag, unsigned in
 		if (ret == 0) {
 			debug("cache test OK\n");
 		} else {
-#ifdef CONFIG_BURNER
-			gd->arch.gi->ddr_test.cache_test.stat = 1;
-			gd->arch.gi->ddr_test.cache_test.remap = with_remap;
-#endif
 			debug("cache test ERROR\n");
 			goto ERR;
 		}
@@ -298,27 +295,19 @@ static int ddr_test(unsigned int cache_flag, unsigned int test_flag, unsigned in
 		if (ret == 0) {
 			debug("uncache test OK\n");
 		} else {
-#ifdef CONFIG_BURNER
-			gd->arch.gi->ddr_test.uncache_test.stat = 1;
-			gd->arch.gi->ddr_test.uncache_test.remap = with_remap;
-#endif
 			debug("uncache test ERROR\n");
 			goto ERR;
 		}
 	}
 
 	if (cache_flag == 2) {
-		addr_start += 0x20000000;
+		addr_start += 0x20008000;	//reserved spl zone
 		debug("all memory size is 0x%x\n", mem_size);
 		debug("uncache test the ddr(all size) ...\n");
 		ret = test_ddr(addr_start, addr_end, 0, with_remap);
 		if (ret == 0) {
 			debug("all size of DDR OK\n");
 		} else {
-#ifdef CONFIG_BURNER
-			gd->arch.gi->ddr_test.uncache_all_test.stat = 1;
-			gd->arch.gi->ddr_test.uncache_all_test.remap = with_remap;
-#endif
 			debug("all size of DDR test ERROR\n");
 			goto ERR;
 		}
@@ -334,6 +323,10 @@ static int ddr_test(unsigned int cache_flag, unsigned int test_flag, unsigned in
 	return 0;
 
 ERR:
+#ifdef CONFIG_BURNER
+	gd->arch.gi->ddr_test.cache_test.stat = 1;
+	gd->arch.gi->ddr_test.cache_test.remap = with_remap;
+#endif
 	if (with_remap && cache_flag != 0) {
 		restore_remap(&remap1, &remap2, &remap3, &remap4, &remap5);
 	}

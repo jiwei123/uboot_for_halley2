@@ -53,7 +53,7 @@ void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 
 static unsigned int pll_get_rate(int pll)
 {
-	unsigned int cpxpcr = cpm_inl(CPM_CPAPCR);
+	unsigned int cpxpcr = 0;
 	unsigned int m, n, od0, od1;
 
 	switch (pll) {
@@ -161,6 +161,11 @@ unsigned int clk_get_rate(int clk)
 		return get_msc_rate(CPM_MSC1CDR);
 	case MSC2:
 		return get_msc_rate(CPM_MSC2CDR);
+	case PLL_A:
+		return pll_get_rate(APLL);
+	case PLL_M:
+		return pll_get_rate(MPLL);
+
 	}
 
 	return 0;

@@ -33,15 +33,15 @@
 #define CONFIG_JZ4785		/* Jz4785 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 
-#define CONFIG_SYS_APLL_FREQ		600000000
-#define CONFIG_SYS_MPLL_FREQ		0
+#define CONFIG_SYS_APLL_FREQ		600000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		0		/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		APLL
 #define CONFIG_SYS_CPU_FREQ		600000000
 #define CONFIG_SYS_MEM_FREQ		200000000
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
-#define CONFIG_SYS_HZ			1000 /* incrementer freq */
+#define CONFIG_SYS_HZ			1000		/* incrementer freq */
 
 
 #define CONFIG_SYS_DCACHE_SIZE		32768
@@ -51,7 +51,8 @@
 #define CONFIG_SYS_UART_INDEX		1
 #define CONFIG_BAUDRATE			57600
 
-/* #define CONFIG_DDR_TEST */
+/*#define CONFIG_DDR_TEST_CPU
+#define CONFIG_DDR_TEST*/
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_TYPE_LPDDR2
@@ -91,7 +92,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY 3
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
@@ -198,6 +199,7 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_EEPROM
+/*#define CONFIG_CMD_I2C*/
 
 /*eeprom*/
 #ifdef CONFIG_CMD_EEPROM
@@ -205,6 +207,7 @@
 /*#define CONFIG_ENV_EEPROM_IS_ON_I2C*/
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #endif
+
 
 /* USB */
 #define CONFIG_CMD_FASTBOOT
