@@ -122,8 +122,10 @@
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 #define CONFIG_LCD_LOGO
-#define CONFIG_RLE_LCD_LOGO
-/*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
+/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_LCD_INFO_BELOW_LOGOONFIG_BMP_LOGO
+#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE (1 << 20)
+#define CONFIG_VIDEO_BMP_GZIP
 #define CONFIG_LOGO_EXTEND
 /*#define CONFIG_PANEL_DIV_LOGO    1*/
 #define CONFIG_SYS_WHITE_ON_BLACK
@@ -204,6 +206,9 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
+#define CONFIG_CMD_BMP          /* BMP support                  */
+#define CONFIG_CMD_UNZIP        /* unzip from memory to memory  */
+
 
 /* USB */
 #ifdef CONFIG_BOOT_ANDROID

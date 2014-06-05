@@ -1010,14 +1010,14 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		return 1;
 	}
 
-	/* We support displaying 8bpp BMPs on 16bpp LCDs */
-	if (bpix != bmp_bpix && !(bmp_bpix == 8 && bpix == 16)) {
-		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
-			bpix,
-			le16_to_cpu(bmp->header.bit_count));
-
-		return 1;
-	}
+        /* We support displaying 8bpp(16bpp、24bpp、32bpp) BMPs on 16bpp or 32bpp LCDs */
+        if (bpix != bmp_bpix && !(((bmp_bpix == 8) || (bmp_bpix == 16)
+                                        || (bmp_bpix == 24) || (bmp_bpix == 32))
+                                        && ((bpix == 16) ||(bpix ==32)))) {
+                printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
+                                bpix,le16_to_cpu(bmp->header.bit_count));
+                return 1;
+        }
 
 	debug("Display-bmp: %d x %d  with %d colors\n",
 		(int)width, (int)height, (int)colors);
@@ -1106,55 +1106,79 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 			byte_width = width;
 		else
 			byte_width = width * 2;
-
 		for (i = 0; i < height; ++i) {
 			WATCHDOG_RESET();
 			for (j = 0; j < width; j++) {
-				if (bpix != 16) {
-					FB_PUT_BYTE(fb, bmap);
-				} else {
+				if (bpix == 16) {
 					*(uint16_t *)fb = cmap_base[*(bmap++)];
 					fb += sizeof(uint16_t) / sizeof(*fb);
+				}else if(bpix == 32){
+					*(uint32_t *)fb =(((cmap_base[*(bmap)]&0x001f) << 3) |
+							((cmap_base[*(bmap)]&0x07e0) << 5) |
+							((cmap_base[*(bmap)]&0xf800) << 8));
+					bmap++;
+					fb += (sizeof(uint32_t) / sizeof(*fb));
 				}
-			}
+				else {
+					FB_PUT_BYTE(fb, bmap);
+				}
+
+			}//end for
 			bmap += (padded_width - width);
-			fb -= byte_width + lcd_line_length;
-		}
+			fb -= lcd_line_length + byte_width*(bpix/8);
+		}//end for
+
 		break;
 
-#if defined(CONFIG_BMP_16BPP)
 	case 16:
 		for (i = 0; i < height; ++i) {
 			WATCHDOG_RESET();
-			for (j = 0; j < width; j++)
-				fb_put_word(&fb, &bmap);
+			for (j = 0; j < width; j++){
+				uchar first_byte = *(bmap++);
+				uchar second_byte = *(bmap++);
+				uint32_t color = (second_byte << 8) | first_byte;
+				*(uint32_t *)fb = ((color & 0xf800) << 8)|
+					((color & 0x07e0) << 5)|
+					((color & 0x001f) << 3);
+				fb += (sizeof(uint32_t) / sizeof(*fb));
+			}
+			fb -= lcd_line_length + width * (bpix / 8);
+		}//end for
 
-			bmap += (padded_width - width) * 2;
-			fb -= width * 2 + lcd_line_length;
-		}
 		break;
-#endif /* CONFIG_BMP_16BPP */
+	case 24:
+		for(i = 0; i < height; ++i){
+			WATCHDOG_RESET();
+			for(j = 0; j < width; j++){
+				*(fb++) = *(bmap++);
+				*(fb++) = *(bmap++);
+				*(fb++) = *(bmap++);
+				fb++;
+			}//end for
+			fb -= lcd_line_length + width*(bpix/8);
+		}//end for
+		break;
 
-#if defined(CONFIG_BMP_32BPP)
 	case 32:
 		for (i = 0; i < height; ++i) {
+			WATCHDOG_RESET();
 			for (j = 0; j < width; j++) {
 				*(fb++) = *(bmap++);
 				*(fb++) = *(bmap++);
 				*(fb++) = *(bmap++);
 				*(fb++) = *(bmap++);
-			}
+			}//end for
 			fb -= lcd_line_length + width * (bpix / 8);
-		}
+		}//end for
+
 		break;
-#endif /* CONFIG_BMP_32BPP */
 	default:
 		break;
-	};
+	};//end switch
 
 	lcd_sync();
 	return 0;
-}
+}//end lcd_display_bitmap
 #endif
 
 #ifdef CONFIG_CMD_LOGO_RLE
