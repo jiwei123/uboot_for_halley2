@@ -67,6 +67,7 @@ enum medium_type {
 	MMC,
 	I2C,
 	EFUSE,
+	REGISTER
 };
 
 enum data_type {
@@ -89,6 +90,7 @@ struct mmc_erase_range {
 };
 
 struct arguments {
+	int efuse_gpio;
 	int use_nand_mgr;
 	int use_mmc;
 
@@ -471,6 +473,11 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 
 int efuse_program(struct cloner *cloner)
 {
+	static int enabled = 0;
+	if(!enabled) {
+		efuse_init(cloner->args->efuse_gpio);
+		enabled = 1;
+	}
 	u32 offset = cloner->cmd.write.offset;
 	u32 length = cloner->cmd.write.length;
 	void *addr = (void *)cloner->write_req->buf;
@@ -536,6 +543,12 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			break;
 		case OPS(EFUSE,RAW):
 			cloner->ack = efuse_program(cloner);
+			break;
+		case OPS(REGISTER,RAW):
+			{
+				volatile unsigned int *tmp = cloner->cmd.write.partation;
+				*tmp = *((int*)cloner->write_req->buf);
+			}
 			break;
 		default:
 			printf("ops %08x not support yet.\n",cloner->cmd.write.ops);
