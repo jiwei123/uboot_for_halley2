@@ -39,7 +39,7 @@ static int get_pt_handle(char *pt_name)
 	}
 
 	if(!g_handle.pphandle){
-		printf("ERROR: the partition %s is not open ,pphandle is -1 ,please check the partition name \n");
+		printf("ERROR: the partition %s is not open ,pphandle is -1 ,please check the partition name,if not have the partition,please add it \n",pt_name);
 		return CMD_RET_FAILURE;
 	}
 
