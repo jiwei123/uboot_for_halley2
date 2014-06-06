@@ -30,8 +30,6 @@ static int efuse_gpio = -1;
 #define EFU_RANDOM_ED	0x207
 #define EFU_SC_KEY_ST	0x500
 #define EFU_SC_KEY_ED	0x5FF
-#define EFU_SARADC_REV1	0x218
-#define EFU_SARADC_REV2	0x21B
 #define EFUDATA_REG_NUM 8
 
 #define WR_ADJ_10TIME	65
@@ -311,13 +309,6 @@ int efuse_write(void *buf, int length, off_t offset)
 		random = 1;
 	}
 
-	/*SARADC USE THIS PART*/
-	if (start <= EFU_SARADC_REV1 && end >= EFU_SARADC_REV1)
-		return -EINVAL;
-	if (start <= EFU_SARADC_REV2 && end >= EFU_SARADC_REV2)
-		return -EINVAL;
-
-
 	if (sc_key)
 		ret =  efuse_write_sc_key((unsigned *)buf);
 	else if (random)
@@ -346,11 +337,6 @@ int efuse_read(void *buf, int length, off_t offset)
 			return -EINVAL;
 		random = 1;
 	}
-
-	if (start <= EFU_SARADC_REV1 && end >= EFU_SARADC_REV1)
-		return -EINVAL;
-	if (start <= EFU_SARADC_REV2 && end >= EFU_SARADC_REV2)
-		return -EINVAL;
 
 	if (sc_key)
 		ret = efuse_read_sc_key((unsigned *)buf);
