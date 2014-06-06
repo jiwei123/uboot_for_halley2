@@ -513,6 +513,8 @@ static nand_flash_param *get_nand_info_from_ids(nand_flash_id *fid,nand_flash_pa
 		if ((fid->id == nand_info_table[index].id) && ((fid->extid & EXTID_MARK) == (nand_info_table[index].extid & EXTID_MARK)))
 			break;
 	}
+	if(index >= total_nand)
+		printf("ERROR:  Can't match the nand params ,the nand id is %x extid is %x  please add the nand params in ids",fid->id,fid->extid);
 	return &nand_info_table[index];
 }
 
