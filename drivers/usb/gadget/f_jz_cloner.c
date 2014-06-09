@@ -547,7 +547,13 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		case OPS(REGISTER,RAW):
 			{
 				volatile unsigned int *tmp = cloner->cmd.write.partation;
-				*tmp = *((int*)cloner->write_req->buf);
+				if(tmp > 0xb0000000 && tmp < 0xb8000000) {
+					*tmp = *((int*)cloner->write_req->buf);
+					cloner->ack = 0;
+				} else {
+					printf("OPS(REGISTER,RAW): not supported address.");
+					cloner->ack = -ENODEV;
+				}
 			}
 			break;
 		default:
