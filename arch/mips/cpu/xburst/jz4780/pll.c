@@ -38,7 +38,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SEL_CPU			2
 #define SEL_H0			2
 #define SEL_H2			2
-#if (CONFIG_SYS_CPU_SPEED > 1000000000)
+#if (CONFIG_SYS_CPU_FREQ > 1000000000)
 #define DIV_PCLK		12
 #define DIV_H2			6
 #else
