@@ -106,6 +106,7 @@ static unsigned int get_pllreg_value(int freq)
 static void pll_set(int pll,int freq)
 {
 	unsigned int regvalue = get_pllreg_value(freq);
+	printf("regvalue = %d\n",regvalue);
 	if (regvalue == -EINVAL)
 		return;
 	switch (pll) {
@@ -231,13 +232,14 @@ static int freq_correcting(void)
 int pll_init(void)
 {
 	freq_correcting();
+	printf("pll_cfg.mpll_freq = %d\n",pll_cfg.mpll_freq);
 	pll_set(APLL,pll_cfg.apll_freq);
 	pll_set(MPLL,pll_cfg.mpll_freq);
 	cpccr_init();
 	{
 		unsigned apll, mpll, cclk, l2clk, h0clk,h2clk,pclk, pll_tmp;
-		apll = clk_get_rate(PLL_A);
-		mpll = clk_get_rate(PLL_M);
+		apll = clk_get_rate(APLL);
+		mpll = clk_get_rate(MPLL);
 		printf("apll_freq %d \nmpll_freq %d \n",apll,mpll);
 
 		if (CONFIG_DDR_SEL_PLL == APLL)

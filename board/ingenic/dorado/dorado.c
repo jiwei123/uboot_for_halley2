@@ -28,6 +28,20 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/clk.h>
+
+struct cgu_clk_src cgu_clk_src[] = {
+	{VPU, MPLL},
+	{OTG, MPLL},
+	{LCD, MPLL},
+	{MSC, MPLL},
+	{SSI, MPLL},
+	{CIM, MPLL},
+	{PCM, MPLL},
+	{GPU, MPLL},
+	{ISP, MPLL},
+	{BCH, MPLL}
+};
 
 #ifdef CONFIG_BOOT_ANDROID
 extern void boot_mode_select(void);
@@ -41,7 +55,7 @@ static void battery_init_gpio(void)
 
 int board_early_init_f(void)
 {
-	/* Power on TF-card */
+	cgu_clks_overwrite(cgu_clk_src,ARRAY_SIZE(cgu_clk_src));
 	return 0;
 }
 

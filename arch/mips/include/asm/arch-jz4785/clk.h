@@ -24,31 +24,42 @@
 
 #include <asm/arch/base.h>
 
-enum {
-	APLL,
-	MPLL,
-};
-
-enum {
-	DDR = 1,
-	CPU,
-	BCH,
-	H2CLK,
-	MSC0,
+enum clk_id {
+	DDR,
+	VPU,
+	OTG,
+	I2S,
+	LCD,
+	MSC,
+	MSC0 = MSC,
 	MSC1,
 	MSC2,
-	PLL_A,
-	PLL_M,
+	UHC,
+	SSI,
+	CIM,
+	PCM,
+	GPU,
+	ISP,
+	BCH,
+	CGU_CNT,
+	CPU = CGU_CNT,
+	H2CLK,
+	APLL,
+	MPLL,
+	EXCLK,
 };
 
 struct cgu {
+	unsigned en:8;
 	unsigned off:8;
-	unsigned sel:8;
 	unsigned sel_bit:8;
-	unsigned en_bit:8;
-	unsigned busy_bit:8;
-	unsigned div:8;
-	unsigned reserved:16;
+	unsigned sel_src:8;
+	unsigned char sel[4];
+};
+
+struct cgu_clk_src {
+	unsigned int cgu_clk;
+	unsigned int src;
 };
 
 typedef union cpm_cpxpcr {
@@ -71,11 +82,6 @@ typedef union cpm_cpxpcr {
 	} b; /* CPAPCR */
 } cpm_cpxpcr_t;
 
-#define CGU_MSC_FREQ 24000000
-#define CGU_MSC_DIV (CONFIG_SYS_APLL_FREQ / CGU_MSC_FREQ / 2 - 1)
-#define CGU_BCH_DIV 0
-#define CGU_LCD_DIV (CONFIG_SYS_APLL_FREQ / CONFIG_SYS_PCLK_FREQ - 1)
-
 unsigned int clk_get_rate(int clk);
 void clk_set_rate(int clk, unsigned long rate);
 void cgu_clks_init(struct cgu *cgu_sel, int nr_cgu_clks);
@@ -87,5 +93,5 @@ enum otg_mode_t {
 	HOST_ONLY_MODE,
 };
 void otg_phy_init(enum otg_mode_t mode,unsigned extclk);
-
+void cgu_clks_overwrite(struct cgu_clk_src *clk_src, int nr);
 #endif /* __CLK_H__ */

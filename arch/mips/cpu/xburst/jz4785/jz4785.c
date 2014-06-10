@@ -64,6 +64,7 @@ void board_init_f(ulong dummy)
 #endif
 	gpio_init();
 
+
 #ifndef CONFIG_FPGA
 	/* Init uart first */
 	enable_uart_clk();
@@ -94,6 +95,7 @@ void board_init_f(ulong dummy)
 
 	debug("SDRAM init\n");
 	sdram_init();
+	debug("SDRAM init ok\n");
 
 #ifdef CONFIG_DDR_TEST
 	ddr_basic_tests();
