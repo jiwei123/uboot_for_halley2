@@ -101,7 +101,7 @@ TOOLS	:= $(addprefix $(obj),$(TOOLS))
 
 all:	$(obj).depend $(TOOLS)
 
-$(obj)ddr_params_creator:	ddr_params_creator.c
+$(obj)ddr_params_creator:	ddr_params_creator.c $(SRCTREE)/include/config.h
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
