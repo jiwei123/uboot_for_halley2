@@ -28,6 +28,7 @@ LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	:= $(BOARD).o
 COBJS-$(CONFIG_VIDEO_JZ4775) += lcd.o
+COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
