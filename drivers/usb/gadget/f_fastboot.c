@@ -35,17 +35,22 @@
 
 #include <boot_img.h>
 #include <mmc.h>
-
+#include <asm/arch/cpm.h>
+#include <asm/io.h>
+#include <fastboot.h>
 #define DATA_BUFFER	0x30000000
 #define BOOT_START_ADDRESS 0x80f00000
-//#define BOOT_START_ADDRESS 0x10008000
 #define RET_LENGTH	64
 
 #define CMD_COUNT	22
 #define MMC_BYTE_PER_BLOCK 512
+#ifndef PARTITION_NUM
+#define PARTITION_NUM 16
+#endif
 
 struct boot_img_hdr bootimginfo;
 char *boot_buf;
+extern struct partition_info partition_info[PARTITION_NUM];
 
 struct fastboot_common {
 	struct usb_gadget	*gadget;	/*Copy of cdev->gadget*/
@@ -801,57 +806,63 @@ static int explain_cmd_download(struct fastboot_dev *fastboot)
 	return 0;
 }
 
-static int flash_partition(u32 blk,struct fastboot_dev *fastboot)
+static int mmc_flash(u32 blk,u32 cnt,struct fastboot_dev *fastboot)
+{
+	char command[128];
+	memset(command , 0, 128);
+	void *addr = (void *)fastboot->data_buf;
+	sprintf(command,"mmc write %p %x %x",addr,blk,cnt);
+	run_command(command,"0");
+	printf("mmc flash OK!\n");
+	return 0;
+}
+
+int nand_flash(unsigned char *pt_name,struct fastboot_dev *fastboot)
 {
 	int curr_device = 0;
-	struct mmc *mmc = find_mmc_device(0);
-	void *addr = (void *)fastboot->data_buf;
-	u32 cnt = (fastboot->data_length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
-	u32 n;
+	u32 length = fastboot->data_length;
+	void *databuf = (void *)fastboot->data_buf;
 
-	if (!mmc) {
-		printf("no mmc device at slot %x\n", curr_device);
-		return -ENODEV;
-	}
+	char command[128];
+	memset(command,0,128);
+	sprintf(command,"nand_zm write %s 0 %x %p",pt_name,length,databuf);
+	printf("command:%s\n",command);
+	run_command(command,"0");
 
-	printf("MMC write: dev # %d, block # %d, count %d ... ",
-			curr_device, blk, cnt);
-
-	mmc_init(mmc);
-
-	if (mmc_getwp(mmc) == 1) {
-		printf("Error: card is write protected!\n");
-		return -EPERM;
-	}
-
-	n = mmc->block_dev.block_write(curr_device, blk,
-			cnt, addr);
-	printf("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
-
-	if (n != cnt)
-		return -EIO;
-
-	mmc->block_dev.block_read(curr_device, blk,cnt, addr);
-	if (n != cnt)
-		return -EIO;
 	return 0;
-
-
 }
 
 static int handle_cmd_flash(struct fastboot_dev *fastboot)
 {
 	int i;
 	printf("please add the flash cmd explain roution\n");
-	u32 blk;
-	if(!strncmp(boot_buf+6,"boot",4))
-		blk = 3*1024*1024 / MMC_BYTE_PER_BLOCK;
-	else if(!strncmp(boot_buf + 6,"system",6))
-		blk = 56*1024*1024 / MMC_BYTE_PER_BLOCK;
-	else if(!strncmp(boot_buf + 6,"recovery",8))
-		blk = 11*1024*1024 / MMC_BYTE_PER_BLOCK;
-	if(!flash_partition(blk,fastboot))
+	u32 blk,cnt;
+	unsigned char *pname;
+	memset(pname, 0 , 128);
+	for(i = 0; i < PARTITION_NUM ; i ++){
+		if(!strcmp(partition_info[i].pname + 2 , boot_buf + 6)){
+			strcpy(pname,partition_info[i].pname);
+			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
+			cnt = partition_info[i].size / MMC_BYTE_PER_BLOCK;
+			goto do_flash;
+			break;
+		}
+	}
+	if(i == PARTITION_NUM){
+		printf("There is not a partition named : %s\n",boot_buf + 6);
+		return -1;
+	}
+
+do_flash:
+#ifdef CONFIG_SPL_MMC_SUPPORT
+	if(!mmc_flash(blk,cnt,fastboot))
 		return 0;
+#else
+#ifdef CONFIG_JZ_NAND_MGR
+	if(!nand_flash(pname,fastboot))
+		return 0;
+#endif
+#endif
 	return -1;
 }
 
@@ -865,64 +876,59 @@ static void explain_cmd_flash(struct fastboot_dev *fastboot)
 	return_buf(fastboot, return_complete);
 }
 
-extern ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt);
-static int fastboot_mmc_erase(char *partition_buf,struct fastboot_dev *fastboot)
+static int fastboot_mmc_erase(u32 blk,u32 blk_cnt,struct fastboot_dev *fastboot)
 {
 	int curr_device = 0;
-	struct mmc *mmc = find_mmc_device(0);
-	uint32_t blk, blk_end, blk_cnt;
-	uint32_t erase_cnt = 0;
-	int timeout = 30000;
-	int i;
-	int ret;
 
-	if (!mmc) {
-		printf("no mmc device at slot %x\n", curr_device);
-		return -ENODEV;
-	}
+	char commond[128] ;
+	memset(commond,0,128);
+	sprintf(commond,"mmc erase %x %x",blk,blk_cnt);
+	run_command(commond,"0");
 
-	mmc_init(mmc);
-
-	if (mmc_getwp(mmc) == 1) {
-		printf("Error: card is write protected!\n");
-		return -EPERM;
-	}
-	if(!strncmp(partition_buf+6,"boot",4)){
-		blk = 3*1024*1024 / MMC_BYTE_PER_BLOCK;
-		blk_cnt = (8 * 1014 * 1024) / MMC_BYTE_PER_BLOCK ;
-	}
-	else if(!strncmp(partition_buf + 6,"system",6)){
-		blk = 56*1024*1024 / MMC_BYTE_PER_BLOCK;
-		blk_cnt = (mmc->capacity / MMC_BYTE_PER_BLOCK) - (56 * 1024 * 1024 / MMC_BYTE_PER_BLOCK);
-	}
-	else if(!strncmp(partition_buf + 6,"recovery",8)){
-		blk = 11*1024*1024 / MMC_BYTE_PER_BLOCK;
-		blk_cnt = (45 * 1014 * 1024) / MMC_BYTE_PER_BLOCK ;
-	}
-
-	printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
-			curr_device, blk, blk_cnt);
-
-	ret = mmc_erase_t(mmc, blk, blk_cnt);
-	if (ret) {
-		printf("mmc erase error\n");
-		return ret;
-	}
-	ret = mmc_send_status(mmc, timeout);
-	if(ret){
-		printf("mmc erase error\n");
-		return ret;
-	}
-
-	printf("mmc erase ok\n", i);
+	printf("mmc erase ok\n");
 	return 0;
+}
+
+static int fastboot_nand_erase(unsigned char *pname,struct fastboot_dev *fastboot)
+{
+	char command[128];
+	memset(command,0,128);
+	sprintf(command,"nand_zm erase %s",pname);
+	printf("command:%s\n",command);
+	run_command(command,"0");
 }
 
 static int handle_cmd_erase(struct fastboot_dev *fastboot)
 {
 	printf("please add the erase cmd explain roution\n");
-	if(!fastboot_mmc_erase(boot_buf ,fastboot))
+	u32 blk,cnt;
+	int i;
+	unsigned char *pname;
+	memset(pname, 0 , 128);
+	for(i = 0; i < PARTITION_NUM ; i ++){
+		if(!strcmp(partition_info[i].pname + 2 , boot_buf + 6)){
+			strcpy(pname,partition_info[i].pname);
+			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
+			cnt = partition_info[i].size / MMC_BYTE_PER_BLOCK;
+			goto do_erase;
+			break;
+		}
+	}
+	if(i == PARTITION_NUM){
+		printf("There is not a partition named : %s\n",boot_buf + 6);
+		return -1;
+	}
+
+do_erase:
+#ifdef CONFIG_SPL_MMC_SUPPORT
+	if(!fastboot_mmc_erase(blk , cnt ,fastboot))
 		return 0;
+#else
+#ifdef CONFIG_JZ_NAND_MGR
+	if(!fastboot_nand_erase(pname,fastboot))
+		return 0;
+#endif
+#endif
 	return -1;
 }
 
@@ -939,6 +945,10 @@ static void explain_cmd_erase(struct fastboot_dev *fastboot)
 static int handle_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 {
 	printf("please add the reboot_bootloader cmd explain roution\n");
+	cpm_set_scrpad(FASTBOOT_SIGNATURE);
+	if(!run_command("reset","0"))
+		return 0;
+
 	return -1;
 }
 
@@ -955,7 +965,8 @@ static void explain_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 static int handle_cmd_reboot(struct fastboot_dev *fastboot)
 {
 	printf("please add the reboot cmd explain roution\n");
-	do_reset(NULL,0,0,NULL);
+	if(!run_command("reset","0"))
+		return 0;
 	return -1;
 }
 
@@ -978,6 +989,13 @@ static void return_continue_complete(struct usb_ep *ep,
 
 static int handle_cmd_continue(struct fastboot_dev *fastboot)
 {
+#ifdef CONFIG_SPL_MMC_SUPPORT
+	run_command("boota mmc 0 0x80f00000 6144", "0");
+#else
+#ifdef CONFIG_JZ_NAND_MGR
+	run_command("boota nand 0x80f00000 6144", "0");
+#endif
+#endif
 	return 0;
 }
 
@@ -995,7 +1013,12 @@ static int handle_cmd_boot(struct fastboot_dev *fastboot)
 {
 	printf("please add the boot cmd explain roution\n");
 	memcpy((char *)(BOOT_START_ADDRESS),fastboot->data_buf,fastboot->data_length);
-	if(!mem_boot((unsigned int)(BOOT_START_ADDRESS)))
+
+	char command[128];
+	memset(command,0,128);
+	sprintf(command,"boota mem %x",BOOT_START_ADDRESS);
+	printf("command:%s\n",command);
+	if(!run_command(command,"0"))
 		return 0;
 	return -1;
 }

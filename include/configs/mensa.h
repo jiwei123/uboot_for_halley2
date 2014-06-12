@@ -82,6 +82,8 @@
   #endif
 #endif
 
+#define PARTITION_NUM 10
+
 /**
  * Boot command definitions.
  */
@@ -405,3 +407,4 @@
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
 #endif /* __CONFIG_MENSA_H__ */
+

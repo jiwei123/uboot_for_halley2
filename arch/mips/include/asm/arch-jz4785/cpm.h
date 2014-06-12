@@ -208,6 +208,7 @@
 #define CPSPPR_CPSPR_WRITABLE   (0x00005a5a)
 #define RECOVERY_SIGNATURE      (0x1a1a)        /* means "RECY" */
 #define RECOVERY_SIGNATURE_SEC  0x800           /* means "RECY" */
+#define FASTBOOT_SIGNATURE      (0x0666)        /* means "FASTBOOT" */
 
 #define cpm_get_scrpad()        readl(CPM_BASE + CPM_CPSPR)
 #define cpm_set_scrpad(data)                    \
