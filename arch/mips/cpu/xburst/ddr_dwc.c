@@ -609,12 +609,10 @@ void sdram_init(void)
 #endif
 	reset_controller();
 
-#ifndef CONFIG_FPGA
-	;
-#else
+	/*force CKE1 HIGH*/
 	ddr_writel(DDRC_CFG_VALUE, DDRC_CFG);
 	ddr_writel((1 << 1), DDRC_CTRL);
-#endif
+
 	/* DDR PHY init*/
 	ddr_phy_init();
 	dump_ddrp_register();
@@ -628,10 +626,8 @@ void sdram_init(void)
 	mem_remap();
 
 	ddr_writel(ddr_readl(DDRC_STATUS) & ~DDRC_DSTATUS_MISS, DDRC_STATUS);
-#ifdef CONFIG_DDR_AUTO_SELF-REFRESH
-#ifdef CONFIG_FPGA
+#ifdef CONFIG_DDR_AUTO_SELF_REFRESH
 	ddr_writel(0 , DDRC_DLP);
-#endif
 	ddr_writel(0x1 ,DDRC_AUTOSR_EN);
 #endif
 	debug("sdram init finished\n");
