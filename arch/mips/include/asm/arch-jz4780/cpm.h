@@ -62,6 +62,7 @@
 #define CPM_SPCR0		(0xb8) /* SRAM Power Control Register0 */
 #define CPM_SPCR1		(0xbc) /* SRAM Power Control Register1 */
 #define CPM_PSWCST(n)		(0x4*(n)+0x90)
+#define CPM_CLKGR		(0x20) /* Clock Gate Register0 */
 #define CPM_CLKGR0		(0x20) /* Clock Gate Register0 */
 #define CPM_CLKGR1		(0x28) /* Clock Gate Register1 */
 #define CPM_OPCR		(0x24) /* Oscillator and Power Control Register */
@@ -100,6 +101,7 @@
 #define CPM_CLKGR0_UART2	(1 << 17)
 #define CPM_CLKGR0_UART1	(1 << 16)
 #define CPM_CLKGR0_UART0	(1 << 15)
+#define CPM_CLKGR_SADC		(1 << 14)
 #define CPM_CLKGR0_SADC		(1 << 14)
 #define CPM_CLKGR0_KBC		(1 << 13)
 #define CPM_CLKGR0_MSC2		(1 << 12)
@@ -174,10 +176,10 @@
 #define cpm_set_scrpad(data)                    \
 do {                                            \
 	volatile int i = 0x3fff;                \
-	writel(0x00005a5a,CPM_CPSPPR);		\
+	writel(0x00005a5a,CPM_BASE+CPM_CPSPPR);		\
 	while(i--);				\
-	writel(data,CPM_CPSPR);			\
-	writel(0x0000a5a5,CPM_CPSPPR);      	\
+	writel(data,CPM_BASE+CPM_CPSPR);		\
+	writel(0x0000a5a5,CPM_BASE+CPM_CPSPPR);      	\
 } while (0)
 
 #endif /* __CPM_H__ */

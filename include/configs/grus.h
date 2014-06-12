@@ -79,7 +79,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS3,57600 mem=256M@0x0 mem=768@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,57600 mem=256M@0x0 mem=768M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -94,7 +94,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY 3
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
@@ -102,7 +102,7 @@
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
-    #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
+    #define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
   #endif
@@ -114,7 +114,7 @@
 		#define CONFIG_BOOTCOMMAND "sf probe; sf read 0x80f00000 0x60000 0x340000; bootm 0x80f00000"
 	#else
 		#ifdef CONFIG_JZ_NAND_MGR
-			#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm" 
+			#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm"
 																	/*order ops pt offset len dst */
 			/*#define CONFIG_BOOTCOMMAND		"nand_zm read ndboot;bootm"*/
 		#else
@@ -236,13 +236,13 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
 #ifndef CONFIG_SPL_SPI_SUPPORT
-#define CONFIG_CMD_DHCP 	/* DHCP support			*/
-#define CONFIG_CMD_MMC		/* MMC/SD support			*/
+#define CONFIG_CMD_MMC		/* MMC/SD support		*/
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
-#define CONFIG_CMD_NET		/* networking support			*/
+#define CONFIG_CMD_NET		/* networking support		*/
+#define CONFIG_CMD_DHCP		/* DHCP support			*/
 #define CONFIG_CMD_PING
 #endif
-/*#define CONFIG_CMD_FASTBOOT*/
+#define CONFIG_CMD_FASTBOOT
 
 /* USB */
 #ifdef CONFIG_BOOT_ANDROID
@@ -356,17 +356,13 @@
 #define CONFIG_UBOOT_OFFSET		16384
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
-
 #define CONFIG_SPL_TEXT_BASE		0xf4000a00
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0xa00)
-
 #define CONFIG_SPL_SERIAL_SUPPORT
-
 #endif /* CONFIG_SPL_MMC_SUPPORT */
 
 #ifdef CONFIG_JZ_NAND_MGR
 /**/
-
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_SIMPLE
@@ -389,7 +385,6 @@
 
 /* the NAND SPL is small enough to enable serial */
 #define CONFIG_SPL_SERIAL_SUPPORT
-
 
 #endif /* CONFIG_JZ_NAND_MGR */
 

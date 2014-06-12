@@ -358,6 +358,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	misc_init_r();
 #endif
 
+#ifdef CONFIG_USB_GADGET
+	board_usb_init();
+#endif
+
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init();
 #endif
@@ -369,6 +373,5 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;)
 		main_loop();
-
 	/* NOTREACHED - no way out of command loop except booting */
 }

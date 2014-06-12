@@ -1072,7 +1072,7 @@ int readline_into_buffer(const char *const prompt, char *buffer, int timeout)
 #endif
 
 
-#if defined(CONFIG_USB_GADGET) && defined(CONFIG_USB_JZ_DWC2_UDC_V1_1)
+#if defined(CONFIG_USB_GADGET) && defined(CONFIG_USB_SELF_POLLING)
 		while (!tstc()) {
 			int usb_gadget_handle_interrupts(void);
 			usb_gadget_handle_interrupts();

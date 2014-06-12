@@ -24,10 +24,6 @@ struct dwc2_ep {
 	int max_xfer_once;		//contorller limit
 	char name[16];
 	u32 flags;
-#define NO_OUT_ZREO_PKT		0
-#define OUT_ZERO_PKT_RECV	1
-#define OUT_ZERO_PKT_COMP	2
-	u32 zero_pkt_recv;
 #define DWC2_EP_ACTIVE	(1 << 0)
 #define DWC2_EP_BUSY	(1 << 1)
 	u8 bEndpointAddress;
@@ -51,19 +47,15 @@ static inline struct dwc2_request* next_request(struct list_head *head) {
 	return list_first_entry(head ,struct dwc2_request ,queue);
 }
 
-typedef enum ctl_trans_stage {
-	IDLE_STAGE	 = 0,
-	SETUP_STAGE	 = 0x1,
-	DATA_STAGE	 = 0x2,
-	STATUS_STAGE	 = 0x4,
-} ctl_trans_stage_t;
-
 struct dwc2_udc {
 	struct usb_gadget gadget;
 	struct usb_gadget_driver *driver;
 	char name[20];
-	ctl_trans_stage_t ep0state;
-	int ctl_trans_is_out;
+#define IDLE_STAGE	0X0
+#define SETUP_STAGE	0X1
+#define DATA_STAGE	0x2
+#define STATUS_STAGE	0X3
+	int ep0state;
 	/* ep0-control, ep1in-bulk, ep1out-bulk, ep2in-int */
 #define DWC2_MAX_IN_ENDPOINTS	3	/*include control endpoint*/
 #define DWC2_MAX_OUT_ENDPOINTS	2	/*include control endpoint*/
@@ -85,16 +77,11 @@ struct dwc2_udc {
 #define ep_maxpacket(EP) ((EP)->ep.maxpacket)
 
 static inline int ep_is_in(struct dwc2_ep *ep) {
-	if (ep_num(ep) == 0) {
-		if (!ep->dev->ctl_trans_is_out &&
-				ep->dev->ep0state == DATA_STAGE)
-			return 1;
-		if (!!ep->dev->ctl_trans_is_out &&
-				ep->dev->ep0state == STATUS_STAGE)
+	if (!ep_num(ep)) {
+		if (ep->dev->ep0state & USB_DIR_IN)
 			return 1;
 	} else {
-		if ((ep->bEndpointAddress&USB_DIR_IN) ==
-				USB_DIR_IN)
+		if (ep->bEndpointAddress&USB_DIR_IN)
 			return 1;
 	}
 	return 0;

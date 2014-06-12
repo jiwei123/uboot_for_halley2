@@ -35,23 +35,15 @@ static int do_burn(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	char *s = "vdr";	//vendor
 	char *env_bkp;
 	int ret;
-	
+
 	if (argc > 1)
 		return CMD_RET_USAGE;
 
-	board_usb_init();
-#if defined(CONFIG_USB_JZ_DWC2_UDC_V1_1)
-	if (!g_burntool_register(s)) {
-		g_burntool_virtual_set_config(s);
-		return CMD_RET_SUCCESS;
-	}
-	return CMD_RET_FAILURE;
-#else
-	if (g_burntool_register(s)) {
+	if (g_burntool_register(s))
 		return CMD_RET_FAILURE;
-	}
 	g_burntool_virtual_set_config(s);
 
+#if !defined(CONFIG_USB_SELF_POLLING)
 	while (1) {
 		if (ctrlc())
 			goto exit;
@@ -59,9 +51,8 @@ static int do_burn(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 exit:
 	g_burntool_unregister();
-
-	return CMD_RET_SUCCESS;
 #endif
+	return CMD_RET_SUCCESS;
 }
 
 U_BOOT_CMD(burn, CONFIG_SYS_MAXARGS, 1, do_burn,

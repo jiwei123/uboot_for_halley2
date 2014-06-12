@@ -214,10 +214,10 @@
 #define cpm_set_scrpad(data)                    \
 do {                                            \
 	volatile int i = 0x3fff;                \
-	writel(0x00005a5a,CPM_CPSPPR);		\
+	writel(0x5a5a,CPM_BASE + CPM_CPSPPR);		\
 	while(i--);				\
-	writel(data,CPM_CPSPR);			\
-	writel(0x0000a5a5,CPM_CPSPPR);      	\
+	writel(data,CPM_BASE + CPM_CPSPR);			\
+	writel(0xa5a5,CPM_BASE + CPM_CPSPPR);      	\
 } while (0)
 
 #endif /* __CPM_H__ */

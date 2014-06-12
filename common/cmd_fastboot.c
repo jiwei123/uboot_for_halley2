@@ -46,8 +46,6 @@ static int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 	if (argc > 1)
 		return CMD_RET_USAGE;
 
-	board_usb_init();
-
 	g_fastboot_register(s);
 
 	handle_fastboot_cmd();

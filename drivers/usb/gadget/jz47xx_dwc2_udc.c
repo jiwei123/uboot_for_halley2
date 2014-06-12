@@ -19,8 +19,8 @@
  * MA 02111-1307 USA
  */
 
-#define DWC2_DEBUG	0
-#define DEBUG_RXFIFO	0x1	//0 : off 1 : epnum 0 2: epnum 1 3:ep_num 0,1
+//#define DWC2_DEBUG	0
+#define DEBUG_RXFIFO	0x0	//0 : off 1 : epnum 0 2: epnum 1 3:ep_num 0,1
 
 #include <common.h>
 #include <malloc.h>
@@ -34,6 +34,11 @@
 #include <usb/jz47xx_dwc2_udc.h>
 #include "jz47xx_dwc2_regs.h"
 
+
+#ifndef DEBUG_RXFIFO
+#define DEBUG_RXFIFO	0x0	//0 : off 1 : epnum 0 2: epnum 1 3:ep_num 0,1
+#endif
+
 #define DWC2_EP0_MTS_LIMIT	64
 #define DWC2_HEP_MTS_LIMIT	(1023 * 512)
 #define DWC2_FEP_MTS_LIMIT	(1023 * 64)
@@ -44,6 +49,7 @@ LIST_HEAD(request_list);
 static void dwc_otg_core_reset(void)
 {
         u32 cnt = 0;
+
 	/* Core Soft Reset */
 	udc_set_reg(0,RSTCTL_CORE_RST, GRST_CTL);
         while (udc_test_reg(RSTCTL_CORE_RST,GRST_CTL)) {
@@ -70,6 +76,7 @@ static void dwc_otg_core_init(void)
 {
 	u32 gusbcfg;
 	u32 reset = 0;
+
 	/*HB config Slave mode ,Unmask globle inter*/
 	udc_write_reg(AHBCFG_GLOBLE_INTRMASK, GAHB_CFG);
 	/*Mask RxfvlMsk Intr*/
@@ -94,7 +101,7 @@ static void dwc_otg_core_init(void)
 
 static void dwc2_otg_flush_tx_fifo(unsigned char txf_num)
 {
-	int timeout = 0x10000;
+	int timeout = 10000;
 	pr_info("flush tx fifo fifo num %d\n",txf_num);
 	/*Set globle nak*/
 	if (udc_test_reg(GINTSTS_GINNAK_EFF,GINT_STS))
@@ -105,32 +112,30 @@ static void dwc2_otg_flush_tx_fifo(unsigned char txf_num)
 		if (!timeout) pr_warn("flush fifo globle in nak set timeout\n");
 	}
 	/*Check AHB is idle*/
-	timeout = 100000;
+	timeout = 10000;
 	while(!(udc_test_reg(RSTCTL_AHB_IDLE,GRST_CTL)) && --timeout);
 	if (!timeout) pr_warn("flush fifo ahb idle timeout\n");
 	/*Check fifo is not in flushing*/
-	timeout = 100000;
+	timeout = 10000;
 	while(!(udc_test_reg(RSTCTL_TXFIFO_FLUSH,GRST_CTL)) && --timeout);
 	/*Flush fifo*/
 	udc_set_reg(0,(txf_num << 6),GRST_CTL);
 	udc_set_reg(0,RSTCTL_TXFIFO_FLUSH ,GRST_CTL);
-	timeout = 100000;
+	timeout = 10000;
 	while (udc_test_reg(RSTCTL_TXFIFO_FLUSH,GRST_CTL) && --timeout);
 	if (!timeout) pr_warn("flush fifo timeout\n");
 	/*Clear globle nak*/
 	udc_set_reg(0,DCTL_CLR_GNPINNAK,OTG_DCTL);
 }
 
-void handle_rxfifo_nempty(struct dwc2_udc *dwc);
+void handle_rxfifo_nempty(struct dwc2_udc *dwc, int flush_fifo);
 void dwc2_otg_flush_rx_fifo(void)
 {
+	printf("dwc flush rx fifo\n");
 	pr_warn_start();
-	pr_info("dwc flush rx fifo\n");
 	udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
 	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
-		if ((udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY)) {
-			handle_rxfifo_nempty(the_controller);
-		}
+		handle_rxfifo_nempty(the_controller, 1);
 		udelay(1);
 	};
 	udc_write_reg(RSTCTL_RXFIFO_FLUSH, GRST_CTL);
@@ -169,7 +174,7 @@ static void dwc_otg_device_init(void)
 	/* dma disable ,High speed , stall no zero handshack*/
 	udc_write_reg(DCFG_HANDSHAKE_STALL_ERR_STATUS, OTG_DCFG);
 	/* Soft Disconnect connect*/
-	udc_set_reg(DCTL_SOFT_DISCONN, DCTL_NAK_ON_BBLE, OTG_DCTL);
+	udc_set_reg(0, DCTL_NAK_ON_BBLE, OTG_DCTL);
 	/* Unmask suspend earlysuspend reset enumdone sof intr*/
 	udc_set_reg(0, GINTSTS_USB_SUSPEND|GINTSTS_USB_RESET|
 			GINTSTS_ENUM_DONE|GINTSTS_USB_EARLYSUSPEND,
@@ -177,23 +182,41 @@ static void dwc_otg_device_init(void)
 	return;
 }
 
+
 static int dwc_udc_init(struct dwc2_udc *dev)
 {
-	dwc_otg_core_reset();
+#ifndef CONFIG_BURNER
 
 	otg_phy_init(DEVICE_ONLY_MODE,CONFIG_SYS_EXTAL);
+
+	dwc_otg_core_reset();
 
 	dwc_otg_core_init();
 
 	dwc_fifo_allocate();
 
 	dwc_otg_device_init();
+#else
+	int i = 0;
 
-	return 0;
-}
+	if (enum_done_speed_detect(dev))
+		return -1;
 
-int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
-{
+	udc_set_reg(0, DCTL_NAK_ON_BBLE, OTG_DCTL);
+	udc_set_reg(0, DCFG_HANDSHAKE_STALL_ERR_STATUS, OTG_DCFG);
+	udc_set_reg(0, (0x3<<DAINT_OUT_BIT)|(0x3<<DAINT_IN_BIT), DAINT_MASK);
+	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_SETUPMSK|DEPMSK_B2BSETUPMSK|DEPMSK_STSPHSERCVMSK,
+			DOEP_MASK);
+	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_TXFIFOEMTMSK|DEPMSK_TIMEOUTMSK,
+			DIEP_MASK);
+
+	for (i = 0; i < DWC2_MAX_ENDPOINTS; i++)
+	{
+		struct dwc2_ep *dep = &dev->ep_attr[i];
+		dep->flags |= DWC2_EP_ACTIVE;
+	}
+	udc_set_reg(DIEPCTL_TX_FIFO_NUM_MASK, DIEPCTL_TX_FIFO_NUM(1), DIEP_CTL(1));
+#endif
 	return 0;
 }
 
@@ -236,21 +259,28 @@ static int jz_ep_enable(struct usb_ep *ep,
 
 static void dwc2_giveback_urb(struct dwc2_ep *dep,
 		struct dwc2_request *request, int status)
-{
+{	struct dwc2_udc *dev = the_controller;
 	pr_info("giveback ep%d%s\n",ep_num(dep),ep_is_in(dep)?"in":"out");
+	if (!ep_num(dep) && (dev->ep0state&0xf) == DATA_STAGE) {
+		if (dev->ep0state&USB_DIR_IN)
+			dev->ep0state = STATUS_STAGE;
+		else
+			dev->ep0state = STATUS_STAGE|USB_DIR_IN;
+	}
 	list_del_init(&request->queue);
 	request->req.status = status;
 	request->req.complete(&dep->ep, &request->req);
 }
 
 static void __dwc2_set_globle_out_nak(int epnum) {
+	int timeout = 10000;
 	udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
-	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
-		if ((udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY)) {
-			handle_rxfifo_nempty(the_controller);
-		}
+	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)&& timeout--) {
+		handle_rxfifo_nempty(the_controller, 1);
 		udelay(1);
 	}
+	if (!timeout)
+		pr_warn("ep%dout nak set failed, cannot wait GINTSTS_GOUTNAK_EFF\n",epnum);
 }
 
 static void __dwc2_clear_globle_out_nak(int epnum) {
@@ -308,7 +338,7 @@ static void __dwc2_set_in_nak(int epnum)
 	{
 		udelay(1);
 		if (timeout < 2) {
-			pr_info("dwc set in nak timeout\n");
+			pr_err("dwc set in nak timeout\n");
 		}
 	} while ( (!(udc_read_reg(DIEP_INT(epnum)) & DEP_INEP_NAKEFF)) && (--timeout > 0));
 
@@ -325,7 +355,7 @@ static void __dwc2_disable_in_ep(int epnum)
 	{
 		udelay(1);
 		if (timeout < 2) {
-			pr_info("dwc disable in ep timeout\n");
+			pr_err("dwc disable in ep timeout\n");
 		}
 	} while ( (!(udc_read_reg(DIEP_INT(epnum)) & DEP_EPDIS_INT)) && (--timeout > 0));
 
@@ -340,7 +370,6 @@ static int __dwc2_stop_in_transfer(struct dwc2_ep *dep)
 	unsigned int diep_ctl = udc_read_reg(DIEP_CTL(epnum));
 
 	if (diep_ctl & DEPCTL_EPENA) {
-		printf("stop intransfer epnum %d\n",epnum);
 		/*step 1: set in nak*/
 		__dwc2_set_in_nak(epnum);
 		dep->flags &= ~DWC2_EP_BUSY;
@@ -404,7 +433,10 @@ static void dwc2_deactive_endpoint(struct dwc2_ep *dep)
 static int jz_ep_disable(struct usb_ep *ep)
 {
 	struct dwc2_ep *dep = to_dwc2_ep(ep);
+	printf("jz_disable %s start\n",ep->name);
 	dwc2_deactive_endpoint(dep);
+	printf("jz_disable %s end\n",ep->name);
+	dep->wait_inxfer_complete = 0;
 	dep->desc = 0;
 	return 0;
 }
@@ -452,7 +484,6 @@ int calculate_xfer_pktcnt(struct dwc2_ep *dep, struct dwc2_request *request)
 	return pktcnt;
 }
 
-int in_transfer_error_detect(struct dwc2_ep *dep);
 static void __dwc2_start_in_transfer(struct dwc2_ep *dep,struct dwc2_request *request)
 {
 	u32 pktcnt;
@@ -461,10 +492,6 @@ static void __dwc2_start_in_transfer(struct dwc2_ep *dep,struct dwc2_request *re
 	udc_write_reg(pktcnt << 19 | request->xfersize, DIEP_SIZE(epnum));
 	udc_set_reg(0,(DEPCTL_EPENA|DEPCTL_CNAK),DIEP_CTL(epnum));
 	udc_set_reg(0,(1 << epnum),DIEP_EMPMSK);
-	if (request->xfersize == 0) {
-		dep->wait_inxfer_complete = 1;
-		in_transfer_error_detect(dep);
-	}
 	pr_info("epnum in %d is transfer %d\n",epnum, request->xfersize);
 	return;
 }
@@ -495,22 +522,26 @@ static void dwc2_start_transfer(struct dwc2_ep *dep)
 	return;
 }
 
-static void dwc2_restart_transfer(struct dwc2_ep *dep)
+static int udc_setup_status(int is_in)
 {
-	struct dwc2_request *request = NULL;
-	struct dwc2_udc *dev = the_controller;
-	int xfer_size_left = 0;
-	int epnum = ep_num(dep);
-
-	xfer_size_left = dwc2_stop_transfer(dep);
-	if ((request = next_request(&dep->urb_list))) {
-		request->req.actual += request->xfersize - xfer_size_left;
-		dwc2_giveback_urb(dep,request,-ECONNRESET);
+	pr_ep0("**enable** %s status stage\n", is_in ? "in" : "out");
+	if (is_in) {
+		udc_write_reg(1 << 19, DIEP_SIZE(0));
+		udc_set_reg(0, DEPCTL_EPENA|DEPCTL_CNAK, DIEP_CTL(0));
+		udc_set_reg(0, 1 ,DIEP_EMPMSK);
+		return 0;
+	} else {
+		udc_write_reg((1 << 19),DOEP_SIZE(0));
+		udc_set_reg(0, DEPCTL_EPENA|DEPCTL_CNAK, DOEP_CTL(0));
+		return 0;
 	}
-	dwc2_start_transfer(dep);
-	if (!epnum)
-		dev->ep0state = SETUP_STAGE;
-	return;
+}
+
+static void udc_start_new_setup(void)
+{
+	pr_ep0("**enable** setup stage\n");
+	udc_write_reg(DOEPSIZE0_SUPCNT_3|DOEPSIZE0_PKTCNT|8*3, DOEP_SIZE(0));
+	udc_set_reg(0, DEPCTL_EPENA|DEPCTL_CNAK, DOEP_CTL(0));
 }
 
 static int jz_queue(struct usb_ep *ep, struct usb_request *req, gfp_t gfp_flags)
@@ -520,7 +551,7 @@ static int jz_queue(struct usb_ep *ep, struct usb_request *req, gfp_t gfp_flags)
 	int epnum = ep_num(dep);
 	int transfer_idle;
 
-	printf("epnum %d queue\n",epnum);
+	pr_info("epnum %d queue\n",epnum);
 	if (unlikely(!list_empty(&request->queue))) {
 		printf("epnum %d is busy\n",epnum);
 		return -EBUSY;
@@ -550,7 +581,7 @@ static int jz_dequeue(struct usb_ep *ep, struct usb_request *req)
 	struct dwc2_ep *dep = to_dwc2_ep(ep);
 	struct dwc2_request *request = to_dwc2_request(req);
 	struct dwc2_request *r = NULL;
-
+	
 	list_for_each_entry(request,&dep->urb_list,queue) {
 		if (r == request)
 			break;
@@ -559,6 +590,7 @@ static int jz_dequeue(struct usb_ep *ep, struct usb_request *req)
 	if (r != request) {
 		return -EINVAL;
 	} else {
+		printf("jz_dequeue %s\n",ep->name);
 		r = next_request(&dep->urb_list);
 		if (r == request)
 			dwc2_stop_transfer(dep);
@@ -570,7 +602,7 @@ static int jz_dequeue(struct usb_ep *ep, struct usb_request *req)
 static void jz_fifo_flush(struct usb_ep *ep)
 {
 	struct dwc2_ep *dep = to_dwc2_ep(ep);
-
+	printf("jz_fifo_flush \n");
 	if (ep_is_in(dep))
 		dwc2_otg_flush_tx_fifo(ep_num(dep));
 	else
@@ -635,7 +667,29 @@ static void dwc2_init_endpoint(struct dwc2_udc *dev, int is_in)
 	}
 }
 
-static const struct usb_gadget_ops jz_udc_ops;
+int jz_dwc_pullup(struct usb_gadget *gadget, int is_on)
+{
+	printf("dwc pull %s\n", is_on ? "on" : "off");
+	if (is_on) {
+		udc_set_reg(DCTL_SOFT_DISCONN, 0, OTG_DCTL);
+	} else {
+		int i;
+		for (i = 1; i < DWC2_MAX_ENDPOINTS; i++) {
+			struct dwc2_ep *dep = &(the_controller->ep_attr[i]);
+			if (dep->flags & DWC2_EP_ACTIVE)
+				jz_ep_disable(&(dep->ep));
+			dep->wait_inxfer_complete = 0;
+			dep->desc = 0;
+		}
+		udc_set_reg(0, DCTL_SOFT_DISCONN, OTG_DCTL);
+		mdelay(2000); //wait for host disconnect
+	}
+}
+
+static const struct usb_gadget_ops jz_udc_ops = {
+	.pullup = jz_dwc_pullup,
+};
+
 int jz_udc_probe(void)
 {
 	the_controller = (struct dwc2_udc *)kzalloc(sizeof(struct dwc2_udc), 0);
@@ -652,33 +706,7 @@ int jz_udc_probe(void)
 	the_controller->gadget.name = the_controller->name;
 	dwc2_init_endpoint(the_controller, 0);
 	dwc2_init_endpoint(the_controller, 1);
-
 	return 0;
-}
-
-static int udc_setup_status(int is_in)
-{
-	pr_ep0("**enable** %s status stage\n", is_in ? "in" : "out");
-	if (is_in) {
-		struct dwc2_ep *dep = the_controller->ep_in_attr[0];
-		udc_write_reg(1 << 19, DIEP_SIZE(0));
-		udc_set_reg(0, DEPCTL_EPENA|DEPCTL_CNAK, DIEP_CTL(0));
-		udc_set_reg(0, 1 ,DAINT_MASK);
-		dep->wait_inxfer_complete = 1;
-		return in_transfer_error_detect(dep);
-	} else {
-		udc_write_reg((1 << 19),DOEP_SIZE(0));
-		udc_set_reg(0, DEPCTL_EPENA|DEPCTL_CNAK, DOEP_CTL(0));
-		pr_debug("DOEP_CTL(0) %x\n",udc_read_reg(DOEP_CTL(0)));
-		return 0;
-	}
-}
-
-void udc_start_new_setup(void)
-{
-	pr_ep0("**enable** setup stage\n");
-	udc_write_reg(DOEPSIZE0_SUPCNT_3|DOEPSIZE0_PKTCNT|8*3, DOEP_SIZE(0));
-	udc_set_reg(0, DEPCTL_EPENA|DEPCTL_CNAK, DOEP_CTL(0));
 }
 
 static void handle_early_suspend_intr(struct dwc2_udc *dev)
@@ -698,7 +726,7 @@ static void handle_reset_intr(struct dwc2_udc *dev)
 	/* Step 2: unmask intr. */
 	udc_set_reg(0, (1<<DAINT_IN_BIT)|(1<<DAINT_OUT_BIT),
 			DAINT_MASK);
-	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_SETUPMSK|DEPMSK_B2BSETUPMSK,
+	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_SETUPMSK|DEPMSK_B2BSETUPMSK|DEPMSK_STSPHSERCVMSK,
 			DOEP_MASK);
 	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_TXFIFOEMTMSK|DEPMSK_TIMEOUTMSK,
 			DIEP_MASK);
@@ -739,6 +767,7 @@ int enum_done_speed_detect(struct dwc2_udc *dev)
 		return -1;
 	}
 
+	dev->ep_attr[0].flags |= DWC2_EP_ACTIVE;
 	for (i = 1; i < DWC2_MAX_ENDPOINTS; i++) {
 		dev->ep_attr[i].ep.maxpacket = ep_fifo_size;
 		dev->ep_attr[i].max_xfer_once = ep_mts;
@@ -770,14 +799,9 @@ static void parse_setup(struct dwc2_ep *dep)
 			dev->crq.bRequest);
 
 	if (dev->crq.wLength)
-		dev->ep0state = DATA_STAGE;
+		dev->ep0state = DATA_STAGE|(dev->crq.bRequestType&USB_DIR_IN);
 	else
-		dev->ep0state = STATUS_STAGE;
-
-	if (!(dev->crq.bRequestType & USB_DIR_IN))
-		dev->ctl_trans_is_out = 1;
-	else
-		dev->ctl_trans_is_out = 0;
+		dev->ep0state = STATUS_STAGE|USB_DIR_IN;
 
 	if ((dev->crq.bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
 		switch (dev->crq.bRequest) {
@@ -795,100 +819,111 @@ static void parse_setup(struct dwc2_ep *dep)
 	} else {
 		ret = dev->driver->setup(&dev->gadget, &dev->crq);
 	}
-
 	if (ret) {
 		//usb_stall_ep0(dep);
 		return;
 	}
-#if 0
-	if (dev->ep0state == DATA_STAGE && !dev->ctl_trans_is_out) {
-		pr_ep0("control in(3) transfer setup stage parse ok\n");
-		udc_setup_status(0);
-	} else if (dev->ep0state == STATUS_STAGE) {
-		pr_ep0("control out(2) transfer setup stage parse ok\n");
-		udc_start_new_setup();
-	} else {
-		pr_ep0("control out(3) transfer setup stage parse ok\n");
-	}
-#endif
 }
 
-static void udc_fetch_data_packet(struct dwc2_ep *dep, int fifo_count)
+static void udc_fetch_data_packet(struct dwc2_ep *dep, int flush_fifo)
 {
 	struct dwc2_request *request = next_request(&dep->urb_list);
 	int dwords = 0;
 	int epnum = ep_num(dep);
 	int i,dat;
+	int rxsts_pop = udc_read_reg(GRXSTS_READ);
+	int fifo_count = (rxsts_pop&GRXSTSP_BYTE_CNT_MASK) >> GRXSTSP_BYTE_CNT_BIT;
 
-	if (unlikely(!request))
+	if (unlikely(!request && fifo_count != 0 && epnum != 0 && !!flush_fifo)) {
+		printf("no request happen\n");
 		return;
+	}
+
+	rxsts_pop = udc_read_reg(GRXSTS_POP);
+	fifo_count = (rxsts_pop&GRXSTSP_BYTE_CNT_MASK) >> GRXSTSP_BYTE_CNT_BIT;
 	dwords = (fifo_count + 3) / 4;
+
+	//printf("fetch %d start:",fifo_count);
 	for (i = 0; i < dwords; i++) {
 		dat = udc_read_reg(EP_FIFO(epnum));
-		if (request->xfersize > 0) {
-			*((u8 *)(request->req.buf + request->req.actual + 0)) = dat & 0xff;
-			*((u8 *)(request->req.buf + request->req.actual + 1)) = (dat >> 8) & 0xff;
-			*((u8 *)(request->req.buf + request->req.actual + 2)) = (dat >> 16) & 0xff;
-			*((u8 *)(request->req.buf + request->req.actual + 3)) = (dat >> 24) & 0xff;
-			request->xfersize -=4;
-			request->req.actual += 4;
+		//printf("%x,",dat);
+		if (!flush_fifo || request) {
+			if (request->xfersize > 0) {
+				*((u8 *)(request->req.buf + request->req.actual + 0)) = dat & 0xff;
+				*((u8 *)(request->req.buf + request->req.actual + 1)) = (dat >> 8) & 0xff;
+				*((u8 *)(request->req.buf + request->req.actual + 2)) = (dat >> 16) & 0xff;
+				*((u8 *)(request->req.buf + request->req.actual + 3)) = (dat >> 24) & 0xff;
+				if (request->xfersize >= 4) {
+					request->xfersize -= 4;
+					request->req.actual += 4;
+				} else {
+					request->req.actual += request->xfersize;
+					request->xfersize = 0;
+				}
+			}
 		}
 	}
+	//printf("ok \n");
 	return;
 }
 
-static void udc_fetch_setup_packet(struct dwc2_ep *dep, int fifo_count)
+static void udc_fetch_setup_packet(struct dwc2_ep *dep)
 {
 	struct dwc2_udc *dev = the_controller;
 	unsigned int *buf = (unsigned int *)(&dev->crq);
 	int epnum = ep_num(dep);
+	int rxsts_pop = udc_read_reg(GRXSTS_POP);
+	int fifo_count = (rxsts_pop&GRXSTSP_BYTE_CNT_MASK) >> GRXSTSP_BYTE_CNT_BIT;
+
 	BUG_ON(fifo_count != 8);
 	buf[0] = udc_read_reg(EP_FIFO(epnum));
 	buf[1] = udc_read_reg(EP_FIFO(epnum));
+	the_controller->ep0state = SETUP_STAGE;
 	pr_info("setup recv requesttype %x request %x\n",dev->crq.bRequestType,
 			dev->crq.bRequest);
 	return;
 }
 
-void handle_rxfifo_nempty(struct dwc2_udc *dev)
+void handle_rxfifo_nempty(struct dwc2_udc *dev, int flush_fifo)
 {
-	unsigned volatile rxsts_pop = udc_read_reg(GRXSTS_POP);
+	unsigned volatile rxsts_pop = udc_read_reg(GRXSTS_READ);
 	int	epnum = (rxsts_pop&0xf);
-	int fifo_count = (rxsts_pop&GRXSTSP_BYTE_CNT_MASK) >> GRXSTSP_BYTE_CNT_BIT;
 	struct dwc2_ep *dep = dev->ep_out_attr[epnum];
+
+	if (!(udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY))
+		return;
 
 	debug_cond((DEBUG_RXFIFO&(1 << epnum)),
 			"%s: GRXSTS_POP is 0x%x\n", __func__, rxsts_pop);
 	switch(rxsts_pop & GRXSTSP_PKSTS_MASK) {
 	case GRXSTSP_PKSTS_GOUT_NAK:
+		rxsts_pop = udc_read_reg(GRXSTS_POP);
 		debug_cond((DEBUG_RXFIFO&(1 << epnum)),
 				"%s: OUT NAK\n", __func__);
 		break;
 	case GRXSTSP_PKSTS_GOUT_RECV:
 		debug_cond((DEBUG_RXFIFO&(1 << epnum)),
 				"%s: GRXSTSP_PKSTS_GOUT_RECV epnum %d\n",__func__,epnum);
-		if (epnum == 0 && fifo_count == NO_OUT_ZREO_PKT)
-			dep->zero_pkt_recv = OUT_ZERO_PKT_RECV;
-		udc_fetch_data_packet(dep, fifo_count);
+		udc_fetch_data_packet(dep, flush_fifo);
 		break;
 	case GRXSTSP_PKSTS_TX_COMP:
+		rxsts_pop = udc_read_reg(GRXSTS_POP);
 		debug_cond((DEBUG_RXFIFO&(1 << epnum)),
 				"%s: TX complete epnum %d\n", __func__,epnum);
-		if (epnum == 0 && dep->zero_pkt_recv == OUT_ZERO_PKT_RECV)
-			dep->zero_pkt_recv = OUT_ZERO_PKT_COMP;
 		break;
-        case GRXSTSP_PKSTS_SETUP_COMP:
+    case GRXSTSP_PKSTS_SETUP_COMP:
+		rxsts_pop = udc_read_reg(GRXSTS_POP);
 		debug_cond((DEBUG_RXFIFO&(1 << epnum)),
 				"%s: SETUP complete\n", __func__);
                 break;
-        case GRXSTSP_PKSTS_SETUP_RECV:
+    case GRXSTSP_PKSTS_SETUP_RECV:
 		debug_cond((DEBUG_RXFIFO&(1 << epnum)),
 				"%s: SETUP receive\n", __func__);
-		udc_fetch_setup_packet(dep,fifo_count);
+		udc_fetch_setup_packet(dep);
                 break;
         default:
-		debug_cond((DEBUG_RXFIFO&(1 << epnum)),
-				"%s: Warring, have not intr\n", __func__);
+		rxsts_pop = udc_read_reg(GRXSTS_POP);
+		pr_warn("%s: Warring, have not intr GRXSTS is 0x%x\n", __func__,rxsts_pop);
                 break;
         }
 	udc_write_reg(GINTSTS_RXFIFO_NEMPTY, GINT_STS);
@@ -896,38 +931,28 @@ void handle_rxfifo_nempty(struct dwc2_udc *dev)
 
 void inep0_transfer_complete (struct dwc2_ep *dep)
 {
-	struct dwc2_udc *dev = the_controller;
 	struct dwc2_request *request = next_request(&dep->urb_list);
-	int is_last = 0;
-	static int first_in_filter = 1;
 
-	if (dev->ep0state == STATUS_STAGE && dev->ctl_trans_is_out) {
-		pr_ep0("==in== control %s transfer status stage complete\n", request ? "out(2)" : "out(3)");
-		dev->ep0state = SETUP_STAGE;
-		udc_start_new_setup();
-		is_last = 1;
-	} else if (dev->ep0state == DATA_STAGE && !dev->ctl_trans_is_out) {
-		pr_ep0("==in== control in(3) transfer data stage complete\n");
-		BUG_ON(!request);
-		if (request->req.actual >= request->req.length) {
-			dev->ep0state = STATUS_STAGE;
+	if (request) {
+		int is_last = 0;
+		pr_ep0("in data stage complete");
+		is_last = !!udc_read_reg(DIEP_SIZE(0));
+		if (request->req.actual >= request->req.length)
 			is_last = 1;
+		if (is_last) {
+			pr_ep0("ok\n");
+			dwc2_giveback_urb(dep, request, 0);
 			udc_setup_status(0);
+			udc_set_reg(1,0,DIEP_EMPMSK);
+		} else {
+			pr_ep0("start reseved\n");
+			dwc2_start_transfer(dep);
 		}
-	} else if (!first_in_filter) {
-		pr_err("[ep0]:==in== unkown control transfer in stage complete\n");
-		return;
-	}
-	first_in_filter = 0;
-
-	if (likely(is_last)) {
-		udc_set_reg(1,0,DIEP_EMPMSK);
-		if (!request) return;
-		dwc2_giveback_urb(dep, request, 0);
 	} else {
-		pr_info("unlikely happen %d\n",__LINE__);
-		dwc2_start_transfer(dep);
+		pr_ep0("in status stage complete");
+		udc_set_reg(1,0,DIEP_EMPMSK);
 	}
+	dep->wait_inxfer_complete = 0;
 	return;
 }
 
@@ -952,6 +977,7 @@ void inepx_transfer_complete(struct dwc2_ep *dep)
 		dwc2_giveback_urb(dep,request,0);
 	}
 	dwc2_start_transfer(dep);
+	dep->wait_inxfer_complete = 0;
 }
 
 void dwc2_fill_tx_fifo(struct dwc2_ep *dep)
@@ -959,8 +985,10 @@ void dwc2_fill_tx_fifo(struct dwc2_ep *dep)
 	struct dwc2_request *request = next_request(&dep->urb_list);
 	int epnum = ep_num(dep);
 
-	if (!request)
+	if (!request) {
+		dep->wait_inxfer_complete = 1;
 		return;
+	}
 
 	while (1) {
 		int i = 0 ,xfersize = 0 ,xferdwords = 0;
@@ -978,7 +1006,7 @@ void dwc2_fill_tx_fifo(struct dwc2_ep *dep)
 		if (!xferdwords || fifo_status < xferdwords)
 			break;
 
-		pr_info("xferdwords %d\n",xferdwords);
+		pr_info("ep%din xferdwords %d\n",epnum,xferdwords);
 		for (;i < xferdwords; i++) {
 			udc_write_reg(buf[i],EP_FIFO(epnum));
 		}
@@ -991,25 +1019,21 @@ void dwc2_fill_tx_fifo(struct dwc2_ep *dep)
 	return;
 }
 
-int in_transfer_error_detect(struct dwc2_ep *dep)
-{
-	/*can we just stall the endpoint\n*/
-	if (dep->wait_inxfer_complete) {
-		unsigned int timeout = 0x7ffff;
-		int epnum = ep_num(dep);
-		dep->wait_inxfer_complete = 0;
-		pr_info("in_transfer_error_detect\n");
-		while (!(udc_read_reg(DIEP_INT(epnum))&DEP_XFER_COMP)
-				&& --timeout);
-		if (!timeout) {
-			pr_err("handle inep timeout\n");
-			dwc2_restart_transfer(dep);
-			udc_set_reg((1 << epnum),0,DIEP_EMPMSK);
-			return -1;
-		}
-	}
+int in_xfer_timeout_detect(struct dwc2_ep *dep) {
+	int epnum = ep_num(dep);
+	unsigned int timeout = get_timer(0) + 20;		//jiffies
+
+	if (!dep->wait_inxfer_complete)
+		return 0;
+
+	dep->wait_inxfer_complete = 0;
+	while (!(udc_read_reg(DIEP_INT(epnum))&DEP_XFER_COMP))
+		if (timeout <= get_timer(0))
+			return -ETIMEDOUT;
 	return 0;
 }
+
+
 
 void handle_inep_intr(struct dwc2_udc *dev)
 {
@@ -1033,7 +1057,7 @@ void handle_inep_intr(struct dwc2_udc *dev)
 		ep_pending = (ep_intr&ep_msk);
 
 		if (ep_pending & DEP_XFER_COMP) {
-			dep->wait_inxfer_complete = 0;
+err_inack_disappear:
 			if (ep_num(dep))
 				inepx_transfer_complete(dep);
 			else
@@ -1055,9 +1079,14 @@ void handle_inep_intr(struct dwc2_udc *dev)
 		if (ep_pending & DEP_TXFIFO_EMPTY) {
 			pr_info("DEP_TXFIFO_EMPTY %d\n",epnum);
 			if ((udc_read_reg(DIEP_EMPMSK) & (1 << epnum))) {
-				pr_info("fill epnum %d\n",epnum);
 				dwc2_fill_tx_fifo(dep);
-				in_transfer_error_detect(dep);
+				if (in_xfer_timeout_detect(dep)) {
+					printf("%s in xfer timeout\n", dep->name);
+					udc_set_reg((1 << epnum),0,DIEP_EMPMSK);
+					__dwc2_stop_in_transfer(dep);
+					udc_write_reg(DEP_TXFIFO_EMPTY, DIEP_INT(epnum));
+					goto err_inack_disappear;
+				}
 			}
 			udc_write_reg(DEP_TXFIFO_EMPTY, DIEP_INT(epnum));
 		}
@@ -1066,72 +1095,27 @@ void handle_inep_intr(struct dwc2_udc *dev)
 
 void outep0_transfer_complete(struct dwc2_ep *dep)
 {
-	struct dwc2_udc *dev = the_controller;
 	struct dwc2_request *request = next_request(&dep->urb_list);
-	int is_last = 0;
-	static int out_data_cover = 1;
 
-	if (dev->ep0state == DATA_STAGE && dev->ctl_trans_is_out) {
-		BUG_ON(!request);
-		pr_ep0("==out== control out(3) transfer data stage complete\n");
-		if (out_data_cover) {
-			out_data_cover = 0;
-			return;
-		}
-		out_data_cover = 1;
+	if (request) {
+		int is_last = 0;
+		pr_ep0("==out== data stage complete\n");
 		is_last = !!udc_read_reg(DOEP_SIZE(0));
 		if (request->req.actual >= request->req.length)
 			is_last = 1;
 		if (is_last) {
-			dev->ep0state  = STATUS_STAGE;
-#if 1
-			while (udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY) {
-				int stat = udc_read_reg(GRXSTS_READ);
-				if ((stat&GRXSTSP_PKSTS_MASK)==GRXSTSP_PKSTS_TX_COMP) {
-					handle_rxfifo_nempty(the_controller);
-					udelay(10);
-					//dwc2_otg_flush_rx_fifo();
-				} else {
-					break;
-				}
-			}
-#endif
-			udc_write_reg(DEP_STATUS_PHASE_RECV, DOEP_INT(0));
-			if (!udc_setup_status(1)) {
-				dev->ep0state  = DATA_STAGE;
-				dwc2_giveback_urb(dep, request, 0);
-				dev->ep0state  = STATUS_STAGE;
-			}
+			dwc2_giveback_urb(dep, request, 0);
+			udc_start_new_setup();
+			udc_setup_status(1);
 		} else {
 			dwc2_start_transfer(dep);
 		}
-	} else if (dev->ep0state == STATUS_STAGE && !dev->ctl_trans_is_out) {
-		pr_ep0("==out== control in(3) transfer status stage complete\n");
-		if (dep->zero_pkt_recv != OUT_ZERO_PKT_COMP) {
-			pr_warn_start();
-			while((udc_read_reg(GINT_STS) & GINTSTS_RXFIFO_NEMPTY)) {
-				handle_rxfifo_nempty(dev);
-				udelay(1);
-			}
-			pr_warn_end();
-		}
-
-		if (dep->zero_pkt_recv != OUT_ZERO_PKT_COMP &&
-				(udc_read_reg(DOEP_INT(0)) & DEP_SETUP_PHASE_DONE)) {
-			pr_err("out status uncomming\n");
-			udc_write_reg(DEP_SETUP_PHASE_DONE, DOEP_INT(0));
-		}
-		dep->zero_pkt_recv = NO_OUT_ZREO_PKT;
-		dev->ep0state = SETUP_STAGE;
+	} else if (the_controller->ep0state != SETUP_STAGE){
+		pr_ep0("==out== status stage complete\n");
 		udc_start_new_setup();
-	} else if (dev->ep0state == SETUP_STAGE) {
-		pr_ep0("==out== control setup stage complete\n");
 	} else {
-		pr_err("[ep0]:==out== unkown control out stage complete\n");
+		pr_ep0("==out== setup stage complete");
 	}
-
-	if (udc_read_reg(DOEP_INT(0))&DEP_STATUS_PHASE_RECV)
-		pr_err("DEP_STATUS_PHASE_RECV\n");
 	return;
 }
 
@@ -1187,6 +1171,13 @@ int handle_outep_intr(struct dwc2_udc *dev)
 			}
 			udc_write_reg(DEP_XFER_COMP, DOEP_INT(epnum));
 		}
+		if (ep_pending & DEP_STATUS_PHASE_RECV) {
+			if (!epnum && udc_read_reg(DOEP_INT(epnum)) & DEP_STATUS_PHASE_RECV) {
+				pr_info("DEP_STATUS_PHASE_RECV\n");
+				udc_write_reg(DEP_STATUS_PHASE_RECV, DOEP_INT(0));
+			}
+		}
+
 		if (ep_pending & DEP_SETUP_PHASE_DONE) {
 			udc_write_reg(DEP_SETUP_PHASE_DONE, DOEP_INT(epnum));
 			if (DEP_B2B_SETUP_RECV & ep_intr) {
@@ -1222,34 +1213,11 @@ int udc_irq(void)
 		handle_outep_intr(dev);
 
 	if (pending & GINTSTS_RXFIFO_NEMPTY)
-		handle_rxfifo_nempty(dev);
+		handle_rxfifo_nempty(dev, 0);
 
 	return IRQ_HANDLED;
 }
 
-static int dwc_udc_init_burnner(struct dwc2_udc *dev)
-{
-	int i = 0;
-
-	if (enum_done_speed_detect(dev))
-		return -1;
-
-	udc_set_reg(0, DCTL_NAK_ON_BBLE, OTG_DCTL);
-	udc_set_reg(0, DCFG_HANDSHAKE_STALL_ERR_STATUS, OTG_DCFG);
-	udc_set_reg(0, (0x3<<DAINT_OUT_BIT)|(0x3<<DAINT_IN_BIT), DAINT_MASK);
-	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_SETUPMSK|DEPMSK_B2BSETUPMSK,
-			DOEP_MASK);
-	udc_set_reg(0, DEPMSK_XFERCOMLMSK|DEPMSK_TXFIFOEMTMSK|DEPMSK_TIMEOUTMSK,
-			DIEP_MASK);
-
-	for (i = 0; i < DWC2_MAX_ENDPOINTS; i++)
-	{
-		struct dwc2_ep *dep = &dev->ep_attr[i];
-		dep->flags |= DWC2_EP_ACTIVE;
-	}
-	udc_set_reg(DIEPCTL_TX_FIFO_NUM_MASK, DIEPCTL_TX_FIFO_NUM(1), DIEP_CTL(1));
-
-}
 /*
   Register entry point for the peripheral controller driver.
 */
@@ -1259,23 +1227,33 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 	struct dwc2_udc *dev = the_controller;
 	int retval = -ENODEV;
 
-	printf("%p",&driver->bind);
+	printf("usb_gadget_register_driver %p\n",&driver->bind);
 	if (driver->bind)
 		retval = driver->bind(&dev->gadget);
 	if (retval)
 		return retval;
 	dev->driver = driver;
 
-#ifndef CONFIG_BURNER
 	dwc_udc_init(dev);
-#else
-	dwc_udc_init_burnner(dev);
-#endif /* CONFIG_BURNER */
 
 	usb_poll_active = true;
 
 	return 0;
 }
+
+int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
+{
+	struct dwc2_udc *dev = the_controller;
+
+	printf("usb_gadget_unregister_driver %p\n",&driver->unbind);
+	if (driver->unbind)
+		driver->unbind(&dev->gadget);
+
+	dev->driver = NULL;
+	usb_poll_active = false;
+	return 0;
+}
+
 
 int usb_gadget_handle_interrupts(void)
 {
