@@ -42,6 +42,19 @@ extern int nd_raw_boundary;
 int erase_partition_fill_pphandle(unsigned int startpage, int pt_index);
 static int NM_PtDirecterase(PPartition *pt);
 
+static int buf_compare(unsigned char *read_data,unsigned char *org_data,unsigned int len)
+{
+	unsigned int i;
+	unsigned int *buf1 = (unsigned int *)org_data;
+	unsigned int *buf2 = (unsigned int *)read_data;
+
+	for(i = 0; i < len / 4; i++)
+	{
+		if(buf1[i] != buf2[i])
+			printf("XXXXXXXXXX  compare error: org_data[%x] = 0x%08x read_data[%x] = 0x%08x len = %08x\n",i,buf1[i],i,buf2[i],len);
+	}
+}
+
 static int erase_pt_fill_pphandle(unsigned int pt_startpage_offset)
 {
 	int pt_index,ret;
@@ -177,7 +190,7 @@ void fill_nand_basic_info(nand_flash_param *nand_info) {
 // (16 * 1024) is max support pagesize, used to write a full page data to nand
 #define SPL_BUF_SIZE		(NAND_SPL_SIZE + 16 * 1024)
 
-//#define DEBUG_PTWRITE
+#define DEBUG_PTWRITE
 #define NEW_SPL
 unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned int ops_length,unsigned int offset)
 {
@@ -193,10 +206,9 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 	unsigned int rsectorid;
 	int bl;
 	int pt_index;
-	int ret = startaddr + ops_length;
+	int ret ;
 	unsigned int pt_startpage,pt_endpage;
 	unsigned int spl_align_sectorcount = 0;
-
 
 	startaddr = startaddr/g_handle.pagesize;
 	g_handle.sectorid = offset/512;
@@ -297,7 +309,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			memcpy(spl_buf + NAND_PARAMS_OFFSET, &ndparams, sizeof(nand_params));
 		}
 	}
-#endif 
+#endif
 	erase_partition_fill_pphandle(startaddr, pt_index);
 	pHandle = g_handle.pphandle[pt_index];
 	if(g_handle.curpt_index != pt_index){
@@ -370,15 +382,14 @@ rewrite:
 #ifdef DEBUG_PTWRITE
 		sl->startSector = rsectorid;
 		sl->pData = (void*)readbuf;
+		memset(readbuf,0,sl->sectorCount * 512);
 		if(NandManger_ptRead(pHandle,sl) < 0){
 			printf("NandManger_ptRead failed, now rewrite!\n");
 			goto rewrite;
 		}
-		if(strncmp(readbuf,databuf,sl->sectorCount * 512))
-		{
-			printf("NandManger_ptRead failed !!!!!!! \n");
-			while(1);
-		}
+
+		if(startaddr != (REBUILD_SPL_SIZE + g_handle.pagesize - 1) / g_handle.pagesize)
+			buf_compare(readbuf,databuf,sl->sectorCount * 512);
 #endif
 		databuf+=wlen;
 		totalbytes-=wlen;
