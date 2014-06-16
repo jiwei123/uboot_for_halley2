@@ -359,6 +359,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #endif
 
 #ifdef CONFIG_USB_GADGET
+extern void board_usb_init(void);
 	board_usb_init();
 #endif
 

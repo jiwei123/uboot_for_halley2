@@ -80,12 +80,11 @@
  * Boot arguments definitions.
  */
 #define BOOTARGS_COMMON "console=ttyS3,57600 mem=256M@0x0 mem=768M@0x30000000"
-
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc"
   #else
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
   #endif
@@ -108,7 +107,7 @@
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
+    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x9000; bootm 0x80f00000"
   #else
 	#ifdef CONFIG_SPL_SPI_SUPPORT
 		#define CONFIG_BOOTCOMMAND "sf probe; sf read 0x80f00000 0x60000 0x340000; bootm 0x80f00000"
@@ -242,7 +241,6 @@
 #define CONFIG_CMD_DHCP		/* DHCP support			*/
 #define CONFIG_CMD_PING
 #endif
-#define CONFIG_CMD_FASTBOOT
 
 /* USB */
 #ifdef CONFIG_BOOT_ANDROID
@@ -256,6 +254,27 @@
 #define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
 #define CONFIG_USB_GADGET_VBUS_DRAW 500
 #endif  /*CONFIG_CMD_FASTBOOT*/
+
+#if 0
+#define CONFIG_SERVERIP		192.168.1.1
+#define CONFIG_IPADDR		192.168.1.2
+#define CONFIG_GATEWAYIP        192.168.1.1
+#define CONFIG_NETMASK          255.255.255.0
+#define CONFIG_ETHADDR          00:11:22:33:44:55
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_JZ_DWC2_UDC_V1_1
+/*#define CONFIG_USB_SELF_POLLING*/
+#define CONFIG_USB_ETH_SUBSET
+#define CONFIG_USBNET_DEV_ADDR		"de:ad:be:ef:00:01"
+#define CONFIG_USBNET_HOST_ADDR		"de:ad:be:ef:00:02"
+#define CONFIG_USB_ETHER
+#define CONFIG_USB_ETH_RNDIS
+#define CONFIG_USB_ETH_HALT
+/*#define CONFIG_EXTRA_ENV_SETTINGS		\
+	"netretry=no\0"		\
+	""*/
+#endif
 
 /**
  * Serial download configuration

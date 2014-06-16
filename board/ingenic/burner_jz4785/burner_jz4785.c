@@ -29,12 +29,20 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 #include <asm/jz_uart.h>
+#include <asm/arch/clk.h>
 
 #ifndef CONFIG_SPL_BUILD
 DECLARE_GLOBAL_DATA_PTR;
 struct global_info ginfo __attribute__ ((section(".data")));
 extern struct jz_uart *uart;
 #endif
+
+
+struct cgu_clk_src cgu_clk_src[] = {
+	{MSC, MPLL},
+	{BCH, MPLL},
+	{SRC_EOF,SRC_EOF}
+};
 
 int board_early_init_f(void)
 {

@@ -32,6 +32,7 @@
 #include <spi_flash.h>
 
 extern int act8600_regulator_init(void);
+extern int jz_net_initialize(bd_t *bis);
 #ifdef CONFIG_BOOT_ANDROID
 extern void boot_mode_select(void);
 #endif
@@ -51,6 +52,15 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_USB_GADGET
+int jz_udc_probe(void);
+void board_usb_init(void)
+{
+	printf("USB_udc_probe\n");
+	jz_udc_probe();
+}
+#endif /* CONFIG_USB_GADGET */
+
 int misc_init_r(void)
 {
 #if 0 /* TO DO */
@@ -69,17 +79,6 @@ int misc_init_r(void)
 	return 0;
 }
 
-#ifdef CONFIG_USB_GADGET
-int jz_udc_probe(void);
-void board_usb_init(void)
-{
-	printf("USB_udc_probe\n");
-	jz_udc_probe();
-}
-#endif /* CONFIG_USB_GADGET */
-
-
-
 #ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
 {
@@ -90,6 +89,8 @@ int board_mmc_init(bd_t *bd)
 
 int board_eth_init(bd_t *bis)
 {
+	int rv;
+#ifndef  CONFIG_USB_ETHER
 	/* reset grus DM9000 */
 	gpio_direction_output(CONFIG_GPIO_DM9000_RESET, CONFIG_GPIO_DM9000_RESET_ENLEVEL);
 	mdelay(10);
@@ -99,8 +100,11 @@ int board_eth_init(bd_t *bis)
 	/* init grus gpio */
 	gpio_set_func(GPIO_PORT_A, GPIO_FUNC_0, 0x040300ff);
 	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_0, 0x00000002);
-
-	return dm9000_initialize(bis);
+	rv = dm9000_initialize(bis);
+#else
+	rv = usb_eth_initialize(bis);
+#endif
+	return rv;
 }
 
 /* U-Boot common routines */

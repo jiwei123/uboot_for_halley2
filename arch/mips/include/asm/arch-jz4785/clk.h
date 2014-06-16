@@ -55,12 +55,16 @@ struct cgu {
 	unsigned sel_bit:8;
 	unsigned sel_src:8;
 	unsigned char sel[4];
+	unsigned ce;
+	unsigned busy;
+	unsigned stop;
 };
 
 struct cgu_clk_src {
 	unsigned int cgu_clk;
 	unsigned int src;
 };
+#define SRC_EOF -1
 
 typedef union cpm_cpxpcr {
 	/** raw register data */
@@ -85,6 +89,7 @@ typedef union cpm_cpxpcr {
 unsigned int clk_get_rate(int clk);
 void clk_set_rate(int clk, unsigned long rate);
 void cgu_clks_init(struct cgu *cgu_sel, int nr_cgu_clks);
+void clk_prepare(void);
 void clk_init(void);
 void enable_uart_clk(void);
 enum otg_mode_t {
@@ -93,5 +98,4 @@ enum otg_mode_t {
 	HOST_ONLY_MODE,
 };
 void otg_phy_init(enum otg_mode_t mode,unsigned extclk);
-void cgu_clks_overwrite(struct cgu_clk_src *clk_src, int nr);
 #endif /* __CLK_H__ */

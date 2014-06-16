@@ -21,7 +21,7 @@
  * MA 02111-1307 USA
  */
 
-/* #define DEBUG */
+/*#define DEBUG*/
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -85,6 +85,9 @@ void board_init_f(ulong dummy)
 	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
 	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
 #endif
+
+	debug("CLK stop\n");
+	clk_prepare();
 
 	debug("PLL init\n");
 	pll_init();

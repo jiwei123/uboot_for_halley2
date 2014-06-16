@@ -32,7 +32,7 @@
 
 struct cgu_clk_src cgu_clk_src[] = {
 	{VPU, MPLL},
-	{OTG, MPLL},
+	{OTG, EXCLK},
 	{LCD, MPLL},
 	{MSC, MPLL},
 	{SSI, MPLL},
@@ -40,7 +40,8 @@ struct cgu_clk_src cgu_clk_src[] = {
 	{PCM, MPLL},
 	{GPU, MPLL},
 	{ISP, MPLL},
-	{BCH, MPLL}
+	{BCH, MPLL},
+	{SRC_EOF,SRC_EOF}
 };
 
 #ifdef CONFIG_BOOT_ANDROID
@@ -55,7 +56,6 @@ static void battery_init_gpio(void)
 
 int board_early_init_f(void)
 {
-	cgu_clks_overwrite(cgu_clk_src,ARRAY_SIZE(cgu_clk_src));
 	return 0;
 }
 

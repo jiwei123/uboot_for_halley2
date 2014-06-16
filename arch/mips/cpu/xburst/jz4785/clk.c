@@ -44,6 +44,8 @@ static char clk_name[][10] = {
 	[ISP] = {"isp"},
 	[DDR] = {"ddr"},
 	[MSC] = {"msc"},
+	[MSC1] = {"msc1"},
+	[MSC2] = {"msc2"},
 	[BCH] = {"bch"},
 };
 
@@ -53,57 +55,91 @@ static char * cgu_name(int clk) {
 #endif
 
 struct cgu cgu_clk_sel[CGU_CNT] = {
-#ifndef CONFIG_BURNER
-	[VPU] = {1, CPM_VPUCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}},
-	[OTG] = {1, CPM_USBCDR, 30, EXCLK, {EXCLK, EXCLK, APLL, MPLL}},
-	[I2S] = {1, CPM_I2SCDR, 30, EXCLK, {APLL, MPLL, EXCLK, -1}},
-	[LCD] = {1, CPM_LPCDR,  31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}},
-	[UHC] = {1, CPM_UHCCDR, 30, OTG, {APLL, MPLL, OTG, -1}},
-	[SSI] = {1, CPM_SSICDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}},
-	[CIM] = {1, CPM_CIMCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}},
-	[PCM] = {1, CPM_PCMCDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}},
-	[GPU] = {1, CPM_GPUCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}},
-	[ISP] = {1, CPM_ISPCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}},
-#endif
-	[DDR] = {1, CPM_DDRCDR, 30, CONFIG_DDR_SEL_PLL, {0, APLL, MPLL, -1}},
-	[MSC] = {1, CPM_MSC0CDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}},
-	[BCH] = {1, CPM_BCHCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}}
+	[DDR] = {1, CPM_DDRCDR, 30, CONFIG_DDR_SEL_PLL, {0, APLL, MPLL, -1}, 29, 28, 27},
+	[MSC] = {1, CPM_MSC0CDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[BCH] = {1, CPM_BCHCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[VPU] = {1, CPM_VPUCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[OTG] = {1, CPM_USBCDR, 30, EXCLK, {EXCLK, EXCLK, APLL, MPLL}, 29, 28, 27},
+	[I2S] = {1, CPM_I2SCDR, 30, EXCLK, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
+	[LCD] = {1, CPM_LPCDR,  31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 28, 27, 26},
+	[MSC1] = {0, CPM_MSC1CDR, 0, 0, {-1, -1, -1, -1}, 29, 28, 27},
+	[MSC2] = {0, CPM_MSC2CDR, 0, 0, {-1, -1, -1, -1}, 29, 28, 27},
+	[UHC] = {1, CPM_UHCCDR, 30, OTG, {APLL, MPLL, OTG, -1}, 29, 28, 27},
+	[SSI] = {1, CPM_SSICDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
+	[CIM] = {1, CPM_CIMCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 30, 29, 28},
+	[PCM] = {1, CPM_PCMCDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 28, 27, 26},
+	[GPU] = {1, CPM_GPUCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[ISP] = {1, CPM_ISPCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
 };
 
-void cgu_clks_overwrite(struct cgu_clk_src *clk_src, int nr)
+void clk_prepare(void)
 {
-	int i, j, id;
-	unsigned int src, xcdr, reg;
-	for (i = 0; i < nr; i++) {
-		id = clk_src[i].cgu_clk;
-		src = clk_src[i].src;
-		for (j = 0; j < 4; j++) {
-			if (src == cgu_clk_sel[id].sel[j]) {
-				xcdr = j << cgu_clk_sel[id].sel_bit;
-				reg = CPM_BASE + cgu_clk_sel[id].off;
-				writel(xcdr, reg);
-#ifdef DUMP_CGU_SELECT
-				printf("Overwrite : 0x%X: value=0x%X\n", reg ,readl(reg));
+	/*stop clk and set div max*/
+	int id;
+	struct cgu *cgu = NULL;
+	unsigned regval = 0, reg = 0;
+
+	for (id = 0; id < CGU_CNT; id++) {
+		cgu = &(cgu_clk_sel[id]);
+		reg = CPM_BASE + cgu->off;
+
+		if (id == UHC)
+			continue;
+#ifdef CONFIG_BURNER
+		if (id == OTG)
+			continue;
 #endif
-			}
+		if (id != OTG)
+		{
+			regval = readl(reg);
+			/*set div max*/
+			regval |= 0xff | (1 << cgu->ce);
+			while (readl(reg) & (1 << cgu->busy));
+			writel(regval, reg);
 		}
+
+		/*stop clk*/
+		while (readl(reg) & (1 << cgu->busy));
+		regval = readl(reg);
+		regval |= ((1 << cgu->stop) | (1 << cgu->ce));
+		writel(regval, reg);
+		while (readl(reg) & (1 << cgu->busy));
+
+		/*clear ce*/
+		regval = readl(reg);
+		regval &= ~(1 << cgu->ce);
+		writel(regval, reg);
+#ifdef DUMP_CGU_SELECT
+		printf("%s(0x%x) :0x%x\n",clk_name[id] ,reg,  readl(reg));
+#endif
 	}
 }
 
 void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 {
-	int i, j;
+	int i, j, id;
+	unsigned int xcdr = 0;
+	unsigned int reg = 0;
+	extern struct cgu_clk_src cgu_clk_src[];
+
+	for (i = 0; cgu_clk_src[i].cgu_clk != SRC_EOF; i++) {
+		id = cgu_clk_src[i].cgu_clk;
+		cgu_clks[id].sel_src = cgu_clk_src[i].src;
+	}
+
 	for(i = 0; i < nr_cgu_clks; i++) {
-		unsigned int xcdr = (cgu_clks[i].sel_src << cgu_clks[i].sel_bit);
-		unsigned int reg = CPM_BASE + cgu_clks[i].off;
 		for (j = 0; j < 4; j++) {
 			if (cgu_clks[i].sel_src == cgu_clks[i].sel[j] &&
 					cgu_clks[i].en == 1) {
-				xcdr = j << cgu_clks[i].sel_bit;
+				reg = CPM_BASE + cgu_clks[i].off;
+				xcdr = readl(reg);
+				xcdr &= ~(3 << 30);
+				xcdr |= j << cgu_clks[i].sel_bit;
 				writel(xcdr, reg);
 #ifdef DUMP_CGU_SELECT
 				printf("%s: 0x%X: value=0x%X\n", cgu_name(i), reg, readl(reg));
 #endif
+				break;
 			}
 		}
 
@@ -226,13 +262,25 @@ unsigned int clk_get_rate(int clk)
 
 static unsigned int set_bch_rate(int clk, unsigned long rate)
 {
-	unsigned int pll_rate = pll_get_rate(APLL);
+	unsigned int pll_rate = 0;
+	unsigned int bchcdr = cpm_inl(CPM_BCHCDR);
+	unsigned int cdr = 0;
 
-	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
-		? (pll_rate / rate)
-		: (pll_rate / rate + 1)) - 1;
+	switch (bchcdr >> 31) {
+	case 0:
+		pll_rate = pll_get_rate(APLL);
+		break;
+	case 1:
+		pll_rate = pll_get_rate(MPLL);
+		break;
+	default:
+		return 0;
+	}
 
-	cpm_outl(cdr | (1 << 29), CPM_BCHCDR);
+	cdr = ((pll_rate + rate - 1)/rate - 1) & 0xf;
+	bchcdr &= ~(0xf | 0x3 << 27);
+	bchcdr |= (cdr | (1 << 29));
+	cpm_outl(bchcdr , CPM_BCHCDR);
 
 	while (cpm_inl(CPM_BCHCDR) & (1 << 28));
 
@@ -242,6 +290,7 @@ static unsigned int set_bch_rate(int clk, unsigned long rate)
 
 static unsigned int set_msc_rate(int clk, unsigned long rate)
 {
+	unsigned int msccdr  = 0;
 	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
 	unsigned int xcdr_addr = 0;
 	unsigned int pll_rate = 0;
@@ -258,7 +307,7 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 		xcdr_addr = CPM_MSC2CDR;
 		break;
 	default:
-		break;
+		return 0;
 	}
 
 	switch (msc0cdr >> 31) {
@@ -269,14 +318,14 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 		pll_rate = pll_get_rate(MPLL);
 		break;
 	default:
-		break;
+		return 0;
 	}
 
-	cdr = ((((pll_rate / rate) % 2) == 0)
-		? (pll_rate / rate / 2)
-		: (pll_rate / rate / 2 + 1)) - 1;
-	cpm_outl((cpm_inl(xcdr_addr) & ~0xff) | cdr | (1 << 29), xcdr_addr);
-
+	msccdr = cpm_inl(xcdr_addr);
+	msccdr &= ~(0x3 << 27 | 0xff);
+	cdr = (((pll_rate + rate - 1)/rate)/2 - 1)& 0xff;
+	msccdr |= (cdr | (1 << 29));
+	cpm_outl(msccdr , xcdr_addr);
 	while (cpm_inl(xcdr_addr) & (1 << 28));
 
 	debug("CPM_MSC%dCDR(%x) = %x\n",(clk - MSC0), xcdr_addr, cpm_inl(xcdr_addr));
@@ -299,15 +348,15 @@ static unsigned int set_ddr_rate(int clk, unsigned long rate)
 	case 0:
 		printf("ddr clk is stop\n");
 	default:
-		return;
+		return 0;
 	}
-	cdr = (pll_rate%rate) ? (pll_rate/rate) :(pll_rate/rate) - 1;
-	cdr &= 0xf;
+	cdr = ((pll_rate + rate - 1)/rate - 1) & 0xf;
 	ddrcdr &= ~(0xf | 0x3f << 24);
 	ddrcdr |= (cdr | (1 << 29));
 	cpm_outl(ddrcdr , CPM_DDRCDR);
 	while (cpm_inl(CPM_DDRCDR) & (1 << 28));
 	debug("CPM_DDRCDR(%x) = %x\n",CPM_DDRCDR, cpm_inl(CPM_DDRCDR));
+	return 0;
 }
 
 static unsigned int set_lcd_rate(int clk, unsigned long rate)
@@ -325,13 +374,13 @@ static unsigned int set_lcd_rate(int clk, unsigned long rate)
 		break;
 	}
 
-	cdr = (pll_rate%rate) ? (pll_rate/rate) :(pll_rate/rate) - 1;
-	cdr &= 0xff;
+	cdr = ((pll_rate + rate - 1)/rate - 1 )& 0xff;
 	lcdcdr &= ~(0xff | (0x3 << 26));
 	lcdcdr |= (cdr | (1 << 28));
 	cpm_outl(lcdcdr , CPM_LPCDR);
 	while (cpm_inl(CPM_LPCDR) & (1 << 27));
 	debug("CPM_LPCDR(%x) = %x\n",CPM_LPCDR, cpm_inl(CPM_LPCDR));
+	return 0;
 }
 
 void clk_set_rate(int clk, unsigned long rate)
@@ -379,12 +428,6 @@ void clk_init(void)
 	reg_clkgr &= ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR);
 	cgu_clks_set(cgu_clk_sel, ARRAY_SIZE(cgu_clk_sel));
-#ifndef CONFIG_BURNER
-	clk_set_rate(MSC0, 24000000);
-	clk_set_rate(MSC1, 24000000);
-	clk_set_rate(MSC2, 24000000);
-	clk_set_rate(BCH, 100000000);
-#endif
 }
 
 void enable_uart_clk(void)
