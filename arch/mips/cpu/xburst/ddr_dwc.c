@@ -601,10 +601,8 @@ void sdram_init(void)
 #endif /* CONFIG_DDR_HOST_CC */
 
 	debug("sdram init start\n");
-
-	clk_set_rate(DDR, gd->arch.gi->ddrfreq);
-
 #ifndef CONFIG_FPGA
+	clk_set_rate(DDR, gd->arch.gi->ddrfreq);
 	reset_dll();
 #endif
 	reset_controller();
