@@ -223,7 +223,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 	for(pt_index = 0; pt_index < g_pt_count; pt_index++){
 		pt_startpage = g_handle.m_ppt[pt_index].startPage;
 		pt_endpage = pt_startpage + g_handle.m_ppt[pt_index].totalblocks * g_handle.m_ppt[pt_index].pageperblock;
-		//printf("$$$$ pt_index=%d pt_startpage=%d pt_endpage=%d startaddr=%d  nd_raw_boundary=%d $$$$$\n",pt_index,pt_startpage,pt_endpage,startaddr,nd_raw_boundary);
+		//printf("$$$$ pt_index=%d pt_startpage=%d pt_endpage=%d startaddr=%d  nd_raw_boundary=%d pt_name = %s $$$$$\n",pt_index,pt_startpage,pt_endpage,startaddr,nd_raw_boundary,g_handle.m_ppt[pt_index].name);
 		if( pt_startpage <=startaddr && (startaddr + ops_length / g_handle.pagesize) < pt_endpage){
 			break;
 		}
@@ -303,7 +303,8 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 
 			/* patch nand basic params */
 			ndparams.magic = 0x646e616e;	//nand
-			ndparams.kernel_offset = g_handle.m_ppt[pt_index + 1].startPage;
+			ndparams.kernel_offset = g_handle.m_ppt[pt_index + 1].startPage / g_handle.m_ppt[pt_index + 1].groupperzone;
+			printf("-------------->>> kernel_offset = %x\n",ndparams.kernel_offset);
 			/* update maxvalidblocks after initing nand_driver successfully */
 			ndparams.ndbaseinfo.maxvalidblocks = get_nandflash_maxvalidblocks();
 			memcpy(spl_buf + NAND_PARAMS_OFFSET, &ndparams, sizeof(nand_params));
@@ -438,7 +439,7 @@ int erase_partition_fill_pphandle(unsigned int startpage, int pt_index)
 	LPartition *lpentry;
 	struct singlelist *it;
 	int ret = 0;
-	//printf("===========> startpage = %d pt_startblock[%d] pt_pageperblock[%d] pt_startpage[%d] pt_index = %d \n",startpage,pt->startblockID,pt->pageperblock,pt->startPage,pt_index);
+	//printf("===========> startpage = %d pt_startblock[%d] pt_pageperblock[%d] pt_startpage[%d] pt_index = %d pt_name = %s\n",startpage,pt->startblockID,pt->pageperblock,pt->startPage,pt_index,pt->name);
 	if(startpage == pt->startPage){
 		singlelist_for_each(it,&(g_handle.lp->head)){
 			lpentry = singlelist_entry(it,LPartition,head);
