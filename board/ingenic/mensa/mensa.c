@@ -96,15 +96,7 @@ int board_eth_init(bd_t *bis)
 	int rv;
 #ifndef  CONFIG_USB_ETHER
 	/* reset grus DM9000 */
-	gpio_direction_output(CONFIG_GPIO_DM9000_RESET, CONFIG_GPIO_DM9000_RESET_ENLEVEL);
-	mdelay(10);
-	gpio_set_value(CONFIG_GPIO_DM9000_RESET, !CONFIG_GPIO_DM9000_RESET_ENLEVEL);
-	mdelay(10);
-
-	/* init grus gpio */
-	gpio_set_func(GPIO_PORT_A, GPIO_FUNC_0, 0x040300ff);
-	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_0, 0x00000002);
-	rv = dm9000_initialize(bis);
+	rv = jz_net_initialize(bis);
 #else
 	rv = usb_eth_initialize(bis);
 #endif
