@@ -557,7 +557,7 @@ static void nand_disable(int cs)
 }
 static void wait_rb(int rb)
 {
-	int cnt = 100000;
+	long cnt = 100000;
 	int gpio = rb / 32;
 	int gpio_bit = rb % 32;
 	int mask_rb = (1 << gpio_bit);//papin
@@ -606,12 +606,14 @@ extern int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall,unsigned int 
 
 extern void my_print_epc(void);
 
-static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int nand_nm)
+static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int nand_nm,int *rb_gpio)
 {
+	int rb;
 	nand_flash_id fid;
 	nand_flash_param *nand_info = NULL;
 
-	try_to_get_nand_id(20,&fid);
+	rb = rb_gpio[0];
+	try_to_get_nand_id(rb,&fid);
 
 	nand_info = get_nand_info_from_ids(&fid,nand_info_ids,nand_nm);
 
@@ -687,7 +689,7 @@ int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int 
 		return ;
 	/**************************** STEP2: nand api reinit *****************************/
 	/* fill nand_flash */
-	get_nandflash_info(&(osdep.base->nfi), nand_info_ids, nand_nm);
+	get_nandflash_info(&(osdep.base->nfi), nand_info_ids, nand_nm,pinfo->rb_gpio);
 	platdep.nandflash = &nand_flash_info;
 
 	/* fill rb_info
@@ -709,7 +711,7 @@ int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int 
 		platdep.platptinfo->pt_table = (plat_ptitem*)((unsigned char *)platdep.platptinfo + sizeof(plat_ptinfo));
 	fill_plat_ptinfo(pinfo, platdep.platptinfo);
 	//dump_partitioninfo(pinfo);
-	//dump_platptinfo(&(ndd_private.platptinfo));
+	//__ndd_dump_plat_partition(platdep.platptinfo);
 
 	/* get write protect pin */
 	platdep.gpio_wp = gpio_request(pinfo->gpio_wp, "nand_wp");
