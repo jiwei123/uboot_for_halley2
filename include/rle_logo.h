@@ -1,7 +1,6 @@
 #ifndef _RLE_LOGO_H
 #define _RLE_LOGO_H
-
-extern unsigned char rle_default_logo_addr[];
+#include <rle_boot_logo.h>
 #define RLE_LOGO_DEFAULT_ADDR  rle_default_logo_addr	//need to fixed!
 #if !defined(CONFIG_LCD_INFO_BELOW_LOGO)
 #define  BMP_LOGO_HEIGHT  panel_info.vl_row

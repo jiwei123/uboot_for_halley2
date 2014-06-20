@@ -32,69 +32,10 @@ SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
 #IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
 #BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
-LOGO-$(CONFIG_LCD_LOGO) += $(RLE_LOGO_C)
-CHARGE_LOGO-$(CONFIG_CMD_BATTERYDET) += $(RLE_CHARGE_LOGO_H)
-RLE_LOGO_C = $(OBJTREE)/common/rle_logo.c
+LOGO-$(CONFIG_RLE_LCD_LOGO) = $(RLE_BOOT_LOGO_H)
+CHARGE_LOGO-$(CONFIG_CMD_BATTERYDET) = $(RLE_CHARGE_LOGO_H)
+RLE_BOOT_LOGO_H = $(OBJTREE)/include/rle_boot_logo.h
 RLE_CHARGE_LOGO_H = $(OBJTREE)/include/rle_charge_logo.h
-
-#### Use jpg to make logo, added by ykliu ####
-ifeq ($(LOGO_JPG),)
-ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/*.jpg),)
-LOGO_JPG= $(TOPDIR)/board/$(BOARDDIR)/logos/ingenic.jpg
-# Use board logo and fallback to vendor
-ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg),)
-LOGO_JPG= $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg
-else
-ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/(VENDOR).jpg),)
-LOGO_JPG= $(TOPDIR)/board/$(BOARDDIR)/logo/$(VENDOR).jpg
-endif
-endif
-else #use the default logo
-LOGO_JPG= $(TOPDIR)/tools/logos/ingenic.jpg
-# Use board logo and fallback to vendor
-ifneq ($(wildcard $(TOPDIR)/tools/logos/$(BOARD).jpg),)
-LOGO_JPG= $(TOPDIR)/tools/logos/$(BOARD).jpg
-else
-ifneq ($(wildcard $(TOPDIR)/tools/logos/(VENDOR).jpg),)
-LOGO_JPG= $(TOPDIR)/tools/logos/$(VENDOR).jpg
-endif
-endif
-endif
-LOGO_RLE= $(LOGO_JPG).rle
-endif
-
-
-ifeq ($(CHARGE_LOGO_JPG),)
-ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.jpg),)
-CHARGE_LOGO_JPG1= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_1.jpg
-CHARGE_LOGO_JPG2= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_2.jpg
-CHARGE_LOGO_JPG3= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_3.jpg
-CHARGE_LOGO_JPG4= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_4.jpg
-CHARGE_LOGO_JPG5= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_5.jpg
-CHARGE_LOGO_JPG6= $(TOPDIR)/board/$(BOARDDIR)/charge_logo/charge_6.jpg
-else ## use the default logo
-CHARGE_LOGO_JPG1= $(TOPDIR)/tools/charge_logo/charge_1.jpg
-CHARGE_LOGO_JPG2= $(TOPDIR)/tools/charge_logo/charge_2.jpg
-CHARGE_LOGO_JPG3= $(TOPDIR)/tools/charge_logo/charge_3.jpg
-CHARGE_LOGO_JPG4= $(TOPDIR)/tools/charge_logo/charge_4.jpg
-CHARGE_LOGO_JPG5= $(TOPDIR)/tools/charge_logo/charge_5.jpg
-CHARGE_LOGO_JPG6= $(TOPDIR)/tools/charge_logo/charge_6.jpg
-endif
-
-CHARGE_LOGO_RLE1= $(CHARGE_LOGO_JPG1).rle
-CHARGE_LOGO_RLE2= $(CHARGE_LOGO_JPG2).rle
-CHARGE_LOGO_RLE3= $(CHARGE_LOGO_JPG3).rle
-CHARGE_LOGO_RLE4= $(CHARGE_LOGO_JPG4).rle
-CHARGE_LOGO_RLE5= $(CHARGE_LOGO_JPG5).rle
-CHARGE_LOGO_RLE6= $(CHARGE_LOGO_JPG6).rle
-
-CHARGE_LOGO_RLE_ALL= $(CHARGE_LOGO_RLE1) \
-		$(CHARGE_LOGO_RLE2) \
-		$(CHARGE_LOGO_RLE3) \
-		$(CHARGE_LOGO_RLE4) \
-		$(CHARGE_LOGO_RLE5) \
-		$(CHARGE_LOGO_RLE6)
-endif
 
 TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y) $(SPL-y) $(LOGO-y) $(CHARGE_LOGO-y) #$(IMG2RLE-y) $(BIN2ARRAY-y)
 TOOLS	:= $(addprefix $(obj),$(TOOLS))
@@ -147,38 +88,6 @@ $(obj)spl_params_fixer:	spl_params_fixer.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
-#$(obj)img2rle:	img2rle.c
-#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) $^ -ljpeg -lpng12 -o $@
-#	$(HOSTSTRIP) $@
-
-#$(obj)bin2array: bin2array.c
-#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
-
-#-------  added by ykliu -----#
-$(LOGO_RLE):  $(obj)img2rle $(LOGO_JPG)
-	$(obj)./img2rle  $(LOGO_JPG) $@
-
-$(RLE_LOGO_C):	$(obj)bin2array $(LOGO_RLE)
-	$(obj)./bin2array --one $(LOGO_RLE) $@
-
-
-
-$(CHARGE_LOGO_RLE1):  $(obj)img2rle $(CHARGE_LOGO_JPG1)
-	$(obj)./img2rle  $(CHARGE_LOGO_JPG1) $@
-$(CHARGE_LOGO_RLE2):  $(obj)img2rle $(CHARGE_LOGO_JPG2)
-	$(obj)./img2rle  $(CHARGE_LOGO_JPG2) $@
-$(CHARGE_LOGO_RLE3):  $(obj)img2rle $(CHARGE_LOGO_JPG3)
-	$(obj)./img2rle  $(CHARGE_LOGO_JPG3) $@
-$(CHARGE_LOGO_RLE4):  $(obj)img2rle $(CHARGE_LOGO_JPG4)
-	$(obj)./img2rle  $(CHARGE_LOGO_JPG4) $@
-$(CHARGE_LOGO_RLE5):  $(obj)img2rle $(CHARGE_LOGO_JPG5)
-	$(obj)./img2rle  $(CHARGE_LOGO_JPG5) $@
-$(CHARGE_LOGO_RLE6):  $(obj)img2rle $(CHARGE_LOGO_JPG6)
-	$(obj)./img2rle  $(CHARGE_LOGO_JPG6) $@
-
-$(RLE_CHARGE_LOGO_H):	$(obj)bin2array $(CHARGE_LOGO_RLE_ALL)
-	$(obj)./bin2array --mult $(CHARGE_LOGO_RLE_ALL)  $@
-
 clean:
 	rm -f $(TOOLS) $(obj).depend  \
 		$(TOPDIR)/tools/logos/*.rle \
@@ -203,6 +112,7 @@ endif
 #########################################################################
 
 # defines $(obj).depend target
+include $(obj)logo.mk
 include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend
