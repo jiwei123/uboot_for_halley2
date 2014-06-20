@@ -33,15 +33,16 @@
 #define CONFIG_JZ4785		/* Jz4785 SoC */
 #define CONFIG_FPGA		/* Jz4785 FPGA */
 
-#define CONFIG_SYS_APLL_FREQ		1200000000
-#define CONFIG_SYS_MPLL_FREQ		-1
+
+#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		-1		/*If MPLL not use mast be set 0*/
+#define CONFIG_CPU_SEL_PLL		APLL
+#define CONFIG_DDR_SEL_PLL		-1
+#define CONFIG_SYS_CPU_FREQ		1200000000
+#define CONFIG_SYS_MEM_FREQ		300000000
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
-#define CONFIG_SYS_HZ			1000 /* incrementer freq */
-
-#define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
-#define CONFIG_SYS_MEM_DIV		3
-#define CONFIG_SYS_MEM_FREQ		36000000//(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
+#define CONFIG_SYS_HZ			1000		/* incrementer freq */
 
 #define CONFIG_SYS_DCACHE_SIZE		32768
 #define CONFIG_SYS_ICACHE_SIZE		32768
@@ -91,19 +92,24 @@
 #define CONFIG_BOOTDELAY 1
 
 #ifdef CONFIG_BOOT_ANDROID
-  #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND	\
-	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
+  #if defined(CONFIG_SPL_MMC_SUPPORT)
+    #define CONFIG_BOOTCOMMAND "cls; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
+  #elif defined(CONFIG_SPL_NOR_SUPPORT)
+    #define CONFIG_BOOTCOMMAND "tftpboot 0x80f00000 boot.img; boota mem 0x80f00000"
+    #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
+     #define CONFIG_RECOVERY_BOOT CONFIG_RECOVERY_BOOT
   #else
-    #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
+    #define CONFIG_BOOTCOMMAND "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
-  #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm"
+  #if defined(CONFIG_SPL_NOR_SUPPORT)
+    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 uImage; bootm"
+  #elif defined(CONFIG_SPL_MMC_SUPPORT)
+    #define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
