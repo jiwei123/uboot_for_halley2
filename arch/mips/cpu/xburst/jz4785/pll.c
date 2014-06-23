@@ -176,12 +176,12 @@ static int freq_correcting(void)
 #define SEL_MAP(cpu,ddr) ((cpu<<16)|(ddr&0xffff))
 	switch (SEL_MAP(CONFIG_CPU_SEL_PLL,CONFIG_DDR_SEL_PLL)) {
 	case SEL_MAP(APLL,APLL):
-		gd->arch.gi->cpufreq = ALIGN_TO_DDR(gd->arch.gi->cpufreq, gd->arch.gi->ddrfreq);
+		pll_cfg.apll_freq = ALIGN_TO_DDR(pll_cfg.apll_freq, gd->arch.gi->ddrfreq);
 		pll_cfg.apll_freq = ALIGN_TO_CPU(pll_cfg.apll_freq, gd->arch.gi->cpufreq);
 		pll_freq = pll_cfg.apll_freq;
 		break;
 	case SEL_MAP(MPLL,MPLL):
-		gd->arch.gi->cpufreq = ALIGN_TO_DDR(gd->arch.gi->cpufreq, gd->arch.gi->ddrfreq);
+		pll_cfg.mpll_freq = ALIGN_TO_DDR(pll_cfg.mpll_freq, gd->arch.gi->ddrfreq);
 		pll_cfg.mpll_freq = ALIGN_TO_CPU(pll_cfg.mpll_freq, gd->arch.gi->cpufreq);
 		pll_freq = pll_cfg.mpll_freq;
 		break;

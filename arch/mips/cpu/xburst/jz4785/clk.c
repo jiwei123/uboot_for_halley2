@@ -83,14 +83,11 @@ void clk_prepare(void)
 		cgu = &(cgu_clk_sel[id]);
 		reg = CPM_BASE + cgu->off;
 
-		if (id == UHC)
-			continue;
 #ifdef CONFIG_BURNER
 		if (id == OTG)
 			continue;
 #endif
-		if (id != OTG)
-		{
+		if (id != OTG) {
 			regval = readl(reg);
 			/*set div max*/
 			regval |= 0xff | (1 << cgu->ce);
