@@ -384,13 +384,14 @@ rewrite:
 		sl->startSector = rsectorid;
 		sl->pData = (void*)readbuf;
 		memset(readbuf,0,sl->sectorCount * 512);
-		if(NandManger_ptRead(pHandle,sl) < 0){
-			printf("NandManger_ptRead failed, now rewrite!\n");
-			goto rewrite;
-		}
+		if(pt_index != 0){
+			if(NandManger_ptRead(pHandle,sl) < 0){
+				printf("NandManger_ptRead failed, now rewrite!\n");
+				goto rewrite;
+			}
 
-		if(startaddr != (REBUILD_SPL_SIZE + g_handle.pagesize - 1) / g_handle.pagesize)
 			buf_compare(readbuf,databuf,sl->sectorCount * 512);
+		}
 #endif
 		databuf+=wlen;
 		totalbytes-=wlen;

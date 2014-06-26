@@ -30,9 +30,7 @@
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 
-#ifdef	DEBUG
-#define DUMP_DDR
-#endif /* DEBUG */
+#include "ddr_debug.h"
 
 #if (CONFIG_DDR_CS1 == 1)
 #ifndef DDR_ROW1
@@ -57,7 +55,7 @@ extern void send_MR0(int a);
 
 static void dump_ddrc_register(void)
 {
-#ifdef DUMP_DDR
+#ifdef CONFIG_DWC_DEBUG
 	printf("DDRC_STATUS		0x%x\n", ddr_readl(DDRC_STATUS));
 	printf("DDRC_CFG		0x%x\n", ddr_readl(DDRC_CFG));
 	printf("DDRC_CTRL		0x%x\n", ddr_readl(DDRC_CTRL));
@@ -81,7 +79,7 @@ static void dump_ddrc_register(void)
 
 static void dump_ddrp_register(void)
 {
-#ifdef DUMP_DDR
+#ifdef CONFIG_DWC_DEBUG
 	printf("DDRP_PIR		0x%x\n", ddr_readl(DDRP_PIR));
 	printf("DDRP_PGCR		0x%x\n", ddr_readl(DDRP_PGCR));
 	printf("DDRP_PGSR		0x%x\n", ddr_readl(DDRP_PGSR));
@@ -259,7 +257,7 @@ static void mem_remap(void)
 
 void ddr_controller_init(void)
 {
-	debug("DDR Controller init\n");
+	dwc_debug("DDR Controller init\n");
 
 	mdelay(1);
 	ddr_writel(DDRC_CTRL_CKE | DDRC_CTRL_ALH, DDRC_CTRL);
@@ -292,7 +290,7 @@ void ddr_phy_init(void)
 	bool	soft_training = false;
 	unsigned int ddr_bl, ddr_cl;
 
-	debug("DDR PHY init\n");
+	dwc_debug("DDR PHY init\n");
 
 	/* DDR training address set*/
 	ddr_writel(0x150000, DDRP_DTAR);
@@ -365,7 +363,7 @@ void ddr_phy_init(void)
 		timeout = 10000;
 	}
 
-	debug("DDR chip init\n");
+	dwc_debug("DDR chip init\n");
 #ifndef CONFIG_FPGA
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
@@ -399,7 +397,7 @@ void ddr_phy_init(void)
 		timeout = 500000;
 	}
 
-	debug("DDR training\n");
+	dwc_debug("DDR training\n");
 #ifdef CONFIG_DDR_FORCE_SOFT_TRAINING
 	soft_training = true;
 #else /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
@@ -426,7 +424,7 @@ void ddr_phy_init(void)
 			&& --timeout);
 
 	if (timeout == 0) {
-		debug("DDR training timeout\n");
+		dwc_debug("DDR training timeout\n");
 #ifdef CONFIG_SPL_DDR_SOFT_TRAINING
 		soft_training = true;
 #else /* CONFIG_SPL_DDR_SOFT_TRAINING */
@@ -435,14 +433,14 @@ void ddr_phy_init(void)
 #endif /* CONFIG_SPL_DDR_SOFT_TRAINING */
 	} else if (ddr_readl(DDRP_PGSR)
 			& (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
-		debug("DDR hardware training error\n");
+		dwc_debug("DDR hardware training error\n");
 #ifdef CONFIG_SPL_DDR_SOFT_TRAINING
 		soft_training = true;
 #else /* CONFIG_SPL_DDR_SOFT_TRAINING */
 		int i = 0;
 
 		for (i = 0; i < 4; i++) {
-			debug("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
+			dwc_debug("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
 		}
 		dump_ddrp_register();
 		hang();
@@ -454,7 +452,7 @@ void ddr_phy_init(void)
 	if (soft_training) {
 		unsigned int cs0;
 		unsigned int cs1;
-		debug("Now try soft training\n");
+		dwc_debug("Now try soft training\n");
 #ifdef CONFIG_DDR_HOST_CC
 		cs0 = CONFIG_DDR_CS0;
 		cs1 = CONFIG_DDR_CS1;
@@ -464,7 +462,7 @@ void ddr_phy_init(void)
 #endif /* CONFIG_DDR_HOST_CC */
 
 		if (dqs_gate_train(cs0 + cs1, 4)) {
-			debug("DDR soft train fail too!!!\n");
+			dwc_debug("DDR soft train fail too!!!\n");
 			dump_ddrp_register();
 			hang();
 		}
@@ -571,7 +569,7 @@ void ddr_phy_init(void)
 		| ((CONFIG_DDR_PHY_IMPED_PULLDOWN & 0x1f) << DDRP_ZQXCR_PULLDOWN_IMPED_BIT);
 	ddr_writel(i, DDRP_ZQXCR0(0));
 #endif
-	debug("DDR PHY init OK\n");
+	dwc_debug("DDR PHY init OK\n");
 }
 
 /* DDR sdram init */
@@ -600,7 +598,7 @@ void sdram_init(void)
 	ddr_params_assign(&ddrc, &ddrp, ddr_params_p);
 #endif /* CONFIG_DDR_HOST_CC */
 
-	debug("sdram init start\n");
+	dwc_debug("sdram init start\n");
 #ifndef CONFIG_FPGA
 	clk_set_rate(DDR, gd->arch.gi->ddrfreq);
 	reset_dll();
@@ -628,7 +626,7 @@ void sdram_init(void)
 	ddr_writel(0 , DDRC_DLP);
 	ddr_writel(0x1 ,DDRC_AUTOSR_EN);
 #endif
-	debug("sdram init finished\n");
+	dwc_debug("sdram init finished\n");
 }
 
 phys_size_t initdram(int board_type)

@@ -20,7 +20,7 @@
  * MA 02111-1307 USA
  */
 
-/* #define DEBUG*/
+#define DEBUG
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -106,7 +106,7 @@ static unsigned int get_pllreg_value(int freq)
 static void pll_set(int pll,int freq)
 {
 	unsigned int regvalue = get_pllreg_value(freq);
-	printf("regvalue = %d\n",regvalue);
+
 	if (regvalue == -EINVAL)
 		return;
 	switch (pll) {
@@ -141,98 +141,141 @@ static void cpccr_init(void)
 	/* change sel */
 	cpccr = (CPCCR_CFG & (0xff << 24)) | (cpm_inl(CPM_CPCCR) & ~(0xff << 24));
 	cpm_outl(cpccr,CPM_CPCCR);
-
 	debug("cppcr 0x%x\n",cpm_inl(CPM_CPCCR));
 }
 
-#define ALIGN_TO_CPU(freq,cpufreq) ({\
-	unsigned x = -1; \
-	if (!((freq)%(cpufreq)))	{ \
-		pll_cfg.cdiv = (freq)/(cpufreq) ? (freq)/(cpufreq) : 1;	\
-		x = (pll_cfg.cdiv * (cpufreq)); \
-	} else { \
-		error("pll freq is not integer times than cpu freq"); \
-	} \
-	x; \
-})
-
-#define ALIGN_TO_DDR(freq, ddrfreq) ({	\
-	unsigned x = -1;	\
-	if (!((freq)%(ddrfreq)))	{\
-		gd->arch.gi->ddr_div = (freq)/(ddrfreq) ? (freq)/(ddrfreq) : 1;	\
-		x = (gd->arch.gi->ddr_div * (ddrfreq));	\
-	} else { \
-		error("pll or cpu freq is not integer times than ddr freq"); \
-	} \
-	x; \
-})
-
-static int freq_correcting(void)
+/* pllfreq align*/
+static int inline align_pll(unsigned pllfreq, unsigned alfreq)
 {
-	unsigned pll_freq = 0;
-	pll_cfg.mpll_freq = CONFIG_SYS_MPLL_FREQ;
-	pll_cfg.apll_freq = CONFIG_SYS_APLL_FREQ;
-
-#define SEL_MAP(cpu,ddr) ((cpu<<16)|(ddr&0xffff))
-	switch (SEL_MAP(CONFIG_CPU_SEL_PLL,CONFIG_DDR_SEL_PLL)) {
-	case SEL_MAP(APLL,APLL):
-		pll_cfg.apll_freq = ALIGN_TO_DDR(pll_cfg.apll_freq, gd->arch.gi->ddrfreq);
-		pll_cfg.apll_freq = ALIGN_TO_CPU(pll_cfg.apll_freq, gd->arch.gi->cpufreq);
-		pll_freq = pll_cfg.apll_freq;
-		break;
-	case SEL_MAP(MPLL,MPLL):
-		pll_cfg.mpll_freq = ALIGN_TO_DDR(pll_cfg.mpll_freq, gd->arch.gi->ddrfreq);
-		pll_cfg.mpll_freq = ALIGN_TO_CPU(pll_cfg.mpll_freq, gd->arch.gi->cpufreq);
-		pll_freq = pll_cfg.mpll_freq;
-		break;
-	case SEL_MAP(APLL,MPLL):
-		pll_cfg.mpll_freq = ALIGN_TO_DDR(pll_cfg.mpll_freq, gd->arch.gi->ddrfreq);
-		pll_cfg.apll_freq = ALIGN_TO_CPU(pll_cfg.apll_freq, gd->arch.gi->cpufreq);
-		pll_freq = pll_cfg.mpll_freq;
-		break;
-	case SEL_MAP(MPLL,APLL):
-		pll_cfg.apll_freq = ALIGN_TO_DDR(pll_cfg.apll_freq, gd->arch.gi->ddrfreq);
-		pll_cfg.mpll_freq = ALIGN_TO_CPU(pll_cfg.mpll_freq, gd->arch.gi->cpufreq);
-		pll_freq = pll_cfg.apll_freq;
-		break;
-	}
-	if (gd->arch.gi->cpufreq < 0 || pll_cfg.apll_freq < 0 || pll_cfg.mpll_freq < 0) {
-		printf("pll freq set error!!!!\nplease check your spl config\n");
+	int div = 0;
+	if (!(pllfreq%alfreq)) {
+		div = pllfreq/alfreq ? pllfreq/alfreq : 1;
+	} else {
+		error("pll freq is not integer times than cpu freq or/and ddr freq");
 		asm volatile ("wait\n\t");
-		return -1;
 	}
+	return alfreq * div;
+}
 
+/* Least Common Multiple */
+static unsigned int lcm(unsigned int a, unsigned int b, unsigned int limit)
+{
+	unsigned int lcm_unit = a > b ? a : b;
+	unsigned int lcm_resv = a > b ? b : a;
+	unsigned int lcm = lcm_unit;;
+
+	debug("caculate lcm :a(cpu:%d) and b(ddr%d) 's\t", a, b);
+	while (lcm%lcm_resv &&  lcm < limit)
+		lcm += lcm_unit;
+
+	if (lcm%lcm_resv) {
+		error("\n a(cpu %d), b(ddr %d) :	\
+				Can not find Least Common Multiple in range of limit\n",
+				a, b);
+		asm volatile ("wait\n\t");
+	}
+	debug("lcm is %d\n",lcm);
+	return lcm;
+}
+
+static void final_fill_div(int cpll, int ddrpll)
+{
+	unsigned cpu_pll_freq = (cpll == APLL)? pll_cfg.apll_freq : pll_cfg.mpll_freq;
+	unsigned Periph_pll_freq = (ddrpll == APLL) ? pll_cfg.apll_freq : pll_cfg.mpll_freq;
+
+	/*Cpu Clock Relevant*/
+	pll_cfg.cdiv = cpu_pll_freq/gd->arch.gi->cpufreq;
 	pll_cfg.l2div = (pll_cfg.cdiv * 3);	//dsqiu said  cclk : l2cache = 1:3 (fix)
-	pll_cfg.h0div = gd->arch.gi->ddr_div;
 
+	/*Peripheral Clock Relevant*/
+	gd->arch.gi->ddr_div  = Periph_pll_freq / gd->arch.gi->ddrfreq;
+	pll_cfg.h0div = gd->arch.gi->ddr_div;
 #define PCLK_MAX_VALUE	150000000	//pclk not to high and it 1 or 2 times of h2clk
 #define PCLK_MIN_VALUE	50000000	//tcu&ost div clk < 1/2 pclk
 	for (pll_cfg.pdiv = 2; pll_cfg.pdiv <= 16; pll_cfg.pdiv += 2) {
-		if (pll_freq/pll_cfg.pdiv < PCLK_MIN_VALUE) {
+		if (Periph_pll_freq/pll_cfg.pdiv < PCLK_MIN_VALUE) {
 			if (pll_cfg.pdiv > 2)
 				pll_cfg.pdiv -= 2;
 			break;
 		}
 		if (pll_cfg.pdiv/2 < pll_cfg.h0div)
 			continue;
-		if (pll_freq/pll_cfg.pdiv <= PCLK_MAX_VALUE &&
-			pll_freq/pll_cfg.pdiv >= PCLK_MIN_VALUE)
-				break;
+		if (Periph_pll_freq/pll_cfg.pdiv <= PCLK_MAX_VALUE &&
+				Periph_pll_freq/pll_cfg.pdiv >= PCLK_MIN_VALUE)
+			break;
 	}
-
 	if (pll_cfg.pdiv == 17) {
 		pll_cfg.pdiv -= 1;
-		printf("warning pclk is used unexpect value %d\n",pll_freq/pll_cfg.pdiv);
+		printf("Warning: pclk is used unexpect value %d\n", Periph_pll_freq/pll_cfg.pdiv);
 	}
 	pll_cfg.h2div = pll_cfg.pdiv/2;
+#undef PCLK_MAX_VALUE
+#undef PCLK_MIN_VALUE
+	return;
+}
 
+static int freq_correcting(void)
+{
+	unsigned int pll_freq = 0;
+	pll_cfg.mpll_freq = CONFIG_SYS_MPLL_FREQ > 0 ? CONFIG_SYS_MPLL_FREQ : 0;
+	pll_cfg.apll_freq = CONFIG_SYS_APLL_FREQ > 0 ? CONFIG_SYS_APLL_FREQ : 0;
+
+	if (!gd->arch.gi->cpufreq && !gd->arch.gi->ddrfreq) {
+		error("cpufreq = %d and ddrfreq = %d can not be zero, check board config\n",
+				gd->arch.gi->cpufreq,gd->arch.gi->ddrfreq);
+		asm volatile ("wait\n\t");
+	}
+
+#define SEL_MAP(cpu,ddr) ((cpu<<16)|(ddr&0xffff))
+#define PLL_MAXVAL 2400000000UL
+	switch (SEL_MAP(CONFIG_CPU_SEL_PLL,CONFIG_DDR_SEL_PLL)) {
+	case SEL_MAP(APLL,APLL):
+		pll_freq = lcm(gd->arch.gi->cpufreq, gd->arch.gi->ddrfreq, PLL_MAXVAL);
+		pll_cfg.apll_freq = align_pll(pll_cfg.apll_freq,pll_freq);
+		final_fill_div(APLL, APLL);
+		break;
+	case SEL_MAP(MPLL,MPLL):
+		pll_freq = lcm(gd->arch.gi->cpufreq, gd->arch.gi->ddrfreq, PLL_MAXVAL);
+		pll_cfg.mpll_freq = align_pll(pll_cfg.mpll_freq, pll_freq);
+		final_fill_div(MPLL, MPLL);
+		break;
+	case SEL_MAP(APLL,MPLL):
+		pll_cfg.mpll_freq = align_pll(pll_cfg.mpll_freq, gd->arch.gi->ddrfreq);
+		pll_cfg.apll_freq = align_pll(pll_cfg.apll_freq, gd->arch.gi->cpufreq);
+		final_fill_div(APLL, MPLL);
+		break;
+	case SEL_MAP(MPLL,APLL):
+		pll_cfg.apll_freq = align_pll(pll_cfg.apll_freq, gd->arch.gi->ddrfreq);
+		pll_cfg.mpll_freq = align_pll(pll_cfg.mpll_freq, gd->arch.gi->cpufreq);
+		final_fill_div(MPLL, APLL);
+		break;
+	}
+#undef SEL_MAP
+#undef PLL_MAXVAL
 	return 0;
 }
+
+#if 0
+void pll_test(int pll)
+{
+	unsigned i = 0, count = 0;
+	while (1) {
+		for (i = 24000000; i <= 1200000000; i += 24000000) {
+			pll_set(pll,i);
+			debug("time = %d ,apll = %d\n", count * 100 + i/100000000, clk_get_rate(pll));
+		}
+		for (i = 1200000000; i >= 24000000 ; i -= 24000000) {
+			pll_set(pll,i);
+			debug("time = %d, apll = %d\n", count * 100 + 50 + i/100000000, clk_get_rate(pll));
+		}
+		count++;
+	}
+}
+#endif
 
 int pll_init(void)
 {
 	freq_correcting();
-	printf("pll_cfg.mpll_freq = %d\n",pll_cfg.mpll_freq);
 	pll_set(APLL,pll_cfg.apll_freq);
 	pll_set(MPLL,pll_cfg.mpll_freq);
 	cpccr_init();
@@ -251,7 +294,6 @@ int pll_init(void)
 		h0clk = pll_tmp/pll_cfg.h0div;
 		h2clk = pll_tmp/pll_cfg.h2div;
 		pclk = pll_tmp/pll_cfg.pdiv;
-
 		if (CONFIG_CPU_SEL_PLL == APLL)
 			pll_tmp = apll;
 		else
@@ -265,5 +307,5 @@ int pll_init(void)
 				gd->arch.gi->ddrfreq,
 				cclk,l2clk,h0clk,h2clk,pclk);
 	}
+	return 0;
 }
-
