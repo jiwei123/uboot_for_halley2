@@ -282,19 +282,9 @@ void ddr_controller_init(void)
 	ddr_writel(DDRC_REFCNT_VALUE, DDRC_REFCNT);
 	ddr_writel(DDRC_CTRL_VALUE, DDRC_CTRL);
 }
-
-void ddr_phy_init(void)
+static void ddr_phy_param_init(void)
 {
-	unsigned int timeout = 10000, i;
-	unsigned int mr0_tmp = 1;
-	bool	soft_training = false;
-	unsigned int ddr_bl, ddr_cl;
-
-	dwc_debug("DDR PHY init\n");
-
-	/* DDR training address set*/
-	ddr_writel(0x150000, DDRP_DTAR);
-
+	int i;
 	ddr_writel(DDRP_DCR_VALUE, DDRP_DCR);
 	ddr_writel(DDRP_MR0_VALUE, DDRP_MR0);
 
@@ -341,7 +331,12 @@ void ddr_phy_init(void)
 	}
 
 	ddr_writel(DDRP_PGCR_VALUE, DDRP_PGCR);
+}
 
+void ddr_phy_init_step1(void)
+{
+	unsigned int timeout = 10000;
+//dll lock cal
 #ifdef CONFIG_DDR_TYPE_LPDDR2
 	ddr_writel(0xc40, DDRP_DXCCR);
 #endif /* CONFIG_DDR_TYPE_LPDDR2 */
@@ -362,52 +357,56 @@ void ddr_phy_init(void)
 	} else {
 		timeout = 10000;
 	}
-
+}
+static void ddr_chip_init(void)
+{
+	int timeout = 10000;
 	dwc_debug("DDR chip init\n");
+
 #ifndef CONFIG_FPGA
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
-			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
+		   | DDRP_PIR_DRAMRST | DDRP_PIR_DLLSRST, DDRP_PIR);
 #endif /* CONFIG_DDR_TYPE_DDR3 */
 
 #ifdef CONFIG_DDR_TYPE_LPDDR2
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
-			| DDRP_PIR_DLLSRST, DDRP_PIR);
+		   | DDRP_PIR_DLLSRST, DDRP_PIR);
 #endif /* CONFIG_DDR_TYPE_LPDDR2 */
-
 #ifdef	CONFIG_DDR_TYPE_LPDDR
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
 #endif /* CONFIG_DDR_TYPE_LPDDR */
 #else /* CONFIG_FPGA */
 
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT
-			| DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
+		   | DDRP_PIR_DRAMRST | DDRP_PIR_DLLBYP, DDRP_PIR);
 #endif /*CONFIG_FPGA */
 
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
-					| DDRP_PGSR_DLDONE
-					| DDRP_PGSR_ZCDONE
-					| DDRP_PGSR_DIDONE))
-			&& (ddr_readl(DDRP_PGSR) != 0x1f)
-			&& --timeout);
+					  | DDRP_PGSR_DLDONE
+					  | DDRP_PGSR_ZCDONE
+					  | DDRP_PGSR_DIDONE))
+	       && (ddr_readl(DDRP_PGSR) != 0x1f)
+	       && --timeout);
 	if (timeout == 0) {
 		printf("DDR init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
 		hang();
-	} else {
-		timeout = 500000;
 	}
+}
 
-	dwc_debug("DDR training\n");
-#ifdef CONFIG_DDR_FORCE_SOFT_TRAINING
-	soft_training = true;
-#else /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
+
+
+static int ddr_training_hardware(void)
+{
+	int result = 0;
+	int timeout = 500000;
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_QSTRN, DDRP_PIR);
 #endif /* CONFIG_DDR_TYPE_DDR3 */
 
 #ifdef CONFIG_DDR_TYPE_LPDDR
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DLLLOCK
-			| DDRP_PIR_QSTRN, DDRP_PIR);
+		   | DDRP_PIR_QSTRN, DDRP_PIR);
 #endif /* CONFIG_DDR_TYPE_LPDDR */
 
 #ifdef CONFIG_DDR_TYPE_LPDDR2
@@ -415,107 +414,67 @@ void ddr_phy_init(void)
 #endif /* CONFIG_DDR_TYPE_LPDDR2 */
 
 	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
-					| DDRP_PGSR_DLDONE
-					| DDRP_PGSR_ZCDONE
-					| DDRP_PGSR_DIDONE
-					| DDRP_PGSR_DTDONE))
-			&& !(ddr_readl(DDRP_PGSR)
-				& (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR))
-			&& --timeout);
+					 | DDRP_PGSR_DLDONE
+					 | DDRP_PGSR_ZCDONE
+					 | DDRP_PGSR_DIDONE
+					 | DDRP_PGSR_DTDONE))
+	       && !(ddr_readl(DDRP_PGSR)
+		    & (DDRP_PGSR_DTDONE | DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR))
+	       && --timeout);
 
 	if (timeout == 0) {
 		dwc_debug("DDR training timeout\n");
-#ifdef CONFIG_SPL_DDR_SOFT_TRAINING
-		soft_training = true;
-#else /* CONFIG_SPL_DDR_SOFT_TRAINING */
-		dump_ddrp_register();
-		hang();
-#endif /* CONFIG_SPL_DDR_SOFT_TRAINING */
+		result = -1;
 	} else if (ddr_readl(DDRP_PGSR)
-			& (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
+		   & (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
 		dwc_debug("DDR hardware training error\n");
-#ifdef CONFIG_SPL_DDR_SOFT_TRAINING
-		soft_training = true;
-#else /* CONFIG_SPL_DDR_SOFT_TRAINING */
-		int i = 0;
+		result = ddr_readl(DDRP_PGSR);
+	}
+	return result;
+}
+static int ddr_training_software(void)
+{
+	unsigned int result = 0;
+	unsigned int ddr_bl, ddr_cl;
+	unsigned int mr0_tmp = 1;
+	unsigned int cs0;
+	unsigned int cs1;
 
-		for (i = 0; i < 4; i++) {
-			dwc_debug("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
-		}
+	dwc_debug("Now try soft training\n");
+#ifdef CONFIG_DDR_HOST_CC
+	cs0 = CONFIG_DDR_CS0;
+	cs1 = CONFIG_DDR_CS1;
+#else /* CONFIG_DDR_HOST_CC */
+	cs0 = ddr_params_p->cs0;
+	cs1 = ddr_params_p->cs1;
+#endif /* CONFIG_DDR_HOST_CC */
+	if (dqs_gate_train(cs0 + cs1, 4)) {
+		dwc_debug("DDR soft train fail too!!!\n");
 		dump_ddrp_register();
-		hang();
-#endif /* CONFIG_SPL_DDR_SOFT_TRAINING */
+		result = -1;
 	}
-#endif /* !CONFIG_DDR_FORCE_SOFT_TRAINING */
-
-#if defined(CONFIG_SPL_DDR_SOFT_TRAINING) || defined(CONFIG_DDR_FORCE_SOFT_TRAINING)
-	if (soft_training) {
-		unsigned int cs0;
-		unsigned int cs1;
-		dwc_debug("Now try soft training\n");
-#ifdef CONFIG_DDR_HOST_CC
-		cs0 = CONFIG_DDR_CS0;
-		cs1 = CONFIG_DDR_CS1;
-#else /* CONFIG_DDR_HOST_CC */
-		cs0 = ddr_params_p->cs0;
-		cs1 = ddr_params_p->cs1;
-#endif /* CONFIG_DDR_HOST_CC */
-
-		if (dqs_gate_train(cs0 + cs1, 4)) {
-			dwc_debug("DDR soft train fail too!!!\n");
-			dump_ddrp_register();
-			hang();
-		}
 
 #ifdef CONFIG_DDR_HOST_CC
-		ddr_bl = DDR_BL;
-		ddr_cl = DDR_CL;
+	ddr_bl = DDR_BL;
+	ddr_cl = DDR_CL;
 #else /* CONFIG_DDR_HOST_CC */
-		ddr_cl = ddr_params_p->cl;
-		ddr_bl = ddr_params_p->bl;
+	ddr_cl = ddr_params_p->cl;
+	ddr_bl = ddr_params_p->bl;
 #endif /* CONFIG_DDR_HOST_CC */
 
-		while (ddr_bl >> mr0_tmp)
-			mr0_tmp++;
-		ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
-		send_MR0(ddr_readl(DDRP_MR0));
-	} else {
-#ifdef	CONFIG_DDR_TYPE_LPDDR
-#ifdef CONFIG_DDR_HOST_CC
-		ddr_bl = DDR_BL;
-		ddr_cl = DDR_CL;
-#else /* CONFIG_DDR_HOST_CC */
-		ddr_cl = ddr_params_p->cl;
-		ddr_bl = ddr_params_p->bl;
-#endif /* CONFIG_DDR_HOST_CC */
+	while (ddr_bl >> mr0_tmp)
+		mr0_tmp++;
+	ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
+	send_MR0(ddr_readl(DDRP_MR0));
+	return result;
+}
+static int lpddr_retrain_bypass(void)
+{
+	unsigned int result = 0;
+	int timeout = 10000;
+	unsigned int ddr_bl, ddr_cl;
+	unsigned int mr0_tmp = 1;
 
-		while (ddr_bl >> mr0_tmp)
-			mr0_tmp++;
-		ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
-
-		timeout = 10000;
-#ifndef CONFIG_DDR_PHY_ODT
-		ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
-#else /* CONFIG_DDR_PHY_ODT */
-		ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
-				DDRP_PIR);
-		ddr_writel(0x1, DDRP_ACDLLCR);
-#endif /* CONFIG_DDR_PHY_ODT */
-
-		while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
-						| DDRP_PGSR_DLDONE
-						| DDRP_PGSR_ZCDONE
-						| DDRP_PGSR_DIDONE
-						| DDRP_PGSR_DTDONE))
-				&& --timeout);
-		if (timeout == 0) {
-			printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
-			hang();
-		}
-#endif /* CONFIG_DDR_TYPE_LPDDR */
-	}
-#else /*CONFIG_SPL_DDR_SOFT_TRAINING || CONFIG_DDR_FORCE_SOFT_TRAINING */
-#ifdef	CONFIG_DDR_TYPE_LPDDR
 #ifdef CONFIG_DDR_HOST_CC
 	ddr_bl = DDR_BL;
 	ddr_cl = DDR_CL;
@@ -528,28 +487,54 @@ void ddr_phy_init(void)
 		mr0_tmp++;
 	ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
 
-	timeout = 10000;
+
 #ifndef CONFIG_DDR_PHY_ODT
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
 #else /* CONFIG_DDR_PHY_ODT */
 	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
-			DDRP_PIR);
+		   DDRP_PIR);
 	ddr_writel(0x1, DDRP_ACDLLCR);
 #endif /* CONFIG_DDR_PHY_ODT */
 
 	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
-					| DDRP_PGSR_DLDONE
-					| DDRP_PGSR_ZCDONE
-					| DDRP_PGSR_DIDONE
-					| DDRP_PGSR_DTDONE))
-			&& --timeout);
+					 | DDRP_PGSR_DLDONE
+					 | DDRP_PGSR_ZCDONE
+					 | DDRP_PGSR_DIDONE
+					 | DDRP_PGSR_DTDONE))
+	       && --timeout);
 	if (timeout == 0) {
 		printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
-		hang();
+		result = -1;
 	}
-#endif /* CONFIG_DDR_TYPE_LPDDR */
-#endif /* CONFIG_SPL_DDR_SOFT_TRAINING || CONFIG_DDR_FORCE_SOFT_TRAINING */
+	return result;
+}
 
+static void ddr_training(void)
+{
+	unsigned int training_state = -1;
+	dwc_debug("DDR training\n");
+#ifndef CONFIG_DDR_FORCE_SOFT_TRAINING
+	training_state = ddr_training_hardware();
+#endif
+	if(training_state)
+	{
+		int i = 0;
+		for (i = 0; i < 4; i++) {
+			dwc_debug("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
+		}
+		dump_ddrp_register();
+#ifdef CONFIG_SPL_DDR_SOFT_TRAINING
+		training_state = ddr_training_software();
+#endif // CONFIG_SPL_DDR_SOFT_TRAINING
+	}
+#ifdef CONFIG_DDR_TYPE_LPDDR
+	training_state = lpddr_retrain_bypass();
+#endif
+	if(training_state)
+		hang();
+}
+static void ddr_impedance_matching(void)
+{
 #if defined(CONFIG_DDR_PHY_IMPED_PULLUP) && defined(CONFIG_DDR_PHY_IMPED_PULLDOWN)
 	/**
 	 * DDR3 240ohm RZQ output impedance:
@@ -569,9 +554,24 @@ void ddr_phy_init(void)
 		| ((CONFIG_DDR_PHY_IMPED_PULLDOWN & 0x1f) << DDRP_ZQXCR_PULLDOWN_IMPED_BIT);
 	ddr_writel(i, DDRP_ZQXCR0(0));
 #endif
+}
+void ddr_phy_init(void)
+{
+	unsigned int timeout = 10000, i;
+	unsigned int mr0_tmp = 1;
+	bool	soft_training = false;
+	unsigned int ddr_bl, ddr_cl;
+
+	dwc_debug("DDR PHY init\n");
+	ddr_writel(0x150000, DDRP_DTAR);
+	/* DDR training address set*/
+	ddr_phy_param_init();
+	ddr_phy_init_step1();
+	ddr_chip_init();
+	ddr_training();
+	ddr_impedance_matching();
 	dwc_debug("DDR PHY init OK\n");
 }
-
 /* DDR sdram init */
 void sdram_init(void)
 {
@@ -581,14 +581,19 @@ void sdram_init(void)
 	int type = VARIABLE;
 #ifndef CONFIG_DDR_TYPE_VARIABLE
 	struct ddr_params ddr_params;
-#ifdef CONFIG_DDR_TYPE_DDR3
-	type = DDR3;
-#elif defined(CONFIG_DDR_TYPE_LPDDR)
-	type = LPDDR;
-#elif defined(CONFIG_DDR_TYPE_LPDDR2)
-	type = LPDDR2;
-#endif /* CONFIG_DDR_TYPE_DDR3 */
-	ddr_params_p = &ddr_params;
+#define DDRTYPE(x) ({				\
+		#ifdef CONFIG_DDR_TYPE_##x	\
+			x;			\
+		#else				\
+			type;			\
+		#endif				\
+			})
+	type = DDRTYPE(DDR3);
+	type = DDRTYPE(LPDDR);
+	type = DDRTYPE(LPDDR2);
+	if(type == VARIABLE)
+		ddr_params_p = &ddr_params;
+#udef DDRTYPE
 #else
 	ddr_params_p = &gd->arch.gi->ddr_params;
 	ddr_params_p->freq = gd->arch.gi->cpufreq / gd->arch.gi->ddr_div;
