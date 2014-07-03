@@ -582,7 +582,7 @@ static int jz_dequeue(struct usb_ep *ep, struct usb_request *req)
 	struct dwc2_request *request = to_dwc2_request(req);
 	struct dwc2_request *r = NULL;
 	
-	list_for_each_entry(request,&dep->urb_list,queue) {
+	list_for_each_entry(r ,&dep->urb_list,queue) {
 		if (r == request)
 			break;
 	}
