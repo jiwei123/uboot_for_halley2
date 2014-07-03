@@ -3,7 +3,7 @@
  * DDR_CACHE_TEST, ADDRLINE_TEST, DATALINE_TEST, CPU_TEST,
  * DMA_TEST, CPU_DMA, REMAP_TEST
  *
- * Used by Jz4775, JZ4780, JZ4785, and so on ...
+ * Used by Jz4775, JZ4780, M200, and so on ...
  *
  * Copyright (C) 2014 Ingenic Semiconductor Co.,Ltd
  * Author:

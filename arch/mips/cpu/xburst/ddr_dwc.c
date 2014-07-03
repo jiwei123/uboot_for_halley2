@@ -650,7 +650,7 @@ void sdram_init(void)
 	reset_dll();
 #endif
 	rate = clk_get_rate(DDR);
-#ifdef CONFIG_JZ4785
+#ifdef CONFIG_M200
 	if(rate <= 150000000)
 		bypass = 1;
 #endif

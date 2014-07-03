@@ -27,7 +27,7 @@
 #include <config.h>
 
 #define BUFFER_SIZE 4
-#ifdef CONFIG_JZ4785
+#ifdef CONFIG_M200
 #define SKIP_SIZE 2048
 #endif
 #ifdef CONFIG_JZ4780

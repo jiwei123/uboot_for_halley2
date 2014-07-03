@@ -30,8 +30,8 @@
 #include "jz_gpio/jz4775_gpio.c"
 #elif defined (CONFIG_JZ4780)
 #include "jz_gpio/jz4780_gpio.c"
-#elif defined (CONFIG_JZ4785)
-#include "jz_gpio/jz4785_gpio.c"
+#elif defined (CONFIG_M200)
+#include "jz_gpio/m200_gpio.c"
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;

@@ -1,5 +1,5 @@
 /*
- * JZ4785 GPIO definitions
+ * M200 GPIO definitions
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Sonil <ztyan@ingenic.cn>

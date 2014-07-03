@@ -1,5 +1,5 @@
 /*
- * JZ4785 pll configuration
+ * M200 pll configuration
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>

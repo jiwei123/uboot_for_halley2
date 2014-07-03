@@ -1,9 +1,9 @@
 #
-# Ingenic JZ4785 configuration
+# Ingenic M200 makefile
 #
 # Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
 # Author: Zoro <ykli@ingenic.cn>
-# Based on: arch/mips/cpu/xburst/jz4780/config.mk
+# Based on: arch/mips/cpu/xburst/jz4780/Makefile
 #           Written by Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -22,5 +22,33 @@
 # MA 02111-1307 USA
 #
 
-# branch likely triggers a reserved instruction exception
-PLATFORM_CPPFLAGS += -mno-branch-likely
+include $(TOPDIR)/config.mk
+
+LIB	= $(obj)lib$(SOC).o
+
+SOBJS-y	=
+COBJS-y	= $(SOC).o
+ifndef CONFIG_FPGA
+COBJS-y += pll.o
+COBJS-y += clk.o
+endif
+COBJS-y += ../ddr_dwc.o
+COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
+
+SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+START	:= $(addprefix $(obj),$(START))
+
+all:	$(obj).depend $(LIB)
+
+$(LIB):	$(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

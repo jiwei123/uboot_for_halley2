@@ -30,7 +30,7 @@
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
-#define CONFIG_JZ4785		/* Jz4785 SoC */
+#define CONFIG_M200		/* Jz4785 SoC */
 #define CONFIG_FPGA		/* Jz4785 FPGA */
 
 
@@ -133,7 +133,7 @@
 #define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
 #define CONFIG_SYS_PWM_FULL		256
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
-#define CONFIG_VIDEO_JZ4785
+#define CONFIG_VIDEO_M200
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BYD_BM8766U
 #ifdef CONFIG_RLE_LCD_LOGO
@@ -298,7 +298,7 @@
 #else
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
 #endif
-#define CONFIG_SPL_PAD_TO		26624 /* equal to spl max size in JZ4785 */
+#define CONFIG_SPL_PAD_TO		26624 /* equal to spl max size in M200 */
 
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	86//0x5A //wli changed 0x20 /* 16KB offset */

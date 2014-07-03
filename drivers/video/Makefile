@@ -61,7 +61,7 @@ COBJS-$(CONFIG_VIDEO_BM347WV_F_8991FTGF) += jz_lcd/lcd_panel/byd_8991.o \
 	jz_lcd/lcd_panel/byd_8991_init.o
 COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4775_lcd.o
 COBJS-$(CONFIG_VIDEO_JZ4780) += jz_lcd/backlight_pwm.o jz_lcd/jz4780_lcd.o
-COBJS-$(CONFIG_VIDEO_JZ4785) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v1_2.o
+COBJS-$(CONFIG_VIDEO_M200) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v1_2.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)

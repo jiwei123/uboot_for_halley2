@@ -417,7 +417,7 @@ void clk_init(void)
 #ifdef CONFIG_JZ_MMC_MSC2
 		| CPM_CLKGR_MSC2
 #endif
-#ifdef CONFIG_VIDEO_JZ4785
+#ifdef CONFIG_VIDEO_M200
 		| CPM_CLKGR_LCD
 #endif
 		;

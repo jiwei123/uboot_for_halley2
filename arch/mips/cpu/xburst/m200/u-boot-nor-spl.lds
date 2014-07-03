@@ -8,20 +8,28 @@ SECTIONS
 	.text      :
 	{
 		__start = .;
-		arch/mips/cpu/xburst/jz4785/start.o	(.text*)
+		arch/mips/cpu/xburst/m200/start.o	(.text*)
 		*(.text*)
+		. = ALIGN(4);
 	} >.sram
 
-	. = ALIGN(4);
-	.rodata : { *(SORT_BY_ALIGNMENT(.rodata*)) } >.sram
+	.rodata : {
+		*(SORT_BY_ALIGNMENT(.rodata*))
+		. = ALIGN(4);
+	} >.sram
 
-	. = ALIGN(4);
-	.data : { *(SORT_BY_ALIGNMENT(.data*)) } >.sram
+	__data_start = .;
+	__data_end = . + SIZEOF(.data);
+	__image_copy_end = __data_end;
 
-	. = ALIGN(4);
-	__image_copy_end = .;
+	.data 0x80000000 : AT(ADDR(.rodata) + SIZEOF(.rodata))
+	{
+		*(SORT_BY_ALIGNMENT(.data*))
+		. = ALIGN(4);
+	}
 
-	.bss : {
+	.bss 0x80000000 + SIZEOF(.data) : AT(ADDR(.rodata) + SIZEOF(.rodata) + SIZEOF(.data))
+	{
 		. = ALIGN(4);
 		__bss_start = .;
 		*(.sbss.*)
@@ -29,7 +37,7 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(4);
 		__bss_end = .;
-	} >.sram
+	}
 
 	/DISCARD/ : {
 		*(.dynbss)

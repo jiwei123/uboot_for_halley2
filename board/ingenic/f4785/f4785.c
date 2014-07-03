@@ -127,7 +127,7 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: f4785 (Ingenic XBurst JZ4785 SoC)\n");
+	puts("Board: f4785 (Ingenic XBurst M200 SoC)\n");
 	return 0;
 }
 

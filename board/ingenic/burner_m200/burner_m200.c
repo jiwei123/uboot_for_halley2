@@ -92,7 +92,7 @@ int board_eth_init(bd_t *bis)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: burner_jz4785 (Ingenic XBurst JZ4785 SoC)\n");
+	puts("Board: burner_m200 (Ingenic XBurst M200 SoC)\n");
 	return 0;
 }
 

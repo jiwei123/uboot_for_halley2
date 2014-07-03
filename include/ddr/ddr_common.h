@@ -12,7 +12,7 @@
 #include <asm/ddr_dwc.h>
 #include <ddr/ddrc.h>
 #include <ddr/ddrp_dwc.h>
-#elif defined(CONFIG_JZ4785)
+#elif defined(CONFIG_M200)
 #include <asm/ddr_dwc.h>
 #include <ddr/ddrc.h>
 #include <ddr/ddrp_dwc.h>

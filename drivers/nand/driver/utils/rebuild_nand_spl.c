@@ -132,7 +132,7 @@ static int gen_spl_header_4780(unsigned int page_size,
 }
 
 /**
- * JZ4785: nand boot specification area
+ * M200: nand boot specification area
  * 64:   0 ~  63: BusWidth_flag
  * 64:  64 ~ 127: NandType_flag
  * 4: 128 ~ 131: RowCycle

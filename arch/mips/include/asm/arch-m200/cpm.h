@@ -1,5 +1,5 @@
 /*
- * JZ4785 cpm definitions
+ * M200 cpm definitions
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  *

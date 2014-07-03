@@ -1,5 +1,5 @@
 /*
- * JZ4785 common routines
+ * M200 common routines
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>

@@ -1,6 +1,6 @@
 /*
  * SPL params fixer.
- * It's used for speed up JZ4785 bootrom performance.
+ * It's used for speed up M200 bootrom performance.
  *
  * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
  *

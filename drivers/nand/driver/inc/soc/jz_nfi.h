@@ -1,7 +1,7 @@
 /*
  * linux/include/asm-mips/mach-jz4780/jz4780nfi.h
  *
- * JZ4785 nfi register definition.
+ * M200 nfi register definition.
  *
  * Copyright (C) 2012 Ingenic Semiconductor Co., Ltd.
  */
