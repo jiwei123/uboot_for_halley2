@@ -147,7 +147,7 @@ struct cloner {
 	struct usb_request *args_req;
 	struct usb_request *read_req;
 
-	union cmd cmd;
+	union cmd *cmd;
 	int cmd_type;
 	uint32_t buf_size;
 	int ack;
@@ -407,12 +407,12 @@ int nand_program(struct cloner *cloner)
 {
 #ifdef CONFIG_JZ_NAND_MGR
 	int curr_device = 0;
-	u32 startaddr = cloner->cmd.write.partation + (cloner->cmd.write.offset);
-	u32 length = cloner->cmd.write.length;
+	u32 startaddr = cloner->cmd->write.partation + (cloner->cmd->write.offset);
+	u32 length = cloner->cmd->write.length;
 	void *databuf = (void *)cloner->write_req->buf;
 
-	printf("=========++++++++++++>   NAND PROGRAM:startaddr = %d P offset = %d P length = %d \n",startaddr,cloner->cmd.write.offset,length);
-	do_nand_request(startaddr, databuf, length,cloner->cmd.write.offset);
+	printf("=========++++++++++++>   NAND PROGRAM:startaddr = %d P offset = %d P length = %d \n",startaddr,cloner->cmd->write.offset,length);
+	do_nand_request(startaddr, databuf, length,cloner->cmd->write.offset);
 
 	return 0;
 #else
@@ -425,8 +425,8 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 #define MMC_BYTE_PER_BLOCK 512
 	int curr_device = 0;
 	struct mmc *mmc = find_mmc_device(mmc_index);
-	u32 blk = (cloner->cmd.write.partation + cloner->cmd.write.offset)/MMC_BYTE_PER_BLOCK;
-	u32 cnt = (cloner->cmd.write.length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
+	u32 blk = (cloner->cmd->write.partation + cloner->cmd->write.offset)/MMC_BYTE_PER_BLOCK;
+	u32 cnt = (cloner->cmd->write.length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
 	void *addr = (void *)cloner->write_req->buf;
 	u32 n;
 
@@ -461,10 +461,10 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 		if (n != cnt)
 			return -EIO;
 
-		uint32_t tmp_crc = local_crc32(0xffffffff,addr,cloner->cmd.write.length);
-		debug_cond(BURNNER_DEBUG,"%d blocks check: %s\n",n,(cloner->cmd.write.crc == tmp_crc) ? "OK" : "ERROR");
-		if (cloner->cmd.write.crc != tmp_crc) {
-			printf("src_crc32 = %08x , dst_crc32 = %08x\n",cloner->cmd.write.crc,tmp_crc);
+		uint32_t tmp_crc = local_crc32(0xffffffff,addr,cloner->cmd->write.length);
+		debug_cond(BURNNER_DEBUG,"%d blocks check: %s\n",n,(cloner->cmd->write.crc == tmp_crc) ? "OK" : "ERROR");
+		if (cloner->cmd->write.crc != tmp_crc) {
+			printf("src_crc32 = %08x , dst_crc32 = %08x\n",cloner->cmd->write.crc,tmp_crc);
 			return -EIO;
 		}
 	}
@@ -478,8 +478,8 @@ int efuse_program(struct cloner *cloner)
 		efuse_init(cloner->args->efuse_gpio);
 		enabled = 1;
 	}
-	u32 partation = cloner->cmd.write.partation;
-	u32 length = cloner->cmd.write.length;
+	u32 partation = cloner->cmd->write.partation;
+	u32 length = cloner->cmd->write.length;
 	void *addr = (void *)cloner->write_req->buf;
 	u32 r = 0;
 
@@ -519,14 +519,14 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 
 	if (cloner->args->transfer_data_chk) {
 		uint32_t tmp_crc = local_crc32(0xffffffff,req->buf,req->actual);
-		if (cloner->cmd.write.crc != tmp_crc) {
-			printf("crc is errr! src crc=%08x crc=%08x\n",cloner->cmd.write.crc,tmp_crc);
+		if (cloner->cmd->write.crc != tmp_crc) {
+			printf("crc is errr! src crc=%08x crc=%08x\n",cloner->cmd->write.crc,tmp_crc);
 			cloner->ack = -EINVAL;
 			return;
 		}
 	}
 #define OPS(x,y) ((x<<16)|(y&0xffff))
-	switch(cloner->cmd.write.ops) {
+	switch(cloner->cmd->write.ops) {
 		case OPS(I2C,RAW):
 			cloner->ack = i2c_program(cloner);
 			break;
@@ -536,7 +536,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		case OPS(MMC,0):
 		case OPS(MMC,1):
 		case OPS(MMC,2):
-			cloner->ack = mmc_program(cloner,cloner->cmd.write.ops & 0xffff);
+			cloner->ack = mmc_program(cloner,cloner->cmd->write.ops & 0xffff);
 			break;
 		case OPS(MEMORY,RAW):
 			cloner->ack = 0;
@@ -546,7 +546,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			break;
 		case OPS(REGISTER,RAW):
 			{
-				volatile unsigned int *tmp = cloner->cmd.write.partation;
+				volatile unsigned int *tmp = cloner->cmd->write.partation;
 				if(tmp > 0xb0000000 && tmp < 0xb8000000) {
 					*tmp = *((int*)cloner->write_req->buf);
 					cloner->ack = 0;
@@ -557,7 +557,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			}
 			break;
 		default:
-			printf("ops %08x not support yet.\n",cloner->cmd.write.ops);
+			printf("ops %08x not support yet.\n",cloner->cmd->write.ops);
 	}
 #undef OPS
 }
@@ -602,7 +602,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 		case VR_READ:
 			break;
 		case VR_SYNC_TIME:
-			cloner->ack = rtc_set(&cloner->cmd.rtc);
+			cloner->ack = rtc_set(&cloner->cmd->rtc);
 			break;
 		case VR_GET_ACK:
 		case VR_GET_CPU_INFO:
@@ -673,7 +673,7 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->ack = 0;
 	cloner->cdev = cdev;
 
-	cloner->ep0req->buf = &cloner->cmd;
+	cloner->cmd = (union cmd *)cloner->ep0req->buf;
 
 	if (gadget_is_dualspeed(cdev->gadget)) {
 		hs_bulk_in_desc.bEndpointAddress =
