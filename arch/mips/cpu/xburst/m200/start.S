@@ -92,6 +92,13 @@ _start:
 	mtc0	v0, CP0_CONFIG, 7
 	nop
 
+	mfc0	v0, $12, 2
+	nop
+	li	v1, 0x04000000
+	or	v0, v0, v1
+	mtc0	v0, $12, 2
+	nop
+
 	/*
 	 * CU0=UM=EXL=IE=0, BEV=ERL=1, IP2~7=1
 	 */
@@ -104,10 +111,10 @@ _start:
 	mtc0	t1, CP0_CAUSE
 
 	/* enable bridge radical mode */
-	la	t0, CPM_BASE
-	lw	t1, 0x24(t0)
-	ori	t1, t1, 0x22
-	sw	t1, 0x24(t0)
+//	la	t0, CPM_BASE
+//	lw	t1, 0x24(t0)
+//	ori	t1, t1, 0x22
+//	sw	t1, 0x24(t0)
 
 	/* Set up stack */
 #ifdef CONFIG_SPL_STACK
