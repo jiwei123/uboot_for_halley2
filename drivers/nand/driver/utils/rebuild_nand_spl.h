@@ -36,6 +36,6 @@ typedef struct __nand_params {
 #define REBUILD_GET_NAND_TYPE(n)	(((n)>>14) & 0x3)
 int rebuild_nand_spl_4775(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf);
 int rebuild_nand_spl_4780(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf);
-int rebuild_nand_spl_4785(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf);
+int rebuild_nand_spl_m200(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf);
 
 #endif

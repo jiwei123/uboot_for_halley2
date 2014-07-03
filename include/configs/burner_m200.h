@@ -28,7 +28,7 @@
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
-#define CONFIG_M200		/* Jz4785 SoC */
+#define CONFIG_M200		/* M200 SoC */
 #define CONFIG_XBURST_TRAPS
 
 #define CONFIG_SYS_MPLL_FREQ		0

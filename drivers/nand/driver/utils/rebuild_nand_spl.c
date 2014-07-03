@@ -140,7 +140,7 @@ static int gen_spl_header_4780(unsigned int page_size,
  * 24: 136 ~ 159: reserved
  * 96: 160 ~ 255: reserved for nand basic params
  **/
-static int gen_spl_header_4785(unsigned int page_size,
+static int gen_spl_header_m200(unsigned int page_size,
 			       unsigned int bus_width,
 			       unsigned int row_cycle,
 			       unsigned int nand_type,
@@ -214,21 +214,21 @@ int rebuild_nand_spl_4780(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf)
  * NOTE1: spl_sbuf and spl_dbuf can use the same buf.
  * NOTE2: size of the spl_dbuf must >= nand_spl.bin.
  **/
-#define NAND_SPL_SIZE_4785		(32 * 1024)
-#define NAND_PARAMS_OFFSET_4785		(128 + 32)
-int rebuild_nand_spl_4785(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf) {
+#define NAND_SPL_SIZE_M200 (32 * 1024)
+#define NAND_PARAMS_OFFSET_M200	(128 + 32)
+int rebuild_nand_spl_m200(nand_params *ndparams, void *spl_sbuf, void *spl_dbuf) {
 	int ret;
 	nand_basic_info *ndinfo = &ndparams->ndbaseinfo;
 
 	if (spl_sbuf != spl_dbuf)
-		__memcpy(spl_dbuf, spl_sbuf, NAND_SPL_SIZE_4785);
+		__memcpy(spl_dbuf, spl_sbuf, NAND_SPL_SIZE_M200);
 
-	ret = gen_spl_header_4785(ndinfo->pagesize, ndinfo->buswidth,
+	ret = gen_spl_header_m200(ndinfo->pagesize, ndinfo->buswidth,
 				  ndinfo->rowcycles, REBUILD_GET_NAND_TYPE(ndinfo->options), spl_dbuf);
 	if (ret)
 		return -1;
 
-	__memcpy(spl_dbuf + NAND_PARAMS_OFFSET_4785, ndparams, sizeof(nand_params));
+	__memcpy(spl_dbuf + NAND_PARAMS_OFFSET_M200, ndparams, sizeof(nand_params));
 
 	return 0;
 }

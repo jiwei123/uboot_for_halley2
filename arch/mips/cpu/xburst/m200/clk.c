@@ -1,5 +1,5 @@
 /*
- * Jz4785 clock common interface
+ * m200 clock common interface
  *
  * Copyright (C) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>

@@ -5,5 +5,5 @@
 #elif defined(CONFIG_JZ4775)
 #define CONFIG_SOC_4775
 #elif defined(CONFIG_M200)
-#define CONFIG_SOC_4785
+#define CONFIG_SOC_M200
 #endif

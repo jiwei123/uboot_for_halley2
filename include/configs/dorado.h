@@ -22,15 +22,15 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __CONFIG_F4785_H__
-#define __CONFIG_F4785_H__
+#ifndef __CONFIG_DORAOD_H__
+#define __CONFIG_DORAOD_H__
 
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
-#define CONFIG_M200		/* Jz4785 SoC */
+#define CONFIG_M200		/* M200 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 
 #define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
@@ -407,4 +407,4 @@
 #define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
-#endif /* __CONFIG_F4785_H__ */
+#endif /* __CONFIG_DORAOD_H__ */
