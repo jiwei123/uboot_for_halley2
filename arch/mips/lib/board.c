@@ -353,14 +353,14 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	puts("ready\n");
 #endif
 
-#if defined(CONFIG_MISC_INIT_R)
-	/* miscellaneous platform dependent initialisations */
-	misc_init_r();
-#endif
-
 #ifdef CONFIG_USB_GADGET
 extern void board_usb_init(void);
 	board_usb_init();
+#endif
+
+#if defined(CONFIG_MISC_INIT_R)
+	/* miscellaneous platform dependent initialisations */
+	misc_init_r();
 #endif
 
 #ifdef CONFIG_BITBANGMII
