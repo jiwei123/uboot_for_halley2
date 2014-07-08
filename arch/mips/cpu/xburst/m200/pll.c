@@ -64,8 +64,10 @@ static unsigned int get_pllreg_value(int freq)
 	unsigned nr = 0,nf = 0,od1 =7 ,od0;
 
 	/*Unset*/
-	if (freq <= 0)
-		return -EINVAL;;
+	if (freq < 600000000) {
+		error("uboot pllfreq must greater than 600M");
+		return -EINVAL;
+	}
 
 	/*Align to extal clk*/
 	if (pllfreq%extal  >= extal/2) {
@@ -182,35 +184,45 @@ static void final_fill_div(int cpll, int ddrpll)
 {
 	unsigned cpu_pll_freq = (cpll == APLL)? pll_cfg.apll_freq : pll_cfg.mpll_freq;
 	unsigned Periph_pll_freq = (ddrpll == APLL) ? pll_cfg.apll_freq : pll_cfg.mpll_freq;
+	unsigned l2cache_clk = 0;
 
-	/*Cpu Clock Relevant*/
+	/*DDRDIV*/
+	gd->arch.gi->ddr_div = Periph_pll_freq/gd->arch.gi->ddrfreq;
+	/*cdiv*/
 	pll_cfg.cdiv = cpu_pll_freq/gd->arch.gi->cpufreq;
-	pll_cfg.l2div = (pll_cfg.cdiv * 3);	//dsqiu said  cclk : l2cache = 1:3 (fix)
 
-	/*Peripheral Clock Relevant*/
-	gd->arch.gi->ddr_div  = Periph_pll_freq / gd->arch.gi->ddrfreq;
-	pll_cfg.h0div = gd->arch.gi->ddr_div;
-#define PCLK_MAX_VALUE	150000000	//pclk not to high and it 1 or 2 times of h2clk
-#define PCLK_MIN_VALUE	50000000	//tcu&ost div clk < 1/2 pclk
-	for (pll_cfg.pdiv = 2; pll_cfg.pdiv <= 16; pll_cfg.pdiv += 2) {
-		if (Periph_pll_freq/pll_cfg.pdiv < PCLK_MIN_VALUE) {
-			if (pll_cfg.pdiv > 2)
-				pll_cfg.pdiv -= 2;
-			break;
-		}
-		if (pll_cfg.pdiv/2 < pll_cfg.h0div)
-			continue;
-		if (Periph_pll_freq/pll_cfg.pdiv <= PCLK_MAX_VALUE &&
-				Periph_pll_freq/pll_cfg.pdiv >= PCLK_MIN_VALUE)
-			break;
+	/*AHB0 AHB2 <= 250M*/
+	/*PCLK 75M ~ 150M*/
+	switch (Periph_pll_freq/100000000) {
+	case 10 ... 12:
+		pll_cfg.pdiv = 10;
+		pll_cfg.h0div = 5;
+		pll_cfg.h2div = 5;
+		break;
+	case 7 ... 9:
+		pll_cfg.pdiv = 8;
+		pll_cfg.h0div = 4;
+		pll_cfg.h2div = 4;
+		break;
+	default:
+		error("Periph pll freq %d is out of range\n", Periph_pll_freq);
+	case 6:
+		pll_cfg.pdiv = 6;
+		pll_cfg.h0div = 3;
+		pll_cfg.h2div = 3;
+		break;
 	}
-	if (pll_cfg.pdiv == 17) {
-		pll_cfg.pdiv -= 1;
-		printf("Warning: pclk is used unexpect value %d\n", Periph_pll_freq/pll_cfg.pdiv);
-	}
-	pll_cfg.h2div = pll_cfg.pdiv/2;
-#undef PCLK_MAX_VALUE
-#undef PCLK_MIN_VALUE
+
+	/*L2CACHE <= 1.5 (AHB0 || AHB2)  && L2CACHE <= CPU*/
+	l2cache_clk = (Periph_pll_freq/pll_cfg.h0div) * 3/2;
+	l2cache_clk = l2cache_clk >= gd->arch.gi->cpufreq ? gd->arch.gi->cpufreq : l2cache_clk;
+
+	printf("l2cache_clk = %d\n",l2cache_clk);
+	pll_cfg.l2div = cpu_pll_freq%l2cache_clk ? cpu_pll_freq/l2cache_clk + 1 :
+		cpu_pll_freq/l2cache_clk;
+
+	printf("pll_cfg.pdiv = %d, pll_cfg.h2div = %d, pll_cfg.h0div = %d, pll_cfg.cdiv = %d, pll_cfg.l2div = %d\n",
+			pll_cfg.pdiv,pll_cfg.h2div,pll_cfg.h0div,pll_cfg.cdiv,pll_cfg.l2div);
 	return;
 }
 
@@ -275,6 +287,7 @@ void pll_test(int pll)
 
 int pll_init(void)
 {
+	printf("%s:%d\n",__func__,__LINE__);
 	freq_correcting();
 	pll_set(APLL,pll_cfg.apll_freq);
 	pll_set(MPLL,pll_cfg.mpll_freq);
