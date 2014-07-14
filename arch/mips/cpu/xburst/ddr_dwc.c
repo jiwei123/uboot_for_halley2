@@ -473,7 +473,7 @@ static int ddr_training_hardware(unsigned int mode)
 	}
 	return result;
 }
-static int ddr_training_software(void)
+static int ddr_training_software(unsigned int mode)
 {
 	unsigned int result = 0;
 	unsigned int ddr_bl, ddr_cl;
@@ -503,10 +503,12 @@ static int ddr_training_software(void)
 	ddr_bl = ddr_params_p->bl;
 #endif /* CONFIG_DDR_HOST_CC */
 
-	while (ddr_bl >> mr0_tmp)
-		mr0_tmp++;
-	ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
-	send_MR0(ddr_readl(DDRP_MR0));
+	if(DDR_TYPE_MODE(mode) == LPDDR){
+		while (ddr_bl >> mr0_tmp)
+			mr0_tmp++;
+		ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
+		send_MR0(ddr_readl(DDRP_MR0));
+	}
 	return result;
 }
 static int lpddr_retrain_bypass(void)
@@ -565,7 +567,7 @@ static void ddr_training(unsigned int mode)
 		}
 		dump_ddrp_register();
 #ifdef CONFIG_SPL_DDR_SOFT_TRAINING
-		training_state = ddr_training_software();
+		training_state = ddr_training_software(mode);
 #endif // CONFIG_SPL_DDR_SOFT_TRAINING
 	}
 	if(DDR_TYPE_MODE(mode) == LPDDR)

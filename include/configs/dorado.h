@@ -32,6 +32,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
+#define CONFIG_SPL_DDR_SOFT_TRAINING
 
 #define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
