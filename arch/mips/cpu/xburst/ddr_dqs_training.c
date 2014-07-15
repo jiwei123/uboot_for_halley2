@@ -45,14 +45,14 @@ union ddr_cmd {
 		unsigned int data2;
 		unsigned int data1;
 		unsigned mask:8;
-		unsigned addr:15;
+		unsigned addr:16;
 		unsigned bank:3;
 		unsigned rank:1;
 		unsigned cmd:4;
 		unsigned tag:1;
 		unsigned tag_bak:1;
 		unsigned dtp:5;
-		unsigned rpt:5;
+		unsigned rpt:3;
 	}cmd;
 };
 
@@ -293,7 +293,7 @@ int dqs_gate_train(int rank_cnt, int byte_cnt)
 				dwc_debug("Middle: %d\n", middle);
 				dwc_debug("Rank:%d\n", rank);
 				dwc_debug("Byte:%d\n", byte);
-				dwc_debug("@pas:DXDQSTR= 0x%x\n", ddr_readl(DDRP_DXDQSTR(byte)));
+				printf("@pas:DXDQSTR= 0x%x\n", ddr_readl(DDRP_DXDQSTR(byte)));
 			} else {
 				printf("Rank:%d\n", rank);
 				printf("No pass at byte:%d\n", byte);
