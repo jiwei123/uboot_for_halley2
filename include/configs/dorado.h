@@ -89,8 +89,11 @@
 /**
  * Boot arguments definitions.
  */
-
+#ifndef CONFIG_RVMS
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=768M@0x30000000"
+#else
+#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=768M@0x30000000"
+#endif
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
