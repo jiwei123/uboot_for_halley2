@@ -183,6 +183,7 @@
 
 /* PMU
 #define CONFIG_REGULATOR
+#define CONFIG_PMU_D2041
  */
 
 /* DEBUG ETHERNET */
