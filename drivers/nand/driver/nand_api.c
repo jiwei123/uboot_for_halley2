@@ -868,7 +868,7 @@ static int fill_cinfo(nand_data *nddata, const nand_flash *ndflash)
 			RETURN_ERR(ENAND, "can not alloc memory for retryparms");
 
 		cinfo->retryparms->mode = READ_RETRY_MODE(cinfo);
-		if (get_retry_parms(base, 0, nddata->rbinfo, cinfo->retryparms)) {
+		if (get_retry_parms(base,cinfo,0, nddata->rbinfo, cinfo->retryparms)) {
 			ndd_free(cinfo->retryparms);
 			RETURN_ERR(ENAND, "get retry data error");
 		}

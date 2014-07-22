@@ -117,6 +117,18 @@ struct hy_rr_msg {
         unsigned char setaddr[8];
 };
 
+struct mt_rr_ada_msg{
+	unsigned int offset;
+	unsigned int feature_addr;
+	unsigned int set_value[7];
+};
+
+struct mt_rr_ada_msg mt_rr_29f_32g_ada = {
+	0x00,
+	0x89,
+	{0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07}
+};
+
 struct hy_rr_msg hy_rr_f26_32g = {
 	0x00,
 	{0x00, 0x00},
@@ -209,7 +221,30 @@ static int set_retry_othermode(int context, retry_parms *retryparms, struct hy_r
 	nand_io_send_cmd(context, 0x16, 300);
 	return 0;
 }
-int set_retry_feature(int data, unsigned int cs_id, int cycle)
+static int set_retry_mt_ada(int data,int context,struct mt_rr_ada_msg *msg,int index,int cs_id)
+{
+
+	nand_data *ndata = (nand_data *)data;
+	io_base *iobase = ndata->base;
+	int ret;
+	int timeout = 10;
+	int timeout_ns = timeout * 1000 * 1000;
+
+	ndata->clear_rb(cs_id);
+
+	nand_io_send_cmd(context, CMD_SET_FEATURES, 0);
+	nand_io_send_spec_addr(context,msg->feature_addr , 1, 300);
+
+	nand_io_send_data(context,&(msg->set_value[index]), 4);
+
+	ret = ndata->wait_rb(cs_id, timeout);
+	if(ret < 0)
+		RETURN_ERR(ENAND, "set retry feature ,wait rb error !! \n");
+
+	return 0;
+}
+
+int set_hynix_retry_feature(int data, unsigned int cs_id, int cycle)
 {
 	int ret, context;
 	static unsigned char cs_retry[4] = {0, 0, 0, 0};
@@ -251,12 +286,66 @@ int set_retry_feature(int data, unsigned int cs_id, int cycle)
 		default:
 			nand_io_chip_deselect(context, cs_id);
 			nand_io_close(context);
-			RETURN_ERR(ENAND, "unknown retry mode");
+			RETURN_ERR(ENAND, "unknown hynix set retry feature mode");
 	}
 
 	nand_io_chip_deselect(context, cs_id);
 ERR_LABLE(chip_select_setretry):
 	nand_io_close(context);
+	return ret;
+}
+int set_micron_retry_feature(int data, unsigned int cs_id, int cycle)
+{
+	int ret, context;
+	static unsigned char cs_retry[4] = {0, 0, 0, 0};
+	nand_data *ndata = (nand_data *)data;
+	chip_info *cinfo = ndata->cinfo;
+	io_base *iobase = ndata->base;
+	retry_parms *retryparms = cinfo->retryparms;
+
+	/* io open */
+	context = nand_io_open(&(iobase->nfi), NULL);
+	if (!context)
+		RETURN_ERR(ENAND, "nand io open error");
+
+	/* chip select */
+	ret = nand_io_chip_select(context, cs_id);
+	if (ret)
+		GOTO_ERR(chip_select_setretry);
+	switch (retryparms->mode) {
+		case MT_RR_29F_32G_MLC_ADA:
+			cs_retry[cs_id] = (cs_retry[cs_id] + cycle) % retryparms->cycle;
+			ret = set_retry_mt_ada(data,context,&mt_rr_29f_32g_ada,cs_retry[cs_id],cs_id);
+			break;
+		default:
+			nand_io_chip_deselect(context, cs_id);
+			nand_io_close(context);
+			RETURN_ERR(ENAND, "unknown hynix set retry feature mode");
+	}
+
+	nand_io_chip_deselect(context, cs_id);
+	ERR_LABLE(chip_select_setretry):
+	nand_io_close(context);
+	return ret;
+}
+
+int set_retry_feature(int data, unsigned int cs_id, int cycle)
+{
+	int ret;
+	nand_data *ndata = (nand_data *)data;
+	chip_info *cinfo = ndata->cinfo;
+
+	switch(cinfo->manuf){
+		case NAND_MFR_MICRON:
+			ret = set_micron_retry_feature(data,cs_id,cycle);
+			break;
+		case NAND_MFR_HYNIX:
+			ret = set_hynix_retry_feature(data,cs_id,cycle);
+			break;
+		default:
+			RETURN_ERR(ENAND, "unknownset retry feature mode");
+
+	}
 	return ret;
 }
 int get_retry_f26_data(int context, retry_parms *retryparms, struct hy_rr_msg *msg)
@@ -270,7 +359,7 @@ int get_retry_f26_data(int context, retry_parms *retryparms, struct hy_rr_msg *m
 	}
 	return 0;
 }
-int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms)
+static int get_hynix_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms)
 {
 	int i, ret, context, datasize;
 	int retry_flag, retrycnt = 0;
@@ -306,7 +395,7 @@ int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_p
 			msg = &hy_rr_f1y_64g;
 			break;
 		default:
-			RETURN_ERR(ENAND, "unknown retry mode");
+			RETURN_ERR(ENAND, "unknown hynix retry mode");
 	}
 
 	/* io open */
@@ -430,6 +519,37 @@ ERR_LABLE(chip_select):
 	return ret;
 }
 
+static int get_micron_retry_params(retry_parms *retryparms)
+{
+	switch(retryparms->mode){
+		case MT_RR_29F_32G_MLC_ADA:
+			retryparms->cycle = 8;
+			break;
+		default:
+			RETURN_ERR(ENAND, "unknown micron retry mode");
+
+	}
+	return 0;
+}
+
+int get_retry_parms(nfi_base *base,chip_info *cinfo, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms)
+{
+
+	int ret;
+
+	switch (cinfo->manuf) {
+		case NAND_MFR_MICRON:
+			ret = get_micron_retry_params(retryparms);
+			break;
+		case NAND_MFR_HYNIX:
+			ret = get_hynix_retry_parms(base,cs_id,rbinfo,retryparms);
+			break;
+		default:
+			RETURN_ERR(ENAND, "unknown the Manufacturer of nand !!!\n");
+	}
+
+	return ret;
+}
 int __set_features(int io_context, rb_item *rbitem, nand_ops_timing *timing,
 		   unsigned char addr, unsigned char *data, int len)
 {

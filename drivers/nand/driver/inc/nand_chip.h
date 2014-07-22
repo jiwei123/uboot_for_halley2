@@ -44,6 +44,10 @@ enum hynix_retry_mode {
 	HY_RR_F1Y_64G_MLC,
 };
 
+enum Micron_retry_mode{
+	MT_RR_29F_32G_MLC_ADA,
+};
+
 enum micron_timing_mode {
 	MR_TIMING_MODE0 = 0x00,
 	MR_TIMING_MODE1 = 0x01,
