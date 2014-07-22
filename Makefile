@@ -594,7 +594,13 @@ $(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
 		$(obj)tools/ingenic-tools/spl_params_fixer $@ $(obj)spl/u-boot-spl.bin 0 256 > /dev/null
 else
 $(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
+ifneq ($(CONFIG_GPT_AT_TAIL),y)
 		cat $(obj)tools/ingenic-tools/mbr-gpt.bin $(obj)u-boot-with-spl.bin > $@
+else
+		@chmod +x $(obj)tools/ingenic-tools/mk-gpt-xboot.sh
+		$(obj)tools/ingenic-tools/mk-gpt-xboot.sh $(obj)tools/ingenic-tools/mbr-of-gpt.bin \
+		$(obj)u-boot-with-spl.bin $(obj)tools/ingenic-tools/gpt.bin $(obj)board/ingenic/newton/partitions.tab $@
+endif
 endif
 
 ifeq ($(CONFIG_SANDBOX),y)
