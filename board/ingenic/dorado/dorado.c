@@ -29,6 +29,8 @@
 #include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/clk.h>
+#include <power/d2041_core.h>
+
 
 struct cgu_clk_src cgu_clk_src[] = {
 	{VPU, MPLL},
@@ -49,14 +51,14 @@ struct cgu_clk_src cgu_clk_src[] = {
 extern void boot_mode_select(void);
 #endif
 
-#if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
-static void battery_init_gpio(void)
-{
-}
+#ifdef CONFIG_PMU_D2041
+extern int d2041_regulator_init(void);
 #endif
-
 int board_early_init_f(void)
 {
+#ifdef CONFIG_PMU_D2041
+	d2041_regulator_init();
+#endif
 	return 0;
 }
 

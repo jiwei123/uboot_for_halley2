@@ -34,6 +34,10 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 	PageList *pl_node, *probe_node = NULL;
 	PageList *tmp_pl, *new_pl = NULL;
 	unsigned int retrycnt = 0;
+	int ecc_error_cnt = 0;
+	int allff_cnt = 0;
+	int retry_flag = 0;
+	int want_retry = 0;
 
 	/* handle spl partition */
 	if(pt - data->ptinfo->pt == 0){
@@ -60,14 +64,14 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 			RETURN_ERR(ENAND, "lib_nandops_creat_task is failed !");
 		for(i = 0; i < unit_cnt; i++){
 			if(nandtask[i]->msg_index != 0){
+				if(retrycnt != 0)
+					nandops_retry(data, nandtask[i]->msg, nandtask[i]->msg_index, retrycnt);
 				if (pt->ops_mode == DMA_OPS) {
 					ndd_dma_cache_inv((unsigned int)nandtask[i]->ret,nandtask[i]->msg_maxcnt);
 					msghandler = handler[i].dma;
 				} else
 					msghandler = handler[i].cpu;
 				/* set the feature of retry */
-				if(retrycnt != 0)
-					nandops_retry(data, nandtask[i]->msg, nandtask[i]->msg_index, retrycnt);
 				flag = msghandler->handler(msghandler->context, nandtask[i]);
 				if(flag){
 					ret = flag;
@@ -81,14 +85,17 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 						pt->startblockid,pt->eccbit, i,NANDOPS_READ);
 			}
 		}
+	retry_flag = 0;
 		if(ret){
 			singlelist_for_each(pos, &(tmp_pl->head)){
 				pl_node = singlelist_entry(pos, PageList, head);
-				if(pl_node->retVal == ALL_FF)
+				if(pl_node->retVal == ALL_FF){
 					ndd_memset(pl_node->pData,0xff,pl_node->Bytes);
+					ndd_dma_cache_wback((unsigned int)pl_node->pData,pl_node->Bytes);
+				}
 
 				if(retrycnt == 0){	/* creat retry pagelist */
-					if(pl_node->retVal == ECC_ERROR){
+					if((pl_node->retVal == ECC_ERROR) || (pl_node->retVal == ALL_FF) || (pl_node->retVal == ND_ECC_TOOLARGE)){
 						if(new_pl == NULL){
 							ndd_memset(ops->retrytop, 0x0,
 								   (sizeof(PageList) *
@@ -106,10 +113,11 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 						probe_node->OffsetBytes = pl_node->OffsetBytes;
 						probe_node->Bytes = pl_node->Bytes;
 						probe_node->pData = pl_node->pData;
+						want_retry = 1;
 					}
 					index++;
 				}else{		/* scan retry pagelist */
-					if(pl_node->retVal == ECC_ERROR){
+					if((pl_node->retVal == ECC_ERROR) || (pl_node->retVal == ALL_FF) || (pl_node->retVal == ND_ECC_TOOLARGE)){
 						if(new_pl == NULL){
 							probe_node = pl_node;
 							new_pl = probe_node;
@@ -117,6 +125,7 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 							probe_node->head.next = &(pl_node->head);
 							probe_node = pl_node;
 						}
+						want_retry = 1;
 					}
 				}
 			}
@@ -128,7 +137,31 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 		if(probe_node)
 			probe_node->head.next = NULL;
 		retrycnt++;
-	}while(ret == ECC_ERROR && retrycnt < 9);
+	if(ret == ALL_FF)
+		allff_cnt++;
+	if((ret == ALL_FF) || (ret == ECC_ERROR) || (ret == ND_ECC_TOOLARGE))
+		ecc_error_cnt++;
+
+	if(want_retry == 1 && retrycnt < 9)
+		retry_flag = 1;
+	if((ret != ECC_ERROR) && retrycnt >= 9 && want_retry != 1)
+		retry_flag = 0;
+	else if(ret == ECC_ERROR && retrycnt >= 9)
+		retry_flag = 1;
+
+	if(allff_cnt >= 2){
+		ret = ALL_FF;
+		retry_flag = 0;
+	}
+	if(ecc_error_cnt >= 17){
+		ret = ECC_ERROR;
+		retry_flag = 0;
+	}
+
+	want_retry = 0;
+
+//	ndd_print(NDD_DEBUG,"------------ %s %d ret = %x want_retry = %d retry_flag = %d retrycnt = %d allff_cnt = %d ecc_error_cnt = %d\n",__func__,__LINE__,ret,want_retry,retry_flag,retrycnt,allff_cnt,ecc_error_cnt);
+	}while(retry_flag && retrycnt < 18);
 	if(retrycnt > 1){
 		ndd_print(NDD_INFO, "^^^^^ retrycnt = %d ^^^^^^\n",retrycnt);
 		index = 0;

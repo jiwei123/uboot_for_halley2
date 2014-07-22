@@ -59,7 +59,7 @@ typedef struct __chip_info {
 
 rb_item* get_rbitem(nfi_base *base, unsigned int cs_id, rb_info *rbinfo);
 int early_nand_prepare(nfi_base *base, unsigned int cs_id);
-int get_retry_parms(nfi_base *base, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms);
+int get_retry_parms(nfi_base *base,chip_info *cinfo, unsigned int cs_id, rb_info *rbinfo, retry_parms *retryparms);
 int nand_set_features(nfi_base *base, unsigned int cs_id, rb_item *rbitem, chip_info *cinfo);
 int set_retry_feature(int ndata, unsigned int cs_id, int cycle);
 int get_nand_id(nfi_base *base, nand_flash_id *id, unsigned int cs_id);

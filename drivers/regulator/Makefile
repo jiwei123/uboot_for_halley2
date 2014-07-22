@@ -29,6 +29,7 @@ ifndef CONFIG_SPL_BUILD
 COBJS-$(CONFIG_REGULATOR) += regulator.o
 endif
 COBJS-$(CONFIG_PMU_ACT8600) += act8600.o
+COBJS-$(CONFIG_PMU_D2041) += d2041_regulator.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

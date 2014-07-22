@@ -137,13 +137,14 @@
 /**
  * Drivers configuration.
  */
-/*#define CONFIG_LCD*/
+#define CONFIG_LCD
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
+#define CONFIG_LCD_GPIO_FUNC0_24BIT
 #define CONFIG_LCD_LOGO
-#define CONFIG_RLE_LCD_LOGO
-/*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
+/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_LCD_INFO_BELOW_LOGO      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
@@ -152,7 +153,7 @@
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
 #define CONFIG_VIDEO_M200
 #define CONFIG_JZ_PWM
-#define CONFIG_VIDEO_BYD_BM8766U
+#define CONFIG_VIDEO_BM347WV_F_8991FTGF
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
@@ -181,9 +182,9 @@
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
 
 
-/* PMU
+/* PMU */
 #define CONFIG_REGULATOR
- */
+#define CONFIG_PMU_D2041
 
 /* DEBUG ETHERNET */
 /*
