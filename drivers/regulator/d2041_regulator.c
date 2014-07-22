@@ -15,6 +15,9 @@
 #define D2041_NUM_LODX   0x2A
 #define D2041_I2C_ADDR   0x49
 
+static int d2041_regulator_disable(struct regulator* regulator);
+static int d2041_regulator_enable(struct regulator *regulator);
+static int d2041_set_voltage(struct regulator* regulator,unsigned int min_uV, unsigned int max_uV);
 struct regl_register_map {
 	u8 pm_reg;
 	u8 mctl_reg;
