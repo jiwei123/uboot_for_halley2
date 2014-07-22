@@ -137,14 +137,15 @@
 /**
  * Drivers configuration.
  */
+
 #define CONFIG_LCD
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 #define CONFIG_LCD_GPIO_FUNC0_24BIT
 #define CONFIG_LCD_LOGO
-/*#define CONFIG_RLE_LCD_LOGO*/
-#define CONFIG_LCD_INFO_BELOW_LOGO      /*display the console info on lcd panel for debugg */
+#define CONFIG_RLE_LCD_LOGO
+/*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
@@ -268,7 +269,7 @@
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
-#define CONFIG_SYS_MONITOR_LEN		(384 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(768 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
@@ -405,20 +406,25 @@
 #define CONFIG_GPIO_FASTBOOT		GPIO_PG(30)	/* SW2 */
 #define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
 
+/*
 #define CONFIG_GPIO_MENU		CONFIG_GPIO_FASTBOOT
 #define CONFIG_GPIO_MENU_ENLEVEL	CONFIG_GPIO_FASTBOOT_ENLEVEL
+*/
 
-#define CONFIG_GPIO_VOL_SUB		GPIO_PD(17)	/* SW9 */
-#define CONFIG_GPIO_VOL_SUB_ENLEVEL	1
+/*#define CONFIG_GPIO_VOL_SUB		GPIO_PD(17)*/	/* SW9 */
+/*#define CONFIG_GPIO_VOL_SUB_ENLEVEL	1
 
-#define CONFIG_GPIO_VOL_ADD		GPIO_PD(18)	/* SW8 */
-#define CONFIG_GPIO_VOL_ADD_ENLEVEL	0
+#define CONFIG_GPIO_VOL_ADD		GPIO_PD(18)*/	/* SW8 */
+/*#define CONFIG_GPIO_VOL_ADD_ENLEVEL	1
 
-#define CONFIG_GPIO_BACK		GPIO_PD(19)	/* SW7 */
-#define CONFIG_GPIO_BACK_ENLEVEL	0
+#define CONFIG_GPIO_BACK		GPIO_PD(19)	*//* SW7 */
+/*#define CONFIG_GPIO_BACK_ENLEVEL	0*/
 
 #define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
 #define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
+
+#define CONFIG_GPIO_DC_DETECT           GPIO_PB(1)
+#define CONFIG_GPIO_DC_DETECT_ENLEVEL   0
 
 /* TEST
 #define CONFIG_GPIO_DC_DETECT           GPIO_PG(10)
