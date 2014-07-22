@@ -328,9 +328,14 @@
 #endif /* !CONFIG_SPL_MMC_SUPPORT */
 
 /**
+ * GPT configuration
+ */
+#ifdef CONFIG_GPT_CREATOR
+#define CONFIG_GPT_TABLE_PATH   "$(TOPDIR)/board/$(BOARDDIR)"
+#else
+/**
  * MBR configuration
  */
-#ifdef CONFIG_MBR_CREATOR
 #define CONFIG_MBR_P0_OFF	56mb
 #define CONFIG_MBR_P0_END	512mb
 #define CONFIG_MBR_P0_TYPE 	linux
