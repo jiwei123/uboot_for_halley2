@@ -50,6 +50,12 @@
 #define NAND_SHARING_PARMS_ADDR 0xB3425800
 //#define NAND_SHARING_PARMS_ADDR 0xf4000800
 
+
+#define PARTITION_RESERVE_BIT	(1 << 0)
+
+#define PARTITION_NEED_RESERVE(n)	(n & PARTITION_RESERVE_BIT)
+
+
 /* ####################################### */
 /**
  * this is only used for kernel to get nand basic params
@@ -139,6 +145,7 @@ typedef struct __plat_ptitem {
 	unsigned char nm_mode;
 	unsigned int flags;
 	unsigned int *pt_badblock_info;
+	unsigned int attribute;
 	plat_ex_partition ex_partition[MUL_PARTS];
 } plat_ptitem;
 

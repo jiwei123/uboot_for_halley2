@@ -37,6 +37,7 @@ struct _Nandppt{
 	int size;						/* the size of the patition (M)*/
 	int managermode;				/* the managermode of the patition; 0:spl_manger, 1:direct_manger, 2:zone_manger, 3:once_manger*/
 	int cache;						/* whether the data need the nandmanger to cache */	
+	unsigned int attribute;			/* the patition attribute*/
 	ui_plat_ex_partition ui_ex_partition[MUL_PARTS];	/* the patition info which is a embedded patition  */
 };
 

@@ -394,14 +394,34 @@ static int is_inherent_badblock(nand_data *nddata, nand_flash *ndflash, unsigned
 	return 0;
 }
 
-static int nand_force_eraseall(nand_data *nddata, nand_flash *ndflash)
+static int nand_force_eraseall(nand_data *nddata, nand_flash *ndflash,plat_ptinfo *ptinfo)
 {
 	cs_info *csinfo = nddata->csinfo;
 	unsigned int blockpchip = ndflash->totalblocks / ndflash->chips;
 	unsigned int chip_index, blockid;
+	plat_ptitem *ptitem = ptinfo->pt_table;
+	int pt_index;
+	int reserve_flag = 0;
 	int ret = 0;
 	for(chip_index = 0; chip_index < csinfo->totalchips; chip_index++){
 		for(blockid = 0; blockid < blockpchip; blockid++){
+			reserve_flag = 0;
+			{
+				for(pt_index=0;pt_index < ptinfo->ptcount;pt_index++)
+				{
+					if(PARTITION_NEED_RESERVE((ptitem + pt_index)->attribute)){
+						unsigned int blk_start = ndd_div_s64_32((ptitem + pt_index)->offset, ndflash->blocksize);
+						unsigned int blk_end = ndd_div_s64_32(((ptitem + pt_index)->offset + (ptitem + pt_index)->size),ndflash->blocksize);
+						if(blockid >= blk_start && blockid < blk_end)
+						{
+							reserve_flag = 1;
+							break;
+						}
+					}
+				}
+			}
+			if(reserve_flag == 1)
+				continue;
 			ret = nand_erase_block(nddata, ndflash, chip_index, blockid);
 			if(ret != SUCCESS){
 				if(ret == WRITE_PROTECT){
@@ -1495,7 +1515,7 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 			ret = nand_normal_eraseall(nddata, ndflash);
 			break;
 		case NAND_FORCE_ERASE_MODE:
-			ret = nand_force_eraseall(nddata, ndflash);
+			ret = nand_force_eraseall(nddata, ndflash,ptinfo);
 			break;
 		case NAND_FACTORY_ERASE_MODE:
 			ret = nand_factory_eraseall(nddata, ndflash);

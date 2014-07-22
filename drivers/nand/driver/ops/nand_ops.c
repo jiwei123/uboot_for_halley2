@@ -160,7 +160,6 @@ int nandops_read(int context, ndpartition *pt, PageList *pl)
 
 	want_retry = 0;
 
-//	ndd_print(NDD_DEBUG,"------------ %s %d ret = %x want_retry = %d retry_flag = %d retrycnt = %d allff_cnt = %d ecc_error_cnt = %d\n",__func__,__LINE__,ret,want_retry,retry_flag,retrycnt,allff_cnt,ecc_error_cnt);
 	}while(retry_flag && retrycnt < 18);
 	if(retrycnt > 1){
 		ndd_print(NDD_INFO, "^^^^^ retrycnt = %d ^^^^^^\n",retrycnt);
