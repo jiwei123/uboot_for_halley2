@@ -104,6 +104,7 @@
 #ifdef CONFIG_CMD_EFUSE
 #define	CONFIG_JZ4780_EFUSE
 #define CONFIG_EFUSE_GPIO	GPIO_PE(4)
+#define CONFIG_EFUSE_LEVEL	0
 #endif
 /**
  * Serial download configuration

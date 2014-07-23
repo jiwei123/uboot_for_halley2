@@ -69,6 +69,7 @@
 #define TSSI0_BASE	0xb34e0000
 #define TSSI1_BASE	0xb34f0000
 #define OTG_BASE	0xb3500000
+#define EFUSE_BASE	0xb3540000
 
 
 #define	OST_BASE	0xb2000000
