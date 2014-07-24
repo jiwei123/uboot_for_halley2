@@ -68,7 +68,7 @@ extern void board_powerdown_device(void);
 #define __battery_is_charging()		0
 #endif
 
-#define __charge_detect()	(__battery_is_charging() || __dc_detected())
+#define __charge_detect()	(__battery_is_charging() || __dc_detected() || __usb_detected())
 
 static long slop = 0;
 static long cut = 0;
