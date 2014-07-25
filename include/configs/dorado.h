@@ -179,13 +179,23 @@
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
+
+#ifdef CONFIG_DORADO_V10
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
+#define CONFIG_PMU_D2041
+#endif
 
-
+#ifdef CONFIG_DORADO_V20
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+/*#define CONFIG_SPL_CORE_VOLTAGE*/
+/*#define CONFIG_SPL_MEM_VOLTAGE*/
+#define CONFIG_PMU_RICOH6x
+#endif
 /* PMU */
 #define CONFIG_REGULATOR
-#define CONFIG_PMU_D2041
 
 /* DEBUG ETHERNET */
 /*
