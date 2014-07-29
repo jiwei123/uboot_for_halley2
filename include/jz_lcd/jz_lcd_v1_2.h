@@ -1,7 +1,7 @@
 /*
  * JZ common routines
  *
- * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Copyright (c) 2014 Ingenic Semiconductor Co.,Ltd
  * Author: Huddy <hyli@ingenic.cn>
  *
  * This program is free software; you can redistribute it and/or
@@ -25,11 +25,6 @@
 
 #include <common.h>
 #include <linux/types.h>
-
-#define FB_MODE_IS_VGA    (1 << 30)
-#define SLCDC_CFG_NEW   (0xB8)
-#define SLCDC_WTIME     (0xB0)
-#define SLCDC_TAS       (0xB4)
 
 void panel_pin_init(void);
 void panel_power_on(void);
@@ -125,6 +120,7 @@ enum smart_lcd_dwidth {
 	SMART_LCD_DWIDTH_8_BIT_ONCE_PARALLEL_SERIAL = (0x4 << 10),
 	SMART_LCD_DWIDTH_24_BIT_ONCE_PARALLEL = (0x5 << 10),
 	SMART_LCD_DWIDTH_9_BIT_TWICE_TIME_PARALLEL = (0x7 << 10),
+	SMART_LCD_DWIDTH_MASK = (0x7 << 10),
 };
 
 /**
@@ -189,6 +185,8 @@ struct jzfb_config_info {
 		enum smart_lcd_type smart_type;	/* smart lcd transfer type, 0: parrallel, 1: serial */
 		enum smart_lcd_cwidth cmd_width;	/* smart lcd command width */
 		enum smart_lcd_dwidth data_width;	/* smart lcd data Width */
+		enum smart_lcd_dwidth data_width2;	/* smart lcd data Width */
+		enum smart_lcd_cwidth data_new_times2;  /* smart lcd command width */
 
 		unsigned clkply_active_rising:1;	/* smart lcd clock polarity:
 							   0: Active edge is Falling,1: Active edge is Rasing */
@@ -209,6 +207,8 @@ struct jzfb_config_info {
 		unsigned bus_width;	/* bus width in bit */
 		unsigned int length_data_table;	/* array size of data_table */
 		struct smart_lcd_data_table *data_table;	/* init data table */
+		int (*init) (void);
+		int (*gpio_for_slcd) (void);
 	} smart_config;
 
 	unsigned dither_enable:1;	/* enable dither function: 1, disable dither function: 0 */

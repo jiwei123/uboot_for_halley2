@@ -1,7 +1,7 @@
 /*
- * JZ4775 LCDC definitions
+ * M200 LCDC definitions
  *
- * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Copyright (c) 2014 Ingenic Semiconductor Co.,Ltd
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,7 +23,7 @@
 #ifndef __LCDC_H__
 #define __LCDC__H__
 
-#include <asm/arch/base.h>
+#include <asm/arch-m200/base.h>
 
 /*************************************************************************
  * SLCD (Smart LCD Controller)
@@ -33,6 +33,11 @@
 #define SLCDC_CTRL      (LCDC0_BASE + 0xA4)  /* SLCDC Control Register */
 #define SLCDC_STATE     (LCDC0_BASE + 0xA8)  /* SLCDC Status Register */
 #define SLCDC_DATA      (LCDC0_BASE + 0xAC)  /* SLCDC Data Register */
+
+#define SLCDC_CFG_NEW   (LCDC0_BASE + 0xB8)
+#define SLCDC_WTIME     (LCDC0_BASE + 0xB0)
+#define SLCDC_TAS       (LCDC0_BASE + 0xB4)
+#define SLCDC_SLOW_TIME (LCDC0_BASE + 0xBC)
 
 /* SLCDC Configure Register */
 #define SLCDC_CFG_DWIDTH_BIT	10
@@ -59,12 +64,53 @@
 #define SLCDC_CFG_TYPE_PARALLEL	(0 << 0)
 #define SLCDC_CFG_TYPE_SERIAL	(1 << 0)
 
+/* SLCD New Configure Register */
+#define SLCDC_NEW_CFG_DWIDTH_BIT        13
+#define SLCDC_NEW_CFG_DWIDTH_MASK       (0x7 << SLCDC_NEW_CFG_DWIDTH_BIT)
+#define SLCDC_NEW_CFG_DWIDTH_8BIT       (0 << SLCDC_NEW_CFG_DWIDTH_BIT)
+#define SLCDC_NEW_CFG_DWIDTH_9BIT       (1 << SLCDC_NEW_CFG_DWIDTH_BIT)
+#define SLCDC_NEW_CFG_DWIDTH_16BIT      (2 << SLCDC_NEW_CFG_DWIDTH_BIT)
+#define SLCDC_NEW_CFG_DWIDTH_18BIT      (3 << SLCDC_NEW_CFG_DWIDTH_BIT)
+#define SLCDC_NEW_CFG_DWIDTH_24BIT      (4 << SLCDC_NEW_CFG_DWIDTH_BIT)
+#define SLCDC_NEW_CFG_6800_MD           (1 << 11)
+#define SLCDC_NEW_CFG_CMD_9BIT          (1 << 10)       /* only use in old slcd */
+#define SLCDC_NEW_CFG_CMD_16BIT         (0 << 10)       /* only use in old slcd */
+#define SLCDC_NEW_CFG_DTIME_BIT         8
+#define SLCDC_NEW_CFG_DTIME_MASK        (0x3 << SLCDC_NEW_CFG_DTIME_BIT)
+#define SLCDC_NEW_CFG_DTIME_ONCE        (0 << SLCDC_NEW_CFG_DTIME_BIT)
+#define SLCDC_NEW_CFG_DTIME_TWICE       (1 << SLCDC_NEW_CFG_DTIME_BIT)
+#define SLCDC_NEW_CFG_DTIME_THREE       (2 << SLCDC_NEW_CFG_DTIME_BIT)
+#define SLCDC_NEW_CFG_CS_HIGH_IDLE      (0 << 5)
+#define SLCDC_NEW_CFG_CS_LOW_IDLE       (1 << 5)
+#define SLCDC_NEW_CFG_RS_CMD_LOW        (0 << 4)
+#define SLCDC_NEW_CFG_RS_CMD_HIGH       (1 << 4)
+#define SLCDC_NEW_CFG_CLK_ACTIVE_FALLING        (0 << 3)
+#define SLCDC_NEW_CFG_CLK_ACTIVE_RISING (1 << 3)
+#define SLCDC_NEW_CFG_DTYPE_PARALLEL    (0 << 2)
+#define SLCDC_NEW_CFG_DTYPE_SERIAL      (1 << 2)
+#define SLCDC_NEW_CFG_CTYPE_PARALLEL    (0 << 1)
+#define SLCDC_NEW_CFG_CTYPE_SERIAL      (1 << 1)
+#define SLCDC_NEW_CFG_FMT_CONV_EN       (1 << 0)
+
+/* SLCD Control Register */
+#define SLCDC_CTRL_NOT_USE_TE   (1 << 8)
+#define SLCDC_CTRL_DCSI_SEL     (1 << 7)
+#define SLCDC_CTRL_MIPI_MODE    (1 << 6)
+#define SLCDC_CTRL_NEW_MODE     (1 << 5)
+#define SLCDC_CTRL_FAST_MODE    (1 << 4)
+#define SLCDC_CTRL_GATE_MASK    (1 << 3)
 #define SLCDC_CTRL_DMA_MODE     (1 << 2)
 #define SLCDC_CTRL_DMA_START    (1 << 1)
 #define SLCDC_CTRL_DMA_EN       (1 << 0)
+
+/* SLCD Status Register */
 #define SLCDC_STATE_BUSY                (1 << 0)
-#define SLCDC_DATA_RS_DATA      (0 << 31)
-#define SLCDC_DATA_RS_COMMAND   (1 << 31)
+
+/* SLCD Data Register */
+#define SLCDC_DATA_RS_DATA      (0 << 30)
+#define SLCDC_DATA_RS_COMMAND   (1 << 30)
+
+
 
 /*************************************************************************
  * LCDC (LCD Controller)

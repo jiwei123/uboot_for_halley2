@@ -1,7 +1,7 @@
 /*
- * Ingenic mensa configuration
+ * Ingenic dorado configuration
  *
- * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
+ * Copyright (c) 2014 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
  * Based on: include/configs/urboard.h
  *           Written by Paul Burton <paul.burton@imgtec.com>
@@ -143,6 +143,7 @@
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 #define CONFIG_LCD_GPIO_FUNC0_24BIT
+/*#define CONFIG_LCD_GPIO_FUNC2_SLCD*/
 #define CONFIG_LCD_LOGO
 #define CONFIG_RLE_LCD_LOGO
 /*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
@@ -155,6 +156,7 @@
 #define CONFIG_VIDEO_M200
 #define CONFIG_JZ_PWM
 #define CONFIG_VIDEO_BM347WV_F_8991FTGF
+/*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
