@@ -91,11 +91,11 @@
     #define CONFIG_BOOTCOMMAND	\
 	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 22528"
   #else
     #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 22528"
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
