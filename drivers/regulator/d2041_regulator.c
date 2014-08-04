@@ -109,7 +109,7 @@ static struct regl_register_map regulator_register_map[] = {
 	D2041_DEFINE_REGL(LDO_AUD, D2041_LDO_AUD_REG, D2041_LDO_AUD_MCTL_REG)
 };
 
-static int d2041_i2c_read( unsigned int start_reg, unsigned char *dest,int bytes)
+int d2041_i2c_read( unsigned int start_reg, unsigned char *dest,int bytes)
 {
 	unsigned char data;
 	int ret = -1;
@@ -132,7 +132,7 @@ static int d2041_i2c_read( unsigned int start_reg, unsigned char *dest,int bytes
  * small writes - if we need to do large writes this will need to be
  * revised.
  */
-static int d2041_i2c_write(unsigned char start_reg, int bytes, void *src)
+int d2041_i2c_write(unsigned char start_reg, int bytes, void *src)
 {
 	int ret;
 

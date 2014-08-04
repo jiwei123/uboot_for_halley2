@@ -110,7 +110,7 @@
 /**
  * Drivers configuration.
  */
-#undef  CONFIG_LCD
+#define  CONFIG_LCD
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
@@ -125,8 +125,10 @@
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
 #define CONFIG_VIDEO_JZ4775
 #define CONFIG_JZ_PWM
-#define CONFIG_VIDEO_BYD_BM8766U
+/*#define CONFIG_VIDEO_BYD_BM8766U*/
 /*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
+#define CONFIG_SLCD_FUNCTION
+#define CONFIG_VIDEO_TRULY_TFT240240_2_E
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE   	/* display the logo using rle command */
@@ -148,7 +150,7 @@
 
 /* I2C */
 /* add the I2C later */
-#undef CONFIG_SOFT_I2C
+#define CONFIG_SOFT_I2C
 #ifdef CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
@@ -157,9 +159,9 @@
 #endif
 /* PMU */
 /* add the pmu later */
-#undef CONFIG_REGULATOR
+#define CONFIG_REGULATOR
 #ifdef  CONFIG_REGULATOR
-#define CONFIG_PMU_ACT8600
+#define CONFIG_PMU_D2041
 #endif
 
 /* Ethernet: gmac and 9161 */
