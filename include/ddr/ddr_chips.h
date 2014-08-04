@@ -1,6 +1,10 @@
 #ifndef __DDR_CHIPS_H__
 #define __DDR_CHIPS_H__
 
+#ifdef CONFIG_MDDR_W94AD6KB_HX51
+#include "./chips/MDDR_W94AD6KB-HX51.h"
+#endif
+
 #ifdef CONFIG_DDR3_H5TQ1G83DFR_H9C
 #include "./chips/DDR3_H5TQ1G83DFR_H9C.h"
 #endif

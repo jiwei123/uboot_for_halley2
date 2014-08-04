@@ -1,9 +1,9 @@
 #
-# Ingenic JZ4775 makefile
+# Ingenic mensa makefile
 #
 # Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
 # Author: Zoro <ykli@ingenic.cn>
-# Based on: arch/mips/cpu/xburst/jz4780/Makefile
+# Based on: board/reliableIPTV/urboard/Makefile
 #           Written by Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -24,30 +24,17 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(SOC).o
+LIB	= $(obj)lib$(BOARD).o
 
-SOBJS-y	=
-COBJS-y	= $(SOC).o
-COBJS-y += pll.o
-COBJS-y += clk.o
-COBJS-y += ../ddr_dwc.o
-COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
+COBJS-y	:= $(BOARD).o
+COBJS-$(CONFIG_VIDEO_JZ4775) += lcd.o
+COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
 
-ifdef CONFIG_SPL_DDR_SOFT_TRAINING
-COBJS-y += ../ddr_dqs_training.o
-else
-ifdef CONFIG_DDR_FORCE_SOFT_TRAINING
-COBJS-y += ../ddr_dqs_training.o
-endif
-endif
+SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y))
+SOBJS   := $(addprefix $(obj),$(SOBJS-y))
 
-SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
-START	:= $(addprefix $(obj),$(START))
-
-all:	$(obj).depend $(LIB)
-
-$(LIB):	$(OBJS)
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
 	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################

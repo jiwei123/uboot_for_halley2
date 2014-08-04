@@ -322,6 +322,10 @@ int efuse_write_sc_key(unsigned int offset)
 	/*step 3: Connect VDDQ pin to 2.5V*/
 	boost_vddq(efuse_gpio);
 	switch (start) {
+	case EFU_ROOT_KEY_BASE:
+		break;
+	case EFU_CHIP_KEY_BASE:
+		break;
 	case EFU_USER_KEY_BASE:
 		break;
 	case EFU_MD5_BASE:
