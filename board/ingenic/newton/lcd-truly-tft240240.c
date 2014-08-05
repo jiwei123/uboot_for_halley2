@@ -204,6 +204,7 @@ struct jzfb_config_info jzfb1_init_data = {
 #else
     .smart_config.data_width2 = SMART_LCD_DWIDTH_8_BIT_THIRD_TIME_PARALLEL,
 #endif
+    .smart_config.dma_mode = SMART_LCD_DMA_MODE_CONTINUOUS,
     .smart_config.clkply_active_rising = 0,
     .smart_config.rsply_cmd_high = 0,
     .smart_config.csply_active_high = 0,

@@ -730,6 +730,23 @@ static void slcd_set_mcu_register(struct jzfb_config_info *info,
 	slcd_send_mcu_data(info, data);
 }
 
+/* slcd: restart dma */
+void soc_lcd_pan_display(void)
+{
+    int slcd_dma_mode_is_single_dma;
+    unsigned int reg;
+
+    slcd_dma_mode_is_single_dma =
+        SMART_LCD_DMA_MODE_SINGLE == lcd_config_info.smart_config.dma_mode;
+
+    /* slcd single dma */
+    if (lcd_config_info.lcd_type == LCD_TYPE_LCM && slcd_dma_mode_is_single_dma) {
+        reg = SLCDC_CTRL_DMA_MODE | SLCDC_CTRL_DMA_EN;
+        reg |= SLCDC_CTRL_DMA_START;
+        reg_write(SLCDC_CTRL, reg);
+    }
+}
+
 void lcd_enable(void)
 {
 	unsigned ctrl;
@@ -741,27 +758,27 @@ void lcd_enable(void)
 		ctrl &= ~LCDC_CTRL_DIS;
 		reg_write(LCDC_CTRL, ctrl);
 		serial_puts("dump_lcdc_registers\n");
-	}
-	lcd_enable_state = 1;
+    }
+    lcd_enable_state = 1;
 }
 
 void lcd_disable(void)
 {
-	unsigned ctrl;
-	if (lcd_enable_state == 1) {
-		if (lcd_config_info.lcd_type != LCD_TYPE_LCM) {
-			ctrl = reg_read(LCDC_CTRL);
-			ctrl |= LCDC_CTRL_DIS;
-			reg_write(LCDC_CTRL, ctrl);
-			while (!(reg_read(LCDC_STATE) & LCDC_STATE_LDD)) ;
-		} else {
-			/* SLCD and TVE only support quick disable */
-			ctrl = reg_read(LCDC_CTRL);
-			ctrl &= ~LCDC_CTRL_ENA;
-			reg_write(LCDC_CTRL, ctrl);
-		}
-	}
-	lcd_enable_state = 0;
+    unsigned ctrl;
+    if (lcd_enable_state == 1) {
+        if (lcd_config_info.lcd_type != LCD_TYPE_LCM) {
+            ctrl = reg_read(LCDC_CTRL);
+            ctrl |= LCDC_CTRL_DIS;
+            reg_write(LCDC_CTRL, ctrl);
+            while (!(reg_read(LCDC_STATE) & LCDC_STATE_LDD)) ;
+        } else {
+            /* SLCD and TVE only support quick disable */
+            ctrl = reg_read(LCDC_CTRL);
+            ctrl &= ~LCDC_CTRL_ENA;
+            reg_write(LCDC_CTRL, ctrl);
+        }
+    }
+    lcd_enable_state = 0;
 }
 
 static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
@@ -885,7 +902,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		if (lcd_config_info.smart_config.csply_active_high)
 			smart_cfg |= SLCDC_CFG_CS_ACTIVE_HIGH;
 		/* SLCD DMA mode select 0 */
-		smart_ctrl = SLCDC_CTRL_DMA_MODE;
+		smart_ctrl |= SLCDC_CTRL_DMA_MODE | SLCDC_CTRL_DMA_EN;
 	}
 	if (info->lcd_type != LCD_TYPE_LCM) {
 		reg_write(LCDC_VAT, (ht << 16) | vt);
@@ -923,20 +940,21 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 
 	jzfb_config_fg0(info);
 
-	jzfb_prepare_dma_desc(info);
+    jzfb_prepare_dma_desc(info);
 
-	if (info->lcd_type == LCD_TYPE_LCM) {
-		jzfb_slcd_mcu_init(info);
+    if (info->lcd_type == LCD_TYPE_LCM) {
+        jzfb_slcd_mcu_init(info);
         lcd_enable();
-#ifdef CONFIG_SLCDC_CONTINUA
-        smart_ctrl &= ~SLCDC_CTRL_DMA_MODE;
-#else
-        smart_ctrl |= SLCDC_CTRL_DMA_START;
-#endif
-        smart_ctrl |= SLCDC_CTRL_DMA_EN;
-        reg_write(SLCDC_CTRL, smart_ctrl);
+        if(lcd_config_info.smart_config.dma_mode == SMART_LCD_DMA_MODE_CONTINUOUS)
+        {
+            unsigned int reg;
+            reg &= ~SLCDC_CTRL_DMA_MODE;
+            reg |= SLCDC_CTRL_DMA_EN;
+            reg |= SLCDC_CTRL_DMA_START;
+            reg_write(SLCDC_CTRL, reg);
+        }
     }
-	return 0;
+    return 0;
 }
 
 static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
