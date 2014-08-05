@@ -31,6 +31,15 @@
 
 /*#define DEBUG*/
 
+#ifdef CONFIG_JZ_MIPI_DSI
+#include <jz_lcd/jz_dsim.h>
+#include "./jz_mipi_dsi/jz_mipi_dsi_regs.h"
+#include "./jz_mipi_dsi/jz_mipi_dsih_hal.h"
+struct dsi_device *dsi;
+void jz_dsi_init();
+int jz_dsi_video_cfg(struct dsi_device *dsi);
+#endif
+
 struct jzfb_config_info lcd_config_info;
 static int lcd_enable_state = 0;
 void board_set_lcd_power_on(void);
@@ -43,6 +52,147 @@ void lcd_set_backlight_level(int num);
 	readl(lcd_config_info.lcdbaseoff+addr)
 
 #ifdef DEBUG
+void dump_dsi_reg(struct dsi_device *dsi)
+{
+	printf( "===========>dump dsi reg\n");
+	printf( "VERSION------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VERSION));
+	printf( "PWR_UP:------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PWR_UP));
+	printf( "CLKMGR_CFG---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_CLKMGR_CFG));
+	printf( "DPI_VCID-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_VCID));
+	printf( "DPI_COLOR_CODING---:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_COLOR_CODING));
+	printf( "DPI_CFG_POL--------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_CFG_POL));
+	printf( "DPI_LP_CMD_TIM-----:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_LP_CMD_TIM));
+	printf( "DBI_VCID-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DBI_VCID));
+	printf( "DBI_CFG------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DBI_CFG));
+	printf( "DBI_PARTITIONING_EN:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DBI_PARTITIONING_EN));
+	printf( "DBI_CMDSIZE--------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DBI_CMDSIZE));
+	printf( "PCKHDL_CFG---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PCKHDL_CFG));
+	printf( "GEN_VCID-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_GEN_VCID));
+	printf( "MODE_CFG-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_MODE_CFG));
+	printf( "VID_MODE_CFG-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_MODE_CFG));
+	printf( "VID_PKT_SIZE-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_PKT_SIZE));
+	printf( "VID_NUM_CHUNKS-----:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_NUM_CHUNKS));
+	printf( "VID_NULL_SIZE------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_NULL_SIZE));
+	printf( "VID_HSA_TIME-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_HSA_TIME));
+	printf( "VID_HBP_TIME-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_HBP_TIME));
+	printf( "VID_HLINE_TIME-----:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_HLINE_TIME));
+	printf( "VID_VSA_LINES------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VSA_LINES));
+	printf( "VID_VBP_LINES------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VBP_LINES));
+	printf( "VID_VFP_LINES------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VFP_LINES));
+	printf( "VID_VACTIVE_LINES--:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VACTIVE_LINES));
+	printf( "EDPI_CMD_SIZE------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_EDPI_CMD_SIZE));
+	printf( "CMD_MODE_CFG-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_CMD_MODE_CFG));
+	printf( "GEN_HDR------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_GEN_HDR));
+	printf( "GEN_PLD_DATA-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_GEN_PLD_DATA));
+	printf( "CMD_PKT_STATUS-----:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_CMD_PKT_STATUS));
+	printf( "TO_CNT_CFG---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_TO_CNT_CFG));
+	printf( "HS_RD_TO_CNT-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_HS_RD_TO_CNT));
+	printf( "LP_RD_TO_CNT-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_LP_RD_TO_CNT));
+	printf( "HS_WR_TO_CNT-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_HS_WR_TO_CNT));
+	printf( "LP_WR_TO_CNT_CFG---:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_LP_WR_TO_CNT));
+	printf( "BTA_TO_CNT---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_BTA_TO_CNT));
+	printf( "SDF_3D-------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_SDF_3D));
+	printf( "LPCLK_CTRL---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_LPCLK_CTRL));
+	printf( "PHY_TMR_LPCLK_CFG--:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_TMR_LPCLK_CFG));
+	printf( "PHY_TMR_CFG--------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_TMR_CFG));
+	printf( "PHY_RSTZ-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_RSTZ));
+	printf( "PHY_IF_CFG---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_IF_CFG));
+	printf( "PHY_ULPS_CTRL------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_ULPS_CTRL));
+	printf( "PHY_TX_TRIGGERS----:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_TX_TRIGGERS));
+	printf( "PHY_STATUS---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_STATUS));
+	printf( "PHY_TST_CTRL0------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_TST_CTRL0));
+	printf( "PHY_TST_CTRL1------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_TST_CTRL1));
+	printf( "INT_ST0------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_INT_ST0));
+	printf( "INT_ST1------------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_INT_ST1));
+	printf( "INT_MSK0-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_INT_MSK0));
+	printf( "INT_MSK1-----------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_INT_MSK1));
+	printf( "INT_FORCE0---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_INT_FORCE0));
+	printf( "INT_FORCE1---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_INT_FORCE1));
+	printf( "VID_SHADOW_CTRL----:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_SHADOW_CTRL));
+	printf( "DPI_VCID_ACT-------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_VCID_ACT));
+	printf( "DPI_COLOR_CODING_AC:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_COLOR_CODING_ACT));
+	printf( "DPI_LP_CMD_TIM_ACT-:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_DPI_LP_CMD_TIM_ACT));
+	printf( "VID_MODE_CFG_ACT---:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_MODE_CFG_ACT));
+	printf( "VID_PKT_SIZE_ACT---:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_PKT_SIZE_ACT));
+	printf( "VID_NUM_CHUNKS_ACT-:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_NUM_CHUNKS_ACT));
+	printf( "VID_HSA_TIME_ACT---:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_HSA_TIME_ACT));
+	printf( "VID_HBP_TIME_ACT---:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_HBP_TIME_ACT));
+	printf( "VID_HLINE_TIME_ACT-:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_HLINE_TIME_ACT));
+	printf( "VID_VSA_LINES_ACT--:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VSA_LINES_ACT));
+	printf( "VID_VBP_LINES_ACT--:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VBP_LINES_ACT));
+	printf( "VID_VFP_LINES_ACT--:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VFP_LINES_ACT));
+	printf( "VID_VACTIVE_LINES_ACT:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_VID_VACTIVE_LINES_ACT));
+	printf( "SDF_3D_ACT---------:%08x\n",
+		 mipi_dsih_read_word(dsi, R_DSI_HOST_SDF_3D_ACT));
+
+}
 void dump_lcd_reg()
 {
 	printf("$$$dump_lcd_reg\n");
@@ -749,6 +899,10 @@ void lcd_enable(void)
 		serial_puts("dump_lcdc_registers\n");
 	}
 	lcd_enable_state = 1;
+#ifdef DEBUG
+	dump_lcd_reg();
+	dump_dsi_reg(dsi);
+#endif
 }
 
 void lcd_disable(void)
@@ -950,6 +1104,16 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		reg_write(LCDC_HSYNC, mode->hsync_len);
 		reg_write(LCDC_VSYNC, mode->vsync_len);
 	} else {
+#ifdef CONFIG_JZ_MIPI_DSI
+		smart_cfg |= 1 << 16;
+		smart_new_cfg |= 4 << 13;
+		smart_ctrl |= 1 << 7 | 1 << 6;
+
+		mipi_dsih_dphy_enable_hs_clk(dsi, 1);
+		mipi_dsih_hal_gen_set_mode(dsi, 1);
+		mipi_dsih_hal_dpi_color_coding(dsi,
+			dsi->video_config->color_coding);
+#endif
 		reg_write(LCDC_VAT, (mode->xres << 16) | mode->yres);
 		reg_write(LCDC_DAH, mode->xres);
 		reg_write(LCDC_DAV, mode->yres);
@@ -1003,6 +1167,14 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		}
 		reg_write(SLCDC_CTRL, smart_ctrl);
 	}
+#ifdef CONFIG_JZ_MIPI_DSI
+	else {
+		cfg = reg_read(LCDC_CFG);
+		cfg |= 1 << 24;
+		reg_write(LCDC_CFG, cfg);
+		jz_dsi_video_cfg(dsi);
+	}
+#endif
 
 	return 0;
 }
@@ -1044,8 +1216,13 @@ void lcd_ctrl_init(void *lcd_base)
 	int LCD = 4;
 	lcd_config_info = jzfb1_init_data;
 	lcd_config_info.lcdbaseoff = 0;
+
+#ifdef CONFIG_JZ_MIPI_DSI
+	dsi = &jz_dsi;
+#endif
+
 	lcd_set_flush_dcache(1);
-	clk_set_rate(LCD,PICOS2KHZ(jzfb1_init_data.modes->pixclock));
+	clk_set_rate(LCD, PICOS2KHZ(jzfb1_init_data.modes->pixclock));
 	lcd_close_backlight();
 	panel_pin_init();
 
@@ -1061,8 +1238,12 @@ void lcd_ctrl_init(void *lcd_base)
 
 	panel_power_on();
 
-	jzfb_set_par(&lcd_config_info);
+#ifdef CONFIG_JZ_MIPI_DSI
+	jz_dsi_init(dsi);
+	panel_init_set_sequence(dsi);
+#endif
 
+	jzfb_set_par(&lcd_config_info);
 	flush_cache_all();
 
 #ifdef DEFAULT_BACKLIGHT_LEVEL
@@ -1071,9 +1252,6 @@ void lcd_ctrl_init(void *lcd_base)
 	lcd_set_backlight_level(80);
 #endif
 
-#ifdef DEBUG
-	dump_lcd_reg();
-#endif
 	return;
 }
 
