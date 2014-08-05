@@ -285,6 +285,7 @@ enum smart_lcd_dwidth {
 	SMART_LCD_DWIDTH_8_BIT_ONCE_PARALLEL_SERIAL = (0x4 << 10),
 	SMART_LCD_DWIDTH_24_BIT_ONCE_PARALLEL = (0x5 << 10),
 	SMART_LCD_DWIDTH_9_BIT_TWICE_TIME_PARALLEL = (0x7 << 10),
+    SMART_LCD_DWIDTH_MASK = (0x7 << 10)
 };
 
 /**
@@ -341,6 +342,7 @@ struct jzfb_config_info {
 		enum smart_lcd_type smart_type;	/* smart lcd transfer type, 0: parrallel, 1: serial */
 		enum smart_lcd_cwidth cmd_width;	/* smart lcd command width */
 		enum smart_lcd_dwidth data_width;	/* smart lcd data Width */
+		enum smart_lcd_dwidth data_width2;	/* smart lcd data Width2 */
 
 		unsigned clkply_active_rising:1;	/* smart lcd clock polarity:
 							   0: Active edge is Falling,1: Active edge is Rasing */

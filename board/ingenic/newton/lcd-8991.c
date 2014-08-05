@@ -23,6 +23,7 @@
 #include <regulator.h>
 #include <asm/gpio.h>
 #include <jz_lcd/jz4775_lcd.h>
+#include <jz_lcd/byd_8991.h>
 
 void board_set_lcd_power_on(void)
 {
@@ -33,8 +34,6 @@ void board_set_lcd_power_on(void)
 }
 
 struct jzfb_config_info jzfb1_init_data = {
-#if (defined(CONFIG_VIDEO_BYD_BM8766U)||\
-		defined(CONFIG_VIDEO_BM347WV_F_8991FTGF))
 	.modes = &jzfb1_videomode,
 	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
 	.bpp = 24,
@@ -44,23 +43,8 @@ struct jzfb_config_info jzfb1_init_data = {
 
 	.lvds = 0,
 	.dither_enable = 0,
-#else
-#error "Please add the board data!!!"
-#endif
 };
 
-#ifdef CONFIG_VIDEO_BYD_BM8766U
-#include <jz_lcd/byd_bm8766u.h>
-struct byd_bm8766u_data byd_bm8766u_pdata = {
-	.gpio_lcd_disp = GPIO_PB(30),
-	.gpio_lcd_de = 0,	//GPIO_PC(9),   /* chose sync mode */
-	.gpio_lcd_vsync = 0,	//GPIO_PC(19),
-	.gpio_lcd_hsync = 0,	//GPIO_PC(18),
-};
-#endif /* CONFIG_LCD_BYD_BM8766U */
-
-#ifdef CONFIG_VIDEO_BM347WV_F_8991FTGF
-#include <jz_lcd/byd_8991.h>
 struct byd_8991_data byd_8991_pdata = {
 	.gpio_lcd_disp = GPIO_PB(30),
 	.gpio_lcd_de = 0,
@@ -71,4 +55,3 @@ struct byd_8991_data byd_8991_pdata = {
 	.gpio_spi_mosi = GPIO_PC(10),
 	.gpio_spi_miso = GPIO_PC(11),
 };
-#endif /* CONFIG_VIDEO_BM347WV_F_8991FTGF */
