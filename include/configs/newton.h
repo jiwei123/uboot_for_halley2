@@ -128,6 +128,7 @@
 /*#define CONFIG_VIDEO_BYD_BM8766U*/
 /*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
 #define CONFIG_SLCD_FUNCTION
+#define CONFIG_SLCDC_CONTINUA
 #define CONFIG_VIDEO_TRULY_TFT240240_2_E
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
