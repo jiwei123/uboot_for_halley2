@@ -75,7 +75,8 @@
  * Boot arguments definitions.
  */
 
-#define BOOTARGS_COMMON "console=ttyS0,57600n8 mem=256M@0x0 mem=768M@0x30000000"
+/*reserved 256M high memory for test gpu*/
+#define BOOTARGS_COMMON "console=ttyS0,57600n8 mem=256M@0x0 mem=512M@0x40000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -90,7 +91,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 3
+#define CONFIG_BOOTDELAY 0
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
