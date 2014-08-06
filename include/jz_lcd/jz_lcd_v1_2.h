@@ -29,6 +29,7 @@
 void panel_pin_init(void);
 void panel_power_on(void);
 void panel_power_off(void);
+void panel_init_set_sequence(struct dsi_device *dsi);
 void board_set_lcd_power_on(void);
 #if PWM_BACKLIGHT_CHIP
 void lcd_set_backlight_level(int num);
@@ -248,4 +249,5 @@ int jzfb_get_controller_bpp(unsigned int);
 extern struct jzfb_config_info lcd_config_info;
 extern struct jzfb_config_info jzfb1_init_data;
 extern struct fb_videomode jzfb1_videomode;
+extern struct dsi_device jz_dsi;
 #endif /*__JZ_LCD_H__*/
