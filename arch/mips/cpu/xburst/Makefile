@@ -28,6 +28,7 @@ START	= start.o
 SOBJS-y	=
 COBJS-y	= cpu.o jz_serial.o timer.o
 COBJS-$(CONFIG_XBURST_TRAPS) += traps.o
+COBJS-$(CONFIG_SPL_OS_BOOT) += os_boot.o
 
 ifdef	CONFIG_SPL_BUILD
 ifdef	CONFIG_SPL_NO_CPU_SUPPORT_CODE
