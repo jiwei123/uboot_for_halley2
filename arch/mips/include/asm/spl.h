@@ -19,7 +19,7 @@ extern ulong __bss_end;
 
 static inline u32 spl_boot_device(void)
 {
-#ifdef BOOT_DEVICE_RAM
+#ifdef CONFIG_SPL_RAM_DEVICE
 	return BOOT_DEVICE_RAM;
 #endif
 #if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)

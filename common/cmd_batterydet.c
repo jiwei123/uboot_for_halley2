@@ -293,9 +293,13 @@ static int jz_pm_do_hibernate(void)
 	/* Put CPU to hibernate mode */
 	rtc_write_reg(RTC_HCR, RTC_HCR_PD);
 
+#ifdef CONFIG_PMU_D2041
+	d2041_shutdown();
+#endif
+
 	while (a--) {
 		printf
-		    ("We should not come here, please check the jz4760rtc.h!!!\n");
+			("We should not come here, please check the jz4760rtc.h!!!\n");
 	};
 
 	/* We can't get here */
@@ -651,7 +655,7 @@ static void show_charging_logo(void)
 		if (!(__usb_detected() || __dc_detected())) {
 			debug("charge is stop\n");
 			show_charge_logo_rle(rle_num_base);
-			mdelay(3000);
+			mdelay(200);
 			jz_pm_do_hibernate();
 		}
 

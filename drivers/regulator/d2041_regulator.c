@@ -15,6 +15,38 @@
 #define D2041_NUM_LODX   0x2A
 #define D2041_I2C_ADDR   0x49
 
+#define __write_32bit_c0_register(register, sel, value)         \
+do {                                    \
+    if (sel == 0)                           \
+        __asm__ __volatile__(                   \
+            "mtc0\t%z0, " #register "\n\t"          \
+            : : "Jr" ((unsigned int)(value)));      \
+    else                                \
+        __asm__ __volatile__(                   \
+            ".set\tmips32\n\t"              \
+            "mtc0\t%z0, " #register ", " #sel "\n\t"    \
+            ".set\tmips0"                   \
+            : : "Jr" ((unsigned int)(value)));      \
+} while (0)
+
+#define __read_32bit_c0_register(source, sel)               \
+({ int __res;                               \
+    if (sel == 0)                           \
+        __asm__ __volatile__(                   \
+            "mfc0\t%0, " #source "\n\t"         \
+            : "=r" (__res));                \
+    else                                \
+        __asm__ __volatile__(                   \
+            ".set\tmips32\n\t"              \
+            "mfc0\t%0, " #source ", " #sel "\n\t"       \
+            ".set\tmips0\n\t"               \
+            : "=r" (__res));                \
+    __res;                              \
+})
+
+#define read_c0_status_1()     __read_32bit_c0_register($12, 4)
+#define write_c0_status_1(val) __write_32bit_c0_register($12, 4, val)
+
 static int d2041_regulator_disable(struct regulator* regulator);
 static int d2041_regulator_enable(struct regulator *regulator);
 static int d2041_set_voltage(struct regulator* regulator,unsigned int min_uV, unsigned int max_uV);
@@ -370,6 +402,65 @@ static int d2041_regulator_disable(struct regulator* regulator)
 	}
 
 	return ret;
+}
+
+
+int d2041_shutdown(void)
+{
+    uint8_t dst;
+    int ret;
+    debug("d2041 shutdown-----!\n");
+
+    d2041_clear_bits(D2041_CONTROLB_REG, D2041_CONTROLB_WRITEMODE | D2041_CONTROLB_I2C_SPEED);
+
+    d2041_clear_bits(D2041_CONTROLB_REG,D2041_CONTROLB_OTPREADEN); //otp r
+
+    d2041_clear_bits(D2041_POWERCONT_REG,D2041_POWERCONT_MCTRLEN); //mctl
+
+
+    dst = 0x0;
+    d2041_i2c_write(D2041_IRQMASKB_REG, 1, &dst); //onkey mask clear
+
+    d2041_clear_bits(D2041_LDO5_REG,    D2041_REGULATOR_EN); //LDO 5 disable
+    d2041_clear_bits(D2041_LDO6_REG,    D2041_REGULATOR_EN); //LDO 6 disable
+    d2041_clear_bits(D2041_LDO7_REG,    D2041_REGULATOR_EN); //LDO 7 disable
+    d2041_clear_bits(D2041_LDO8_REG,    D2041_REGULATOR_EN); //LDO 8 disable
+    d2041_clear_bits(D2041_LDO9_REG,    D2041_REGULATOR_EN); //LDO 9 disable
+    d2041_clear_bits(D2041_LDO10_REG,   D2041_REGULATOR_EN); //LDO 10 disable
+    d2041_clear_bits(D2041_LDO11_REG,   D2041_REGULATOR_EN); //LDO 11 disable
+    d2041_clear_bits(D2041_LDO12_REG,   D2041_REGULATOR_EN); //LDO 12 disable
+    d2041_clear_bits(D2041_LDO13_REG,   D2041_REGULATOR_EN); //LDO 13 disable
+    d2041_clear_bits(D2041_LDO14_REG,   D2041_REGULATOR_EN); //LDO 14 disable
+    d2041_clear_bits(D2041_LDO15_REG,   D2041_REGULATOR_EN); //LDO 15 disable
+    d2041_clear_bits(D2041_LDO16_REG,   D2041_REGULATOR_EN); //LDO 16 disable
+    d2041_clear_bits(D2041_LDO17_REG,   D2041_REGULATOR_EN); //LDO 17 disable
+    d2041_clear_bits(D2041_LDO18_REG,   D2041_REGULATOR_EN); //LDO 18 disable
+    d2041_clear_bits(D2041_LDO19_REG,   D2041_REGULATOR_EN); //LDO 19 disable
+    d2041_clear_bits(D2041_LDO20_REG,   D2041_REGULATOR_EN); //LDO 20 disable
+    d2041_clear_bits(D2041_LDO_AUD_REG, D2041_REGULATOR_EN); //LDO_AUD disable
+
+#if 0
+    dst = 0x0;
+    d2041_i2c_write( D2041_BUCK4_REG, 1, &dst); //BUCK 4
+#endif
+
+#if 0
+  dst = 0x10;
+  d2041_i2c_write(D2041_SUPPLY_REG, 1, &dst);
+
+  dst = 0x0E;
+  d2041_i2c_write(D2041_POWERCONT_REG, 1, &dst);
+#endif
+    dst = 0xef;
+    d2041_i2c_write(D2041_PDDIS_REG, 1, &dst);
+
+    dst = 0;
+    ret = d2041_i2c_read(D2041_CONTROLB_REG, 1, &dst);
+
+    dst |= D2041_CONTROLB_DEEPSLEEP/*|D2041_CONTROLB_SHUTDOWN*/;
+    d2041_i2c_write(D2041_CONTROLB_REG, 1, &dst);
+
+    return 0;
 }
 
 int d2041_regulator_init(void)
