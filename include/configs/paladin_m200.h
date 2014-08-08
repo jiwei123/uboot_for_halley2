@@ -25,6 +25,7 @@
 #ifndef __CONFIG_DORAOD_H__
 #define __CONFIG_DORAOD_H__
 
+#define CONFIG_SPL_RAM_DEVICE
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
  */
@@ -66,15 +67,18 @@
 #define CONFIG_BAUDRATE			115200
 #endif
 
-/*#define CONFIG_DDR_TEST_CPU
-#define CONFIG_DDR_TEST*/
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
-#define CONFIG_DDR_TYPE_LPDDR2
+#define CONFIG_DDR_TYPE_DDR3
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
-#define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
+#define CONFIG_DDR3_H5TQ2G83CFR_H9C
+#define CONFIG_DDR_CHIP_ODT
+#define CONFIG_DDR_PHY_ODT
+#define CONFIG_DDR_PHY_DQ_ODT
+#define CONFIG_DDR_PHY_DQS_ODT
+
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -86,6 +90,7 @@
  * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
  */
 
+#define CONFIG_MACH_TYPE 8888
 /**
  * Boot arguments definitions.
  */
@@ -138,36 +143,6 @@
  * Drivers configuration.
  */
 
-#define CONFIG_LCD
-#ifdef CONFIG_LCD
-/*#define CONFIG_JZ_MIPI_DSI*/
-#define LCD_BPP				5
-#define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
-#define CONFIG_LCD_GPIO_FUNC0_24BIT
-/*#define CONFIG_LCD_GPIO_FUNC2_SLCD*/
-#define CONFIG_LCD_LOGO
-#define CONFIG_RLE_LCD_LOGO
-/*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
-#define CONFIG_SYS_WHITE_ON_BLACK
-#define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
-#define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
-#define CONFIG_SYS_PWM_FULL		256
-#define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
-#define CONFIG_VIDEO_M200
-#define CONFIG_JZ_PWM
-#ifdef CONFIG_JZ_MIPI_DSI
-#define CONFIG_VIDEO_BYD_9177AA
-#define CONFIG_DEFAULT_BYTE_CLOCK	450
-#else
-#define CONFIG_VIDEO_BM347WV_F_8991FTGF
-/*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/
-#endif
-#ifdef CONFIG_RLE_LCD_LOGO
-#define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
-#define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
-#endif
-#endif /* CONFIG_LCD */
-
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
@@ -182,36 +157,7 @@
 #define CONFIG_JZ_MMC_MSC1_PE 1
 #endif
 
-/* I2C */
-#define CONFIG_SOFT_I2C
-#define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
-#define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 
-#ifdef CONFIG_DORADO_V10
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
-#define CONFIG_PMU_D2041
-#endif
-
-#ifdef CONFIG_DORADO_V20
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
-#define CONFIG_SOFT_I2C_READ_REPEATED_START
-/*#define CONFIG_SPL_CORE_VOLTAGE*/
-/*#define CONFIG_SPL_MEM_VOLTAGE*/
-#define CONFIG_PMU_RICOH6x
-#endif
-/* PMU */
-#define CONFIG_REGULATOR
-
-/* DEBUG ETHERNET */
-/*
-#define CONFIG_SERVERIP		192.168.8.3
-#define CONFIG_IPADDR		192.168.10.206
-#define CONFIG_GATEWAYIP        192.168.10.1
-#define CONFIG_NETMASK          255.255.255.0
-#define CONFIG_ETHADDR          00:11:22:33:44:55
-*/
 /* GPIO */
 #define CONFIG_JZ_GPIO
 
@@ -235,7 +181,6 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
-#define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
 /*#define CONFIG_CMD_I2C*/
 
@@ -246,17 +191,6 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #endif
 
-
-/* USB */
-/*#define CONFIG_CMD_FASTBOOT*/
-#define CONFIG_USB_GADGET
-#define CONFIG_USB_GADGET_DUALSPEED
-#define CONFIG_USB_JZ_DWC2_UDC_V1_1
-#define CONFIG_FASTBOOT_GADGET
-#define CONFIG_FASTBOOT_FUNCTION
-#define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
-#define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
-#define CONFIG_USB_GADGET_VBUS_DRAW 500
 
 /**
  * Serial download configuration
@@ -360,30 +294,8 @@
 #endif	/*CONFIG_SPL_NOR_SUPPORT*/
 #define CONFIG_SPL_MAX_SIZE		(26 * 1024)
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
-#define CONFIG_SPL_SERIAL_SUPPORT
-
-#endif /* CONFIG_SPL_MMC_SUPPORT */
-
-#ifdef CONFIG_SPL_NAND_SUPPORT
-/*
-#define CONFIG_SPL_NAND_BASE
-#define CONFIG_SPL_NAND_DRIVERS
-#define CONFIG_SPL_NAND_SIMPLE
-#define CONFIG_SPL_NAND_LOAD
-*/
-
-/* the NAND SPL is small enough to enable serial */
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
-
-#endif /* CONFIG_SPL_NAND_SUPPORT */
-
-#ifdef CONFIG_SPL_SPI_SUPPORT
-#define CONFIG_SPL_SERIAL_SUPPORT
-#define CONFIG_SPI_SPL_CHECK
-#define CONFIG_SYS_SPI_BOOT_FREQ	1000000
-#endif
 
 #ifdef CONFIG_SPL_NOR_SUPPORT
 #define CONFIG_SPL_SERIAL_SUPPORT
@@ -417,45 +329,4 @@
 #define CONFIG_MBR_P3_TYPE 	fat
 #endif
 
-/**
- * Keys.
- */
-#define CONFIG_GPIO_USB_DETECT		GPIO_PA(14)
-#define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
-
-/* Wrong keys. */
-#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)	/* SW7 */
-#define CONFIG_GPIO_RECOVERY_ENLEVEL	0
-
-/* Wrong keys. */
-#define CONFIG_GPIO_FASTBOOT		GPIO_PG(30)	/* SW2 */
-#define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
-
-/*
-#define CONFIG_GPIO_MENU		CONFIG_GPIO_FASTBOOT
-#define CONFIG_GPIO_MENU_ENLEVEL	CONFIG_GPIO_FASTBOOT_ENLEVEL
-*/
-
-/*#define CONFIG_GPIO_VOL_SUB		GPIO_PD(17)*/	/* SW9 */
-/*#define CONFIG_GPIO_VOL_SUB_ENLEVEL	1
-
-#define CONFIG_GPIO_VOL_ADD		GPIO_PD(18)*/	/* SW8 */
-/*#define CONFIG_GPIO_VOL_ADD_ENLEVEL	1
-
-#define CONFIG_GPIO_BACK		GPIO_PD(19)	*//* SW7 */
-/*#define CONFIG_GPIO_BACK_ENLEVEL	0*/
-
-#define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
-#define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
-
-/*#define CONFIG_GPIO_DC_DETECT           GPIO_PB(1)
-#define CONFIG_GPIO_DC_DETECT_ENLEVEL   0
-*/
-/* TEST
-#define CONFIG_GPIO_DC_DETECT           GPIO_PG(10)
-#define CONFIG_GPIO_DC_DETECT_ENLEVEL   1
-
-#define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
-#define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
-*/
 #endif /* __CONFIG_DORAOD_H__ */
