@@ -25,8 +25,9 @@
 #include <serial.h>
 #include <common.h>
 #include <lcd.h>
-#include <asm/arch-m200/lcdc.h>
-#include <asm/arch-m200/gpio.h>
+#include <asm/arch/lcdc.h>
+#include <asm/arch/gpio.h>
+#include <asm/arch/clk.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
 
 /*#define DEBUG*/
@@ -1213,7 +1214,6 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 void lcd_ctrl_init(void *lcd_base)
 {
 	/* init registers base address */
-	int LCD = 4;
 	lcd_config_info = jzfb1_init_data;
 	lcd_config_info.lcdbaseoff = 0;
 
