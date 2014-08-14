@@ -662,6 +662,9 @@ void sdram_init(void)
 #endif
 	reset_controller();
 
+#ifdef CONFIG_DDR_AUTO_SELF_REFRESH
+	ddr_writel(0x0 ,DDRC_AUTOSR_EN);
+#endif
 	/*force CKE1 HIGH*/
 	ddr_writel(DDRC_CFG_VALUE, DDRC_CFG);
 	ddr_writel((1 << 1), DDRC_CTRL);
