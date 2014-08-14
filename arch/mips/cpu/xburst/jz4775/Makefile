@@ -31,6 +31,8 @@ COBJS-y	= $(SOC).o
 COBJS-y += pll.o
 COBJS-y += clk.o
 COBJS-y += ../ddr_dwc.o
+COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
+
 ifdef CONFIG_SPL_DDR_SOFT_TRAINING
 COBJS-y += ../ddr_dqs_training.o
 else

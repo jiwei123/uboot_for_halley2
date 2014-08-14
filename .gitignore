@@ -53,6 +53,11 @@
 # Generated files
 #
 
+kk
+/include/charge_logo.h
+/tools/logos/ingenic.rle
+/include/rle_boot_logo.h
+/tools/charge_logo/charg*
 /include/rle_charge_logo.h
 /common/rle_logo.c
 /tools/logos/ingenic.jpg.rle

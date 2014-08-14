@@ -55,9 +55,12 @@ void __weak board_init_f(ulong dummy)
  * arg: Pointer to paramter image in RAM
  */
 #ifdef CONFIG_SPL_OS_BOOT
+int __weak cleanup_before_linux (void)
+{
+}
+
 void __noreturn jump_to_image_linux(void *arg)
 {
-#error TODO
 	debug("Entering kernel arg pointer: 0x%p\n", arg);
 	typedef void (*image_entry_arg_t)(int, int, void *)
 		__attribute__ ((noreturn));

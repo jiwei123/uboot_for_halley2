@@ -1,6 +1,6 @@
 property:
     disk_size = 4096m
-    gpt_header_lba = 256k
+    gpt_header_lba = 2m
 
 partition:
 	#name     =  start,   size, fstype

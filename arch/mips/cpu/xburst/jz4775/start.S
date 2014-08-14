@@ -47,6 +47,32 @@ _start:
 
 #endif /* CONFIG_SPL_NAND_SUPPORT */
 
+#if 0
+loop:
+	la      v0, 0xb0010400
+	li      t0, 0x400
+	sw      t0, 0x74(v0)
+	sw      t0, 0x18(v0)
+	sw      t0, 0x24(v0)
+	sw      t0, 0x38(v0)
+	sw      t0, 0x48(v0)
+	li      t1, 0x7fffff
+loop2:
+	subu    t1, t1, 1
+	nop
+	bgtz    t1, loop2
+	nop
+	sw      t0, 0x44(v0)
+	li      t1, 0x7fffff
+loop3:
+	subu    t1, t1, 1
+	nop
+	bgtz    t1, loop3
+	nop
+	b       loop
+	nop
+#endif
+
 	/* Invalidate BTB */
 	mfc0	v0, CP0_CONFIG, 7
 	nop

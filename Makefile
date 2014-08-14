@@ -599,7 +599,7 @@ ifneq ($(CONFIG_GPT_AT_TAIL),y)
 else
 		@chmod +x $(obj)tools/ingenic-tools/mk-gpt-xboot.sh
 		$(obj)tools/ingenic-tools/mk-gpt-xboot.sh $(obj)tools/ingenic-tools/mbr-of-gpt.bin \
-		$(obj)u-boot-with-spl.bin $(obj)tools/ingenic-tools/gpt.bin $(obj)board/ingenic/newton/partitions.tab $@
+		$(obj)u-boot-with-spl.bin $(obj)tools/ingenic-tools/gpt.bin $(CONFIG_GPT_TABLE_PATH)/partitions.tab $@
 endif
 endif
 

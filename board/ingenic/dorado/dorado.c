@@ -54,10 +54,19 @@ extern void boot_mode_select(void);
 #ifdef CONFIG_PMU_D2041
 extern int d2041_regulator_init(void);
 #endif
+#ifdef CONFIG_PMU_RICOH6x
+extern int ricoh61x_regulator_init(void);
+#endif
+
 int board_early_init_f(void)
 {
 #ifdef CONFIG_PMU_D2041
 	d2041_regulator_init();
+#endif
+
+#ifdef CONFIG_PMU_RICOH6x
+	ricoh61x_regulator_init();
+//	test_richo();
 #endif
 	return 0;
 }

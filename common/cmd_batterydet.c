@@ -68,7 +68,7 @@ extern void board_powerdown_device(void);
 #define __battery_is_charging()		0
 #endif
 
-#define __charge_detect()	(__battery_is_charging() || __dc_detected())
+#define __charge_detect()	(__battery_is_charging() || __dc_detected() || __usb_detected())
 
 static long slop = 0;
 static long cut = 0;
@@ -165,6 +165,22 @@ static int keys_pressed(void)
 #define RD_EN		0x01
 #define RD_DONE		0x1
 /* JZ4780 adc adjust*/
+static void sadc_power_on(void)
+{
+	/* Enable the SADC clock ,so we can access the SACD registers */
+	reg_bit_clr(CPM_BASE + CPM_CLKGR, CPM_CLKGR_SADC);
+
+	/* Clear the SADC_ADENA_POWER bit to turn on SADC,just once */
+	reg_bit_clr(SADC_BASE + SADC_ADENA, SADC_ADENA_POWER);
+}
+static void sadc_power_off(void)
+{
+	/* set the SADC_ADENA_POWER bit to turn off SADC,just once */
+	reg_bit_set(SADC_BASE + SADC_ADENA, SADC_ADENA_POWER);
+
+	/* disable the SADC clock ,then we can't access the SACD registers */
+	reg_bit_set(CPM_BASE + CPM_CLKGR, CPM_CLKGR_SADC);
+}
 static void get_cpu_id(void)
 {
 #ifdef CONFIG_ADC_SUPPORT_ADJUST
@@ -277,9 +293,13 @@ static int jz_pm_do_hibernate(void)
 	/* Put CPU to hibernate mode */
 	rtc_write_reg(RTC_HCR, RTC_HCR_PD);
 
+#ifdef CONFIG_PMU_D2041
+	d2041_shutdown();
+#endif
+
 	while (a--) {
 		printf
-		    ("We should not come here, please check the jz4760rtc.h!!!\n");
+			("We should not come here, please check the jz4760rtc.h!!!\n");
 	};
 
 	/* We can't get here */
@@ -334,12 +354,6 @@ static unsigned int read_adc_vbat(void)
 
 	unsigned int timeout = 0xfff;
 	unsigned long long bat = 0;
-
-	/* Enable the SADC clock ,so we can access the SACD registers */
-	reg_bit_clr(CPM_BASE + CPM_CLKGR, CPM_CLKGR_SADC);
-
-	/* Clear the SADC_ADENA_POWER bit to turn on SADC,just once */
-	reg_bit_clr(SADC_BASE + SADC_ADENA, SADC_ADENA_POWER);
 
 	/* Set the ADCLK register bit[7:0],SACD work at 100Khz */
 	writel(120 - 1, SADC_BASE + SADC_ADCLK);
@@ -411,6 +425,7 @@ static unsigned int read_battery_voltage(void)
 	int min = 0xffff, max = 0, tmp;
 	int i;
 
+	sadc_power_on();
 	for (i = 0; i < 12; i++) {
 		tmp = read_adc_vbat();
 		if (tmp < min)
@@ -420,6 +435,7 @@ static unsigned int read_battery_voltage(void)
 		voltage += tmp;
 		mdelay(10);
 	}
+	sadc_power_off();
 
 	voltage -= min + max;
 	voltage /= 10;
@@ -635,11 +651,11 @@ static void show_charging_logo(void)
 				return;
 			}
 		}
-		// During the charge process ,User extract the USB cable ,Enter hibernate mode 
+		// During the charge process ,User extract the USB cable ,Enter hibernate mode
 		if (!(__usb_detected() || __dc_detected())) {
 			debug("charge is stop\n");
 			show_charge_logo_rle(rle_num_base);
-			mdelay(3000);
+			mdelay(200);
 			jz_pm_do_hibernate();
 		}
 

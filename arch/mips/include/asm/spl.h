@@ -12,12 +12,16 @@
 #define BOOT_DEVICE_NAND 3
 #define BOOT_DEVICE_SPI 4
 #define BOOT_DEVICE_NOR 5
+#define BOOT_DEVICE_RAM 6
 
 extern char __bss_start[];
 extern ulong __bss_end;
 
 static inline u32 spl_boot_device(void)
 {
+#ifdef CONFIG_SPL_RAM_DEVICE
+	return BOOT_DEVICE_RAM;
+#endif
 #if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)
 	return BOOT_DEVICE_NAND;
 #endif

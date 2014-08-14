@@ -49,14 +49,16 @@ struct cgu_clk_src cgu_clk_src[] = {
 extern void boot_mode_select(void);
 #endif
 
-#if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
-static void battery_init_gpio(void)
-{
-}
+#ifdef CONFIG_PMU_RICOH6x
+extern int ricoh61x_regulator_init(void);
 #endif
 
 int board_early_init_f(void)
 {
+#ifdef CONFIG_PMU_RICOH6x
+	ricoh61x_regulator_init();
+//	test_richo();
+#endif
 	return 0;
 }
 

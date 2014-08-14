@@ -26,16 +26,20 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
-COBJS	:= $(BOARD).o
+COBJS-y	:= $(BOARD).o
+COBJS-$(CONFIG_VIDEO_BM347WV_F_8991FTGF) += lcd-8991.o
+COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += lcd-truly-tft240240.o
+COBJS-$(CONFIG_VIDEO_BYD_BM8766U) += lcd-bydbm8766u.o
+COBJS-$(CONFIG_VIDEO_BYD_9177AA) += lcd-9177aa.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
+SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y))
+SOBJS   := $(addprefix $(obj),$(SOBJS-y))
 
 $(LIB):	$(obj).depend $(OBJS) $(SOBJS)
 	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################
-
 # defines $(obj).depend target
 include $(SRCTREE)/rules.mk
 

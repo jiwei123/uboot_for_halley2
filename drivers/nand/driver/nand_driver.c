@@ -473,6 +473,7 @@ void fill_plat_ptinfo(PartitionInfo *pinfo, plat_ptinfo * plat_info)
 	plat_info->ptcount = pinfo->ptcount;
 	for(pt_index = 0; pt_index < plat_info->ptcount; pt_index++){
 		part_num = 0;
+		(plat_info->pt_table + pt_index)->attribute = (uipt + pt_index)->attribute;
 		memcpy((plat_info->pt_table + pt_index)->name, (uipt + pt_index)->name, MAX_NAME_SIZE);
 		(plat_info->pt_table + pt_index)->offset = (unsigned long long)(uipt + pt_index)->offset *
 			(unsigned long long)(1024 * 1024);

@@ -47,7 +47,7 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		3
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			57600
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
@@ -91,11 +91,11 @@
     #define CONFIG_BOOTCOMMAND	\
 	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 22528"
   #else
     #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 22528"
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
@@ -110,7 +110,7 @@
 /**
  * Drivers configuration.
  */
-#undef  CONFIG_LCD
+#define  CONFIG_LCD
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
@@ -125,8 +125,10 @@
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
 #define CONFIG_VIDEO_JZ4775
 #define CONFIG_JZ_PWM
-#define CONFIG_VIDEO_BYD_BM8766U
+/*#define CONFIG_VIDEO_BYD_BM8766U*/
 /*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
+#define CONFIG_SLCD_FUNCTION
+#define CONFIG_VIDEO_TRULY_TFT240240_2_E
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE   	/* display the logo using rle command */
@@ -148,7 +150,7 @@
 
 /* I2C */
 /* add the I2C later */
-#undef CONFIG_SOFT_I2C
+#define CONFIG_SOFT_I2C
 #ifdef CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
@@ -157,9 +159,9 @@
 #endif
 /* PMU */
 /* add the pmu later */
-#undef CONFIG_REGULATOR
+#define CONFIG_REGULATOR
 #ifdef  CONFIG_REGULATOR
-#define CONFIG_PMU_ACT8600
+#define CONFIG_PMU_D2041
 #endif
 
 /* Ethernet: gmac and 9161 */
@@ -203,7 +205,7 @@
 
 /* USB */
 #ifdef CONFIG_BOOT_ANDROID
-#define CONFIG_CMD_FASTBOOT
+/* #define CONFIG_CMD_FASTBOOT */
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_GADGET_DUALSPEED
 #define CONFIG_USB_JZ_DWC2_UDC
@@ -357,25 +359,17 @@
 /**
  * Keys.
  */
-#define CONFIG_GPIO_USB_DETECT		GPIO_PA(16)
-#define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
+/*#define CONFIG_GPIO_USB_DETECT		GPIO_PA(16)*/
+#define CONFIG_GPIO_USB_DETECT		GPIO_PB(29)
+#define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
 
-#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)	/* SW7 */
+#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	0
 
-#define CONFIG_GPIO_FASTBOOT		GPIO_PG(15)	/* SW2 */
+#define CONFIG_GPIO_FASTBOOT		GPIO_PG(15)
 #define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
 
-#define CONFIG_GPIO_MENU		CONFIG_GPIO_FASTBOOT
-#define CONFIG_GPIO_MENU_ENLEVEL	CONFIG_GPIO_FASTBOOT_ENLEVEL
-
-#define CONFIG_GPIO_VOL_SUB		GPIO_PD(17)	/* SW9 */
-#define CONFIG_GPIO_VOL_SUB_ENLEVEL	1
-
-#define CONFIG_GPIO_VOL_ADD		GPIO_PD(18)	/* SW8 */
-#define CONFIG_GPIO_VOL_ADD_ENLEVEL	0
-
-#define CONFIG_GPIO_BACK		GPIO_PD(19)	/* SW7 */
+#define CONFIG_GPIO_BACK		GPIO_PD(19)
 #define CONFIG_GPIO_BACK_ENLEVEL	0
 
 #define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)

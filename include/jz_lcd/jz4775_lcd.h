@@ -285,6 +285,13 @@ enum smart_lcd_dwidth {
 	SMART_LCD_DWIDTH_8_BIT_ONCE_PARALLEL_SERIAL = (0x4 << 10),
 	SMART_LCD_DWIDTH_24_BIT_ONCE_PARALLEL = (0x5 << 10),
 	SMART_LCD_DWIDTH_9_BIT_TWICE_TIME_PARALLEL = (0x7 << 10),
+    SMART_LCD_DWIDTH_MASK = (0x7 << 10)
+};
+
+/* smart lcd interface_type */
+enum smart_lcd_dma_mode {
+    SMART_LCD_DMA_MODE_CONTINUOUS, /* default value */
+    SMART_LCD_DMA_MODE_SINGLE,
 };
 
 /**
@@ -317,6 +324,7 @@ struct fb_videomode {
 	u32 flag;
 };
 
+
 struct jzfb_config_info {
 
 	int num_modes;
@@ -337,10 +345,12 @@ struct jzfb_config_info {
 	struct lvds_txpll1 txpll1;	/* the configure of LVDS Transmitter's PLL Control Register 1 */
 	struct lvds_txectrl txectrl;	/* the configure of LVDS Transmitter's Enhance Control */
 
-	struct {
-		enum smart_lcd_type smart_type;	/* smart lcd transfer type, 0: parrallel, 1: serial */
-		enum smart_lcd_cwidth cmd_width;	/* smart lcd command width */
+    struct {
+        enum smart_lcd_dma_mode dma_mode;/* smart lcd dma mode */
+        enum smart_lcd_type smart_type;	/* smart lcd transfer type, 0: parrallel, 1: serial */
+        enum smart_lcd_cwidth cmd_width;	/* smart lcd command width */
 		enum smart_lcd_dwidth data_width;	/* smart lcd data Width */
+		enum smart_lcd_dwidth data_width2;	/* smart lcd data Width2 */
 
 		unsigned clkply_active_rising:1;	/* smart lcd clock polarity:
 							   0: Active edge is Falling,1: Active edge is Rasing */

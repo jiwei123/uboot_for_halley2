@@ -94,8 +94,8 @@ _start:
 
 	mfc0	v0, $12, 2
 	nop
-	li	v1, 0x40000000
-	or	v0, v0, v1
+	li	v1, 0x7fffffff
+	and	v0, v0, v1
 	mtc0	v0, $12, 2
 	nop
 
