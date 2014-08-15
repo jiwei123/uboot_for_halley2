@@ -28,4 +28,7 @@
 #include "./chips/MCP_H9TP32A8JDMC_PRKGM_LPDDR2.h"
 #endif
 
+#ifdef CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2
+#include "./chips/MCP_SAMSUNG_KMN5X000ZM_LPDDR2.h"
+#endif
 #endif /* __DDR_CHIPS_H__ */

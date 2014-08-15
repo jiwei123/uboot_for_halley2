@@ -61,7 +61,7 @@ static void write_dcu_cache(unsigned int *data, unsigned int len)
 	int i;
 
 	for (i = 0; i < len; i++) {
-		dwc_debug("send: 0x%08x\n", data[i]);
+		dwc_debug("send: 0x%x\n", data[i]);
 		ddr_writel(data[i], DDRP_DCUDR);
 	}
 	dwc_debug("\n");
@@ -154,10 +154,10 @@ static void ddr_test_write(int rank)
 	while (!(ddr_readl(DDRP_DCUSR0) & 0x1));
 
 	dwc_debug("dcu command stag1 over!\n");
-	dwc_debug("DCUAR: 0x%08x\n", ddr_readl(DDRP_DCUAR));
-	dwc_debug("DCURR: 0x%08x\n", ddr_readl(DDRP_DCURR));
-	dwc_debug("DCUSR0: 0x%08x\n", ddr_readl(DDRP_DCUSR0));
-	dwc_debug("DCUSR1: 0x%08x\n", ddr_readl(DDRP_DCUSR1));
+	dwc_debug("DCUAR: 0x%x\n", ddr_readl(DDRP_DCUAR));
+	dwc_debug("DCURR: 0x%x\n", ddr_readl(DDRP_DCURR));
+	dwc_debug("DCUSR0: 0x%x\n", ddr_readl(DDRP_DCUSR0));
+	dwc_debug("DCUSR1: 0x%x\n", ddr_readl(DDRP_DCUSR1));
 }
 
 static int ddr_test_read(int byte)
@@ -169,10 +169,10 @@ static int ddr_test_read(int byte)
 	while (!(ddr_readl(DDRP_DCUSR0) & 0x1));
 
 	dwc_debug("dcu command stag2 over!\n");
-	dwc_debug("DCUAR: 0x%08x\n", ddr_readl(DDRP_DCUAR));
-	dwc_debug("DCURR: 0x%08x\n", ddr_readl(DDRP_DCURR));
-	dwc_debug("DCUSR0: 0x%08x\n", ddr_readl(DDRP_DCUSR0));
-	dwc_debug("DCUSR1: 0x%08x\n", ddr_readl(DDRP_DCUSR1));
+	dwc_debug("DCUAR: 0x%x\n", ddr_readl(DDRP_DCUAR));
+	dwc_debug("DCURR: 0x%x\n", ddr_readl(DDRP_DCURR));
+	dwc_debug("DCUSR0: 0x%x\n", ddr_readl(DDRP_DCUSR0));
+	dwc_debug("DCUSR1: 0x%x\n", ddr_readl(DDRP_DCUSR1));
 
 	ddr_writel(0xe00, DDRP_DCUAR);
 
@@ -190,13 +190,13 @@ static int ddr_test_read(int byte)
 				expect = EXPECT3;
 		}
 		if ((data & MASK(byte)) != (expect & MASK(byte))) {
-			dwc_debug("\tERROR DCUDR: 0x%08x\n", data);
-			dwc_debug("\tEXPECT DCUDR: 0x%08x\n", expect);
-			dwc_debug("\tMASK: 0x%08x\n", MASK(byte));
+			dwc_debug("\tERROR DCUDR: 0x%x\n", data);
+			dwc_debug("\tEXPECT DCUDR: 0x%x\n", expect);
+			dwc_debug("\tMASK: 0x%x\n", MASK(byte));
 			res = 0;
 			break;
 		} else {
-			dwc_debug("\tOK DCUDR: 0x%08x\n", data & MASK(byte));
+			dwc_debug("\tOK DCUDR: 0x%x\n", data & MASK(byte));
 		}
 	}
 	ddr_writel(0x20011, DDRP_PIR);
@@ -226,7 +226,7 @@ static int tunning_dqs_parameter(int rank, int byte)
 			tmp |= (dgsl << (rank * 3) | (dgps << (rank * 2 + 12)));
 			ddr_writel(tmp, DDRP_DXDQSTR(byte));
 
-			dwc_debug("ddr_test_read REG_DDRP_DXDQSTR(%d): 0x%08x\n",
+			dwc_debug("ddr_test_read REG_DDRP_DXDQSTR(%d): 0x%x\n",
 					byte, ddr_readl(DDRP_DXDQSTR(byte)));
 
 			if (ddr_test_read(byte)) {
