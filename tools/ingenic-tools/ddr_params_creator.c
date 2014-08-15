@@ -347,7 +347,7 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->cfg.b.MISPE = 1;
 	ddrc->cfg.b.ROW0 = p->row - 12;
 	ddrc->cfg.b.COL0 = p->col - 8;
-#ifdef CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2
+#ifdef CONFIG_DDR_FORCE_SELECT_CS1
 	ddrc->cfg.b.CS1EN = 1;
 #else
 	ddrc->cfg.b.CS1EN = p->cs1;
