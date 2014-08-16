@@ -1515,7 +1515,7 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 			ret = nand_normal_eraseall(nddata, ndflash);
 			break;
 		case NAND_FORCE_ERASE_MODE:
-			ret = nand_force_eraseall(nddata, ndflash);
+			ret = nand_force_eraseall(nddata, ndflash,ptinfo);
 			break;
 		case NAND_FACTORY_ERASE_MODE:
 			ret = nand_factory_eraseall(nddata, ndflash);

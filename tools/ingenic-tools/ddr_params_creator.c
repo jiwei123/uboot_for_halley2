@@ -347,7 +347,11 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->cfg.b.MISPE = 1;
 	ddrc->cfg.b.ROW0 = p->row - 12;
 	ddrc->cfg.b.COL0 = p->col - 8;
+#ifdef CONFIG_DDR_FORCE_SELECT_CS1
+	ddrc->cfg.b.CS1EN = 1;
+#else
 	ddrc->cfg.b.CS1EN = p->cs1;
+#endif
 	ddrc->cfg.b.CS0EN = p->cs0;
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddrc->cfg.b.CL = 0; /* NOT used in this version */

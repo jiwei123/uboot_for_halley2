@@ -484,7 +484,7 @@ static int ddr_training_software(unsigned int mode)
 	unsigned int mr0_tmp = 1;
 	unsigned int cs0;
 	unsigned int cs1;
-
+	unsigned int tmp = 0;
 	dwc_debug("Now try soft training\n");
 #ifdef CONFIG_DDR_HOST_CC
 	cs0 = CONFIG_DDR_CS0;
@@ -496,7 +496,18 @@ static int ddr_training_software(unsigned int mode)
 	if (dqs_gate_train(cs0 + cs1, 4)) {
 		dwc_debug("DDR soft train fail too!!!\n");
 		dump_ddrp_register();
-		result = -1;
+		result = 1;
+	}
+	if((result) && (!cs1)){
+		printf("try again to soft train may be the problem for cs\n");
+		tmp = ddr_readl(DDRC_CFG);
+		tmp |= 3 << 6;
+		ddr_writel(tmp, DDRC_CFG);
+		if (dqs_gate_train(cs0, 4)) {
+			dwc_debug("try again DDR soft train fail too please check the hardware!!!\n");
+			dump_ddrp_register();
+			result = -1;
+		}
 	}
 
 #ifdef CONFIG_DDR_HOST_CC
@@ -662,6 +673,9 @@ void sdram_init(void)
 #endif
 	reset_controller();
 
+#ifdef CONFIG_DDR_AUTO_SELF_REFRESH
+	ddr_writel(0x0 ,DDRC_AUTOSR_EN);
+#endif
 	/*force CKE1 HIGH*/
 	ddr_writel(DDRC_CFG_VALUE, DDRC_CFG);
 	ddr_writel((1 << 1), DDRC_CTRL);

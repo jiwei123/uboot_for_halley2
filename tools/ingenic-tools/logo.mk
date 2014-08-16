@@ -35,5 +35,5 @@ $(RLE_CHARGE_LOGO_H):	$(obj)bin2array $(CHARGE_RLE_OBJS)
 #	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) $^ -ljpeg -lpng12 -o $@
 #	$(HOSTSTRIP) $@
 
-#$(obj)bin2array: bin2array.c
-#	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+$(obj)bin2array: bin2array.c
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
