@@ -773,13 +773,17 @@ static void jzfb_config_smart_lcd_dma(struct jzfb_config_info *info)
 	framedesc_cmd[1]->page_width = 0;
 	framedesc_cmd[1]->desc_size = 0;
 
-	switch (info->smart_config.cmd_width) {
-		case SMART_LCD_CWIDTH_8_BIT_ONCE:
-        case SMART_LCD_CWIDTH_9_BIT_ONCE://SMART_LCD_CWIDTH_16_BIT_ONCE
+	switch (info->smart_config.bus_width) {
+		case 8:
 			framedesc_cmd[1]->ldcmd = LCDC_CMD_CMD | LCDC_CMD_FRM_EN | 1;
 			framedesc_cmd[1]->cmd_num = 4;
 			break;
-		default://SMART_LCD_CWIDTH_18_BIT_ONCE,SMART_LCD_CWIDTH_24_BIT_ONCE
+        case 9:
+        case 16:
+			framedesc_cmd[1]->ldcmd = LCDC_CMD_CMD | LCDC_CMD_FRM_EN | 1;
+			framedesc_cmd[1]->cmd_num = 2;
+			break;
+		default:
 			framedesc_cmd[1]->ldcmd = LCDC_CMD_CMD | LCDC_CMD_FRM_EN | 1;
 			framedesc_cmd[1]->ldcmd = 1;
 			break;
@@ -841,7 +845,7 @@ static int jzfb_prepare_dma_desc(struct jzfb_config_info *info)
 	info->dmadesc_cmd_tmp =
 	    (struct jz_fb_dma_descriptor *)((unsigned long)info->palette -
 					    4 * 32);
-	if (info->lcd_type != LCD_TYPE_LCM) {
+	if (info->lcd_type != LCD_TYPE_SLCD) {
 		jzfb_config_tft_lcd_dma(info);
 	} else {
 		jzfb_config_smart_lcd_dma(info);
@@ -910,7 +914,7 @@ void lcd_disable(void)
 {
 	unsigned ctrl;
 	if (lcd_enable_state == 1) {
-		if (lcd_config_info.lcd_type != LCD_TYPE_LCM) {
+		if (lcd_config_info.lcd_type != LCD_TYPE_SLCD) {
 			ctrl = reg_read(LCDC_CTRL);
 			ctrl |= LCDC_CTRL_DIS;
 			reg_write(LCDC_CTRL, ctrl);
@@ -930,7 +934,7 @@ static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
     unsigned int is_enabled, i;
     unsigned long tmp;
 
-    if (info->lcd_type != LCD_TYPE_LCM)
+    if (info->lcd_type != LCD_TYPE_SLCD)
         return;
 
     is_enabled = lcd_enable_state;
@@ -938,32 +942,27 @@ static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
         lcd_enable();
     }
 
-    if (info->smart_config.length_data_table &&
+     if (info->smart_config.length_data_table &&
             info->smart_config.data_table) {
         for (i = 0; i < info->smart_config.length_data_table; i++) {
             switch (info->smart_config.data_table[i].type) {
-                case 0:
-                    slcd_set_mcu_register(info,
-                            info->smart_config.
-                            data_table[i].reg,
+                case SMART_CONFIG_DATA:
+                    slcd_send_mcu_data(info,
                             info->smart_config.
                             data_table[i].value);
                     break;
-                case 1:
+                case SMART_CONFIG_CMD:
                     slcd_send_mcu_command(info,
                             info->smart_config.
                             data_table[i].value);
                     break;
-                case 2:
-                    slcd_send_mcu_data(info,
-                            info->smart_config.
-                            data_table[i].value);
+                case SMART_CONFIG_UDELAY:
+                    udelay(info->smart_config.data_table[i].value);
                     break;
                 default:
                     serial_puts("Unknow SLCD data type\n");
                     break;
             }
-            udelay(info->smart_config.data_table[i].udelay);
         }
         {
             int count = 10000;
@@ -977,21 +976,19 @@ static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
         }
     }
 
-    if (info->smart_config.data_width2) {
-        int tmp = reg_read(SLCDC_CFG);
-        tmp &= ~SMART_LCD_DWIDTH_MASK;
-        tmp |= info->smart_config.data_width2;
-        reg_write(SLCDC_CFG, tmp);
-        printf("mcu init over.the cfg is %08x\n", tmp);
+    if(info->bpp / info->smart_config.bus_width != 1 ) {
+        int tmp = reg_read(SLCDC_CFG_NEW);
+        tmp &= ~(SMART_LCD_DWIDTH_MASK); //mask the 8~9bit
+        tmp |=  (info->bpp / info->smart_config.bus_width)  == 2 ? SMART_LCD_NEW_DTIMES_TWICE : SMART_LCD_NEW_DTIMES_THICE;
+        reg_write(SLCDC_CFG_NEW, tmp);
+        printf("the slcd slcd_cfg_new is %08x\n", tmp);
     }
 
-    if (info->smart_config.data_new_times2) {
-        int tmp = reg_read(SLCDC_CFG_NEW);
-        tmp &= ~(3<<8); //mask the 8~9bit
-        tmp |= info->smart_config.data_new_times2;
-        reg_write(SLCDC_CFG_NEW, tmp);
-        printf("the slcd  slcd_cfg_new is %08x\n", tmp);
-    }
+#ifdef CONFIG_FB_JZ_DEBUG
+    /*for register mode test,
+     * you can write test code according to the lcd panel
+     **/
+#endif
 
     /* SLCD DMA mode select 0 */
     if (!is_enabled) {
@@ -1046,39 +1043,65 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 
 	ctrl |= LCDC_CTRL_BPP_18_24;
 	/* configure smart LCDC registers */
-	if (info->lcd_type == LCD_TYPE_LCM) {
-		smart_cfg = lcd_config_info.smart_config.smart_type |
-		    lcd_config_info.smart_config.cmd_width |
-		    lcd_config_info.smart_config.data_width;
+	if (info->lcd_type == LCD_TYPE_SLCD) {
+        smart_cfg = lcd_config_info.smart_config.smart_type |
+            SMART_LCD_DWIDTH_24_BIT_ONCE_PARALLEL;
 
-		if (lcd_config_info.smart_config.clkply_active_rising)
-			smart_cfg |= SLCDC_CFG_CLK_ACTIVE_RISING;
-		if (lcd_config_info.smart_config.rsply_cmd_high)
-			smart_cfg |= SLCDC_CFG_RS_CMD_HIGH;
-		if (lcd_config_info.smart_config.csply_active_high)
-			smart_cfg |= SLCDC_CFG_CS_ACTIVE_HIGH;
-		/* SLCD DMA mode select 0 */
-		smart_ctrl = SLCDC_CTRL_DMA_MODE;
-                smart_ctrl &= ~SLCDC_CTRL_GATE_MASK;
+        switch(info->smart_config.bus_width){
+            case 8:
+                smart_cfg |= SMART_LCD_CWIDTH_8_BIT_ONCE;
+                smart_new_cfg |= SMART_LCD_NEW_DWIDTH_8_BIT;
+                break;
+            case 9:
+                smart_cfg |= SMART_LCD_CWIDTH_9_BIT_ONCE;
+                smart_new_cfg |= SMART_LCD_NEW_DWIDTH_9_BIT;
+                break;
+            case 16:
+                smart_cfg |= SMART_LCD_CWIDTH_16_BIT_ONCE;
+                smart_new_cfg |= SMART_LCD_NEW_DWIDTH_16_BIT;
+                break;
+            case 18:
+                smart_cfg |= SMART_LCD_CWIDTH_18_BIT_ONCE;
+                smart_new_cfg |= SMART_LCD_NEW_DWIDTH_18_BIT;
+                break;
+            case 24:
+                smart_cfg |= SMART_LCD_CWIDTH_24_BIT_ONCE;
+                smart_new_cfg |= SMART_LCD_NEW_DWIDTH_24_BIT;
+                break;
+            default:
+                printf("ERR: please check out your bus width config\n");
+                break;
+        }
 
-                smart_ctrl |= (SLCDC_CTRL_NEW_MODE | SLCDC_CTRL_NOT_USE_TE); //new slcd mode
-                smart_ctrl &= ~SLCDC_CTRL_MIPI_MODE;
-                smart_new_cfg |= info->smart_config.data_new_width |
-                    info->smart_config.data_new_times;
+        if (lcd_config_info.smart_config.clkply_active_rising)
+            smart_cfg |= SLCDC_CFG_CLK_ACTIVE_RISING;
+        if (lcd_config_info.smart_config.rsply_cmd_high)
+            smart_cfg |= SLCDC_CFG_RS_CMD_HIGH;
+        if (lcd_config_info.smart_config.csply_active_high)
+            smart_cfg |= SLCDC_CFG_CS_ACTIVE_HIGH;
+        /* SLCD DMA mode select 0 */
+        smart_ctrl = SLCDC_CTRL_DMA_MODE;
+        //smart_ctrl |= SLCDC_CTRL_GATE_MASK; //for saving power
+        smart_ctrl &= ~SLCDC_CTRL_GATE_MASK;
 
-                if (info->smart_config.newcfg_6800_md)
-                        smart_new_cfg |= SLCDC_NEW_CFG_6800_MD;
-                if (info->smart_config.newcfg_datatx_type
-                    && info->smart_config.newcfg_cmdtx_type)
-                        smart_new_cfg |=
-                            SLCDC_NEW_CFG_DTYPE_SERIAL |
-                            SLCDC_NEW_CFG_CTYPE_SERIAL;
-                if (info->smart_config.newcfg_cmd_9bit)
-			smart_new_cfg |= SLCDC_NEW_CFG_CMD_9BIT;
+        smart_ctrl |= (SLCDC_CTRL_NEW_MODE | SLCDC_CTRL_NOT_USE_TE); //new slcd mode
+        smart_ctrl &= ~SLCDC_CTRL_MIPI_MODE;
+        smart_new_cfg |= SMART_LCD_NEW_DTIMES_ONCE;
 
-		smart_wtime = 0;
-		smart_tas = 0;
+        if (info->smart_config.newcfg_6800_md)
+            smart_new_cfg |= SLCDC_NEW_CFG_6800_MD;
+        if (info->smart_config.newcfg_datatx_type
+                && info->smart_config.newcfg_cmdtx_type)
+            smart_new_cfg |=
+                SLCDC_NEW_CFG_DTYPE_SERIAL |
+                SLCDC_NEW_CFG_CTYPE_SERIAL;
+        if (info->smart_config.newcfg_cmd_9bit)
+            smart_new_cfg |= SLCDC_NEW_CFG_CMD_9BIT;
+
+        smart_wtime = 0;
+        smart_tas = 0;
 	}
+
 
 	switch (info->lcd_type) {
 		case LCD_TYPE_SPECIAL_TFT_1:
@@ -1097,7 +1120,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 			break;
 	}
 
-	if (info->lcd_type != LCD_TYPE_LCM) {
+	if (info->lcd_type != LCD_TYPE_SLCD) {
 		reg_write(LCDC_VAT, (ht << 16) | vt);
 		reg_write(LCDC_DAH, (hds << 16) | hde);
 		reg_write(LCDC_DAV, (vds << 16) | vde);
@@ -1149,7 +1172,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 
 	jzfb_prepare_dma_desc(info);
 
-	if (info->lcd_type == LCD_TYPE_LCM) {
+	if (info->lcd_type == LCD_TYPE_SLCD) {
 		jzfb_slcd_mcu_init(info);
 #ifdef CONFIG_SLCDC_CONTINUA
 		smart_ctrl &= ~SLCDC_CTRL_DMA_MODE;
@@ -1195,19 +1218,15 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 	info->palette =
 		(unsigned long)lcdbase + fb_size + PAGE_SIZE - palette_mem_size;
 	info->dma_cmd_buf = ((unsigned long)lcdbase + fb_size + PAGE_SIZE - 1) & ~(PAGE_SIZE -1);
-	if (info->lcd_type == LCD_TYPE_LCM) {
-		int i;
-		unsigned long cmd[2] = { 0, 0 }, *ptr;
-
-		ptr = (unsigned long *)info->dma_cmd_buf;
-		cmd[0] = info->smart_config.write_gram_cmd;
-		cmd[1] = cmd[0];
-		for (i = 0; i < 4; i += 2) {
-			ptr[i] = cmd[0];
-			ptr[i + 1] = cmd[1];
-		}
-		flush_cache_all();
-	}
+	if (info->lcd_type == LCD_TYPE_SLCD) {
+        int i;
+        unsigned long *ptr;
+        ptr = (unsigned long *)info->dma_cmd_buf;
+        for (i = 0; i < info->smart_config.length_cmd; i++) {
+            ptr[i] = info->smart_config.write_gram_cmd[i];
+        }
+        flush_cache_all();
+    }
 	return 0;
 }
 

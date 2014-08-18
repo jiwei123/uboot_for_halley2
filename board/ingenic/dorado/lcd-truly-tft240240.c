@@ -25,7 +25,11 @@
 #include <jz_lcd/jz_lcd_v1_2.h>
 #include <jz_lcd/truly_tft240240_2_e.h>
 
-#define CONFIG_SLCD_TRULY_18BIT
+//#define CONFIG_SLCD_TRULY_18BIT
+
+unsigned long truly_cmd_buf[]= {
+    0x2C2C2C2C,
+};
 
 void board_set_lcd_power_on(void)
 {
@@ -37,174 +41,160 @@ void board_set_lcd_power_on(void)
 }
 
 struct smart_lcd_data_table truly_tft240240_data_table[] = {
-        /* LCD init code */
-        {0x01, 0x01, 1, 120000},  //soft reset, 120 ms = 120 000 us
-        {0x11, 0x11, 1, 5000},    /* sleep out 5 ms  */
+    /* LCD init code */
+    {0, 0x01},  //soft reset, 120 ms = 120 000 us
+    {2, 120000},
+    {0, 0x11},
+    {2, 5000},	  /* sleep out 5 ms  */
 
-        {0x36, 0x36, 1, 0},
-#ifdef  CONFIG_TRULY_240X240_ROTATE_180
-        /*{0x36, 0xc0, 2, 0}, //40*/
-        {0x36, 0xd0, 2, 0}, //40
+    {0, 0x36},
+#ifdef	CONFIG_TRULY_240X240_ROTATE_180
+    /*{0x36, 0xc0, 2, 0}, //40*/
+    {1, 0xd0}, //40
 #else
-        {0x36, 0x00, 2, 0}, //40
+    {1, 0x00}, //40
 #endif
 
-        {0x2a, 0x2a, 1, 0},
-        {0x2a, 0x00, 2, 0},
-        {0x2a, 0x00, 2, 0},
-        {0x2a, 0x00, 2, 0},
-        {0x2a, 0xef, 2, 0},
+    {0, 0x2a},
+    {1, 0x00},
+    {1, 0x00},
+    {1, 0x00},
+    {1, 0xef},
 
-        {0x2b, 0x2b, 1, 0},
-        {0x2b, 0x00, 2, 0},
-        {0x2b, 0x00, 2, 0},
-        {0x2b, 0x00, 2, 0},
-        {0x2b, 0xef, 2, 0},
+    {0, 0x2b},
+    {1, 0x00},
+    {1, 0x00},
+    {1, 0x00},
+    {1, 0xef},
 
 
-        {0x3a, 0x3a, 1, 0},
+    {0, 0x3a},
 #if defined(CONFIG_SLCD_TRULY_18BIT)  //if 18bit/pixel unusual. try to use 16bit/pixel
-        {0x3a, 0x06, 2, 0}, //6-6-6
+    {1, 0x06}, //6-6-6
 #else
-        {0x3a, 0x05, 2, 0}, //5-6-5
+    {1, 0x05}, //5-6-5
 #endif
-//      {0x3a, 0x55, 2, 0},
+    //	{1, 0x55},
 
-        {0xb2, 0xb2, 1, 0},
-        {0xb2, 0x7f, 2, 0},
-        {0xb2, 0x7f, 2, 0},
-        {0xb2, 0x01, 2, 0},
-        {0xb2, 0xde, 2, 0},
-        {0xb2, 0x33, 2, 0},
+    {0, 0xb2},
+    {1, 0x7f},
+    {1, 0x7f},
+    {1, 0x01},
+    {1, 0xde},
+    {1, 0x33},
 
-        {0xb3, 0xb3, 1, 0},
-        {0xb3, 0x10, 2, 0},
-        {0xb3, 0x05, 2, 0},
-        {0xb3, 0x0f, 2, 0},
+    {0, 0xb3},
+    {1, 0x10},
+    {1, 0x05},
+    {1, 0x0f},
 
-        {0xb4, 0xb4, 1, 0},
-        {0xb4, 0x0b, 2, 0},
-        {0xb7, 0xb7, 1, 0},
-        {0xb7, 0x35, 2, 0},
+    {0, 0xb4},
+    {1, 0x0b},
 
-        {0xbb, 0xbb, 1, 0},
-        {0xbb, 0x28, 2, 0}, //23
+    {0, 0xb7},
+    {1, 0x35},
 
-        {0xbc, 0xbc, 1, 0},
-        {0xbc, 0xec, 2, 0},
+    {0, 0xbb},
+    {1, 0x28}, //23
 
-        {0xc0, 0xc0, 1, 0},
-        {0xc0, 0x2c, 2, 0},
+    {0, 0xbc},
+    {1, 0xec},
 
-        {0xc2, 0xc2, 1, 0},
-        {0xc2, 0x01, 2, 0},
+    {0, 0xc0},
+    {1, 0x2c},
 
-        {0xc3, 0xc3, 1, 0},
-        {0xc3, 0x1e, 2, 0}, //14
+    {0, 0xc2},
+    {1, 0x01},
 
-        {0xc4, 0xc4, 1, 0},
-        {0xc4, 0x20, 2, 0},
+    {0, 0xc3},
+    {1, 0x1e}, //14
 
-        {0xc6, 0xc6, 1, 0},
-        {0xc6, 0x14, 2, 0},
+    {0, 0xc4},
+    {1, 0x20},
 
-        {0xd0, 0xd0, 1, 0},
-        {0xd0, 0xa4, 2, 0},
-        {0xd0, 0xa1, 2, 0},
+    {0, 0xc6},
+    {1, 0x14},
 
-        {0xe0, 0xe0, 1, 0},
-        {0xe0, 0xd0, 2, 0},
-        {0xe0, 0x00, 2, 0},
-        {0xe0, 0x00, 2, 0},
-        {0xe0, 0x08, 2, 0},
-        {0xe0, 0x07, 2, 0},
-        {0xe0, 0x05, 2, 0},
-        {0xe0, 0x29, 2, 0},
-        {0xe0, 0x54, 2, 0},
-        {0xe0, 0x41, 2, 0},
-        {0xe0, 0x3c, 2, 0},
-        {0xe0, 0x17, 2, 0},
-        {0xe0, 0x15, 2, 0},
-        {0xe0, 0x1a, 2, 0},
-        {0xe0, 0x20, 2, 0},
+    {0, 0xd0},
+    {1, 0xa4},
+    {1, 0xa1},
 
-        {0xe1, 0xe1, 1, 0},
-        {0xe1, 0xd0, 2, 0},
-        {0xe1, 0x00, 2, 0},
-        {0xe1, 0x00, 2, 0},
-        {0xe1, 0x08, 2, 0},
-        {0xe1, 0x07, 2, 0},
-        {0xe1, 0x04, 2, 0},
-        {0xe1, 0x29, 2, 0},
-        {0xe1, 0x44, 2, 0},
-        {0xe1, 0x42, 2, 0},
-        {0xe1, 0x3b, 2, 0},
-        {0xe1, 0x16, 2, 0},
-        {0xe1, 0x15, 2, 0},
-        {0xe1, 0x1b, 2, 0},
-        {0xe1, 0x1f, 2, 0},
+    {0, 0xe0},
+    {1, 0xd0},
+    {1, 0x00},
+    {1, 0x00},
+    {1, 0x08},
+    {1, 0x07},
+    {1, 0x05},
+    {1, 0x29},
+    {1, 0x54},
+    {1, 0x41},
+    {1, 0x3c},
+    {1, 0x17},
+    {1, 0x15},
+    {1, 0x1a},
+    {1, 0x20},
 
-        {0x35, 0x35, 1, 0}, // TE on
-        {0x35, 0x00, 2, 0}, // TE mode: 0, mode1; 1, mode2
-//      {0x34, 0x34, 1, 0}, // TE off
+    {0, 0xe1},
+    {1, 0xd0},
+    {1, 0x00},
+    {1, 0x00},
+    {1, 0x08},
+    {1, 0x07},
+    {1, 0x04},
+    {1, 0x29},
+    {1, 0x44},
+    {1, 0x42},
+    {1, 0x3b},
+    {1, 0x16},
+    {1, 0x15},
+    {1, 0x1b},
+    {1, 0x1f},
 
-        {0x29, 0x29, 1, 0}, //Display ON
+    {0, 0x35}, // TE on
+    {1, 0x00}, // TE mode: 0, mode1; 1, mode2
+    //	{0, 0x34}, // TE off
 
-        /* set window size*/
-//      {0xcd, 0xcd, 1, 0},
-        {0x2a, 0x2a, 1, 0},
-        {0x2a, 0, 2, 0},
-        {0x2a, 0, 2, 0},
-        {0x2a, (239>> 8) & 0xff, 2, 0},
-        {0x2a, 239 & 0xff, 2, 0},
-#ifdef  CONFIG_TRULY_240X240_ROTATE_180
-        {0x2b, 0x2b, 1, 0},
-        {0x2b, ((320-240)>>8)&0xff, 2, 0},
-        {0x2b, ((320-240)>>0)&0xff, 2, 0},
-        {0x2b, ((320-1)>>8) & 0xff, 2, 0},
-        {0x2b, ((320-1)>>0) & 0xff, 2, 0},
+    {0, 0x29}, //Display ON
+
+    /* set window size*/
+    //	{0, 0xcd},
+    {0, 0x2a},
+    {1, 0},
+    {1, 0},
+    {1, (239>> 8) & 0xff},
+    {1, 239 & 0xff},
+#ifdef	CONFIG_TRULY_240X240_ROTATE_180
+    {0, 0x2b},
+    {1, ((320-240)>>8)&0xff},
+    {1, ((320-240)>>0)&0xff},
+    {1, ((320-1)>>8) & 0xff},
+    {1, ((320-1)>>0) & 0xff},
 #else
-	{0x2b, 0x2b, 1, 0},
-	{0x2b, 0, 2, 0},
-	{0x2b, 0, 2, 0},
-	{0x2b, (239>> 8) & 0xff, 2, 0},
-	{0x2b, 239 & 0xff, 2, 0},
+    {0, 0x2b},
+    {1, 0},
+    {1, 0},
+    {1, (239>> 8) & 0xff},
+    {1, 239 & 0xff},
 #endif
-
-	//{0xcd, 0xcd, 1, 0},
-	//{0x2c, 0x2c, 1, 0},
 };
 
 struct jzfb_config_info jzfb1_init_data = {
 	.num_modes = 1,
 	.modes = &jzfb1_videomode,
-	.lcd_type = LCD_TYPE_LCM,
+	.lcd_type = LCD_TYPE_SLCD,
 	.bpp    = 18,
 	.pinmd  = 0,
-	.pixclk_falling_edge    = 0,
-	.date_enable_active_low = 0,
 
-	.smart_config.smart_type      = SMART_LCD_TYPE_PARALLEL,
-	.smart_config.cmd_width       = SMART_LCD_CWIDTH_8_BIT_ONCE,           //8bit, according to the 8bit command
-	.smart_config.data_width      = SMART_LCD_DWIDTH_24_BIT_ONCE_PARALLEL, //due to new slcd mode, must be 24bit
-	.smart_config.data_new_width  = SMART_LCD_NEW_DWIDTH_8_BIT,          //8bit for lcd init
-	.smart_config.data_new_times  = SMART_LCD_NEW_DTIMES_ONCE,   //8bit once, for 8bit command
-
-#if defined(CONFIG_SLCD_TRULY_18BIT)  //if 18bit/pixel unusual. try to use 16bit/pixel
-	.smart_config.data_new_times2 = SMART_LCD_NEW_DTIMES_THICE, //18bit three times, for 6-6-6
-#else
-	.smart_config.data_new_times2 = SMART_LCD_NEW_DTIMES_TWICE,//16bit two times,for 5-6-5
-#endif
-	.smart_config.clkply_active_rising = 0,
 	.smart_config.rsply_cmd_high       = 0,
 	.smart_config.csply_active_high    = 0,
 	/* write graphic ram command, in word, for example 8-bit bus, write_gram_cmd=C3C2C1C0. */
 	.smart_config.newcfg_fmt_conv =  1,
-	.smart_config.write_gram_cmd = 0x2c2c2c2c,
+	.smart_config.write_gram_cmd = truly_cmd_buf,
+	.smart_config.length_cmd = ARRAY_SIZE(truly_cmd_buf),
 	.smart_config.bus_width = 8,
 	.smart_config.length_data_table =  ARRAY_SIZE(truly_tft240240_data_table),
 	.smart_config.data_table = truly_tft240240_data_table,
-	.smart_config.init = 0,
 	.dither_enable = 0,
 };
 
