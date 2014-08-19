@@ -42,140 +42,139 @@ void board_set_lcd_power_on(void)
 
 struct smart_lcd_data_table truly_tft240240_data_table[] = {
     /* LCD init code */
-    {0, 0x01},  //soft reset, 120 ms = 120 000 us
-    {2, 120000},
-    {0, 0x11},
-    {2, 5000},	  /* sleep out 5 ms  */
+    {SMART_CONFIG_CMD, 0x01},  //soft reset, 120 ms = 120 000 us
+    {SMART_CONFIG_UDELAY, 120000},
+    {SMART_CONFIG_CMD, 0x11},
+    {SMART_CONFIG_UDELAY, 5000},	  /* sleep out 5 ms  */
 
-    {0, 0x36},
+    {SMART_CONFIG_CMD, 0x36},
 #ifdef	CONFIG_TRULY_240X240_ROTATE_180
-    /*{0x36, 0xc0, 2, 0}, //40*/
-    {1, 0xd0}, //40
+    {SMART_CONFIG_DATA, 0xd0}, //40
 #else
-    {1, 0x00}, //40
+    {SMART_CONFIG_DATA, 0x00}, //40
 #endif
 
-    {0, 0x2a},
-    {1, 0x00},
-    {1, 0x00},
-    {1, 0x00},
-    {1, 0xef},
+    {SMART_CONFIG_CMD, 0x2a},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0xef},
 
-    {0, 0x2b},
-    {1, 0x00},
-    {1, 0x00},
-    {1, 0x00},
-    {1, 0xef},
+    {SMART_CONFIG_CMD, 0x2b},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0xef},
 
 
-    {0, 0x3a},
+    {SMART_CONFIG_CMD, 0x3a},
 #if defined(CONFIG_SLCD_TRULY_18BIT)  //if 18bit/pixel unusual. try to use 16bit/pixel
-    {1, 0x06}, //6-6-6
+    {SMART_CONFIG_DATA, 0x06}, //6-6-6
 #else
-    {1, 0x05}, //5-6-5
+    {SMART_CONFIG_DATA, 0x05}, //5-6-5
 #endif
-    //	{1, 0x55},
+    //	{SMART_CONFIG_DATA, 0x55},
 
-    {0, 0xb2},
-    {1, 0x7f},
-    {1, 0x7f},
-    {1, 0x01},
-    {1, 0xde},
-    {1, 0x33},
+    {SMART_CONFIG_CMD, 0xb2},
+    {SMART_CONFIG_DATA, 0x7f},
+    {SMART_CONFIG_DATA, 0x7f},
+    {SMART_CONFIG_DATA, 0x01},
+    {SMART_CONFIG_DATA, 0xde},
+    {SMART_CONFIG_DATA, 0x33},
 
-    {0, 0xb3},
-    {1, 0x10},
-    {1, 0x05},
-    {1, 0x0f},
+    {SMART_CONFIG_CMD, 0xb3},
+    {SMART_CONFIG_DATA, 0x10},
+    {SMART_CONFIG_DATA, 0x05},
+    {SMART_CONFIG_DATA, 0x0f},
 
-    {0, 0xb4},
-    {1, 0x0b},
+    {SMART_CONFIG_CMD, 0xb4},
+    {SMART_CONFIG_DATA, 0x0b},
 
-    {0, 0xb7},
-    {1, 0x35},
+    {SMART_CONFIG_CMD, 0xb7},
+    {SMART_CONFIG_DATA, 0x35},
 
-    {0, 0xbb},
-    {1, 0x28}, //23
+    {SMART_CONFIG_CMD, 0xbb},
+    {SMART_CONFIG_DATA, 0x28}, //23
 
-    {0, 0xbc},
-    {1, 0xec},
+    {SMART_CONFIG_CMD, 0xbc},
+    {SMART_CONFIG_DATA, 0xec},
 
-    {0, 0xc0},
-    {1, 0x2c},
+    {SMART_CONFIG_CMD, 0xc0},
+    {SMART_CONFIG_DATA, 0x2c},
 
-    {0, 0xc2},
-    {1, 0x01},
+    {SMART_CONFIG_CMD, 0xc2},
+    {SMART_CONFIG_DATA, 0x01},
 
-    {0, 0xc3},
-    {1, 0x1e}, //14
+    {SMART_CONFIG_CMD, 0xc3},
+    {SMART_CONFIG_DATA, 0x1e}, //14
 
-    {0, 0xc4},
-    {1, 0x20},
+    {SMART_CONFIG_CMD, 0xc4},
+    {SMART_CONFIG_DATA, 0x20},
 
-    {0, 0xc6},
-    {1, 0x14},
+    {SMART_CONFIG_CMD, 0xc6},
+    {SMART_CONFIG_DATA, 0x14},
 
-    {0, 0xd0},
-    {1, 0xa4},
-    {1, 0xa1},
+    {SMART_CONFIG_CMD, 0xd0},
+    {SMART_CONFIG_DATA, 0xa4},
+    {SMART_CONFIG_DATA, 0xa1},
 
-    {0, 0xe0},
-    {1, 0xd0},
-    {1, 0x00},
-    {1, 0x00},
-    {1, 0x08},
-    {1, 0x07},
-    {1, 0x05},
-    {1, 0x29},
-    {1, 0x54},
-    {1, 0x41},
-    {1, 0x3c},
-    {1, 0x17},
-    {1, 0x15},
-    {1, 0x1a},
-    {1, 0x20},
+    {SMART_CONFIG_CMD, 0xe0},
+    {SMART_CONFIG_DATA, 0xd0},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x08},
+    {SMART_CONFIG_DATA, 0x07},
+    {SMART_CONFIG_DATA, 0x05},
+    {SMART_CONFIG_DATA, 0x29},
+    {SMART_CONFIG_DATA, 0x54},
+    {SMART_CONFIG_DATA, 0x41},
+    {SMART_CONFIG_DATA, 0x3c},
+    {SMART_CONFIG_DATA, 0x17},
+    {SMART_CONFIG_DATA, 0x15},
+    {SMART_CONFIG_DATA, 0x1a},
+    {SMART_CONFIG_DATA, 0x20},
 
-    {0, 0xe1},
-    {1, 0xd0},
-    {1, 0x00},
-    {1, 0x00},
-    {1, 0x08},
-    {1, 0x07},
-    {1, 0x04},
-    {1, 0x29},
-    {1, 0x44},
-    {1, 0x42},
-    {1, 0x3b},
-    {1, 0x16},
-    {1, 0x15},
-    {1, 0x1b},
-    {1, 0x1f},
+    {SMART_CONFIG_CMD, 0xe1},
+    {SMART_CONFIG_DATA, 0xd0},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x00},
+    {SMART_CONFIG_DATA, 0x08},
+    {SMART_CONFIG_DATA, 0x07},
+    {SMART_CONFIG_DATA, 0x04},
+    {SMART_CONFIG_DATA, 0x29},
+    {SMART_CONFIG_DATA, 0x44},
+    {SMART_CONFIG_DATA, 0x42},
+    {SMART_CONFIG_DATA, 0x3b},
+    {SMART_CONFIG_DATA, 0x16},
+    {SMART_CONFIG_DATA, 0x15},
+    {SMART_CONFIG_DATA, 0x1b},
+    {SMART_CONFIG_DATA, 0x1f},
 
-    {0, 0x35}, // TE on
-    {1, 0x00}, // TE mode: 0, mode1; 1, mode2
-    //	{0, 0x34}, // TE off
+    {SMART_CONFIG_CMD, 0x35}, // TE on
+    {SMART_CONFIG_DATA, 0x00}, // TE mode: 0, mode1; 1, mode2
+    //	{SMART_CONFIG_CMD, 0x34}, // TE off
 
-    {0, 0x29}, //Display ON
+    {SMART_CONFIG_CMD, 0x29}, //Display ON
 
     /* set window size*/
-    //	{0, 0xcd},
-    {0, 0x2a},
-    {1, 0},
-    {1, 0},
-    {1, (239>> 8) & 0xff},
-    {1, 239 & 0xff},
+    //	{SMART_CONFIG_CMD, 0xcd},
+    {SMART_CONFIG_CMD, 0x2a},
+    {SMART_CONFIG_DATA, 0},
+    {SMART_CONFIG_DATA, 0},
+    {SMART_CONFIG_DATA, (239>> 8) & 0xff},
+    {SMART_CONFIG_DATA, 239 & 0xff},
 #ifdef	CONFIG_TRULY_240X240_ROTATE_180
-    {0, 0x2b},
-    {1, ((320-240)>>8)&0xff},
-    {1, ((320-240)>>0)&0xff},
-    {1, ((320-1)>>8) & 0xff},
-    {1, ((320-1)>>0) & 0xff},
+    {SMART_CONFIG_CMD, 0x2b},
+    {SMART_CONFIG_DATA, ((320-240)>>8)&0xff},
+    {SMART_CONFIG_DATA, ((320-240)>>0)&0xff},
+    {SMART_CONFIG_DATA, ((320-1)>>8) & 0xff},
+    {SMART_CONFIG_DATA, ((320-1)>>0) & 0xff},
 #else
-    {0, 0x2b},
-    {1, 0},
-    {1, 0},
-    {1, (239>> 8) & 0xff},
-    {1, 239 & 0xff},
+    {SMART_CONFIG_CMD, 0x2b},
+    {SMART_CONFIG_DATA, 0},
+    {SMART_CONFIG_DATA, 0},
+    {SMART_CONFIG_DATA, (239>> 8) & 0xff},
+    {SMART_CONFIG_DATA, 239 & 0xff},
 #endif
 };
 
