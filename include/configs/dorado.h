@@ -40,7 +40,12 @@
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
 #define CONFIG_SYS_CPU_FREQ		800000000
+
+#ifdef CONFIG_DORADO_V30
+#define CONFIG_SYS_MEM_FREQ		300000000
+#else
 #define CONFIG_SYS_MEM_FREQ		150000000
+#endif //endif CONFIG_DORADO_V30
 
 #else /* defined CONFIG_RVMS */
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
@@ -70,12 +75,22 @@
 #define CONFIG_DDR_TEST*/
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
+#define CONFIG_DDR_FORCE_SELECT_CS1
+
+#ifdef CONFIG_DORADO_V30
+#define CONFIG_DDR_TYPE_DDR3
+#define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
+#define CONFIG_DDR3_H5TQ1G83DFR_H9C
+#else
 #define CONFIG_DDR_TYPE_LPDDR2
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
 #define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 /*#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2*/
+#endif // CONFIG_DORADO_V30
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -91,7 +106,7 @@
  * Boot arguments definitions.
  */
 #ifndef CONFIG_RVMS
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=768M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=256@0x30000000"
 #else
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=768M@0x30000000"
 #endif
@@ -104,7 +119,8 @@
 /*	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc" */
 	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootdelay=2 init=/linuxrc root=/dev/mmcblk0p7 rw"
   #else
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
+    /*#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"*/
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ram0 rw rdinit=/linuxrc"
   #endif
 #endif
 
@@ -120,7 +136,8 @@
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
-    #define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"
+    /*#define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"*/
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000" 
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
   #endif
@@ -129,9 +146,15 @@
 /*    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm" */
 	#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
+	#ifdef CONFIG_JZ_NAND_MGR
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x600000 0x80600000;bootm" 
+                                                            /*order ops pt offset len dst */
+		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
+	#else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
+	#endif /* endif CONFIG_JZ_NAND_MGR*/
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
 
@@ -147,8 +170,8 @@
 #define CONFIG_LCD_GPIO_FUNC0_24BIT
 /*#define CONFIG_LCD_GPIO_FUNC2_SLCD*/
 #define CONFIG_LCD_LOGO
-#define CONFIG_RLE_LCD_LOGO
-/*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
+/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_LCD_INFO_BELOW_LOGO      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
 #define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
@@ -203,6 +226,14 @@
 /*#define CONFIG_SPL_MEM_VOLTAGE*/
 #define CONFIG_PMU_RICOH6x
 #endif
+
+#ifdef CONFIG_DORADO_V30
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+#define CONFIG_PMU_RICOH6x
+#endif
+
 /* PMU */
 #define CONFIG_REGULATOR
 
@@ -309,19 +340,37 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
-#else
-/*
-#define CONFIG_ENV_IS_IN_NAND
-*/
-#define CONFIG_ENV_IS_NOWHERE
+#endif /* endif CONFIG_ENV_IS_IN_MMC */
+
+#ifdef CONFIG_JZ_NAND_MGR
+
+/* environment  */
+#define CONFIG_ENV_IS_IN_NAND_ZM
+#define CMDLINE_PARTITION	"ndcmdline"
 #define CONFIG_ENV_SIZE			(32 << 10)
-#define CONFIG_ENV_OFFSET		(CONFIG_SYS_NAND_BLOCK_SIZE * 5)
-#endif
+#define CONFIG_ENV_OFFSET		0
+
+
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SPL_NAND_SIMPLE
+#define CONFIG_SPL_NAND_LOAD
+
+
+/* nand gpio init */
+#define CONFIG_NAND_LOADER
+#define CFG_NAND_BW8    1
+#define CONFIG_NAND_CS  1
+
+#define CONFIG_SPL_SERIAL_SUPPORT
+
+#define CONFIG_CMD_ZM_NAND  /* nand zone manager support */
+
+#endif /* endif CONFIG_JZ_NAND_MGR */
 
 /**
  * SPL configuration
  */
-#define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
@@ -331,7 +380,11 @@
 #else
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
 #endif
+#ifdef CONFIG_JZ_NAND_MGR
+#define CONFIG_SPL_PAD_TO		32768
+#else
 #define CONFIG_SPL_PAD_TO		26624 /* equal to spl max size in M200 */
+#endif /* endif CONFIG_JZ_NAND_MGR*/
 
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	86//0x5A //wli changed 0x20 /* 16KB offset */
@@ -360,12 +413,7 @@
 #endif /* CONFIG_SPL_MMC_SUPPORT */
 
 #ifdef CONFIG_SPL_NAND_SUPPORT
-/*
-#define CONFIG_SPL_NAND_BASE
-#define CONFIG_SPL_NAND_DRIVERS
-#define CONFIG_SPL_NAND_SIMPLE
-#define CONFIG_SPL_NAND_LOAD
-*/
+
 
 /* the NAND SPL is small enough to enable serial */
 #define CONFIG_SPL_SERIAL_SUPPORT

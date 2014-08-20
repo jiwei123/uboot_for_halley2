@@ -40,32 +40,17 @@ _start:
 	RESERVED_FOR_SC(0)
 #endif
 
-#ifdef CONFIG_SPL_NAND_SUPPORT
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)
 	/*
 	 * NAND parameters are stored with plenty of redundancy in the
 	 * first 192 bytes of the first page of the SPL image.
 	 */
 
-#if (CONFIG_SYS_NAND_BW8 == 1)
-	.space 64, 0x55
-#else
-	.space 64, 0xaa
-#endif
-#if (CONFIG_SYS_NAND_TOGGLE == 1)
-	.space 64, 0xaa
-#else
-	.space 64, 0x55
-#endif
+	.space 512, 0x00
 
-	/*nand row cycle and page size */
-	.word 0x214c5053
-	.word CONFIG_SYS_NAND_ROWCYCLE
-	.word CONFIG_SYS_NAND_PAGE_SIZE
-	/* non used space 116 bytes */
-	.space 116, 0x0
+	RESERVED_FOR_SC(0)
 
-	.space 256, 0x55
-	RESERVED_FOR_SC(0x55)
+
 #endif /* CONFIG_SPL_NAND_SUPPORT */
 
 #ifdef CONFIG_SPL_SPI_SUPPORT

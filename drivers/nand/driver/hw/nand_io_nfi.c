@@ -116,11 +116,11 @@ static void nand_nfi_disable(nfi_base *base)
 static void set_nand_timing_default(nfi_base *base)
 {
 	//ndd_debug("##### base->writel = %p, base->iomem = 0x%08x\n",base->writel,(unsigned int)base->iomem);
-	base->writel(NAND_NFIT0, (NAND_NFIT0_SWE(0x0) | NAND_NFIT0_WWE(0x3)));
-	base->writel(NAND_NFIT1, (NAND_NFIT1_HWE(0x0) | NAND_NFIT1_SRE(0x0)));
-	base->writel(NAND_NFIT2, (NAND_NFIT2_WRE(0x3) | NAND_NFIT2_HRE(0x0)));
-	base->writel(NAND_NFIT3, (NAND_NFIT3_SCS(0x2) | NAND_NFIT3_WCS(0x1)));
-	base->writel(NAND_NFIT4, (NAND_NFIT4_BUSY(0xf) | NAND_NFIT4_EDO(0xf)));
+	base->writel(NAND_NFIT0, (NAND_NFIT0_SWE(0x3) | NAND_NFIT0_WWE(0x9)));//030
+	base->writel(NAND_NFIT1, (NAND_NFIT1_HWE(0x3) | NAND_NFIT1_SRE(0x3)));
+	base->writel(NAND_NFIT2, (NAND_NFIT2_WRE(0x9) | NAND_NFIT2_HRE(0x3)));//030
+	base->writel(NAND_NFIT3, (NAND_NFIT3_SCS(0xf) | NAND_NFIT3_WCS(0xf)));//21
+	base->writel(NAND_NFIT4, (NAND_NFIT4_BUSY(0xff) | NAND_NFIT4_EDO(0xf)));
 }
 static void set_nand_timing_optimize(nfi_base *base, nfi_nand_timing *timing)
 {
@@ -463,8 +463,8 @@ int nand_io_open(nfi_base *base, chip_info *cinfo)
 	nand_io_init(nandio->base);
 	if (cinfo) {
 		nandio->cinfo = cinfo;
-		nand_io_setup_timing_optimize((int)nandio, nandio->cinfo);
-		recalc_writecycle(base, cinfo);
+		//nand_io_setup_timing_optimize((int)nandio, nandio->cinfo);
+		//recalc_writecycle(base, cinfo);
 	} else {
 		nandio->cinfo = NULL;
 		nand_io_setup_timing_default((int)nandio);

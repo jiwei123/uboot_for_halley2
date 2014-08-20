@@ -4,7 +4,11 @@
 
 #define NAND_PARAMS_LEN     256
 
+#ifdef CONFIG_NAND_NFI
+#define SPL_SIZE    (32*1024)
+#else
 #define SPL_SIZE    (16*1024)
+#endif //endif CONFIG_NAND_NFI 
 #define NAND_PARAMS_LEN     256
 #define SPL_BACKUP_NUM      8
 
@@ -32,6 +36,13 @@
 
 #endif //endif CONFIG_JZ4780
 
+#ifdef CONFIG_M200
+
+#define BUSWIDTH_FLAG_OFFSET    0               /* [0 : 63] */
+#define NANDTYPE_FLAG_OFFSET    (BUSWIDTH_FLAG_OFFSET + 64) /* [64 : 127] */
+#define NAND_OTHER_FLAG_OFFSET  (NANDTYPE_FLAG_OFFSET + 64) /* [128 : 255] */
+
+#endif //endif CONFIG_M200
 #define FLAG_BUSWIDTH_8BIT  0x55
 #define FLAG_BUSWIDTH_16BIT 0xaa
 #define FLAG_NANDTYPE_COMMON    0x55
@@ -52,6 +63,13 @@ struct spl_basic_param{
 	unsigned int pagesize;
 };
 
+/* the maxsize of struct nand_otherflag is 32bytes */
+struct nand_otherflag{
+	unsigned int splflag;   /* the string is "SPL!" = 0x21 4c 50 53 */
+	unsigned int rowcycle;
+	unsigned int pagesize;
+	unsigned int space[20];
+};
 
 
 #endif //__NAND_BASIC_H__

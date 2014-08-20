@@ -58,6 +58,7 @@ static void dump_nand_flash_info(void)
 	printf("\t planeoffset =  %d\n",nand_flash_info.planeoffset);
 	printf("\t options =      %x\n",nand_flash_info.options);
 
+#ifndef CONFIG_NAND_NFI
 	printf("\ndump nand flash timing:\n");
 	printf("\t tals =     %d \n",nand_flash_info.timing.emc.tALS);
 	printf("\t talh =     %d \n",nand_flash_info.timing.emc.tALH);
@@ -72,6 +73,7 @@ static void dump_nand_flash_info(void)
 	printf("\t tCWAW =    %d \n",nand_flash_info.timing.emc.tCWAW);
 	printf("\t tcs =      %d \n",nand_flash_info.timing.emc.tCS);
 	printf("\t tCLH =     %d \n",nand_flash_info.timing.emc.tCLH);
+#endif
 }
 
 void fill_nand_flash_info(nand_flash_param *nand_info)
@@ -524,11 +526,16 @@ static nand_flash_param *get_nand_info_from_ids(nand_flash_id *fid,nand_flash_pa
 #define NAND_ADDRPORT   0xBB800000
 #define NAND_COMMPORT   0xBB400000
 #define REG_NEMC_NFCSR  0xB3410050
+#define REG_NFI_NFICR   0XB3410010
 #define __nand_cmd(n)       (*((volatile unsigned char *)(NAND_COMMPORT)) = (n))
 #define __nand_addr(n)      (*((volatile unsigned char *)(NAND_ADDRPORT)) = (n))
 #define __nand_write_data8(n)   (*((volatile unsigned char *)(NAND_DATAPORT)) = (n))
 #define __nand_read_data8() (*(volatile unsigned char *)(NAND_DATAPORT))
+#ifdef CONFIG_NAND_NFI
+#define __nand_enable()     (*((volatile unsigned int *)(REG_NFI_NFICR)) = 0x1)
+#else
 #define __nand_enable()     (*((volatile unsigned int *)(REG_NEMC_NFCSR)) = 0x3)
+#endif
 #define __nand_disable()    (*((volatile unsigned int *)(REG_NEMC_NFCSR)) = 0x0)
 
 static void nand_enable(int cs)
@@ -576,8 +583,6 @@ static int try_to_get_nand_id(int rb_gpio,nand_flash_id *fid)
 	unsigned int i;
 	unsigned int cnt = 4000000;
 
-	__nand_enable();
-//	printf("n----------->.. nfcsr = 0x%08x rb_gpio = %d \n",*(volatile unsigned int *)(0xb3410050),rb_gpio);
 
 	nand_reset();
 	wait_rb(rb_gpio);
@@ -614,6 +619,7 @@ static int get_nandflash_info(nfi_base *nfi,nand_flash_param *nand_info_ids,int 
 	nand_flash_param *nand_info = NULL;
 
 	rb = rb_gpio[0];
+	__nand_enable();
 	try_to_get_nand_id(rb,&fid);
 
 	nand_info = get_nand_info_from_ids(&fid,nand_info_ids,nand_nm);

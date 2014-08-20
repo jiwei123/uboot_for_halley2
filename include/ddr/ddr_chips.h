@@ -29,7 +29,6 @@
 #endif
 
 #ifdef CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2
-#define CONFIG_DDR_FORCE_SELECT_CS1
 #include "./chips/MCP_SAMSUNG_KMN5X000ZM_LPDDR2.h"
 #endif
 #endif /* __DDR_CHIPS_H__ */

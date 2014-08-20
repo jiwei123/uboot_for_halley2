@@ -2,6 +2,7 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/gpio.h>
 #include <linux/types.h>
+#include <asm/arch/clk.h>
 #include <nand_info.h>
 #include <nand_bch.h>
 #include <nand_io.h>
@@ -19,7 +20,9 @@ typedef struct __nand_io {
 	void *addrport;
 	transadaptor trans;
 	chip_info *cinfo;
+#ifndef CONFIG_NAND_NFI
 	const emc_nand_timing *timing;
+#endif
 	unsigned int copy_context;
 } nand_io;
 
@@ -78,8 +81,26 @@ static inline void nand_wait_ready(void)
 {
 	volatile unsigned int timeout = 200;
 
+//#ifndef CONFIG_NAND_NFI // no define
+
+#if 1
+//	printf("WWWWWWWWWWWWWWWWW %s %d  GPIOA = %x\n",__func__,__LINE__,*((volatile unsigned int *)GPIO_PXPIN(0)));
 	while ((*((volatile unsigned int *)GPIO_PXPIN(0)) & 0x00100000) && timeout--);
 	while (!((*(volatile unsigned int *)GPIO_PXPIN(0)) & 0x00100000));
+//	printf("WWWWWWWWWWWWWWWWW %s %d  GPIOA = %x timeout = %d\n",__func__,__LINE__,*((volatile unsigned int *)GPIO_PXPIN(0)),timeout);
+#else
+
+	printf("WWWWWWWWWWWWWWWWW %s %d  NFBC = %x\n",__func__,__LINE__,*(volatile unsigned int *)(0xb341000c));
+	while(!(*(volatile unsigned int *)(0xb341000c) & (1 << 16)) && (timeout--)); //NFBC
+	printf("WWWWWWWWWWWWWWWWW %s %d  NFBC = %x timeout = %d\n",__func__,__LINE__,*(volatile unsigned int *)(0xb341000c),timeout);
+	if(timeout > 0)
+		*(volatile unsigned int *)(0xb341000c) |= (1 << 16);
+	else
+		printf("-------- WARNING: wait rb timeout ---------\n");
+
+//		printf("---------- %s %d GPIO_FLAG = %x \n",__func__,__LINE__,*(volatile unsigned int *)(0xb0010050));
+
+#endif //no def  CONFIG_NAND_NFI
 }
 
 static int nfi_readl(int reg)
@@ -118,7 +139,9 @@ static void fill_nfi_base(void)
 	nandio->base->readl = nfi_readl;
 	nandio->base->writel = nfi_writel;
 	nandio->cinfo = cinfo;
+#ifndef CONFIG_NAND_NFI
 	nandio->timing = 0x0;
+#endif
 	nandio->copy_context = (unsigned int)(cpinfo);
 
 	nandio->trans.prepare_memcpy = cpu_prepare_memcpy;
@@ -163,7 +186,7 @@ static int parse_flag(unsigned char *flag_buf)
 		return 0;
 }
 
-#ifdef CONFIG_JZ4775
+#if (defined(CONFIG_JZ4775) || defined(CONFIG_NAND_NFI))
 static inline void get_nand_buswidth(unsigned char *buswidth, unsigned char *flag_buf)
 {
 	int flag = parse_flag(flag_buf + BUSWIDTH_FLAG_OFFSET);
@@ -174,7 +197,7 @@ static inline void get_nand_buswidth(unsigned char *buswidth, unsigned char *fla
 	else
 		*buswidth = -1;
 }
-#endif //endif CONFIG_JZ4775
+#endif //endif CONFIG_JZ4775 || CONFIG_NAND_NFI
 
 static inline void get_nand_nandtype(unsigned char *nandtype, unsigned char *flag_buf)
 {
@@ -186,6 +209,7 @@ static inline void get_nand_nandtype(unsigned char *nandtype, unsigned char *fla
 	else
 		*nandtype = -1;
 }
+#ifndef CONFIG_NAND_NFI
 static inline void get_nand_rowcycles(unsigned char *rowcycles, unsigned char *flag_buf)
 {
 	int flag = parse_flag(flag_buf + ROWCYCLE_FLAG_OFFSET);
@@ -225,12 +249,29 @@ static inline void get_nand_pagesize(unsigned int *pagesize, unsigned char *flag
 			*pagesize = -1;
 	}
 }
+#endif //no define CONFIG_NAND_NFI
+
+#ifdef CONFIG_NAND_NFI
+static inline void get_nand_otherparam(struct spl_basic_param *param,unsigned char *flag_buf)
+{
+	struct nand_otherflag *otherparms = (struct nand_otherflag *)(flag_buf + NAND_OTHER_FLAG_OFFSET);
+
+	param->rowcycles = otherparms->rowcycle;
+	param->pagesize = otherparms->pagesize;
+}
+#endif //CONFIG_NAND_NFI
 
 /* Bootrom had read the first 256 bytes of spl, and put the nandinfo */
 /* in address 0xf4000800. Now we read out them, and parse the nandinfo*/
 static inline void get_nand_spl_basic_param(struct spl_basic_param *param)
 {
+#ifdef CONFIG_NAND_NFI // nfi
+	unsigned char *spl_flag = (unsigned char *)0x80001000;
+#else // nemc
 	unsigned char *spl_flag = (unsigned char *)0xf4000800;
+#endif
+
+#ifndef CONFIG_NAND_NFI // no define
 
 #ifdef CONFIG_JZ4775
 	get_nand_buswidth(&param->buswidth, spl_flag);
@@ -239,8 +280,13 @@ static inline void get_nand_spl_basic_param(struct spl_basic_param *param)
 	get_nand_rowcycles(&param->rowcycles, spl_flag);
 	get_nand_pagesize(&param->pagesize, spl_flag);
 
-	//printf("[%s] [%d] nand_basic_param : buswidth = %d nandtype = %d rowcycles = %d pagesize = %d\n",
-	//		__func__,__LINE__,param->buswidth,param->nandtype,param->rowcycles,param->pagesize);
+#else //nfi
+
+	get_nand_buswidth(&param->buswidth, spl_flag);
+
+	get_nand_nandtype(&param->nandtype, spl_flag);
+	get_nand_otherparam(param,spl_flag);
+#endif //CONFIG_NAND_NFI
 }
 
 static void spl_bch_init(int ecc_leavel,int eccsize)
@@ -262,8 +308,11 @@ static void send_read_start_cmd(unsigned int page_addr,unsigned int offset,int d
 static void dump_data(unsigned char *buf,unsigned int len)
 {
 	int k;
-		for(k=0;k<len/4;k++)
-			printf("read data = %x\n",((unsigned int *)buf)[k]);
+	for(k=0;k<len/4;k++){
+		if(!(k % 8))
+			printf("\n");
+		printf("%x ",((unsigned int *)buf)[k]);
+	}
 }
 
 static void dump_nand_common_params(nand_sharing_params *nandparams)
@@ -287,6 +336,7 @@ static inline void fill_nand_io_cinfo(struct spl_basic_param *param)
 {
 	nandio->cinfo->rowcycles = param->rowcycles;
 	nandio->cinfo->pagesize = param->pagesize;
+	nandio->base->cycle = param->rowcycles;
 }
 
 static struct nand_sharing_params *get_nand_basic_params_emc()
@@ -295,15 +345,11 @@ static struct nand_sharing_params *get_nand_basic_params_emc()
 	int page_addr;
 	int ret = 0, bakup_num = 0;
 
-	/* enable clk of MCU TCSM */
-	//REG_CPM_CLKGR0 &= ~(1 << 20);
-	//cpm_outl((cpm_inl(CPM_CLKGR) & ~(1 << 20)),CPM_CLKGR);
-
 	get_nand_spl_basic_param(&param);
 
 	fill_nand_io_cinfo(&param);
 
-	memset(data_space,0x55,NAND_PARAMS_LEN);
+	memset(data_space,0x00,NAND_PARAMS_LEN);
 
 	page_addr = (SPL_SIZE / param.pagesize) * 2;
 
@@ -364,6 +410,19 @@ static void nand_init(void)
 	init_param_addr();
 	fill_nfi_base();
 	fill_bch_base();
+#if 1
+//		*(volatile unsigned int *)(0xb0010010) |= (1 << 20);
+//		*(volatile unsigned int *)(0xb0010020) |= (1 << 20);
+//		*(volatile unsigned int *)(0xb0010030) |= (1 << 20);
+//		*(volatile unsigned int *)(0xb0010040) |= (1 << 20);
+//	}
+#endif
+
+#ifdef CONFIG_NAND_NFI
+	clk_set_rate(BCH,clk_get_rate(H2CLK));
+
+	nand_io_setup_timing_default((int)nandio);
+#endif
 
 	nand_io_chip_select((int)nandio,0);
 
@@ -420,13 +479,13 @@ static int nand_read_spl_page(int page_addr, unsigned char *data_buf, unsigned c
 
 	PipeNode pipenode;
 
-	send_read_start_cmd(page_addr,offset,1);
+	send_read_start_cmd(page_addr,offset,0xf);
 
 	pn_enable((int)nandio);
 	nand_io_receive_data((int)(nandio),data_buf,bytes);
 	pn_disable((int)(nandio));
 
-	send_read_start_cmd(page_addr + 1,0,1);
+	send_read_start_cmd(page_addr + 1,0,0xf);
 
 	pn_enable((int)nandio);
 	nand_io_receive_data((int)(nandio),oob_buf,oob_size);
@@ -521,6 +580,7 @@ static void nand_deselect(void)
 void spl_nand_load_image(void)
 {
 	struct image_header *header;
+
 	nand_init();
 	// offset -1 is auto offset mode, size -1 is auto size mode
 	nand_spl_load_image(-1,-1, (void *)CONFIG_SYS_TEXT_BASE);
