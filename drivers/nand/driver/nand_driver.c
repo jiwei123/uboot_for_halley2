@@ -75,6 +75,25 @@ static void dump_nand_flash_info(void)
 	printf("\t tCLH =     %d \n",nand_flash_info.timing.emc.tCLH);
 #endif
 }
+static void test_add_fill_nfi_timing(const nand_timing *nandtiming)
+{
+	nfi_nand_timing *timing = &nandtiming->nfi;
+#define assign(member,val) timing->member = val
+	assign(tWH,10);
+	assign(tCH,5);
+	assign(tRP,25);
+	assign(tWP,15);
+	assign(tDH,5);
+	assign(tWHR,80);
+	assign(tWHR2,0);
+	assign(tRR,20);
+	assign(tWB,80);
+	assign(tADL,100);
+	assign(tCWAW,0);
+	assign(tCS,25);
+	assign(tREH,10);
+#undef assign
+}
 
 void fill_nand_flash_info(nand_flash_param *nand_info)
 {
@@ -101,8 +120,11 @@ void fill_nand_flash_info(nand_flash_param *nand_info)
 		    nand_flash_info.options |= NAND_READ_RETRY | NAND_READ_RETRY_MODE(nand_info->options);
 	if (nand_info->options & NAND_DRIVER_STRENGTH)
 		    nand_flash_info.options |= NAND_DRIVER_STRENGTH;
-
+#ifdef CONFIG_NAND_NFI
+	test_add_fill_nfi_timing(&(nand_flash_info.timing));
+#else
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
+#endif
 	//dump_nand_flash_info();
 }
 

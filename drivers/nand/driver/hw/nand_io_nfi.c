@@ -121,6 +121,7 @@ static void set_nand_timing_default(nfi_base *base)
 	base->writel(NAND_NFIT2, (NAND_NFIT2_WRE(0x9) | NAND_NFIT2_HRE(0x3)));//030
 	base->writel(NAND_NFIT3, (NAND_NFIT3_SCS(0xf) | NAND_NFIT3_WCS(0xf)));//21
 	base->writel(NAND_NFIT4, (NAND_NFIT4_BUSY(0xff) | NAND_NFIT4_EDO(0xf)));
+
 }
 static void set_nand_timing_optimize(nfi_base *base, nfi_nand_timing *timing)
 {
@@ -156,6 +157,13 @@ static void set_nand_timing_optimize(nfi_base *base, nfi_nand_timing *timing)
 	base->writel(NAND_NFIT2, (NAND_NFIT2_WRE(0x3) | NAND_NFIT2_HRE(0x0)));
 	base->writel(NAND_NFIT3, (NAND_NFIT3_SCS(0x7) | NAND_NFIT3_WCS(0x7)));
 	base->writel(NAND_NFIT4, (NAND_NFIT4_BUSY(0xf) | NAND_NFIT4_EDO(0xf)));
+
+
+    ndd_print(NDD_DEBUG,"NNNNNNNNNNNN******** T0 = %08x\n",base->readl(NAND_NFIT0));
+    ndd_print(NDD_DEBUG,"NNNNNNNNNNNN******** T1 = %08x\n",base->readl(NAND_NFIT1));
+    ndd_print(NDD_DEBUG,"NNNNNNNNNNNN******** T2 = %08x\n",base->readl(NAND_NFIT2));
+    ndd_print(NDD_DEBUG,"NNNNNNNNNNNN******** T3 = %08x\n",base->readl(NAND_NFIT3));
+    ndd_print(NDD_DEBUG,"NNNNNNNNNNNN******** T4 = %08x\n",base->readl(NAND_NFIT4));
 */
 }
 static void recalc_writecycle(nfi_base *base,chip_info *cinfo)
@@ -463,8 +471,8 @@ int nand_io_open(nfi_base *base, chip_info *cinfo)
 	nand_io_init(nandio->base);
 	if (cinfo) {
 		nandio->cinfo = cinfo;
-		//nand_io_setup_timing_optimize((int)nandio, nandio->cinfo);
-		//recalc_writecycle(base, cinfo);
+		nand_io_setup_timing_optimize((int)nandio, nandio->cinfo);
+		recalc_writecycle(base, cinfo);
 	} else {
 		nandio->cinfo = NULL;
 		nand_io_setup_timing_default((int)nandio);
@@ -630,7 +638,7 @@ int nand_io_receive_data(int context, unsigned char *dst, unsigned int len)
 	return 0;
 }
 int nand_io_send_waitcomplete(int context, chip_info *cinfo) {
-	ndd_ndelay(cinfo->ops_timing.tWC * 64);
+	    ndd_ndelay(cinfo->ops_timing.tWC * 64);
 	return 0;
 }
 void nand_io_setup_default_16bit(nfi_base *base)

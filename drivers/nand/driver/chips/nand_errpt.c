@@ -539,6 +539,7 @@ static int nand_write_pagedata(nand_data *nddata, nand_flash *ndflash, int chip_
 		pn_enable(nd_errpt_info.io_context);
 		nand_io_send_data(nd_errpt_info.io_context, wbuf + i * eccsize, eccsize);
 		nand_io_send_data(nd_errpt_info.io_context, nd_errpt_info.bchbuf + i * eccbytes, eccbytes);
+		nand_io_send_waitcomplete(nd_errpt_info.io_context, nddata->cinfo);
 		pn_disable(nd_errpt_info.io_context);
 	}
 	len = oobsize - i * eccbytes;
