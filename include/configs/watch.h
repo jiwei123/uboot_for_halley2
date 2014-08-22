@@ -59,7 +59,7 @@
 #define CONFIG_SYS_ICACHE_SIZE		32768
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
-#define CONFIG_SYS_UART_INDEX		1
+#define CONFIG_SYS_UART_INDEX		3
 #ifndef CONFIG_RVMS
 #define CONFIG_BAUDRATE			57600
 #else /* defined CONFIG_RVMS */
@@ -91,9 +91,9 @@
  * Boot arguments definitions.
  */
 #ifndef CONFIG_RVMS
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=768M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=256M@0x0 mem=256@0x30000000"
 #else
-#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=768M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,115200n8 mem=256M@0x0 mem=256@0x30000000"
 #endif
 
 #ifdef CONFIG_BOOT_ANDROID
@@ -402,15 +402,15 @@
 /**
  * Keys.
  */
-#define CONFIG_GPIO_USB_DETECT		GPIO_PE(10)
+#define CONFIG_GPIO_USB_DETECT		GPIO_PA(14)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
 
 /* Wrong keys. */
-#define CONFIG_GPIO_RECOVERY		-1      	/* SW7 */
+#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)      	/* SW7 */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	0
 
 /* Wrong keys. */
-#define CONFIG_GPIO_FASTBOOT		-1      	/* SW2 */
+#define CONFIG_GPIO_FASTBOOT		GPIO_PG(30)      	/* SW2 */
 #define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
 
 /*
