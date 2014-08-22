@@ -106,7 +106,7 @@
  * Boot arguments definitions.
  */
 #ifndef CONFIG_RVMS
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=256@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=256M@0x30000000"
 #else
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=768M@0x30000000"
 #endif
