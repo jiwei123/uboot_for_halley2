@@ -288,6 +288,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	mem_malloc_init(CONFIG_SYS_MONITOR_BASE + gd->reloc_off -
 			TOTAL_MALLOC_LEN, TOTAL_MALLOC_LEN);
 
+#ifdef CONFIG_REGULATOR
+	regulator_init();
+#endif
+
 #ifndef CONFIG_SYS_NO_FLASH
 	/* configure available FLASH banks */
 	size = flash_init();
