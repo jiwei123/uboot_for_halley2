@@ -83,7 +83,6 @@
 
 
 /* PMU */
-#define CONFIG_REGULATOR
 #define CONFIG_PMU_ACT8600
 
 /* GPIO */
