@@ -94,7 +94,7 @@ enum jzfb_lcd_type {
 	LCD_TYPE_SPECIAL_TFT_2 = 2,
 	LCD_TYPE_SPECIAL_TFT_3 = 3,
 	LCD_TYPE_8BIT_SERIAL = 0xc,
-	LCD_TYPE_LCM = 0xd | (1 << 31),
+	LCD_TYPE_SLCD = 0xd | (1 << 31),
 };
 
 /* smart lcd interface_type */
@@ -124,17 +124,16 @@ enum smart_lcd_dwidth {
 	SMART_LCD_DWIDTH_MASK = (0x7 << 10),
 };
 
-/**
- * @reg: the register address
- * @value: the value to be written
- * @type: operation type, 0: write register, 1: write command, 2: write data
- * @udelay: delay time in us
- */
+/*smart lcd init code type*/
+enum smart_config_type {
+	SMART_CONFIG_CMD =  0,
+	SMART_CONFIG_DATA =  1,
+	SMART_CONFIG_UDELAY =  2,
+};
+
 struct smart_lcd_data_table {
-	unsigned long reg;
-	unsigned long value;
-	unsigned long type;
-	unsigned long udelay;
+	enum smart_config_type type;
+	uint32_t value;
 };
 
 struct fb_videomode {
@@ -184,10 +183,6 @@ struct jzfb_config_info {
 	unsigned date_enable_active_low:1;	/* data enable active low */
 	struct {
 		enum smart_lcd_type smart_type;	/* smart lcd transfer type, 0: parrallel, 1: serial */
-		enum smart_lcd_cwidth cmd_width;	/* smart lcd command width */
-		enum smart_lcd_dwidth data_width;	/* smart lcd data Width */
-		enum smart_lcd_dwidth data_width2;	/* smart lcd data Width */
-		enum smart_lcd_cwidth data_new_times2;  /* smart lcd command width */
 
 		unsigned clkply_active_rising:1;	/* smart lcd clock polarity:
 							   0: Active edge is Falling,1: Active edge is Rasing */
@@ -196,17 +191,16 @@ struct jzfb_config_info {
 		unsigned csply_active_high:1;	/* smart lcd CS Polarity.
 						   0: Active level is low, 1: Active level is high */
 
-		enum smart_lcd_new_dwidth data_new_width;
-		enum smart_lcd_new_dtimes data_new_times;
 		unsigned newcfg_6800_md:1;
 		unsigned newcfg_fmt_conv:1;
 		unsigned newcfg_datatx_type:1;
 		unsigned newcfg_cmdtx_type:1;
 		unsigned newcfg_cmd_9bit:1;
 
-		unsigned long write_gram_cmd;	/* write graphic ram command */
-		unsigned bus_width;	/* bus width in bit */
-		unsigned int length_data_table;	/* array size of data_table */
+		size_t length_cmd;
+        unsigned long *write_gram_cmd;	/* write graphic ram command */
+        unsigned bus_width;	/* bus width in bit */
+        unsigned int length_data_table;	/* array size of data_table */
 		struct smart_lcd_data_table *data_table;	/* init data table */
 		int (*init) (void);
 		int (*gpio_for_slcd) (void);

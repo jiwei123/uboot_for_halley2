@@ -420,6 +420,10 @@ void clk_init(void)
 #ifdef CONFIG_VIDEO_M200
 		| CPM_CLKGR_LCD
 #endif
+#ifdef CONFIG_NAND_NFI
+		|CPM_CLKGR_PDMA
+		|CPM_CLKGR_BCH
+#endif
 		;
 
 	reg_clkgr &= ~gate;

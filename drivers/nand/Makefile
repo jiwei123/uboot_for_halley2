@@ -43,7 +43,11 @@ COBJS-y += driver/ops/handler/dma_msg_handler.o
 COBJS-y += driver/ops/handler/spl_rw.o
 COBJS-y += driver/ops/handler/spl_rw.o
 COBJS-y += driver/hw/nand_bch.o
+ifdef CONFIG_NAND_NFI
+COBJS-y += driver/hw/nand_io_nfi.o
+else
 COBJS-y += driver/hw/nand_io_emc.o
+endif
 COBJS-y += driver/hw/transadaptor/cpu_trans.o
 COBJS-y += driver/hw/transadaptor/dma_trans.o
 COBJS-y += driver/chips/nand_chip.o
@@ -61,7 +65,11 @@ $(shell mkdir -p $(SPLTREE)/drivers/nand/driver/chips)
 
 COBJS-y += spl/nand_spl.o
 COBJS-y += driver/utils/os_clib.o
+ifdef CONFIG_NAND_NFI
+COBJS-y += driver/hw/nand_io_nfi.o
+else
 COBJS-y += driver/hw/nand_io_emc.o
+endif
 COBJS-y += driver/hw/nand_bch.o
 COBJS-y += driver/hw/transadaptor/cpu_trans.o
 

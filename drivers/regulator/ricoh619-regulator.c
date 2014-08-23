@@ -201,8 +201,8 @@ static int __ricoh61x_set_voltage( struct ricoh61x_regulator *ri,
 
 	if (selector)
 		*selector = vsel;
-	vout_val = (min_uV + max_uV)/2;
 
+	vout_val =  (vsel & ri->vout_mask);
 	ret = ricoh61x_write_reg(ri->vout_reg, &vout_val);
 	if (ret < 0)
 		printf("Error in writing the Voltage register\n");
@@ -293,11 +293,21 @@ void test_richo()
 //	ricoh61x_read_reg(u8 reg, u8 *val, u32 len);
 }
 
+static int ricoh61x_reg_is_enabled(struct regulator *regulator)
+{
+	uint8_t control;
+	struct ricoh61x_regulator *ri = rdev_get_drvdata(regulator);
+
+	ricoh61x_read_reg(ri->reg_en_reg, &control,1);
+	return (((control >> ri->en_bit) & 1) == 1);
+}
+
 static struct regulator_ops ricoh61x_ops = {
 
 	.disable = ricoh61x_reg_disable,
 	.enable = ricoh61x_reg_enable,
 	.set_voltage = ricoh61x_set_voltage,
+	.is_enabled	= ricoh61x_reg_is_enabled,
 
 #if 0
 	.list_voltage	= ricoh61x_list_voltage,
@@ -305,7 +315,6 @@ static struct regulator_ops ricoh61x_ops = {
 	.get_voltage	= ricoh61x_get_voltage,
 	.enable		= ricoh61x_reg_enable,
 	.disable	= ricoh61x_reg_disable,
-	.is_enabled	= ricoh61x_reg_is_enabled,
 	.enable_time	= ricoh61x_regulator_enable_time,
 #endif
 
@@ -322,8 +331,6 @@ static struct regulator_ops ricoh61x_ops = {
 	.vout_reg	= _vout_reg,				\
 	.vout_mask	= _vout_mask,				\
 	.sleep_reg	= _ds_reg,				\
-	.min_uV		= _min_mv * 1000,			\
-	.max_uV		= _max_mv * 1000,			\
 	.step_uV	= _step_uV,				\
 	.nsteps		= _nsteps,				\
 	.delay		= _delay,				\
@@ -331,11 +338,15 @@ static struct regulator_ops ricoh61x_ops = {
 	.sleep_id	= RICOH619_DS_##_id,			\
 	.eco_reg	=  _eco_reg,				\
 	.eco_bit	=  _eco_bit,				\
+	.min_uV		= _min_mv * 1000,			\
+	.max_uV		= _max_mv * 1000,			\
 	.eco_slp_reg	=  _eco_slp_reg,			\
 	.eco_slp_bit	=  _eco_slp_bit,			\
 	.desc = {						\
 		.name = ricoh619_rails(_id),			\
 		.id = RICOH619_ID_##_id,			\
+		.min_uV		= _min_mv * 1000,			\
+		.max_uV		= _max_mv * 1000,			\
 		.n_voltages = _nsteps,				\
 		.ops = &_ops,					\
 	},							\
@@ -393,6 +404,15 @@ static struct ricoh61x_regulator ricoh61x_regulator[] = {
 	RICOH61x_REG(LDO8, 0x44, 7, 0x46, 7, 0x53, 0x7F, 0x5F,
 			900, 3500, 25000, 0x68, ricoh61x_ops, 500,
 			0x00, 0, 0x00, 0),
+
+	RICOH61x_REG(LDO9, 0x45, 0, 0x47, 0, 0x54, 0x7F, 0x60,
+			900, 3500, 25000, 0x68, ricoh61x_ops, 500,
+			0x00, 0, 0x00, 0),
+
+	RICOH61x_REG(LDO10, 0x45, 1, 0x47, 1, 0x55, 0x7F, 0x61,
+			900, 3500, 25000, 0x68, ricoh61x_ops, 500,
+			0x00, 0, 0x00, 0),
+
 
 	RICOH61x_REG(LDORTC1, 0x45, 4, 0x00, 0, 0x56, 0x7F, 0x00,
 			1700, 3500, 25000, 0x48, ricoh61x_ops, 500,

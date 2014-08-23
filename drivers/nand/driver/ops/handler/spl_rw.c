@@ -37,6 +37,11 @@ static int nand_wait_busy(struct Spl *spl)
         return ret;
 }
 
+static void nand_wait_data_finish(unsigned int count)
+{
+        ndd_ndelay(count);
+}
+
 static int nand_read_status(struct Spl *spl)
 {
         int ret = SUCCESS;
@@ -179,11 +184,17 @@ static int write_data(struct Spl *spl, struct AlignList *al, int pageid)
 		for(j = 0; j < (pagelist->Bytes / SPL_BCH_SIZE); j++){
 			/** the first 256 bytes of spl don't use PN **/
 			if(i != 0 || j != 0 || (pageid % SPL_BAKUP_STEPS))
+			{   /*for wait data finish from cpu 10540 = (15+15+15+2)*64*5 default max timing*/
+				nand_wait_data_finish(15040);
 				pn_enable(spl->io_context);
+			}
 			data = (unsigned char *)(pagelist->pData) + j * SPL_BCH_SIZE;
 			nand_write_data(spl, data, SPL_BCH_SIZE);
 			if(i != 0 || j != 0 || (pageid % SPL_BAKUP_STEPS))
+			{
+				nand_wait_data_finish(15040);
 				pn_disable(spl->io_context);
+			}
 		}
         }
 
@@ -197,9 +208,11 @@ static int write_bch(struct Spl *spl, int pageid)
         int ret = SUCCESS;
 
         nand_write_start(spl, pageid, 0);
-	pn_enable(spl->io_context);
+    	pn_enable(spl->io_context);
+	    /*for wait data finish from cpu 10540 = (15+15+15+2)*64*5 default max timing*/
         nand_write_data(spl, spl->bchbuf, spl->bchsize);
-	pn_disable(spl->io_context);
+		nand_wait_data_finish(15040);
+    	pn_disable(spl->io_context);
         ret = nand_write_finish(spl);
 
         return ret;
@@ -340,9 +353,9 @@ static int read_data(struct Spl *spl, struct AlignList *al, int pageid)
 
 static int read_bch(struct Spl *spl, int pageid)
 {
-        int ret = SUCCESS;
-        ret = nand_read_start(spl, pageid, 0);
-        if (ret < 0)
+	int ret = SUCCESS;
+	ret = nand_read_start(spl, pageid, 0);
+	if (ret < 0)
 		RETURN_ERR(ret, "bch read start error");
 	pn_enable(spl->io_context);
 	if (spl->cinfo->pagesize != 512)
@@ -354,7 +367,7 @@ static int read_bch(struct Spl *spl, int pageid)
 	}
 	pn_disable(spl->io_context);
 
-        return ret;
+	return ret;
 }
 
 static int read_nand(struct Spl *spl, struct AlignList *al, int pageid)

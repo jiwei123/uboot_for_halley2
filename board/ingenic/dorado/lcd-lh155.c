@@ -55,18 +55,10 @@ struct dsi_device jz_dsi = {
 struct jzfb_config_info jzfb1_init_data = {
     .modes = &jzfb1_videomode,
 
-    .lcd_type = LCD_TYPE_LCM,
+    .lcd_type = LCD_TYPE_SLCD,
     .bpp = 18,
 
     .smart_config.smart_type      = SMART_LCD_TYPE_PARALLEL,
-    .smart_config.cmd_width       = SMART_LCD_CWIDTH_8_BIT_ONCE,           //8bit, according to the 8bit command
-    .smart_config.data_width      = SMART_LCD_DWIDTH_24_BIT_ONCE_PARALLEL, //due to new slcd mode, must be 24bit
-    .smart_config.data_new_width  = SMART_LCD_NEW_DWIDTH_8_BIT,          //8bit for lcd init
-    .smart_config.data_new_times  = SMART_LCD_NEW_DTIMES_ONCE,   //8bit once, for 8bit command
-
-    .smart_config.data_new_times2 = SMART_LCD_NEW_DTIMES_TWICE,
-
-    .smart_config.clkply_active_rising = 0,
     .smart_config.rsply_cmd_high = 0,
     .smart_config.csply_active_high = 0,
     .smart_config.write_gram_cmd = lh155_cmd_buf,

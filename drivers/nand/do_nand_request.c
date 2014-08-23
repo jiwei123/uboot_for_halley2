@@ -184,14 +184,17 @@ void fill_nand_basic_info(nand_flash_param *nand_info) {
 	ndparams.ndbaseinfo.options		= nand_info->options;
 
 }
+#ifdef CONFIG_NAND_NFI
+#define NAND_SPL_SIZE	(32 * 1024)
+#else
 #define NAND_SPL_SIZE	(16 * 1024)
+#endif //CONFIG_NAND_NFI
 #define NAND_PARAMS_OFFSET	NAND_SPL_SIZE
 #define REBUILD_SPL_SIZE	(NAND_SPL_SIZE + (1 * 1024))	// 16K nand_spl.bin + 1K nand basic params
 // (16 * 1024) is max support pagesize, used to write a full page data to nand
 #define SPL_BUF_SIZE		(NAND_SPL_SIZE + 16 * 1024)
 
 #define DEBUG_PTWRITE
-#define NEW_SPL
 unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned int ops_length,unsigned int offset)
 {
 	int pHandle;
@@ -234,7 +237,6 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		//pt_index,__func__,ops_length,pagesize,totalbytes);
 		return -1;
 	}
-#ifdef NEW_SPL
 	if (startaddr == 0) {
 		if (totalbytes < NAND_SPL_SIZE) {
 			printf("%s ERROR: nand_spl.bin not write at once!\n",__func__);
@@ -266,6 +268,26 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 				void *pf0_buf;
 			} parm_buf = {spl_buf, spl_buf + 64, spl_buf + 96, spl_buf + 128, spl_buf + 160};
 
+#elif defined(CONFIG_M200)
+			struct parm_buf {
+				void *bw_buf;
+				void *tp_buf;
+				void *otherparm_buf;
+				void *ext_buf;
+			} parm_buf = {spl_buf, spl_buf + 64, spl_buf + 128, spl_buf + 256};
+
+			/* the maxsize of struct nand_otherflag is 32bytes */
+			struct nand_otherflag{
+				unsigned int splflag;   /* the string is "SPL!" = 0x21 4c 50 53 */
+				unsigned int rowcycle;
+				unsigned int pagesize;
+				unsigned int space[20];
+			} nand_othflag;
+
+			nand_othflag.splflag = 0x214c5053;
+			nand_othflag.rowcycle = ndparams.ndbaseinfo.rowcycles;
+			nand_othflag.pagesize = ndparams.ndbaseinfo.pagesize;
+			nand_othflag.space[0] = 0;
 #endif
 
 			memset(spl_buf + NAND_PARAMS_OFFSET, 0xff, SPL_BUF_SIZE - NAND_SPL_SIZE);
@@ -292,6 +314,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 				printf("%s ERROR: unsupport nand pagesize %d!\n", __func__, ndinfo->pagesize);
 				return -1;
 			}
+#ifndef CONFIG_NAND_NFI  // no define nfi
 #ifdef CONFIG_JZ4775
 			memset(parm_buf.bw_buf, (ndinfo->buswidth == 16) ? 0xAA : 0x55, 64);
 #endif
@@ -300,6 +323,15 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			memset(parm_buf.pf2_buf, (pagesize_flag >> 2 & 1) ? 0xAA : 0x55, 32);
 			memset(parm_buf.pf1_buf, (pagesize_flag >> 1 & 1) ? 0xAA : 0x55, 32);
 			memset(parm_buf.pf0_buf, (pagesize_flag >> 0 & 1) ? 0xAA : 0x55, 32);
+#else /* nfi */
+
+			memset(parm_buf.bw_buf, (ndinfo->buswidth == 16) ? 0xAA : 0x55, 64);
+			memset(parm_buf.tp_buf, (REBUILD_GET_NAND_TYPE(ndinfo->options) == NAND_TYPE_TOGGLE) ? 0xAA : 0x55, 64);
+			memcpy(parm_buf.otherparm_buf, &nand_othflag, sizeof(struct nand_otherflag));
+			memset(parm_buf.otherparm_buf + (sizeof(struct nand_otherflag)), 0x00, 128 - sizeof(struct nand_otherflag));
+			memset(parm_buf.ext_buf, 0x00, 256);
+
+#endif //CONFIG_NAND_NFI
 
 			/* patch nand basic params */
 			ndparams.magic = 0x646e616e;	//nand
@@ -310,7 +342,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			memcpy(spl_buf + NAND_PARAMS_OFFSET, &ndparams, sizeof(nand_params));
 		}
 	}
-#endif
+
 	erase_partition_fill_pphandle(startaddr, pt_index);
 	pHandle = g_handle.pphandle[pt_index];
 	if(g_handle.curpt_index != pt_index){
@@ -348,7 +380,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		}
 		rsectorid = g_handle.sectorid;
 		sl->startSector = g_handle.sectorid;
-#ifdef NEW_SPL
+
 		if (startaddr == 0) {
 			wlen = NAND_SPL_SIZE;
 			sl->pData = (void*)spl_buf;
@@ -360,11 +392,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			sl->sectorCount = (wlen + 511)/ 512;
 			g_handle.sectorid += (wlen + 511)/ 512;
 		}
-#else
-		sl->pData = (void*)databuf;
-		sl->sectorCount = (wlen + 511)/ 512;
-		g_handle.sectorid += (wlen + 511)/ 512;
-#endif
+
 		//printf("%s write:sectorid:%d sectorCount:%d curpt_index=%d pt_index=%d pHandle=%x sl[%x]\n",__func__,sl->startSector,sl->sectorCount,g_handle.curpt_index,pt_index,pHandle,(int)sl);
 rewrite:
 	//printf("============  %s %d pHandle = 0x%08x pHandle_nmhandle = 0x%x \n",__func__,__LINE__,pHandle,*(unsigned int *)pHandle);
@@ -445,7 +473,7 @@ int erase_partition_fill_pphandle(unsigned int startpage, int pt_index)
 		singlelist_for_each(it,&(g_handle.lp->head)){
 			lpentry = singlelist_entry(it,LPartition,head);
 			if(strcmp(lpentry->name,pt->name) == 0){
-				g_handle.pphandle[g_handle.pphandle_index] = 
+				g_handle.pphandle[g_handle.pphandle_index] =
 					NandManger_ptOpen(g_handle.zm_handle,lpentry->name,lpentry->mode);
 				//printf("====================>  lpentry->name = %s pt->name = %s g_handle.pphandle_index = %d pphandle = 0x%08x nmhanle = 0x%x\n",lpentry->name,pt->name,g_handle.pphandle_index,g_handle.pphandle[g_handle.pphandle_index],*(unsigned int *)g_handle.pphandle[g_handle.pphandle_index]);
 				g_handle.pphandle_index = 0;

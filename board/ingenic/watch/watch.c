@@ -55,12 +55,20 @@ extern int ricoh61x_regulator_init(void);
 
 int board_early_init_f(void)
 {
-#ifdef CONFIG_PMU_RICOH6x
-	ricoh61x_regulator_init();
-//	test_richo();
-#endif
 	return 0;
 }
+
+#ifdef CONFIG_REGULATOR
+int regulator_init(void)
+{
+	int ret;
+
+#ifdef CONFIG_PMU_RICOH6x
+	ret = ricoh61x_regulator_init();
+#endif
+	return ret;
+}
+#endif /* CONFIG_REGULATOR */
 
 #ifdef CONFIG_USB_GADGET
 int jz_udc_probe(void);

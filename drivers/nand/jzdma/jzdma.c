@@ -2,7 +2,11 @@
 #include <clib.h>
 
 static int firmware[] = {
-#include "firmware.hex"
+#ifdef CONFIG_NAND_NFI
+	#include "firmware_nfi.hex"
+#else
+	#include "firmware_nemc.hex"
+#endif
 };
 
 static inline void jzdma_load_firmware(void)

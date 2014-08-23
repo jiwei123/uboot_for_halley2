@@ -24,13 +24,17 @@
 #include <asm/gpio.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
 #include <jz_lcd/byd_8991.h>
+#ifdef CONFIG_PMU_RICOH6x
+#define CONFIG_LCD_REGULATOR	"RICOH619_LDO9"
+#elif defined CONFIG_PMU_D2041
+#define CONFIG_LCD_REGULATOR	""
+#endif
 
 void board_set_lcd_power_on(void)
 {
-	return;
-	char *id = "out11";
+	char *id = CONFIG_LCD_REGULATOR;
 	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_set_voltage(lcd_regulator, 3300000, 1800000);
+	regulator_set_voltage(lcd_regulator, 1800000,1800000);
 	regulator_enable(lcd_regulator);
 }
 
