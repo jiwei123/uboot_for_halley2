@@ -75,7 +75,7 @@
  * Boot arguments definitions.
  */
 
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=768M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -92,7 +92,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 3
+#define CONFIG_BOOTDELAY 0
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
@@ -377,36 +377,4 @@
 #define CONFIG_GPIO_USB_DETECT		GPIO_PE(31)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
 
-/* Wrong keys. */
-#if 0
-#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)	/* SW7 */
-#define CONFIG_GPIO_RECOVERY_ENLEVEL	0
-
-/* Wrong keys. */
-#define CONFIG_GPIO_FASTBOOT		GPIO_PG(30)	/* SW2 */
-#define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
-#endif
-#define CONFIG_GPIO_MENU		CONFIG_GPIO_FASTBOOT
-#define CONFIG_GPIO_MENU_ENLEVEL	CONFIG_GPIO_FASTBOOT_ENLEVEL
-
-#if 0
-#define CONFIG_GPIO_VOL_SUB		GPIO_PD(17)	/* SW9 */
-#define CONFIG_GPIO_VOL_SUB_ENLEVEL	1
-
-#define CONFIG_GPIO_VOL_ADD		GPIO_PD(18)	/* SW8 */
-#define CONFIG_GPIO_VOL_ADD_ENLEVEL	0
-
-#define CONFIG_GPIO_BACK		GPIO_PD(19)	/* SW7 */
-#define CONFIG_GPIO_BACK_ENLEVEL	0
-
-#define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
-#define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
-#endif
-/* TEST
-#define CONFIG_GPIO_DC_DETECT           GPIO_PG(10)
-#define CONFIG_GPIO_DC_DETECT_ENLEVEL   1
-
-#define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
-#define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
-*/
 #endif /* __CONFIG_DORAOD_H__ */
