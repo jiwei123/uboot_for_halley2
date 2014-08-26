@@ -79,18 +79,21 @@
 
 #ifdef CONFIG_DORADO_V30
 #define CONFIG_DDR_TYPE_DDR3
-#define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
 #define CONFIG_DDR3_H5TQ1G83DFR_H9C
 #else
 #define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
 #define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 /*#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2*/
 #endif // CONFIG_DORADO_V30
+#ifdef CONFIG_DORADO_V20
+#define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1          1   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
+#else
+#define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
+#endif
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -137,7 +140,7 @@
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
     /*#define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"*/
-		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000" 
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
   #endif
@@ -147,7 +150,7 @@
 	#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
 	#ifdef CONFIG_JZ_NAND_MGR
-		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x600000 0x80600000;bootm" 
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x600000 0x80600000;bootm"
                                                             /*order ops pt offset len dst */
 		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
 	#else
@@ -200,7 +203,7 @@
 
 #ifdef CONFIG_JZ_MMC_MSC0
 #define CONFIG_JZ_MMC_SPLMSC 0
-#define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
+#define CONFIG_JZ_MMC_MSC0_PA_8BIT 1
 #endif
 #ifdef CONFIG_JZ_MMC_MSC1
 #define CONFIG_JZ_MMC_SPLMSC 1

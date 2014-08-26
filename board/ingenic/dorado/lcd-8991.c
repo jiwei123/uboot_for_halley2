@@ -34,6 +34,7 @@ void board_set_lcd_power_on(void)
 {
 	char *id = CONFIG_LCD_REGULATOR;
 	struct regulator *lcd_regulator = regulator_get(id);
+
 	regulator_set_voltage(lcd_regulator, 1800000,1800000);
 	regulator_enable(lcd_regulator);
 }
@@ -49,8 +50,14 @@ struct jzfb_config_info jzfb1_init_data = {
 	.dither_enable = 0,
 };
 
+#ifdef CONFIG_DORADO_V20
+#define GPIO_LCD_DISP GPIO_PE(10)
+#endif
+#ifdef CONFIG_DORADO_V21
+#define GPIO_LCD_DISP GPIO_PB(0)
+#endif
 struct byd_8991_data byd_8991_pdata = {
-	.gpio_lcd_disp = GPIO_PE(10),
+	.gpio_lcd_disp = GPIO_LCD_DISP,
 	.gpio_lcd_de = 0,
 	.gpio_lcd_vsync = 0,
 	.gpio_lcd_hsync = 0,
