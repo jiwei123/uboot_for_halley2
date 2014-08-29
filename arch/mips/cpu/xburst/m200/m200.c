@@ -64,11 +64,11 @@ void board_init_f(ulong dummy)
 #endif
 	gpio_init();
 
-
 #ifndef CONFIG_FPGA
 	/* Init uart first */
 	enable_uart_clk();
 #endif
+
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif
@@ -107,7 +107,6 @@ void board_init_f(ulong dummy)
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);
-
 	debug("board_init_r\n");
 	board_init_r(NULL, 0);
 #endif

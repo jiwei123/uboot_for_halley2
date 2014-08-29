@@ -78,13 +78,17 @@ static int jz_serial_init(void)
 static void jz_serial_setbrg(void)
 {
 	u32 baud_div, tmp;
-
 #ifdef CONFIG_BURNER
 	baud_div = gd->arch.gi->extal / 16 / gd->arch.gi->baud_rate;
 #else
 	baud_div = CONFIG_SYS_EXTAL / 16 / CONFIG_BAUDRATE;
 #endif
 
+#ifdef CONFIG_PALLADIUM
+	writel(32,0xb0030024);
+	writel(0,0xb0030028);
+	baud_div = 1;
+#endif
 	tmp = readb(&uart->lcr);
 	tmp |= UART_LCR_DLAB;
 	writeb(tmp, &uart->lcr);

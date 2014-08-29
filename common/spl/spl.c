@@ -33,6 +33,7 @@
 #include <malloc.h>
 #include <linux/compiler.h>
 
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_SYS_UBOOT_START
@@ -165,9 +166,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #ifdef CONFIG_SPL_BOARD_INIT
 	spl_board_init();
 #endif
-
 	boot_device = spl_boot_device();
 	debug("boot device - %d\n", boot_device);
+#ifdef CONFIG_PALLADIUM
+	spl_board_prepare_for_linux();
+#endif
 	switch (boot_device) {
 #ifdef CONFIG_SPL_RAM_DEVICE
 	case BOOT_DEVICE_RAM:
@@ -238,6 +241,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	default:
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
+
 	jump_to_image_no_args(&spl_image);
 }
 
@@ -252,6 +256,9 @@ void preloader_console_init(void)
 	gd->baudrate = CONFIG_BAUDRATE;
 #else
 	gd->baudrate = gd->arch.gi->baud_rate;
+#endif
+#ifdef CONFIG_PALLADIUM
+	gd->baudrate = 3750000;
 #endif
 	serial_init();		/* serial communications setup */
 

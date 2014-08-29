@@ -8,8 +8,8 @@
  * DDR3-1066 info
  */
 /* DDR3 paramters */
-#define DDR_ROW     15  /* ROW : 12 to 18 row address ,1G only 512MB*/
-#define DDR_ROW1     15  /* ROW : 12 to 18 row address ,1G only 512MB*/
+#define DDR_ROW     14  /* ROW : 12 to 18 row address ,1G only 512MB*/
+#define DDR_ROW1     14  /* ROW : 12 to 18 row address ,1G only 512MB*/
 #define DDR_COL     10  /* COL :  8 to 14 column address */
 #define DDR_COL1     10  /* COL :  8 to 14 column address */
 #define DDR_BANK8   1 	/* Banks each chip: 0-4bank, 1-8bank */
@@ -60,7 +60,7 @@
 #define DDR_tMOD   	MAX(12, 15 * 1000)	/* DDR3 only: Mode Register Set Command update delay*/
 #define DDR_tXPDLL 	MAX(10, 24 * 1000)	 /* DDR3 only: Exit active power down to command requirint a locked DLL, ns*/
 #define DDR_tXS    	MAX(5, (DDR_tRFC + 10) * 1000) /* DDR3 only: EXit self-refresh to command not requiring a locked DLL, ns*/
-#define DDR_tXSRD  	100		/* DDR2 only: Exit self refresh to a read command, tck */
+#define DDR_tXSRD  	/*100*/10		/* DDR2 only: Exit self refresh to a read command, tck */
 
 /*
  * DDR3 controller refcnt register

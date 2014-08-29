@@ -26,22 +26,24 @@
 #define __CONFIG_DORAOD_H__
 
 #define CONFIG_SPL_RAM_DEVICE
+#define CONFIG_PALLADIUM
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
-#define CONFIG_DDR_AUTO_SELF_REFRESH
-#define CONFIG_SPL_DDR_SOFT_TRAINING
+/*#define CONFIG_DDR_AUTO_SELF_REFRESH*/
+/*#define CONFIG_SPL_DDR_SOFT_TRAINING*/
+#define CONFIG_DDR_FORCE_SELECT_CS1
 
 #ifndef CONFIG_RVMS
-#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		600000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		800000000
-#define CONFIG_SYS_MEM_FREQ		150000000
+#define CONFIG_SYS_CPU_FREQ		600000000
+#define CONFIG_SYS_MEM_FREQ		200000000
 
 #else /* defined CONFIG_RVMS */
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
@@ -60,11 +62,11 @@
 #define CONFIG_SYS_ICACHE_SIZE		32768
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
-#define CONFIG_SYS_UART_INDEX		1
+#define CONFIG_SYS_UART_INDEX		0
 #ifndef CONFIG_RVMS
-#define CONFIG_BAUDRATE			57600
+#define CONFIG_BAUDRATE			3750000
 #else /* defined CONFIG_RVMS */
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			3750000
 #endif
 
 #define CONFIG_DDR_PARAMS_CREATOR
@@ -74,21 +76,25 @@
 #define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
 #define CONFIG_DDR3_H5TQ2G83CFR_H9C
+
+
+/*
 #define CONFIG_DDR_CHIP_ODT
 #define CONFIG_DDR_PHY_ODT
 #define CONFIG_DDR_PHY_DQ_ODT
 #define CONFIG_DDR_PHY_DQS_ODT
-
+*/
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
+* #define CONFIG_DDR_CHIP_ODT
+* #define CONFIG_DDR_PHY_ODT
+* #define CONFIG_DDR_PHY_DQ_ODT
+* #define CONFIG_DDR_PHY_DQS_ODT
+* #define CONFIG_DDR_PHY_IMPED_PULLUP			0xe
+* #define CONFIG_DDR_PHY_IMPED_PULLDOWN			0xe
+*/
+
 
 #define CONFIG_MACH_TYPE 8888
 /**
@@ -295,6 +301,7 @@
 #define CONFIG_SPL_MAX_SIZE		(26 * 1024)
 
 #define CONFIG_SPL_SERIAL_SUPPORT
+
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 
 #ifdef CONFIG_SPL_NOR_SUPPORT
