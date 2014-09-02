@@ -12,16 +12,18 @@
 #include <regulator.h>
 #include <asm/gpio.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
-
 #include <jz_lcd/jz_dsim.h>
 
+#ifdef CONFIG_PMU_RICOH6x
+#define CONFIG_LCD_REGULATOR	"RICOH619_LDO9"
+#endif
 
 void board_set_lcd_power_on(void)
 {
-	return;
-	char *id = "lcd_1.8v";
+	char *id = CONFIG_LCD_REGULATOR;
 	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_set_voltage(lcd_regulator, 3300000, 1800000);
+
+	regulator_set_voltage(lcd_regulator, 1800000,1800000);
 	regulator_enable(lcd_regulator);
 }
 
@@ -56,4 +58,3 @@ struct jzfb_config_info jzfb1_init_data = {
 	.pixclk_falling_edge = 0,
 	.date_enable_active_low = 0,
 };
-

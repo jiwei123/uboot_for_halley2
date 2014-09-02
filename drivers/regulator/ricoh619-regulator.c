@@ -31,9 +31,10 @@
 #include <linux/list.h>
 #include <regulator.h>
 #include <i2c.h>
-
+#ifndef CONFIG_SPL_BUILD
 #include <power/ricoh619.h>
 #include <power/ricoh619-regulator.h>
+#endif
 
 #define RICOH61x_I2C_ADDR    0x32
 
@@ -55,6 +56,7 @@
 #define	RICOH619_LDORTC1 0x56
 #define	RICOH619_LDORTC2 0x57
 
+#ifndef CONFIG_SPL_BUILD
 struct ricoh61x_regulator {
 	int		id;
 	int		sleep_id;
@@ -92,11 +94,31 @@ enum regulator_type {
 	REGULATOR_VOLTAGE,
 	REGULATOR_CURRENT,
 };
+#endif
 
+static int ricoh61x_write_reg(u8 reg, u8 *val)
+{
+	unsigned int  ret;
 
-static int ricoh61x_write_reg(u8 reg, u8 *val);
-static int ricoh61x_read_reg(u8 reg, u8 *val, u32 len);
+	ret = i2c_write(RICOH61x_I2C_ADDR, reg, 1, val, 1);
+	if(ret) {
+		debug("ricoh61x write register error\n");
+		return -EIO;
+	}
+	return 0;
+}
 
+#ifndef CONFIG_SPL_BUILD
+static int ricoh61x_read_reg(u8 reg, u8 *val, u32 len)
+{
+	int ret;
+	ret = i2c_read(RICOH61x_I2C_ADDR, reg, 1, val, len);
+	if(ret) {
+		printf("ricoh61x read register error\n");
+		return -EIO;
+	}
+	return 0;
+}
 void *rdev_get_drvdata(struct regulator *rdev)
 {
 	    return rdev->reg_data;
@@ -218,77 +240,12 @@ static  int ricoh61x_set_voltage(struct regulator *rdev,
 	return __ricoh61x_set_voltage(ri, min_uV, max_uV, selector);
 }
 
-
-static int ricoh61x_write_reg(u8 reg, u8 *val)
-{
-	unsigned int  ret;
-
-	ret = i2c_write(RICOH61x_I2C_ADDR, reg, 1, val, 1);
-	if(ret) {
-		debug("ricoh61x write register error\n");
-		return -EIO;
-	}
-	return 0;
-}
-
-
-
-static int ricoh61x_read_reg(u8 reg, u8 *val, u32 len)
-{
-	int ret;
-	ret = i2c_read(RICOH61x_I2C_ADDR, reg, 1, val, len);
-	if(ret) {
-		printf("ricoh61x read register error\n");
-		return -EIO;
-	}
-	return 0;
-}
-
-int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv)
-{
-	char reg;
-	u8 regvalue;
-
-	switch(outnum) {
-		case REGULATOR_CORE:
-			reg = RICOH619_DC1;
-			if ((vol_mv < 1000) || (vol_mv >1300)) {
-				debug("voltage for core is out of range\n");
-				return -EINVAL;
-			}
-			break;
-		case REGULATOR_MEM:
-			reg = RICOH619_DC2;
-			break;
-		case REGULATOR_IO:
-			reg = RICOH619_DC4;
-			break;
-		default:return -EINVAL;
-	}
-
-	if ((vol_mv < 600) || (vol_mv > 3500)) {
-		debug("unsupported voltage\n");
-		return -EINVAL;
-	} else if (vol_mv < 1200) {
-		regvalue = (vol_mv - 600) / 25;
-	} else if (vol_mv < 2400) {
-		regvalue = (vol_mv - 1200) / 50 + 24;
-	} else {
-		regvalue = (vol_mv - 2400) / 100 + 48;
-	}
-
-	return ricoh61x_write_reg(reg, &regvalue);
-}
-
-
 void test_richo()
 {
 	int val =0;
 //	spl_ricoh61x_regulator_set_voltage(RICOH619_LDO4, 1200);
 	ricoh61x_read_reg(0x2c, &val, 1);
-	printf("xyfu debug ----------the val is %x\n",val);
 	ricoh61x_read_reg(0xbd, &val, 1);
-	printf("xyfu debug ----------the val is %x\n",val);
 
 //	ricoh61x_read_reg(u8 reg, u8 *val, u32 len);
 }
@@ -442,7 +399,38 @@ int ricoh61x_regulator_init(void)
 
 	return 0;
 }
+#endif
 
+#ifdef CONFIG_SPL_BUILD
+int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv)
+{
+	char reg;
+	u8 regvalue;
 
+	switch(outnum) {
+		case REGULATOR_CORE:
+			reg = RICOH619_DC1;
+			if ((vol_mv < 1000) || (vol_mv >1300)) {
+				debug("voltage for core is out of range\n");
+				return -EINVAL;
+			}
+			break;
+		case REGULATOR_MEM:
+			reg = RICOH619_DC2;
+			break;
+		case REGULATOR_IO:
+			reg = RICOH619_DC4;
+			break;
+		default:return -EINVAL;
+	}
 
+	if ((vol_mv < 600) || (vol_mv > 3500)) {
+		debug("unsupported voltage\n");
+		return -EINVAL;
+	} else {
+		regvalue = ((vol_mv - 600) * 10)/ 125;
+	}
 
+	return ricoh61x_write_reg(reg, &regvalue);
+}
+#endif

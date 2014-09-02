@@ -32,6 +32,7 @@
 #include <image.h>
 #include <malloc.h>
 #include <linux/compiler.h>
+#include <regulator.h>
 
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -268,5 +269,17 @@ void preloader_console_init(void)
 			U_BOOT_TIME ")\n");
 #ifdef CONFIG_SPL_DISPLAY_PRINT
 	spl_display_print();
+#endif
+}
+
+void spl_regulator_set(void)
+{
+#ifdef CONFIG_SPL_CORE_VOLTAGE
+	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
+#endif
+#ifdef CONFIG_SPL_MEM_VOLTAGE
+	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
 #endif
 }

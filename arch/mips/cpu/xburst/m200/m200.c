@@ -21,14 +21,13 @@
  * MA 02111-1307 USA
  */
 
-/*#define DEBUG*/
+/* #define DEBUG */
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/cpm.h>
 #include <spl.h>
-#include <regulator.h>
 
 #ifdef CONFIG_SPL_BUILD
 
@@ -77,13 +76,9 @@ void board_init_f(ulong dummy)
 	debug("Timer init\n");
 	timer_init();
 
-#ifdef CONFIG_SPL_CORE_VOLTAGE
-	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
-	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
-#endif
-#ifdef CONFIG_SPL_MEM_VOLTAGE
-	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
-	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
+#ifdef CONFIG_SPL_REGULATOR_SUPPORT
+	debug("regulator set\n");
+	spl_regulator_set();
 #endif
 
 	debug("CLK stop\n");
