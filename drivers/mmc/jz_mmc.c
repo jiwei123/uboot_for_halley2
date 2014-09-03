@@ -350,11 +350,19 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	mmc->f_min = 200000;
 #ifdef CONFIG_SPL_BUILD
 	mmc->f_max = 24000000;
+#ifdef CONFIG_JZ_MMC_MSC0_PA_8BIT
+	mmc->host_caps = MMC_MODE_8BIT | MMC_MODE_HC;
+#else
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HC;
+#endif
 #else
 	mmc->f_max = 52000000;
 #ifndef CONFIG_FPGA
+#ifdef CONFIG_JZ_MMC_MSC0_PA_8BIT
+	mmc->host_caps = MMC_MODE_8BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+#else
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+#endif
 #else /* CONFIG_FPGA */
 	mmc->host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
 #endif /* CONFIG_FPGA */

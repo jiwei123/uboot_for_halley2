@@ -346,14 +346,16 @@ out:
 int efuse_write(void *buf, int length, off_t offset)
 {
 	int start = (offset+EFU_ROM_BASE);
-	int end = (offset + (length + 3)/4 + EFU_ROM_BASE - 1);
+	int end = (offset + length + EFU_ROM_BASE - 1);
 	int ret = -EPERM;
 
 	if (end > EFU_ROM_END)
 		return -EINVAL;
-
+	printf("offset %x length %x start %x end %x\n", offset, length ,start, end);
 	if ((start < EFU_ROOT_KEY_BASE && end <= EFU_ROOT_KEY_BASE) ||
-			(start > EFU_MD5_END && end > EFU_MD5_END))
+			(start > EFU_MD5_BASE && end <= EFU_MD5_END) ||
+			(start > EFU_FIX_BT_BASE && end <= EFU_FIX_BT_END) ||
+			(start > EFU_PROT_BIT_BASE && end <= EFU_PROT_BIT_END))
 		ret = efuse_write_data(buf,length,offset);
 	else if (buf == NULL && length == 0) {
 		ret = efuse_write_sc_key(offset);
@@ -363,15 +365,18 @@ int efuse_write(void *buf, int length, off_t offset)
 
 int efuse_read(void *buf, int length, off_t offset)
 {
-	int start = (offset+EFU_ROM_BASE);
+	int start = (offset + EFU_ROM_BASE);
 	int end = (offset + length + EFU_ROM_BASE - 1);
 	int ret = -EPERM;
 
 	if (end > EFU_ROM_END)
 		return -EINVAL;
 
+	printf("offset %x length %x start %x end %x\n", offset, length ,start, end);
 	if ((start < EFU_ROOT_KEY_BASE && end <= EFU_ROOT_KEY_BASE) ||
-			(start > EFU_MD5_END && end > EFU_MD5_END))
+			(start > EFU_MD5_BASE && end <= EFU_MD5_END) ||
+			(start > EFU_FIX_BT_BASE && end <= EFU_FIX_BT_END) ||
+			(start > EFU_PROT_BIT_BASE && end <= EFU_PROT_BIT_END))
 		ret = efuse_read_data(buf,length,offset);
 	else if (buf == NULL && length == 0) {
 		ret = efuse_read_sc_key(offset);

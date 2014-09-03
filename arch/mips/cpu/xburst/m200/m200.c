@@ -21,14 +21,13 @@
  * MA 02111-1307 USA
  */
 
-/*#define DEBUG*/
+/* #define DEBUG */
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/cpm.h>
 #include <spl.h>
-#include <regulator.h>
 
 #ifdef CONFIG_SPL_BUILD
 
@@ -64,11 +63,11 @@ void board_init_f(ulong dummy)
 #endif
 	gpio_init();
 
-
 #ifndef CONFIG_FPGA
 	/* Init uart first */
 	enable_uart_clk();
 #endif
+
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif
@@ -77,13 +76,9 @@ void board_init_f(ulong dummy)
 	debug("Timer init\n");
 	timer_init();
 
-#ifdef CONFIG_SPL_CORE_VOLTAGE
-	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
-	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
-#endif
-#ifdef CONFIG_SPL_MEM_VOLTAGE
-	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
-	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
+#ifdef CONFIG_SPL_REGULATOR_SUPPORT
+	debug("regulator set\n");
+	spl_regulator_set();
 #endif
 
 	debug("CLK stop\n");
@@ -107,7 +102,6 @@ void board_init_f(ulong dummy)
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);
-
 	debug("board_init_r\n");
 	board_init_r(NULL, 0);
 #endif

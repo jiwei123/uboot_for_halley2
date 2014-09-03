@@ -32,6 +32,8 @@
 #include <image.h>
 #include <malloc.h>
 #include <linux/compiler.h>
+#include <regulator.h>
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -165,9 +167,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #ifdef CONFIG_SPL_BOARD_INIT
 	spl_board_init();
 #endif
-
 	boot_device = spl_boot_device();
 	debug("boot device - %d\n", boot_device);
+#ifdef CONFIG_PALLADIUM
+	spl_board_prepare_for_linux();
+#endif
 	switch (boot_device) {
 #ifdef CONFIG_SPL_RAM_DEVICE
 	case BOOT_DEVICE_RAM:
@@ -238,6 +242,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	default:
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
+
 	jump_to_image_no_args(&spl_image);
 }
 
@@ -253,6 +258,9 @@ void preloader_console_init(void)
 #else
 	gd->baudrate = gd->arch.gi->baud_rate;
 #endif
+#ifdef CONFIG_PALLADIUM
+	gd->baudrate = 3750000;
+#endif
 	serial_init();		/* serial communications setup */
 
 	gd->have_console = 1;
@@ -261,5 +269,17 @@ void preloader_console_init(void)
 			U_BOOT_TIME ")\n");
 #ifdef CONFIG_SPL_DISPLAY_PRINT
 	spl_display_print();
+#endif
+}
+
+void spl_regulator_set(void)
+{
+#ifdef CONFIG_SPL_CORE_VOLTAGE
+	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
+#endif
+#ifdef CONFIG_SPL_MEM_VOLTAGE
+	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
 #endif
 }

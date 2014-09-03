@@ -48,6 +48,7 @@ COBJS-$(CONFIG_CMD_FASTBOOT) += cmd_fastboot.o
 COBJS-$(CONFIG_CMD_BOOTM) += cmd_bootm.o
 COBJS-y += cmd_help.o
 COBJS-y += cmd_version.o
+COBJS-y += cmd_serial_burn.o
 
 # environment
 COBJS-y += env_attr.o

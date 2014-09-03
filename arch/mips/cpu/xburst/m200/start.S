@@ -101,6 +101,48 @@ _start:
 //	ori	t1, t1, 0x22
 //	sw	t1, 0x24(t0)
 
+#ifdef CONFIG_PALLADIUM
+	.set	mips32
+init_caches:
+	la	$25, 0x80000000
+        li      $2, 3                   // cacheable for kseg0 access
+        mtc0    $2, $16                 // CP0_CONFIG
+        nop
+
+#if 1
+//	li      $2, 0x20000000          // enable idx-store-data cache insn
+//	mtc0    $2, $26                 // CP0_ERRCTL
+#else
+	mtc0    $0, $26                 // CP0_ERRCTL
+#endif
+	mfc0    $3, $4,7		//enable rdhwr
+	ori     $3, $3,1
+	mtc0    $3, $4,7
+
+        ori     $2, $25, 0              // start address
+        ori     $3, $2, 0x7fe0          // end address, total 32KB
+        mtc0    $0, $28, 0              // CP0_TAGLO
+        mtc0    $0, $28, 1              // CP0_DATALO
+cache_clear_a_line:
+        cache   0x8, 0($2)              // Index_Store_Tag_I
+        cache   0x9, 0($2)              // Index_Store_Tag_D
+        bne     $2, $3, cache_clear_a_line
+        addiu   $2, $2, 32              // increment CACHE_LINE_SIZE
+        ori     $2, $25, 0              // start address
+        ori     $3, $2, 0x7fe0          // end address, total 32KB spl stack space
+        la      $4, 0x1ffff000          // physical address and 4KB page mask
+cache_alloc_a_line:
+        and     $5, $2, $4
+        ori     $5, $5, 1               // V bit of the physical tag
+        mtc0    $5, $28, 0              // CP0_TAGLO
+        cache   0x8, 0($2)              // Index_Store_Tag_I
+        cache   0x9, 0($2)              // Index_Store_Tag_D
+        bne     $2, $3, cache_alloc_a_line
+        addiu   $2, $2, 32              // increment CACHE_LINE_SIZE
+
+	li	sp, 0x80008000
+#endif
+
 	/* Set up stack */
 #ifdef CONFIG_SPL_STACK
 	li	sp, CONFIG_SPL_STACK

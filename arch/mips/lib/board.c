@@ -59,6 +59,8 @@ int __board_early_init_f(void)
 }
 int board_early_init_f(void)
 	__attribute__((weak, alias("__board_early_init_f")));
+int board_early_init_r(void)
+	__attribute__((weak, alias("__board_early_init_f")));
 
 static int init_func_ram(void)
 {
@@ -280,6 +282,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	monitor_flash_len = image_copy_end() - dest_addr;
 
+	board_early_init_r();
+
 	serial_initialize();
 
 	bd = gd->bd;
@@ -287,10 +291,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	/* The Malloc area is immediately below the monitor copy in DRAM */
 	mem_malloc_init(CONFIG_SYS_MONITOR_BASE + gd->reloc_off -
 			TOTAL_MALLOC_LEN, TOTAL_MALLOC_LEN);
-
-#ifdef CONFIG_REGULATOR
-	regulator_init();
-#endif
 
 #ifndef CONFIG_SYS_NO_FLASH
 	/* configure available FLASH banks */
