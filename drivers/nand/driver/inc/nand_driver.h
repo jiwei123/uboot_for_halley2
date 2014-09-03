@@ -8,7 +8,7 @@
 #define CS_PER_NFI		2
 #define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
 #elif defined(CONFIG_SOC_M200)
-#define CS_PER_NFI		2//4
+#define CS_PER_NFI		4
 #define NFI_MAX_RATE_LIMIT	(250 * 1000 * 1000)
 #endif
 
