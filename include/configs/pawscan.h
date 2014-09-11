@@ -49,7 +49,7 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		1
-#define CONFIG_BAUDRATE			57600
+#define CONFIG_BAUDRATE			115200
 
 /*#define CONFIG_DDR_TEST_CPU
 #define CONFIG_DDR_TEST*/
@@ -75,7 +75,7 @@
  * Boot arguments definitions.
  */
 
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
