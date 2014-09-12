@@ -134,7 +134,11 @@
 /**
  * Boot command definitions.
  */
+#ifdef CONFIG_DORADO_V21
+#define CONFIG_BOOTDELAY 0
+#else
 #define CONFIG_BOOTDELAY 1
+#endif
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
