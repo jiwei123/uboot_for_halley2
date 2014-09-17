@@ -48,12 +48,12 @@ COBJS-$(CONFIG_CMD_FASTBOOT) += cmd_fastboot.o
 COBJS-$(CONFIG_CMD_BOOTM) += cmd_bootm.o
 COBJS-y += cmd_help.o
 COBJS-y += cmd_version.o
-COBJS-y += cmd_serial_burn.o
 
 # environment
 COBJS-y += env_attr.o
 COBJS-y += env_callback.o
 COBJS-y += env_flags.o
+COBJS-$(CONFIG_FPGA) += cmd_jzfpga.o
 COBJS-$(CONFIG_ENV_IS_IN_DATAFLASH) += env_dataflash.o
 COBJS-$(CONFIG_ENV_IS_IN_EEPROM) += env_eeprom.o
 XCOBJS-$(CONFIG_ENV_IS_EMBEDDED) += env_embedded.o

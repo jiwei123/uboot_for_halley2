@@ -44,8 +44,23 @@ _start:
 	 */
 
 	.space 256, 0x00
+	/* simulation use 8bit common 3-byte row cycles 8k page nand*/
+	/*.space 128, 0x55
+	.space 96, 0xaa
+	.space 32, 0x55*/
 
 #endif /* CONFIG_SPL_NAND_SUPPORT */
+
+#ifdef CONFIG_SPL_NOR_SUPPORT
+	.word 0
+#endif /* CONFIG_SPL_NOR_SUPPORT */
+
+#ifdef CONFIG_SPL_SPI_SUPPORT
+#define SSI_GR_BOOT (CONFIG_SYS_EXTAL / (CONFIG_SYS_SPI_BOOT_FREQ * 2) - 1)
+	.word 0x55020304
+	.word (0x00aa55aa | (SSI_GR_BOOT << 24))
+	.space 8, 0
+#endif /* CONFIG_SPL_SPI_SUPPORT */
 
 #if 0
 loop:
@@ -129,6 +144,22 @@ cache_alloc_a_line:
 	cache   INDEX_STORE_TAG_D, 0(t1)
 	bne     t1, t2, cache_alloc_a_line
 	addiu   t1, t1, CONFIG_SYS_CACHELINE_SIZE
+
+#ifdef CONFIG_SPL_NOR_SUPPORT
+	.extern __data_start
+	.extern __data_end
+	/*Init data section, nor spl*/
+	la	t0, __data_start
+	la	t1, __data_end
+	la	t2, 0xF4000800
+1:
+	lw	t3, 0(t0)
+	addiu	t0, t0, 4
+	sw	t3, 0(t2)
+	addiu	t2, t2, 4
+	bne	t0, t1, 1b
+	nop
+#endif
 
 	/* Set up stack */
 #ifdef CONFIG_SPL_STACK

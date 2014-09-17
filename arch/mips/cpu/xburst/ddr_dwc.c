@@ -665,8 +665,10 @@ void sdram_init(void)
 #ifndef CONFIG_FPGA
 	clk_set_rate(DDR, gd->arch.gi->ddrfreq);
 	reset_dll();
-#endif
 	rate = clk_get_rate(DDR);
+#else
+	rate = gd->arch.gi->ddrfreq;
+#endif
 #ifdef CONFIG_M200
 	if(rate <= 150000000)
 		bypass = 1;

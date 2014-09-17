@@ -30,25 +30,33 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_JZ4775		/* Jz4775 SoC */
 #define CONFIG_XBURST_TRAPS
+/*#define CONFIG_FPGA*/
 
 #define CONFIG_SYS_MPLL_FREQ		-1
 #define CONFIG_SYS_APLL_FREQ		816000000
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
 #define CONFIG_SYS_HZ			1000 /* incrementer freq */
-
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
 
 #define CONFIG_SYS_DCACHE_SIZE		16384
 #define CONFIG_SYS_ICACHE_SIZE		16384
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
+#ifndef CONFIG_FPGA
 #define CONFIG_SYS_UART_INDEX		3
 #define CONFIG_BAUDRATE			57600
-
+#else
+#define CONFIG_SYS_UART_INDEX		0
+#define CONFIG_BAUDRATE			115200
+#endif
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_TYPE_VARIABLE
 
+/*#define CONFIG_DDR_TEST_CPU
+#define CONFIG_DDR_TEST
+#define CONFIG_DDR_TEST_DATALINE
+#define CONFIG_DDR_TEST_ADDRLINE*/
 #define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_ENV_SIZE 512
 /**
@@ -84,7 +92,6 @@
  */
 #define CONFIG_CMD_BOOTD	/* bootd			*/
 #define CONFIG_CMD_CONSOLE	/* coninfo			*/
-#define CONFIG_CMD_DHCP 	/* DHCP support			*/
 #define CONFIG_CMD_ECHO		/* echo arguments		*/
 #define CONFIG_CMD_EXT4 	/* ext4 support			*/
 #define CONFIG_CMD_FAT		/* FAT support			*/
@@ -93,8 +100,6 @@
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
-#define CONFIG_CMD_NET		/* networking support			*/
-#define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
@@ -128,7 +133,11 @@
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
+#ifndef CONFIG_FPGA
 #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
+#else
+#define CONFIG_SYS_MALLOC_LEN		(16 * 1024 * 1024)
+#endif
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
 #define CONFIG_SYS_SDRAM_BASE		0x80000000 /* cached (KSEG0) address */

@@ -399,8 +399,6 @@ static inline int get_devices_resources(io_base *base)
 	return 0;
 }
 
-extern unsigned int cpm_get_h2clk(void);
-
 static inline int get_devices_clk(io_base *base)
 {
 	nfi_base *nfi = &(base->nfi);

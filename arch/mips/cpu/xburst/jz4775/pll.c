@@ -29,6 +29,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifndef CONFIG_FPGA
 #ifndef CONFIG_SYS_CPCCR_SEL
 /**
  * default CPCCR configure.
@@ -129,3 +130,7 @@ void pll_init(void)
 
 	debug("ok\n");
 }
+#else
+
+void pll_init(void) {}
+#endif

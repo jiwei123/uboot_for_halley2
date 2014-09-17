@@ -30,6 +30,27 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
+	/*
+	 * {offset, sel, sel_bit, en_bit, busy_bit, div}
+	 */
+	[0] = {CPM_DDRCDR, 1, 30, 29, 28, 0},
+#ifdef CONFIG_JZ_MMC_MSC0
+	{CPM_MSC0CDR, 1, 30, 29, 28, CGU_MSC_DIV},
+#endif
+#ifdef CONFIG_JZ_MMC_MSC1
+	{CPM_MSC1CDR, 1, 30, 29, 28, CGU_MSC_DIV},
+#endif
+#ifdef CONFIG_JZ_NAND_MGR
+	{CPM_BCHCDR, 1, 30, 29, 28, CGU_BCH_DIV},
+#endif
+#ifdef CONFIG_VIDEO_JZ4775
+	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
+#endif
+	{CPM_I2SCDR, 2, 30, 0, 0, 0},
+};
+
+#ifndef CONFIG_FPGA
 void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 {
 	int i;
@@ -248,26 +269,6 @@ void clk_set_rate(int clk, unsigned long rate)
 #endif
 }
 
-struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
-	/*
-	 * {offset, sel, sel_bit, en_bit, busy_bit, div}
-	 */
-	[0] = {CPM_DDRCDR, 1, 30, 29, 28, 0},
-#ifdef CONFIG_JZ_MMC_MSC0
-	{CPM_MSC0CDR, 1, 30, 29, 28, CGU_MSC_DIV},
-#endif
-#ifdef CONFIG_JZ_MMC_MSC1
-	{CPM_MSC1CDR, 1, 30, 29, 28, CGU_MSC_DIV},
-#endif
-#ifdef CONFIG_JZ_NAND_MGR
-	{CPM_BCHCDR, 1, 30, 29, 28, CGU_BCH_DIV},
-#endif
-#ifdef CONFIG_VIDEO_JZ4775
-	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
-#endif
-	{CPM_I2SCDR, 2, 30, 0, 0, 0},
-};
-
 void clk_init(void)
 {
 	unsigned int reg_clkgr = cpm_inl(CPM_CLKGR);
@@ -396,4 +397,39 @@ void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {
 	cpm_outl(tmp_reg, CPM_CLKGR);
 #endif
 }
+#else
+void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks) {}
+void clk_set_rate(int clk, unsigned long rate) {}
+void clk_init(void) {}
+void enable_uart_clk(void) {}
+void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {}
+unsigned int cpm_get_h2clk(void) {
+#ifdef CONFIG_FPGA_H2CLK
+	return CONFIG_FPGA_H2CLK;
+#else
+	return 24000000;
+#endif
+}
+unsigned int clk_get_rate(int clk) {
 
+	switch (clk) {
+	case DDR:
+		return gd->arch.gi->ddrfreq;
+	case CPU:
+		return gd->arch.gi->cpufreq;
+	case H2CLK:
+		return cpm_get_h2clk();
+	case MSC0:
+	case MSC1:
+	case MSC2:
+#ifdef CONFIG_FPGA_DEVCLK
+		return CONFIG_FPGA_DEVCLK;
+#else
+		return gd->arch.gi->extal;
+#endif
+	default:
+		return 0;
+	}
+
+}
+#endif

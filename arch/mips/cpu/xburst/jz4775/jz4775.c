@@ -49,6 +49,7 @@ struct global_info ginfo __attribute__ ((section(".data"))) = {
 
 #endif
 
+extern void gpio_init(void);
 extern void pll_init(void);
 extern void sdram_init(void);
 extern void validate_cache(void);
@@ -72,8 +73,12 @@ void board_init_f(ulong dummy)
 
 	/* Init uart first */
 	enable_uart_clk();
+
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
+#ifdef CONFIG_FPGA
+	printf("Boot Select Is %d\n", *(volatile unsigned int *)0xf4000110);
+#endif
 #endif
 
 	debug("Timer init\n");
@@ -97,9 +102,11 @@ void board_init_f(ulong dummy)
 	debug("SDRAM init\n");
 	sdram_init();
 
+#ifdef CONFIG_DDR_TEST
+	ddr_basic_tests();
+#endif
 	debug("validate cache\n");
 	validate_cache();
-
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);

@@ -540,13 +540,13 @@ int mmc_start_init(struct mmc *mmc)
 	if (mmc->has_init)
 		return 0;
 
-#if 0
-	err = mmc->init(mmc);
+	if (mmc->init) {
+		err = mmc->init(mmc);
+		if (err)
+			return err;
+	}
 
-	if (err)
-		return err;
 	mmc_set_bus_width(mmc, 1);
-#endif
 
 	mmc_set_clock(mmc, 1);
 

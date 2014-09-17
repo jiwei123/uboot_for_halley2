@@ -562,6 +562,9 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 #undef OPS
 }
 
+#ifdef CONFIG_FPGA
+extern int do_udc_reset(void);
+#endif
 void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
@@ -608,6 +611,11 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 		case VR_GET_CPU_INFO:
 			break;
 		case VR_REBOOT:
+#ifdef CONFIG_FPGA
+			mdelay(1000);
+			do_udc_reset();
+			mdelay(10000);
+#endif
 			do_reset(NULL,0,0,NULL);
 			break;
 	}

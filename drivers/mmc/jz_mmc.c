@@ -269,8 +269,12 @@ static void jz_mmc_set_ios(struct mmc *mmc)
 		/* 1/64 devclk, 384KHz, for init */
 		jz_mmc_writel(6, priv, MSC_CLKRT);
 	} else {
+#ifdef CONFIG_JZ_MMC_MSC1
+		jz_mmc_writel(3, priv, MSC_CLKRT);
+#else
 		/* 1/2 devclk, 12Mhz, for data transfer */
 		jz_mmc_writel(1, priv, MSC_CLKRT);
+#endif
 	}
 #endif
 	/* set the bus width for the next command */
@@ -335,7 +339,7 @@ static void jz_mmc_init_one(int idx, int controller, uintptr_t base, int clock)
 	mmc->priv = priv;
 	mmc->send_cmd = jz_mmc_send_cmd;
 	mmc->set_ios = jz_mmc_set_ios;
-#ifndef	CONFIG_SPL_BUILD
+#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_SUPPORT_EMMC_BOOT)
 	mmc->init = jz_mmc_core_init;
 #else
 	mmc->init = NULL;

@@ -581,7 +581,7 @@ static int jz_dequeue(struct usb_ep *ep, struct usb_request *req)
 	struct dwc2_ep *dep = to_dwc2_ep(ep);
 	struct dwc2_request *request = to_dwc2_request(req);
 	struct dwc2_request *r = NULL;
-	
+
 	list_for_each_entry(r ,&dep->urb_list,queue) {
 		if (r == request)
 			break;
@@ -1240,6 +1240,26 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 
 	return 0;
 }
+
+#ifdef CONFIG_FPGA
+int do_udc_reset(void)
+{
+	u32 cnt = 0;
+
+	udc_set_reg(0, DCTL_SOFT_DISCONN, OTG_DCTL);
+
+	udc_set_reg(0,RSTCTL_CORE_RST, GRST_CTL);
+        while (udc_test_reg(RSTCTL_CORE_RST,GRST_CTL)) {
+                if (cnt++ > 10000) {
+			pr_err("HANG! GRESET wait core reset timeout.\n");
+                        return;
+                }
+                udelay(1);
+        }
+
+	printf("dwc udc reset ok\n");
+}
+#endif
 
 int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
 {
