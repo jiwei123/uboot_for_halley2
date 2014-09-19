@@ -773,6 +773,11 @@ static void jzfb_config_smart_lcd_dma(struct jzfb_config_info *info)
 	framedesc_cmd[1]->page_width = 0;
 	framedesc_cmd[1]->desc_size = 0;
 
+	/* if connect mipi smart lcd, do not sent command by slcdc, send command by mipi dsi controller. */
+#ifdef CONFIG_JZ_MIPI_DSI
+	framedesc_cmd[1]->ldcmd = LCDC_CMD_CMD | LCDC_CMD_FRM_EN | 0;
+	framedesc_cmd[1]->cmd_num = 0;
+#else  /* CONFIG_JZ_MIPI_DSI */
 	switch (info->smart_config.bus_width) {
 		case 8:
 			framedesc_cmd[1]->ldcmd = LCDC_CMD_CMD | LCDC_CMD_FRM_EN | 1;
@@ -788,6 +793,7 @@ static void jzfb_config_smart_lcd_dma(struct jzfb_config_info *info)
 			framedesc_cmd[1]->ldcmd = 1;
 			break;
 	}
+#endif /* CONFIG_JZ_MIPI_DSI */
 
 	info->fdadr0 = virt_to_phys((void *)info->dmadesc_cmd_tmp);
 
@@ -1232,6 +1238,7 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 
 void lcd_ctrl_init(void *lcd_base)
 {
+	unsigned long pixel_clock_rate;
 	/* init registers base address */
 	lcd_config_info = jzfb1_init_data;
 	lcd_config_info.lcdbaseoff = 0;
@@ -1241,7 +1248,15 @@ void lcd_ctrl_init(void *lcd_base)
 #endif
 
 	lcd_set_flush_dcache(1);
-	clk_set_rate(LCD, PICOS2KHZ(jzfb1_init_data.modes->pixclock));
+	pixel_clock_rate = PICOS2KHZ(jzfb1_init_data.modes->pixclock);
+
+	/* smart lcd WR freq = (lcd pixel clock)/2 */
+	if (lcd_config_info.lcd_type == LCD_TYPE_SLCD) {
+		pixel_clock_rate *= 2;
+	}
+
+	clk_set_rate(LCD, pixel_clock_rate);
+
 	lcd_close_backlight();
 	panel_pin_init();
 
