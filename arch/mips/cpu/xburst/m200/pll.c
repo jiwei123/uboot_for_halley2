@@ -195,9 +195,9 @@ static void final_fill_div(int cpll, int ddrpll)
 	/*PCLK 75M ~ 150M*/
 	switch (Periph_pll_freq/100000000) {
 	case 10 ... 12:
-		pll_cfg.pdiv = 10;
-		pll_cfg.h0div = 5;
-		pll_cfg.h2div = 5;
+		pll_cfg.pdiv = 8;
+		pll_cfg.h0div = 4;
+		pll_cfg.h2div = 4;
 		break;
 	case 7 ... 9:
 		pll_cfg.pdiv = 8;
