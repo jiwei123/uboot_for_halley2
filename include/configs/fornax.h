@@ -35,7 +35,7 @@
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		1200000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
 #define CONFIG_SYS_CPU_FREQ		1200000000
@@ -126,7 +126,7 @@
 
 #ifdef CONFIG_JZ_MMC_MSC0
 #define CONFIG_JZ_MMC_SPLMSC 0
-#define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
+#define CONFIG_JZ_MMC_MSC0_PA_8BIT 1
 #endif
 #ifdef CONFIG_JZ_MMC_MSC1
 #define CONFIG_JZ_MMC_SPLMSC 1
@@ -164,28 +164,8 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
-#define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
 /*#define CONFIG_CMD_I2C*/
-
-/*eeprom*/
-#ifdef CONFIG_CMD_EEPROM
-#define CONFIG_SYS_I2C_EEPROM_ADDR  0x50
-/*#define CONFIG_ENV_EEPROM_IS_ON_I2C*/
-#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
-#endif
-
-
-/* USB */
-/*#define CONFIG_CMD_FASTBOOT*/
-#define CONFIG_USB_GADGET
-#define CONFIG_USB_GADGET_DUALSPEED
-#define CONFIG_USB_JZ_DWC2_UDC_V1_1
-#define CONFIG_FASTBOOT_GADGET
-#define CONFIG_FASTBOOT_FUNCTION
-#define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
-#define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
-#define CONFIG_USB_GADGET_VBUS_DRAW 500
 
 /**
  * Serial download configuration
