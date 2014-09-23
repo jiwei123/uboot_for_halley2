@@ -50,6 +50,14 @@ extern void board_powerdown_device(void);
 
 #define __poweron_key_pressed()	__is_gpio_en(CONFIG_GPIO_PWR_WAKE)
 
+
+#ifdef CONFIG_PMU_RICOH6x
+
+#define __usb_detected()	ricoh61x_reg_charge_status(0xbd, 7)
+#define __dc_detected()		ricoh61x_reg_charge_status(0xbd, 6)
+#define __charge_detect()	( __dc_detected() || __usb_detected())
+
+#else
 #if defined(CONFIG_GPIO_USB_DETECT) && defined(CONFIG_GPIO_USB_DETECT_ENLEVEL)
 #define __usb_detected()	__is_gpio_en(CONFIG_GPIO_USB_DETECT)
 #else
@@ -69,6 +77,9 @@ extern void board_powerdown_device(void);
 #endif
 
 #define __charge_detect()	(__battery_is_charging() || __dc_detected() || __usb_detected())
+
+#endif
+
 
 static long slop = 0;
 static long cut = 0;
@@ -485,6 +496,11 @@ static int charge_detect(void)
 		mdelay(10);
 		ret += __charge_detect();
 	}
+	if (__dc_detected())
+		printf("now use DC charge!!!\n");
+
+	if (__usb_detected())
+		printf("now use USB charge!!!\n");
 	printf("ret = %d\n", ret);
 	return ret;
 }

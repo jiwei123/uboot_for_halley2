@@ -181,7 +181,7 @@
 #define CONFIG_LCD_GPIO_FUNC0_24BIT
 /*#define CONFIG_LCD_GPIO_FUNC2_SLCD*/
 #define CONFIG_LCD_LOGO
-/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_RLE_LCD_LOGO
 #define CONFIG_LCD_INFO_BELOW_LOGO      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */

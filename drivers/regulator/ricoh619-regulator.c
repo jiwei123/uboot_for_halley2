@@ -249,6 +249,13 @@ void test_richo()
 
 //	ricoh61x_read_reg(u8 reg, u8 *val, u32 len);
 }
+int ricoh61x_reg_charge_status(u8 reg, uint8_t bit_status)
+{
+	int ret = 0;
+	uint8_t reg_val;
+	ret = ricoh61x_read_reg( reg, &reg_val,1);
+	return (((reg_val >> bit_status) & 1) == 1);
+}
 
 static int ricoh61x_reg_is_enabled(struct regulator *regulator)
 {
