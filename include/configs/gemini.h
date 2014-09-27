@@ -89,7 +89,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY 0
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
@@ -276,7 +276,7 @@
 
 /* environment  */
 #define CONFIG_ENV_IS_IN_NAND_ZM
-#define CMDLINE_PARTITION	"ndcmdline"
+#define CMDLINE_PARTITION		"ndcmdline"
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		0
 
