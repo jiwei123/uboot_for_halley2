@@ -605,6 +605,7 @@ static void ddr_impedance_matching(void)
 	 * 	30.4ohm		0x9
 	 * 	28.6ohm		0x18
 	 */
+	unsigned int i;
 	i = ddr_readl(DDRP_ZQXCR0(0)) & ~0x3ff;
 	i |= DDRP_ZQXCR_ZDEN
 		| ((CONFIG_DDR_PHY_IMPED_PULLUP & 0x1f) << DDRP_ZQXCR_PULLUP_IMPED_BIT)

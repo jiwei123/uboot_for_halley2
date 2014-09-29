@@ -31,14 +31,14 @@
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
-#define CONFIG_DDR_AUTO_SELF_REFRESH
+/* #define CONFIG_DDR_AUTO_SELF_REFRESH */
 
-#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		1000000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		960000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		800000000
-#define CONFIG_SYS_MEM_FREQ		150000000
+#define CONFIG_SYS_CPU_FREQ		1000000000
+#define CONFIG_SYS_MEM_FREQ		160000000
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
@@ -62,14 +62,13 @@
 #define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 
 /* #define CONFIG_DDR_DLL_OFF */
-/*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
+
+#define CONFIG_DDR_CHIP_ODT
+#define CONFIG_DDR_PHY_ODT
+#define CONFIG_DDR_PHY_DQ_ODT
+#define CONFIG_DDR_PHY_DQS_ODT
+#define CONFIG_DDR_PHY_IMPED_PULLUP	0xe
+#define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
 
 /**
  * Boot arguments definitions.
