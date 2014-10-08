@@ -44,13 +44,13 @@
 #define DDR_BL   4   /* Burst length: 3 - 8 burst, 2 - 4 burst , 1 - 2 burst*/
 #define DDR_tAL  0      /* Additive Latency, tCK*/
 #define DDR_tRL (DDR_tAL + DDR_CL)  /* DDR2: Read Latency = tAL + tCL */
-#define DDR_tWL (DDR_tRL - 1)       /* DDR2: Write Latency = tAL + tCL - 1*/
+#define DDR_tWL  3/*(DDR_tRL - 1)*/       /* DDR2: Write Latency = tAL + tCL - 1*/
 #define DDR_tCCD 2      /* CAS# to CAS# command delay , tCK*/
-#define DDR_tRTW ((DDR_BL > 4) ? 6 : 4) /* 4 in case of BL=4, 6 in case of BL=8 */
+#define DDR_tRTW (((DDR_BL > 4) ? 6 : 4) + 1) /* 4 in case of BL=4, 6 in case of BL=8 */
 #define DDR_tFAW 45     /* Four bank activate period, ns */
 #define DDR_tCKE 3      /* CKE minimum pulse width, tCK */
 #define DDR_tRDLAT  (DDR_tRL - 2)
-#define DDR_tWDLAT  (DDR_tWL - 1)
+#define DDR_tWDLAT  3/*(DDR_tWL - 1)*/
 #define DDR_tXARD 2     /* DDR2 only: Exit active power down to read command , tCK*/
 #define DDR_tXARDS (8 - DDR_tAL)/* DDR2 only: Exit active power down to read command (slow exit/low power mode), tCK */
 
