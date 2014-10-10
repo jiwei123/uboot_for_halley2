@@ -171,6 +171,8 @@ cache_alloc_a_line:
 #else
 	jal	board_init_f
 	nop
+	lui     k0 ,0xbfc0
+	ori     k0, k0,0x2b94
 	li ra, 0xbfc03258
         jr ra
         addiu sp, sp, 8
