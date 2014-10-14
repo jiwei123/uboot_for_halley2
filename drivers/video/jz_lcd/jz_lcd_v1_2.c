@@ -302,12 +302,15 @@ static void fbmem_set(void *_ptr, unsigned short val, unsigned count)
 		int rdata, gdata, bdata;
 		unsigned int *ptr = (unsigned int *)_ptr;
 
+		rdata = val >> 11;
+		gdata = val >> 5 & 0x003F;
+		bdata = val & 0x001F;
 		if (lcd_config_info.fmt_order == FORMAT_X8B8G8R8) {
+			val_32 =
+			    bdata << 19 | 0x7 << 16 | gdata << 10 | 0x3 << 8 | rdata <<
+			    3 | 0x7;
 			/*fixed */
 		} else if (lcd_config_info.fmt_order == FORMAT_X8R8G8B8) {
-			rdata = val >> 11;
-			gdata = val >> 5 & 0x003F;
-			bdata = val & 0x001F;
 			val_32 =
 			    rdata << 19 | 0x7 << 16 | gdata << 10 | 0x3 << 8 | bdata <<
 			    3 | 0x7;
