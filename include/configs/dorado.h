@@ -190,7 +190,7 @@
 #define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
 #define CONFIG_SYS_PWM_FULL		256
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
-#define CONFIG_VIDEO_M200
+#define CONFIG_JZ_LCD_V12
 #define CONFIG_JZ_PWM
 
 #ifdef CONFIG_JZ_MIPI_DSI
