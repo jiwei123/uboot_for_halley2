@@ -308,6 +308,14 @@ static int jz_pm_do_hibernate(void)
 	d2041_shutdown();
 #endif
 
+#ifdef CONFIG_PMU_RICOH6x
+	int ret;
+	printf("WARNNING:system will power!\n");
+	ret = ricoh619_power_off();
+	if (ret < 0)
+		printf("ricoh618_power_off failed \n");
+#endif
+
 	while (a--) {
 		printf
 			("We should not come here, please check the jz4760rtc.h!!!\n");

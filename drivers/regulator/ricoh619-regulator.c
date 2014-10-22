@@ -176,8 +176,44 @@ int ricoh61x_clr_bits(u8 reg, uint8_t bit_mask)
 	return 0 ;
 }
 
+int ricoh619_power_off(void)
+{
+	int ret,g_soc = 100,g_fg_on_mode = 0;
+	uint8_t reg_val;
+	reg_val = g_soc;
+	reg_val &= 0x7f;
 
+	ret = ricoh61x_write_reg(RICOH61x_PSWR, &reg_val);
+	if (ret < 0)
+		printf("Error in writing PSWR_REG\n");
+	if (g_fg_on_mode == 0) {
+		/* Clear RICOH61x_FG_CTRL 0x01 bit */
+		ret = ricoh61x_read_reg(RICOH61x_FG_CTRL, &reg_val,1);
+		if (reg_val & 0x01) {
+			reg_val &= ~0x01;
+			ret = ricoh61x_write_reg(RICOH61x_FG_CTRL, &reg_val);
+		}
+		if (ret < 0)
+			printf("Error in writing FG_CTRL\n");
+	}
+	/* set rapid timer 300 min */
+	ret = ricoh61x_read_reg(TIMSET_REG, &reg_val,1);
+	reg_val |= 0x03;
+	ret = ricoh61x_write_reg(TIMSET_REG, &reg_val);
+	if (ret < 0)
+		printf("Error in writing the TIMSET_Reg\n");
 
+	/* Disable all Interrupt */
+	reg_val = 0;
+	ricoh61x_write_reg(RICOH61x_INTC_INTEN, &reg_val);
+	/* Not repeat power ON after power off(Power Off/N_OE) */
+	reg_val = 0x0;
+	ricoh61x_write_reg(RICOH61x_PWR_REP_CNT, &reg_val);
+	/* Power OFF */
+	reg_val = 0x1;
+	ricoh61x_write_reg(RICOH61x_PWR_SLP_CNT, &reg_val);
+	return 0;
+}
 
 static int ricoh61x_reg_enable(struct regulator *rdev)
 {
