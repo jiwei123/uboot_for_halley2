@@ -20,7 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-
+/* #define DEBUG */
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -30,7 +30,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
+
+struct cgu spl_cgu_clksel[] = {
 	/*
 	 * {offset, sel, sel_bit, en_bit, busy_bit, div}
 	 */
@@ -50,6 +51,20 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	{CPM_I2SCDR, 2, 30, 0, 0, 0},
 };
 
+#if defined(CONFIG_BURNER) || defined(CONFIG_JZ_SLT)
+int set_spl_cgu_array(unsigned reg, unsigned sel, unsigned div)
+{
+	int i;
+	for (i=0; i < ARRAY_SIZE(spl_cgu_clksel); i++) {
+		if (spl_cgu_clksel[i].off == (unsigned char)reg) {
+			if (sel != -1) spl_cgu_clksel[i].sel = (unsigned char)sel;
+			if (div != -1) spl_cgu_clksel[i].div = (unsigned char)div;
+		}
+	}
+	return 0;
+}
+#endif
+
 #ifndef CONFIG_FPGA
 void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 {
@@ -58,12 +73,15 @@ void cgu_clks_set(struct cgu *cgu_clks, int nr_cgu_clks)
 	for(i = 0; i < nr_cgu_clks; i++) {
 		unsigned int xcdr = (cgu_clks[i].sel << cgu_clks[i].sel_bit);
 		unsigned int reg = CPM_BASE + cgu_clks[i].off;
+		debug("%x : sel %d div %d\n", cgu_clks[i].off,
+				(int)cgu_clks[i].sel,
+				(int)cgu_clks[i].div);
 
 		writel(xcdr, reg);
 		if (cgu_clks[i].en_bit && cgu_clks[i].busy_bit) {
 			writel(xcdr | cgu_clks[i].div | (1 << cgu_clks[i].en_bit), reg);
 			while (readl(reg) & (1 << cgu_clks[i].busy_bit))
-				debug("wait cgu %x\n",reg);
+				debug("wait cgu %x readl(reg) %x\n",reg, readl(reg));
 		}
 #ifdef DUMP_CGU_SELECT
 		printf("0x%X: value=0x%X\n",
