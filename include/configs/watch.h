@@ -145,10 +145,10 @@
 #define CONFIG_JZ_MIPI_DSI
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
-#define CONFIG_LCD_GPIO_FUNC0_24BIT
-/*#define CONFIG_LCD_GPIO_FUNC2_SLCD*/
+/*#define CONFIG_LCD_GPIO_FUNC0_24BIT*/
+/*#define CONFIG_LCD_GPIO_FUNC2_SLCD */
 #define CONFIG_LCD_LOGO
-/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_RLE_LCD_LOGO
 /*#define CONFIG_LCD_INFO_BELOW_LOGO*/     /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
@@ -159,8 +159,11 @@
 #define CONFIG_JZ_PWM
 #ifdef CONFIG_JZ_MIPI_DSI
 /*#define CONFIG_VIDEO_BYD_9177AA*/
-#define CONFIG_VIDEO_SAMSUNG
-#define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+/*#define CONFIG_VIDEO_SAMSUNG*/
+#define CONFIG_VIDEO_X163
+#define CONFIG_SLCDC_CONTINUA
+
+#define CONFIG_DEFAULT_BYTE_CLOCK	150 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #else
 #define CONFIG_VIDEO_BM347WV_F_8991FTGF
 /*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/

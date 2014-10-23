@@ -1139,6 +1139,8 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		smart_new_cfg |= 4 << 13;
 		smart_ctrl |= 1 << 7 | 1 << 6;
 
+    		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG,
+				                    0x00000000);
 		mipi_dsih_dphy_enable_hs_clk(dsi, 1);
 		mipi_dsih_hal_gen_set_mode(dsi, 1);
 		mipi_dsih_hal_dpi_color_coding(dsi,
