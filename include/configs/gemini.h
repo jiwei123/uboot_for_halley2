@@ -41,16 +41,13 @@
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
 #define CONFIG_SYS_MEM_DIV		8
 #define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
-#define CONFIG_JZ_SLT
 
 #define CONFIG_SYS_DCACHE_SIZE		16384
 #define CONFIG_SYS_ICACHE_SIZE		16384
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
-#define CONFIG_SYS_UART_INDEX		0
+#define CONFIG_SYS_UART_INDEX		1
 #define CONFIG_BAUDRATE			57600
-#define GPIO_UART_RX	 GPIO_PF(0)
-#define GPIO_UART_TX	 GPIO_PF(3)
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
@@ -74,7 +71,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS0,57600n8 mem=128M@0x0"
+#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=128M@0x0"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -106,7 +103,7 @@
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "print ;mmc dev 0;mmc read 0x80f00000 0x1800 0xa000; bootm 0x80f00000"
+    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0xa000; bootm 0x80f00000"
   #else
 	#ifdef CONFIG_JZ_NAND_MGR
 	 #define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm"
