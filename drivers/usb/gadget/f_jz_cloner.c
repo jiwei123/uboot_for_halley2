@@ -37,10 +37,6 @@
 #include <linux/usb/composite.h>
 
 #include <ingenic_nand_mgr/nand_param.h>
-#include <spi.h>
-#include <spi_flash.h>
-#include <asm/arch/spi.h>
-//#include <lib_spi_flash.h>
 
 #define ARGS_LEN (1024*1024)
 #define BURNNER_DEBUG 0
