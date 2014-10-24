@@ -112,6 +112,40 @@ char *getenv_default(const char *name)
 	gd->flags = real_gd_flags;
 	return ret_val;
 }
+#ifdef CONFIG_JZ_SLT
+void slt_uart_mode(void) {
+#if defined(GPIO_UART_RX) && defined(GPIO_UART_TX)
+	int test_uart_as_gpio = 0;
+	int start = 0;
+	char *env = NULL;
+	int size;
+	gpio_direction_output(GPIO_UART_TX , 1);
+	gpio_direction_input(GPIO_UART_RX);
+	if (gpio_get_value(GPIO_UART_RX)) {
+		gpio_direction_output(GPIO_UART_TX , 0);
+		if (!gpio_get_value(GPIO_UART_RX)) {
+			test_uart_as_gpio = 1;
+		}
+	}
+	gpio_set_func(GPIO_PORT_F, GPIO_FUNC_0, 0x0f);
+	if (test_uart_as_gpio) {
+		for (env = default_environment, size = sizeof(default_environment);
+				start < size;
+				start += (strlen(env) + 1), env += (strlen(env) + 1)) {
+			if (!!strstr(env, "bootargs")) {
+				if (!!(env = strstr(env, "console"))) {
+					for (;*env !=  ' ' && *env != '\0'; env++) {
+						*env = ' ';
+					}
+				}
+				break;
+			}
+		}
+	}
+	return;
+#endif
+}
+#endif
 
 void set_default_env(const char *s)
 {
@@ -121,6 +155,10 @@ void set_default_env(const char *s)
 		puts("*** Error - default environment is too large\n\n");
 		return;
 	}
+
+#ifdef CONFIG_JZ_SLT
+	slt_uart_mode();
+#endif
 
 	if (s) {
 		if (*s == '!') {

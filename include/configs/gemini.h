@@ -39,15 +39,32 @@
 #define CONFIG_SYS_HZ			1000 /* incrementer freq */
 
 #define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
-#define CONFIG_SYS_MEM_DIV		8
+#define CONFIG_SYS_MEM_DIV		6
 #define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_APLL_FREQ / CONFIG_SYS_MEM_DIV)
+#define CONFIG_JZ_SLT
 
 #define CONFIG_SYS_DCACHE_SIZE		16384
 #define CONFIG_SYS_ICACHE_SIZE		16384
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
-#define CONFIG_SYS_UART_INDEX		1
+#define CONFIG_SYS_UART_INDEX		0
 #define CONFIG_BAUDRATE			57600
+
+#ifdef CONFIG_JZ_SLT
+#define CONFIG_ADJUST_CPUFREQ
+#define GPIO_UART_RX	GPIO_PF(0)
+#define GPIO_UART_TX	GPIO_PF(3)
+#define GPIO_FREQ_SEL0	GPIO_PE(21)
+#define GPIO_FREQ_SEL1	GPIO_PE(22)
+#define SLT_CPU_FREQ0	1200000000		//0-->MPLL
+#define SLT_DDR_DIV0	6
+#define SLT_CPU_FREQ1	1200000000		//1-->APLL
+#define SLT_DDR_DIV1	6
+#define SLT_CPU_FREQ2	CONFIG_SYS_CPU_FREQ	//2-->MPLL
+#define SLT_DDR_DIV2	CONFIG_SYS_MEM_DIV
+#define SLT_CPU_FREQ3	CONFIG_SYS_CPU_FREQ	//3-->APLL
+#define SLT_DDR_DIV3	CONFIG_SYS_MEM_DIV
+#endif
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
@@ -71,7 +88,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=128M@0x0"
+#define BOOTARGS_COMMON "console=ttyS0,57600n8 mem=128M@0x0"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -103,7 +120,7 @@
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0xa000; bootm 0x80f00000"
+    #define CONFIG_BOOTCOMMAND "print ;mmc dev 0;mmc read 0x80f00000 0x1800 0xa000; bootm 0x80f00000"
   #else
 	#ifdef CONFIG_JZ_NAND_MGR
 	 #define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm"

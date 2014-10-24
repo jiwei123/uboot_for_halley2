@@ -43,7 +43,7 @@
 
 struct tck tck_g = {0, 0};
 
-static inline int calc_nck(int x, int y)
+static int calc_nck(int x, int y)
 {
 	int value;
 
@@ -486,6 +486,7 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 	ddrc->mmap[1] = mem_base1 << DDRC_MMAP_BASE_BIT | mem_mask1;
 }
 
+
 static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 {
 	unsigned int tmp = 0;
@@ -494,6 +495,7 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 #ifdef CONFIG_DDR_TYPE_LPDDR2
 	unsigned int  count = 0;
 #endif
+
 
 #define BETWEEN(T, MIN, MAX) if (T < MIN) T = MIN; if (T > MAX) T = MAX
 #define PNDEF(N, P, T, MIN, MAX, PS, type)	\
