@@ -37,9 +37,16 @@
 #include <linux/usb/composite.h>
 
 #include <ingenic_nand_mgr/nand_param.h>
+#include <spi.h>
+#include <spi_flash.h>
+#include <asm/arch/spi.h>
+//#include <lib_spi_flash.h>
 
 #define ARGS_LEN (1024*1024)
 #define BURNNER_DEBUG 0
+
+
+#define SSI_IDX 0
 
 /*bootrom stage request*/
 #define VR_GET_CPU_INFO		0x00
@@ -67,7 +74,8 @@ enum medium_type {
 	MMC,
 	I2C,
 	EFUSE,
-	REGISTER
+	REGISTER,
+	SPI
 };
 
 enum data_type {
@@ -89,6 +97,12 @@ struct mmc_erase_range {
 	uint32_t end;
 };
 
+struct spi_args {
+	uint32_t clk;
+	uint32_t data;
+	uint32_t enable;
+};
+
 struct arguments {
 	int efuse_gpio;
 	int use_nand_mgr;
@@ -103,12 +117,15 @@ struct arguments {
 	uint32_t mmc_erase_range_count;
 	struct mmc_erase_range mmc_erase_range[MMC_ERASE_CNT_MAX];
 
+	struct spi_args spi_args;
+
 	int transfer_data_chk;
 	int write_back_chk;
 
 	PartitionInfo PartInfo;
 	int nr_nand_args;
 	nand_flash_param nand_params[0];
+
 };
 
 union cmd {
@@ -328,7 +345,7 @@ static int mmc_erase(struct cloner *cloner)
 		blk_cnt = mmc->capacity / MMC_BYTE_PER_BLOCK;
 
 		printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
-		       curr_device, blk, blk_cnt);
+				curr_device, blk, blk_cnt);
 
 		ret = mmc_erase_t(mmc, blk, blk_cnt);
 		if (ret) {
@@ -357,15 +374,15 @@ static int mmc_erase(struct cloner *cloner)
 		blk_cnt = blk_end - blk + 1;
 
 		printf("MMC erase: dev # %d, start block # 0x%x, count 0x%x ... \n",
-		       curr_device, blk, blk_cnt);
+				curr_device, blk, blk_cnt);
 
 		if ((blk % mmc->erase_grp_size) || (blk_cnt % mmc->erase_grp_size)) {
 			printf("\n\nCaution! Your devices Erase group is 0x%x\n"
-			       "The erase block range would be change to "
-			       "0x" LBAF "~0x" LBAF "\n\n",
-			       mmc->erase_grp_size, blk & ~(mmc->erase_grp_size - 1),
-			       ((blk + blk_cnt + mmc->erase_grp_size)
-				& ~(mmc->erase_grp_size - 1)) - 1);
+					"The erase block range would be change to "
+					"0x" LBAF "~0x" LBAF "\n\n",
+					mmc->erase_grp_size, blk & ~(mmc->erase_grp_size - 1),
+					((blk + blk_cnt + mmc->erase_grp_size)
+					 & ~(mmc->erase_grp_size - 1)) - 1);
 		}
 
 		ret = mmc_erase_t(mmc, blk, blk_cnt);
@@ -401,6 +418,13 @@ int cloner_init(struct cloner *cloner)
 			mmc_erase(cloner);
 		}
 	}
+
+	if(!(cloner->args->use_nand_mgr || cloner->args->use_mmc)){
+		printf("cloner->args->spi_args.clk:%d\n",cloner->args->spi_args.clk);
+		printf("cloner->args->spi_args.data:%d\n",cloner->args->spi_args.data);
+		printf("cloner->args->spi_args.enable:%d\n",cloner->args->spi_args.enable);
+	}
+
 }
 
 int nand_program(struct cloner *cloner)
@@ -490,6 +514,16 @@ int efuse_program(struct cloner *cloner)
 	return r;
 }
 
+int spi_program(struct cloner *cloner)
+{
+	printf("SPI Program\n");
+	u32 partation = cloner->cmd->write.partation;
+	u32 length = cloner->cmd->write.length;
+	void *addr = (void *)cloner->write_req->buf;
+
+	return 0;
+}
+
 void handle_read(struct usb_ep *ep,struct usb_request *req)
 {
 }
@@ -555,6 +589,9 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 					cloner->ack = -ENODEV;
 				}
 			}
+			break;
+		case OPS(SPI,RAW):
+			cloner->ack = spi_program(cloner);
 			break;
 		default:
 			printf("ops %08x not support yet.\n",cloner->cmd->write.ops);
@@ -728,7 +765,7 @@ int f_cloner_set_alt(struct usb_function *f,
 	debug_cond(BURNNER_DEBUG,"set interface %d alt %d\n",interface,alt);
 	epin_desc = ep_choose(cloner->gadget,&hs_bulk_in_desc,&fs_bulk_in_desc);
 	epout_desc = ep_choose(cloner->gadget,&hs_bulk_out_desc,&fs_bulk_out_desc);
-	
+
 	status += usb_ep_enable(cloner->ep_in,epin_desc);
 	status += usb_ep_enable(cloner->ep_out,epout_desc);
 
