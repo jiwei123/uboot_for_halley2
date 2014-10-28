@@ -66,6 +66,30 @@
 #define CONFIG_JZ_GPIO
 #define CONFIG_INGENIC_SOFT_I2C
 
+/* SPI */
+#define CONFIG_CMD_SPI
+#define CONFIG_INGENIC_SOFT_SPI
+#ifdef CONFIG_CMD_SPI
+#define CONFIG_SSI_BASE SSI0_BASE
+#define CONFIG_SPI_BUILD
+#ifdef CONFIG_INGENIC_SOFT_SPI
+#undef SPI_INIT
+#define SPI_DELAY
+#else
+#define CONFIG_JZ_SPI
+#endif
+/*#define CONFIG_JZ_SPI_FLASH*/
+/*#define CONFIG_SPI_FLASH_BAR*/
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH_INGENIC
+#define CONFIG_SPI_FLASH
+#endif
+
+/*#define CONFIG_CMD_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH
+#define CONFIG_INGENIC_SOFT_SPI
+*/
 /* MMC */
 #define CONFIG_GENERIC_MMC	1
 #define CONFIG_MMC		1
