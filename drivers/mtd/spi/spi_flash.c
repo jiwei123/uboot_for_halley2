@@ -454,6 +454,7 @@ static const struct {
 	/* Keep it sorted by define name */
 #ifdef CONFIG_SPI_FLASH_INGENIC
 	{ 0, 0xe0, spi_flash_probe_ingenic, },
+	{ 0, 0xc8, spi_flash_probe_ingenic, },
 #endif
 #ifdef CONFIG_SPI_FLASH_ATMEL
 	{ 0, 0x1f, spi_flash_probe_atmel, },

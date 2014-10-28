@@ -29,8 +29,11 @@
 #include <mmc.h>
 #include <rtc.h>
 #include <part.h>
+#include <spi.h>
+#include <spi_flash.h>
 #include <efuse.h>
 #include <ingenic_soft_i2c.h>
+#include <ingenic_soft_spi.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/compiler.h>
@@ -44,6 +47,7 @@
 
 #define SSI_IDX 0
 
+struct spi spi;
 /*bootrom stage request*/
 #define VR_GET_CPU_INFO		0x00
 #define VR_SET_DATA_ADDR	0x01
@@ -63,6 +67,19 @@
 #define MMC_ERASE_ALL	1
 #define MMC_ERASE_PART	2
 #define MMC_ERASE_CNT_MAX	10
+
+#ifndef CONFIG_SF_DEFAULT_SPEED
+# define CONFIG_SF_DEFAULT_SPEED    20000000
+#endif
+#ifndef CONFIG_SF_DEFAULT_MODE
+# define CONFIG_SF_DEFAULT_MODE     SPI_MODE_3
+#endif
+#ifndef CONFIG_SF_DEFAULT_CS
+# define CONFIG_SF_DEFAULT_CS       0
+#endif
+#ifndef CONFIG_SF_DEFAULT_BUS
+# define CONFIG_SF_DEFAULT_BUS      0
+#endif
 
 enum medium_type {
 	MEMORY = 0,
@@ -514,10 +531,66 @@ int efuse_program(struct cloner *cloner)
 
 int spi_program(struct cloner *cloner)
 {
-	printf("SPI Program\n");
-	u32 partation = cloner->cmd->write.partation;
+	unsigned int bus = CONFIG_SF_DEFAULT_BUS;
+	unsigned int cs = CONFIG_SF_DEFAULT_CS;
+	unsigned int speed = CONFIG_SF_DEFAULT_SPEED;
+	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
+	u32 offset = cloner->cmd->write.offset;
 	u32 length = cloner->cmd->write.length;
 	void *addr = (void *)cloner->write_req->buf;
+	struct spi_args *spi_arg = &cloner->args->spi_args;
+	unsigned int ret;
+	int len = 0;
+	struct spi_flash *flash;
+	spi.enable = spi_arg->enable;
+	spi.clk   = spi_arg->clk;
+	spi.data_in  = spi_arg->data_in;
+	spi.data_out  = spi_arg->data_out;
+#ifdef CONFIG_JZ_SPI
+	spi_init();
+#endif
+#ifdef CONFIG_INGENIC_SOFT_SPI
+	spi_init_jz(&spi);
+#endif
+	if(flash == NULL){
+		flash = spi_flash_probe(bus, cs, speed, mode);
+		if (!flash) {
+			printf("Failed to initialize SPI flash at %u:%u\n", bus, cs);
+			return 1;
+		}
+	}
+
+	debug("the offset = %x\n",offset);
+	debug("the length = %x\n",length);
+
+	if (length%4096 == 0){
+		len = length;
+		printf("the length = %x\n",length);
+	}
+	else{
+		printf("the length = %x, is no 4096\n",length);
+		len = (length/4096)*4096 + 4096;
+	}
+
+	ret = spi_flash_erase(flash, offset, len);
+	printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
+			ret ? "ERROR" : "OK");
+
+	ret = spi_flash_write(flash, offset, len, addr);
+	printf("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
+			ret ? "ERROR" : "OK");
+#if debug
+	int buf_debug[8*1024*1024];
+	if (spi_flash_read(flash, 1024, /*len*/2048, buf_debug)) {
+		printf("read failed\n");
+		return -1;
+	}
+	int i = 0;
+	for(i=0;i<4096;i++){
+		printf("the debug[%d] = %x\n",i,buf_debug[i]);
+	}
+
+#endif
 
 	return 0;
 }
