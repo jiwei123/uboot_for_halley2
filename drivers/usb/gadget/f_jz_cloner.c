@@ -95,7 +95,8 @@ struct mmc_erase_range {
 
 struct spi_args {
 	uint32_t clk;
-	uint32_t data;
+	uint32_t data_in;
+	uint32_t data_out;
 	uint32_t enable;
 };
 
@@ -417,7 +418,8 @@ int cloner_init(struct cloner *cloner)
 
 	if(!(cloner->args->use_nand_mgr || cloner->args->use_mmc)){
 		printf("cloner->args->spi_args.clk:%d\n",cloner->args->spi_args.clk);
-		printf("cloner->args->spi_args.data:%d\n",cloner->args->spi_args.data);
+		printf("cloner->args->spi_args.data_in:%d\n",cloner->args->spi_args.data_in);
+		printf("cloner->args->spi_args.data_out:%d\n",cloner->args->spi_args.data_out);
 		printf("cloner->args->spi_args.enable:%d\n",cloner->args->spi_args.enable);
 	}
 
