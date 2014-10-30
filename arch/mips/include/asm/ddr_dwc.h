@@ -87,6 +87,7 @@
 #define DDRP_DXGCR(n)	(DDR_PHY_OFFSET + 0x1c0 + n * 0x40) /* DATX8 n General Configuration Register */
 #define DDRP_DXGSR0(n)	(DDR_PHY_OFFSET + 0x1c4 + n * 0x40) /* DATX8 n General Status Register */
 #define DDRP_DXGSR1(n)	(DDR_PHY_OFFSET + 0x1c8 + n * 0x40) /* DATX8 n General Status Register */
+#define DDRP_DXDLLCR(n)	(DDR_PHY_OFFSET + 0x1cc + n * 0x40) /* DATX8 n General Status Register */
 #define DDRP_DXDQSTR(n)	(DDR_PHY_OFFSET + 0x1d4 + n * 0x40) /* DATX8 n DQS Timing Register */
 #define DDRP_ZQXCR0(n)	(DDR_PHY_OFFSET + 0x180 + n * 0x10) /* ZQ impedance Control Register 0 */
 #define DDRP_ZQXCR1(n)	(DDR_PHY_OFFSET + 0x184 + n * 0x10) /* ZQ impedance Control Register 1 */
@@ -599,4 +600,3 @@
 	 value;							\
  })
 #endif /* __DDR_H__ */
-
