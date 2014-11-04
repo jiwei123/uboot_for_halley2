@@ -43,7 +43,7 @@ struct cgu_clk_src cgu_clk_src[] = {
 	{GPU, MPLL},
 	{ISP, MPLL},
 	{BCH, MPLL},
-	{I2S, MPLL},
+	{I2S, EXCLK},
 	{SRC_EOF,SRC_EOF}
 };
 
