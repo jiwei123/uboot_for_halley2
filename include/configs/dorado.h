@@ -178,7 +178,9 @@
 #ifdef CONFIG_LCD
 
 #define CONFIG_LCD_FORMAT_X8B8G8R8
-/*#define CONFIG_JZ_MIPI_DSI*/
+#ifdef CONFIG_DORADO_V21
+#define CONFIG_JZ_MIPI_DSI
+#endif
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 
