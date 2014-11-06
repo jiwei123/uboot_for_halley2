@@ -1417,5 +1417,6 @@ int write_command(struct dsi_device * dsi, struct dsi_cmd_packet cmd_data)
 		debug("not support packet type, please checkout!,\n");
 	}
 	mipi_dsih_gen_wr_packet(dsi, 0, packet_type, dsi_command_param, word_count + 2);
+	udelay(1000);
 	return 0;
 }
