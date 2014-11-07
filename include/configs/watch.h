@@ -142,11 +142,8 @@
  */
 #define CONFIG_LCD
 #ifdef CONFIG_LCD
-#define CONFIG_JZ_MIPI_DSI
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
-/*#define CONFIG_LCD_GPIO_FUNC0_24BIT*/
-/*#define CONFIG_LCD_GPIO_FUNC2_SLCD */
 #define CONFIG_LCD_LOGO
 #define CONFIG_RLE_LCD_LOGO
 /*#define CONFIG_LCD_INFO_BELOW_LOGO*/     /*display the console info on lcd panel for debugg */
@@ -157,21 +154,41 @@
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
 #define CONFIG_VIDEO_M200
 #define CONFIG_JZ_PWM
-#ifdef CONFIG_JZ_MIPI_DSI
-/*#define CONFIG_VIDEO_BYD_9177AA*/
-/*#define CONFIG_VIDEO_SAMSUNG*/
-#define CONFIG_VIDEO_X163
-#define CONFIG_SLCDC_CONTINUA
-
-#define CONFIG_DEFAULT_BYTE_CLOCK	150 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
-#else
-#define CONFIG_VIDEO_BM347WV_F_8991FTGF
-/*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/
-#endif
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
 #endif
+
+/*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/
+#define CONFIG_VIDEO_X163
+
+#ifdef  CONFIG_VIDEO_X163
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK	150 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+#endif
+
+#ifdef  CONFIG_VIDEO_BYD_9177AA
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK       150
+#endif
+
+#ifdef  CONFIG_VIDEO_SAMSUNG
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK       150
+#endif
+
+#ifdef  CONFIG_VIDEO_BM347WV_F_8991FTGF
+#define CONFIG_LCD_GPIO_FUNC2_SLCD
+#endif
+
+#ifdef  CONFIG_VIDEO_TRULY_TFT240240_2_E
+#define CONFIG_LCD_GPIO_FUNC2_SLCD
+#endif
+
+#ifdef  CONFIG_LCD_GPIO_FUNC0_24BIT
+/* ... */
+#endif
+
 #endif /* CONFIG_LCD */
 
 /* MMC */

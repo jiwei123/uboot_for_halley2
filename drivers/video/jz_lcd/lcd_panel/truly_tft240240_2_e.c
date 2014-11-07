@@ -64,6 +64,7 @@ void panel_pin_init(void)
 
 void panel_power_on(void)
 {
+	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_bl, 1);
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_cs, 1);
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_rd, 1);
 
@@ -74,7 +75,6 @@ void panel_power_on(void)
 	mdelay(10);
 
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_cs, 0);
-	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_bl, 1);
 
 	serial_puts("truly_tft240240_2_e panel display on\n");
 }

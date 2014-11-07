@@ -27,17 +27,24 @@
 
 //#define CONFIG_SLCD_TRULY_18BIT
 
+#define CONFIG_LCD_REGULATOR_9          "RICOH619_LDO9"
+#define CONFIG_LCD_REGULATOR_10         "RICOH619_LDO10"
+
 unsigned long truly_cmd_buf[]= {
     0x2C2C2C2C,
 };
 
 void board_set_lcd_power_on(void)
 {
-	return;
-	char *id = "out11";
-	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_set_voltage(lcd_regulator, 3300000, 1800000);
-	regulator_enable(lcd_regulator);
+        char *id_9  = CONFIG_LCD_REGULATOR_9;
+        char *id_10 = CONFIG_LCD_REGULATOR_10;
+        struct regulator *lcd_regulator_9 = regulator_get(id_9);
+        struct regulator *lcd_regulator_10 = regulator_get(id_10);
+        regulator_set_voltage(lcd_regulator_9, 1800000, 1800000);
+        regulator_set_voltage(lcd_regulator_10, 3000000, 3000000);
+        regulator_enable(lcd_regulator_9);
+        regulator_enable(lcd_regulator_10);
+
 }
 
 struct smart_lcd_data_table truly_tft240240_data_table[] = {
@@ -198,8 +205,8 @@ struct jzfb_config_info jzfb1_init_data = {
 };
 
 struct truly_tft240240_2_e_data truly_tft240240_2_e_pdata = {
-	.gpio_lcd_rd  = GPIO_PC(17),
-	.gpio_lcd_rst = GPIO_PA(12),
-	.gpio_lcd_cs  = GPIO_PC(14),
-	.gpio_lcd_bl  = GPIO_PC(18),
+	.gpio_lcd_rd  = -1,
+	.gpio_lcd_rst = GPIO_PC(19),
+	.gpio_lcd_cs  = GPIO_PC(18),
+	.gpio_lcd_bl  = GPIO_PD(28),
 };
