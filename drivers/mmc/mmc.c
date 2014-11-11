@@ -296,7 +296,7 @@ static int mmc_go_idle(struct mmc *mmc)
 	if (err)
 		return err;
 
-	udelay(2000);
+	udelay(10000);
 
 	return 0;
 }
