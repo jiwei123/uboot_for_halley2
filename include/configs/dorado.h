@@ -145,7 +145,7 @@
     #define CONFIG_BOOTCOMMAND	\
 	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 22528"
+    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
     /*#define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"*/
 		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000"
