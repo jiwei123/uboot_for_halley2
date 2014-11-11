@@ -63,6 +63,7 @@ COBJS-$(CONFIG_VIDEO_BYD_9177AA) += jz_lcd/lcd_panel/byd_9177aa.o
 COBJS-$(CONFIG_VIDEO_SAMSUNG) += jz_lcd/lcd_panel/samsung.o
 COBJS-$(CONFIG_VIDEO_X163) += jz_lcd/lcd_panel/auo_x163.o
 COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += jz_lcd/lcd_panel/truly_tft240240_2_e.o
+COBJS-$(CONFIG_VIDEO_TRULY_TFT320320) += jz_lcd/lcd_panel/truly_tft320320.o
 COBJS-$(CONFIG_VIDEO_LH155) += jz_lcd/lcd_panel/lh155.o
 COBJS-$(CONFIG_JZ_MIPI_DSI) += jz_lcd/jz_mipi_dsi/jz_mipi_dsi.o jz_lcd/jz_mipi_dsi/jz_mipi_dsi_lowlevel.o jz_lcd/jz_mipi_dsi/jz_mipi_dsih_hal.o
 COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4775_lcd.o
