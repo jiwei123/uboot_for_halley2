@@ -206,7 +206,7 @@ struct jzfb_config_info jzfb1_init_data = {
 
 struct truly_tft240240_2_e_data truly_tft240240_2_e_pdata = {
 	.gpio_lcd_rd  = -1,
-	.gpio_lcd_rst = GPIO_PC(19),
-	.gpio_lcd_cs  = GPIO_PC(18),
-	.gpio_lcd_bl  = GPIO_PD(28),
+	.gpio_lcd_rst = GPIO_PC(18),
+	.gpio_lcd_cs  = GPIO_PC(19),
+	.gpio_lcd_bl  = GPIO_PC(17),
 };
