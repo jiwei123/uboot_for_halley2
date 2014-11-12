@@ -246,6 +246,7 @@ static inline void fill_ff(struct cpu_msg_ops *cpu_msg)
 
 static int pipe_is_full(struct cpu_msg_ops *cpu_msg, int offset, int bytes, int eccsize)
 {
+#ifdef CHECK_PIPE_DATA
 	int i, ret = 0;
 	unsigned long long bitmap = cpu_msg->bitmap;
 	unsigned long long bitmap_mask = cpu_msg->bitmap_mask;
@@ -254,7 +255,6 @@ static int pipe_is_full(struct cpu_msg_ops *cpu_msg, int offset, int bytes, int 
 	unsigned long long check_mask = (1LL << (eccsize / NDD_SECTOR_SIZE)) - 1;
 	int check_offset = (offset / eccsize) * (eccsize / NDD_SECTOR_SIZE);
 
-#ifdef CHECK_PIPE_DATA
 	if (bitmap == bitmap_mask)
 		bitmap = 0LL;
 
@@ -296,6 +296,7 @@ static int nand_write_data(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 	void *pdata = (void *)get_vaddr(msg->msgdata.data.pdata);
 	PipeNode *pipe = &cpu_msg->pipe;
 
+	cpu_msg->par_size = (cpu_msg->par_size + 3)/4 * 4;
 #ifdef WRITE_NOT_USE_COPY
 	if (bytes == eccsize)
 		pipe->data = pdata;
@@ -342,7 +343,7 @@ static int nand_read_data(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 	int bytes = msg->msgdata.data.bytes;
 	int eccbit = cpu_msg->eccbit;
 	int eccsize = cpu_msg->eccsize;
-	int unitsize = eccsize + cpu_msg->par_size;
+	int unitsize = eccsize + ((cpu_msg->par_size + 3)/4 * 4);
 	int cs_index = msg->ops.bits.chipsel;
 	int io_context = cpu_msg->io_context;
 	int bch_context = cpu_msg->bch_context;

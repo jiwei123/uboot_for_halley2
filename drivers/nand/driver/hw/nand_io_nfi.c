@@ -18,6 +18,9 @@
 #define NFI_COMMON_CS_ENABLE_MODE
 /******  the operation of nemc registers  ******/
 static int ref_cnt = 0;
+extern int (*nand_auto_adapt_edo)(int, chip_info *, rb_item *);
+extern int (*nand_adjust_to_toggle)(int, chip_info *);
+extern int (*nand_adjust_to_onfi)(int, chip_info *);
 
 typedef struct __nand_io {
 	nfi_base *base;
@@ -28,6 +31,7 @@ typedef struct __nand_io {
 	chip_info *cinfo;
 	unsigned int copy_context;
 } nand_io;
+static int edo_timing = 0;
 #if 0
 /* set NFI busy control register */
 #define __nfi_unmark_rb(n)	(REG_NAND_NFCR &= ~(NAND_NFCR_BUSY_MASK(n)))
@@ -48,7 +52,7 @@ typedef struct __nand_io {
 #endif
 extern int (*__wait_rb_timeout) (rb_item *, int);
 void nand_io_setup_timing_default(int context);
-int nand_io_setup_timing_optimize(int context, chip_info *cinfo/*, rb_item *rbitem*/);
+int nand_io_setup_timing_optimize(int context, chip_info *cinfo);
 /******  the operation of nfi registers  ******/
 void pn_enable(int context)
 {
@@ -246,7 +250,7 @@ static int compare_data_ok(int context, transadaptor *trans, void *src)
 	if(ret < 0)
 		RETURN_ERR(ENAND, "finish_memcpy error");
 	for(i = 0; i < NAND_EDO_TEST_BYTES; i++){
-		if(dst[i] != 0x55 || dst[i] != 0xaa){
+		if(dst[i] != 0x55 && dst[i] != 0xaa){
 			ret = ENAND;
 			break;
 		}
@@ -260,19 +264,14 @@ return : 0 -> ok
 static int check_edo_timing(nand_io *io, chip_info *cinfo, rb_item *rb)
 {
 	int ret = SUCCESS;
-	int i = 0;
+	nand_ops_timing *timing = &cinfo->ops_timing;
 
-	__send_cmd_to_nand(io->cmdport, 0x00, 0, 0, 0);
-	if(cinfo->pagesize != 512){
-		__send_addr_to_nand(io->addrport, 0x00, 0, 0, 0);
-	}
-	__send_addr_to_nand(io->addrport, 0x00, 0, 0, 0);
-	for(i = 0; i < cinfo->rowcycles; i++){
-		__send_addr_to_nand(io->addrport, 0x00, 0, 0, 0);
-	}
-	__send_cmd_to_nand(io->cmdport, 0x30, 0, 0, 1); //please sure the datasheet of nfi ******************
+	nand_io_send_cmd((int)io,CMD_PAGE_READ_1ST, 0);
+	nand_io_send_spec_addr((int)io,0,cinfo->rowcycles, timing->tADL);
+	if(cinfo->pagesize != 512)
+		    nand_io_send_cmd((int)io, CMD_PAGE_READ_2ND, 100);
 	if(__wait_rb_timeout){
-		ret = __wait_rb_timeout(rb, 500);
+			ret = __wait_rb_timeout(rb, 500);
 		if(!ret)
 			ret = TIMEOUT;
 		else
@@ -286,8 +285,9 @@ static int check_edo_timing(nand_io *io, chip_info *cinfo, rb_item *rb)
    we will set a appropriate value of delay timing of EDO, the zone of nand flag is 0x55 or 0xaa at beginning
    of the first nand.
  */
-static int auto_adapt_edo_nand(nand_io *io, chip_info *cinfo, rb_item *rbitem)
+int auto_adapt_edo_nand(int context, chip_info *cinfo, rb_item *rbitem)
 {
+	nand_io *io = (nand_io *)context;
 	nfi_base *base = io->base;
 	unsigned int reg;
 	unsigned int b_ok,f_ok,max;
@@ -295,14 +295,19 @@ static int auto_adapt_edo_nand(nand_io *io, chip_info *cinfo, rb_item *rbitem)
 	unsigned int ret = SUCCESS;
 	unsigned int cycle = base->cycle;  //unit: ps
 	nfi_nand_timing *timing = (nfi_nand_timing *)cinfo->ops_timing.io_timing;
+	int nfcr = base->readl(NAND_NFCR);
 	reg = base->readl(NAND_NFIT4);
 	b_ok = f_ok = 0;
+	base->writel(NAND_NFCR, nfcr | NAND_NFCR_EDO_EN);
+
+#ifdef EDO_PROBE
 	if(edo_t ==1 ){
 		max = ((timing->tRP + timing->tREH) * 1000 + cycle - 1) / cycle;
 		edo_t = (reg & NAND_NFIT4_EDO_MASK) >> NAND_NFIT4_EDO_BIT;
 		reg &= ~(NAND_NFIT4_EDO_MASK);
 		while(1){
 			if(edo_t >= max){
+				edo_t -= 2; // larger than max ,have add 2,should sub 2 to adjust
 				ret = ENAND;
 				break;
 			}
@@ -320,11 +325,15 @@ static int auto_adapt_edo_nand(nand_io *io, chip_info *cinfo, rb_item *rbitem)
 				break;
 			edo_t += 2;
 		}
-		if(ret != ENAND)
+		if(ret != ENAND && f_ok != 0)
 			edo_t = (b_ok + f_ok) / 2;
 	}
 	reg &= ~(NAND_NFIT4_EDO_MASK);
+#else
+	edo_t = (timing->tREH * 1000 + cycle - 1) / cycle;
+#endif //EDO_PROBE
 	base->writel(NAND_NFIT4, reg | NAND_NFIT4_EDO(edo_t));
+	edo_timing = base->readl(NAND_NFIT4) & 0x0000ffff;
 	return ret;
 }
 static int auto_adapt_dqs_delay(nfi_base *base)
@@ -339,8 +348,9 @@ static int auto_adapt_dqs_delay(nfi_base *base)
 	else
 		return SUCCESS;
 }
-int auto_adapt_toggle_nand(nand_io *io, chip_info *cinfo)
+int auto_adapt_toggle_nand(int context, chip_info *cinfo)
 {
+	nand_io *io = (nand_io *)context;
 	unsigned int reg = 0, tmp;
 	nfi_base *base = io->base;
 	nfi_nand_timing *timing = (nfi_nand_timing *)cinfo->ops_timing.io_timing;
@@ -364,8 +374,9 @@ int auto_adapt_toggle_nand(nand_io *io, chip_info *cinfo)
 	base->writel(NAND_NFITG1, reg);
 	return auto_adapt_dqs_delay(base);
 }
-int auto_adapt_onfi_nand(nand_io *io, chip_info *cinfo)
+int auto_adapt_onfi_nand(int context, chip_info *cinfo)
 {
+	nand_io *io = (nand_io *)context;
 	unsigned int reg = 0, tmp;
 	nfi_base *base = io->base;
 //	const nand_timing *timing = cinfo->timing;
@@ -503,8 +514,21 @@ void nand_io_setup_timing_default(int context)
 	ndd_debug("default NFCR = 0x%08x, NFRB = 0x%08x\n",
 			*(volatile unsigned int *)(0xb3410010),*(volatile unsigned int *)(0xb3410054));
 }
+void nfi_set_edo_mode(nfi_base *base)
+{
+	int nfcr,t4;
 
-int nand_io_setup_timing_optimize(int context, chip_info *cinfo/*, rb_item *rbitem*/)
+	nfcr = base->readl(NAND_NFCR);
+	nfcr |= NAND_NFCR_EDO_EN;
+	base->writel(NAND_NFCR,nfcr);
+
+	t4 = base->readl(NAND_NFIT4);
+	t4 &= 0xffff0000;
+	t4 |= (edo_timing << 0);
+	base->writel(NAND_NFIT4,t4);
+}
+
+int nand_io_setup_timing_optimize(int context, chip_info *cinfo)
 {
 	nand_io *io = (nand_io *)context;
 	unsigned int bus = NAND_BUSWIDTH_8BIT;
@@ -520,13 +544,15 @@ int nand_io_setup_timing_optimize(int context, chip_info *cinfo/*, rb_item *rbit
 	}
 	set_nand_bus_mode(io->base, bus, GET_NAND_TYPE(cinfo));
 	set_nand_timing_optimize(io->base, (nfi_nand_timing *)cinfo->ops_timing.io_timing);
-	//set_nand_timing_default(io->base);
-	if(GET_NAND_TYPE(cinfo) == COMMON_EDO_NAND){
-		//ret = auto_adapt_edo_nand(io, cinfo, rbitem);///// kyhe add
+	if(edo_timing)
+		nfi_set_edo_mode(io->base);
+
+	if(GET_NAND_TYPE(cinfo) == COMMON_EDO_NAND && nand_auto_adapt_edo == NULL){
+		nand_auto_adapt_edo = auto_adapt_edo_nand;
 	}else if(GET_NAND_TYPE(cinfo) == TOGGLE_DDR_NAND){
-		ret = auto_adapt_toggle_nand(io, cinfo);
+		nand_adjust_to_toggle = auto_adapt_toggle_nand;
 	}else if(GET_NAND_TYPE(cinfo) == ONFI_DDR_NAND){
-		ret = auto_adapt_onfi_nand(io, cinfo);
+		nand_adjust_to_onfi = auto_adapt_onfi_nand;
 	}else{
 		ret = SUCCESS;
 		ndd_debug("%s the type of the nand is common !\n",__func__);
@@ -547,7 +573,7 @@ int nand_io_send_cmd(int context, unsigned char command, unsigned int delay)
 
 	delay = (delay * 1000 + cycle - 1) / cycle;
 
-//	ndd_debug("##### reset delay = %d\n",delay);
+
 	__send_cmd_to_nand(io->cmdport,command,0,delay,0);
 
 	if(command == CMD_READ_STATUS_1ST){
@@ -560,14 +586,12 @@ int nand_io_send_cmd(int context, unsigned char command, unsigned int delay)
 void nand_io_send_addr(int context, int col_addr, int row_addr, unsigned int delay)
 {
 	nand_io *io = (nand_io *)context;
-	//ndd_debug("io->base = %p, io->cinfo = %p, io->copy_context = %x\n", io->base, io->cinfo, io->copy_context);
-	//ndd_debug("io->cinfo->rowcycles = %d, io->base->cycle = %d\n", io->cinfo->rowcycles, io->base->cycle);
+
 	int rowcycle = io->cinfo->rowcycles;
 	int i;
 	unsigned int cycle = io->base->cycle;  //unit: ps
 
 	delay = (delay * 1000 + cycle - 1) / cycle;
-	//ndd_debug("##### addr delay = %d\n",delay);
 
 	if(col_addr >= 0){
 		if(io->cinfo->pagesize != 512){
@@ -591,7 +615,6 @@ void nand_io_send_spec_addr(int context, int addr, unsigned int rowcycle, unsign
 	unsigned int cycle = io->base->cycle;  //unit: ps
 
 	delay = (delay * 1000 + cycle - 1) / cycle;
-	//ndd_debug("##### spec addr delay = %d\n",delay);
 	while(rowcycle > 1){
 		__send_addr_to_nand(io->addrport, (addr & 0xff), 0, 0, 0);
 		addr = addr >> 0x08;
@@ -599,7 +622,6 @@ void nand_io_send_spec_addr(int context, int addr, unsigned int rowcycle, unsign
 	}
 	if(rowcycle)
 		__send_addr_to_nand(io->addrport, (addr & 0xff), 0, delay, 0);
-	//ndd_debug("%s addrport=%p, addr=0x%08x\n", __func__, io->addrport,addr);
 }
 
 int nand_io_send_data(int context, unsigned char *src, unsigned int len)
@@ -625,12 +647,10 @@ int nand_io_receive_data(int context, unsigned char *dst, unsigned int len)
 	nand_io *io = (nand_io *)context;
 	unsigned char *src = (unsigned char *)(io->dataport);
 
-	//ndd_debug("***** receive data prepare!\n");
 	ret = io->trans.prepare_memcpy(io->copy_context,src,dst,len,DSTADD);
 	if(ret < 0)
 		RETURN_ERR(ENAND, "prepare memcpy error");
 
-	//ndd_debug("***** receive data finish!\n");
 	ret = io->trans.finish_memcpy(io->copy_context);
 	if(ret < 0)
 		RETURN_ERR(ENAND, "prepare memcpy error");

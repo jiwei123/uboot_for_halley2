@@ -26,6 +26,7 @@
 /* global */
 nand_data *nddata = NULL;
 extern int nd_raw_boundary;
+extern int g_have_wp;
 
 void (*__clear_rb_state)(rb_item *);
 int (*__wait_rb_timeout) (rb_item *, int);
@@ -34,6 +35,9 @@ void (*__wp_enable) (int);
 void (*__wp_disable) (int);
 int (*__gpio_irq_request)(unsigned short, unsigned short *, void **);
 int (*__ndd_gpio_request)(unsigned int, const char *);
+int (*nand_auto_adapt_edo)(int , chip_info *, rb_item *);
+int (*nand_adjust_to_toggle)(int , chip_info *);
+int (*nand_adjust_to_onfi)(int, chip_info *);
 
 extern int os_clib_init(os_clib *clib);
 
@@ -1073,6 +1077,45 @@ static void free_platdep_memory(struct nand_api_platdependent **platdep) {
 	*platdep = NULL;
 }
 
+static int  nand_func_auto_adjust(nand_data *nddata)
+{
+	int context;
+	nfi_base *base = &(nddata->base->nfi);
+	chip_info *cinfo = nddata->cinfo;
+	unsigned short totalchips = nddata->csinfo->totalchips;
+	cs_item *csinfo_table = nddata->csinfo->csinfo_table;
+	rb_item *rbitem;
+	int cs_index;
+	int cs_id;
+	int ret;
+
+	for(cs_index = 0; cs_index < totalchips; cs_index++){
+		cs_id = csinfo_table[cs_index].id;
+		rbitem = csinfo_table[cs_index].rbitem;
+
+		context = nand_io_open(base,cinfo);
+		if (!context)
+			RETURN_ERR(ENAND, "nand io open error");
+
+		ret = nand_io_chip_select(context, cs_id);
+		if (ret)
+			RETURN_ERR(ENAND, "nand io chip select error, cs = [%d]", cs_id);
+
+		if(nand_auto_adapt_edo)
+			nand_auto_adapt_edo(context,cinfo,rbitem);
+
+		if(nand_adjust_to_toggle)
+			nand_adjust_to_toggle(context,cinfo);
+
+		if(nand_adjust_to_onfi)
+			nand_adjust_to_onfi(context,cinfo);
+
+		nand_io_chip_deselect(context, cs_id);
+		nand_io_close(context);
+	}
+
+	return 0;
+}
 int nand_api_init(struct nand_api_osdependent *osdep)
 {
 	int ret;
@@ -1126,8 +1169,10 @@ int nand_api_init(struct nand_api_osdependent *osdep)
 
 		ndd_debug("\ninit wp gpio:\n");
 		ret = __ndd_gpio_request(nddata->gpio_wp, "nand_wp");
-		if(ret < 0)
-			GOTO_ERR(request_wp);
+		if(ret < 0){
+			g_have_wp = 0;
+			ndd_print(NDD_DEBUG,"\n%s [line:%d] nand_wp request error, can't use write protect !!!\n",__func__,__LINE__);
+		}
 
 		ndd_debug("\ninit irq of rb:\n");
 		totalrbs = nddata->rbinfo->totalrbs;
@@ -1156,6 +1201,7 @@ int nand_api_init(struct nand_api_osdependent *osdep)
 		if (ret)
 			ndd_print(NDD_ERROR,"WARNING:nand set feature failed!\n");
 
+		nand_func_auto_adjust(nddata);
 		ndd_debug("\nget ppainfo from errpt:\n");
 		ret = get_ppainfo_from_errpt(nddata, nddata->platdep);
 		if (ret < 0)
@@ -1176,7 +1222,6 @@ ERR_LABLE(get_ppainfo):
 ERR_LABLE(get_csinfo):
 ERR_LABLE(fill_cinfo):
 ERR_LABLE(request_rb_irq):
-ERR_LABLE(request_wp):
 ERR_LABLE(get_platinfo):
 	free_platdep_memory(&(nddata->platdep));
 ERR_LABLE(alloc_platdep_memory):
@@ -1243,6 +1288,8 @@ int nand_api_reinit(struct nand_api_platdependent *platdep)
 	ret = nandflash_setup(&(nddata->base->nfi), nddata->csinfo, nddata->rbinfo, nddata->cinfo);
 	if (ret)
 		ndd_print(NDD_ERROR,"WARNING:nand set feature failed!\n");
+
+	nand_func_auto_adjust(nddata);
 
 	if (platdep->erasemode) {
 		/* init operations of errpt */

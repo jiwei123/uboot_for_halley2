@@ -1470,7 +1470,7 @@ int get_errpt_ppainfo(nand_data *nddata, struct nand_api_platdependent *platdep)
 				if(ret < 0){
 					ndd_print(NDD_WARNING,"%s %d read_partition_info pagid[%d]failed! try again!\n",
 						  __func__,__LINE__,pageid);
-					ndd_memset(ptinfo, 0xff, sizeof(plat_ptinfo));
+					//ndd_memset(ptinfo, 0xff, sizeof(plat_ptinfo));
 					break;
 				}
 				fill_partition_info(ptinfo, databuf, pt_index);
@@ -1581,6 +1581,7 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 			for(blk_index = ept_startblk; blk_index > ept_endblk; blk_index--){
 				if(is_bad_block(nddata, ndflash, chip_index, blk_index, 1, RB_READY) < 0)
 					continue;
+				ret = 0;
 				if(pt_index == 0){
 					/*write errpt head*/
 					ndd_memset(wbuf, 0xff, nddata->cinfo->pagesize);
@@ -1588,24 +1589,26 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 					ndd_memcpy(wbuf + NANDFLASH_OFFSET_IN_ERRPTHEAD, ndflash, sizeof(nand_flash));
 					nand_encode_errpt_headpage(nddata, ndflash, wbuf);
 					pageid = blk_index * nddata->cinfo->ppblock;
-					nand_write_pagedata(nddata, ndflash, chip_index, pageid, wbuf);
+					ret = nand_write_pagedata(nddata, ndflash, chip_index, pageid, wbuf);
 				}
-				pageid = blk_index * nddata->cinfo->ppblock + PT_HEADINFO_CNT + pt_index * PT_INFO_CNT;
-				ndd_memset(wbuf, 0xff, nddata->cinfo->pagesize);
-				ndd_memcpy(wbuf, ppainfo + pt_index, sizeof(ppa_info));
-				badblockbuf = (ptinfo->pt_table + pt_index)->pt_badblock_info;
-				ret = write_pt_badblock_info(nddata, ndflash, chip_index, badblockbuf, pageid, wbuf);
+				if (ret == 0){
+					pageid = blk_index * nddata->cinfo->ppblock + PT_HEADINFO_CNT + pt_index * PT_INFO_CNT;
+					ndd_memset(wbuf, 0xff, nddata->cinfo->pagesize);
+					ndd_memcpy(wbuf, ppainfo + pt_index, sizeof(ppa_info));
+					badblockbuf = (ptinfo->pt_table + pt_index)->pt_badblock_info;
+					ret = write_pt_badblock_info(nddata, ndflash, chip_index, badblockbuf, pageid, wbuf);
+				}
 				if (ret < 0){
 					nand_erase_block(nddata, ndflash, chip_index, blk_index);
 					if(mark_bad_block(nddata, ndflash, chip_index, blk_index) < 0){
 						if (is_bad_block(nddata, ndflash, chip_index, blk_index, 1, RB_READY) != 0){
 							ndd_debug("%s erase fail and is bad block, skip mark[%d]\n",
-								  __func__, blk_index);
+									__func__, blk_index);
 							ret = 0;
 							continue;
 						} else {
 							ndd_print(NDD_ERROR,"%s %d mark_bad_block[%d] error!\n",
-								  __func__,__LINE__, blk_index);
+									__func__,__LINE__, blk_index);
 							goto err3;
 						}
 					}
@@ -1614,8 +1617,8 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 		}
 	}
 err3:
-ERR_LABLE(initbuf):
-	ndd_free(l2pblock.csinrb);
+	ERR_LABLE(initbuf):
+		ndd_free(l2pblock.csinrb);
 err2:
 	ndd_free(wbuf);
 err1:

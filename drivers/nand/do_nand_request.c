@@ -414,7 +414,7 @@ rewrite:
 		memset(readbuf,0,sl->sectorCount * 512);
 		if(pt_index != 0){
 			if(NandManger_ptRead(pHandle,sl) < 0){
-				printf("NandManger_ptRead failed, now rewrite!\n");
+				printf("%s %d  NandManger_ptRead failed, now rewrite!\n",__func__,__LINE__);
 				goto rewrite;
 			}
 

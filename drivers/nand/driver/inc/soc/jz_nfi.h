@@ -141,6 +141,7 @@
 #define NAND_NFCR_INIT			(0x1 << 1)		 /* inital NFI, the bit is wrote 1 only,when soft reset */
 #define NAND_NFCR_EN			(0x1 << 0)		 /* NFI enable */
 
+#define NAND_NFCR_EDO_EN		(0x1 << 2)      /* nfi enable edo mode */
 /* NAND PN Control Register */
 // PN(bit 0):0-disable, 1-enable
 // PN(bit 1):0-no reset, 1-reset

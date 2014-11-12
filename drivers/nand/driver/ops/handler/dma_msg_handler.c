@@ -241,10 +241,11 @@ static int mcu_init(nand_dma *nd_dma,Nand_Task *nandtask,int id)
 	ndd_print(NDD_INFO,"^^^^^^^^^ h2clk=%d fcycle=%d ^^^^^^^^^^\n",h2clk,fcycle);
 	msg->info.twhr2 = ((ndtime->tWHR2 * 1000 + fcycle - 1) / fcycle) + 1;
 	msg->info.tcwaw = ((ndtime->tCWAW * 1000 + fcycle - 1) / fcycle) + 1;
-	msg->info.tadl = ((ndtime->tADL * 1000 + fcycle - 1) / fcycle) + 1;
+	msg->info.tadl = ndtime->tADL;
 	msg->info.tcs = ((ndtime->tCS * 1000 + fcycle - 1) / fcycle) + 1;
 	msg->info.tclh= ((ndtime->tCLH * 1000 + fcycle - 1) / fcycle) + 1;
 	msg->info.tsync = ((ndtime->tWC * 64 * 1000 + fcycle - 1) / fcycle) + 1;
+	msg->info.fcycle = fcycle;
 
 //	msg->info.eccpos = ndinfo->eccpos;
 	msg->info.buswidth = ndinfo->buswidth;

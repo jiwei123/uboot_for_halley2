@@ -42,6 +42,7 @@ struct __mcu_nand_info {
 	unsigned char rb0;
 	unsigned char rb1;
 	unsigned int taskmsgaddr;
+	unsigned int fcycle;
 };
 typedef struct __mcu_nand_info McuNandInfo;
 

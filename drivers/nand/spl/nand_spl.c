@@ -505,6 +505,7 @@ static int nand_read_page(unsigned int pageaddr,unsigned char *data_buf,unsigned
 	int i;
 	unsigned int bit0cnt;
 	PipeNode pipenode;
+	parity_size = (parity_size + 3) / 4 * 4;
 
 	send_read_start_cmd(pageaddr,0,1);
 

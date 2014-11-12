@@ -72,6 +72,8 @@
 /**
  * Drivers configuration.
  */
+#define CONFIG_JZ_NAND_MGR
+#define CONFIG_NAND_NFI
 #define CONFIG_JZ_GPIO
 #define CONFIG_INGENIC_SOFT_I2C
 

@@ -29,6 +29,7 @@ struct nand_api_platdependent platdep;
 nand_sharing_params share_parms;
 nand_flash nand_flash_info;
 
+int g_have_wp = 1;//use the wp gpio can't request
 
 int get_nand_param(void);
 #define __raw_readl(reg)     \
@@ -75,10 +76,11 @@ static void dump_nand_flash_info(void)
 	printf("\t tCLH =     %d \n",nand_flash_info.timing.emc.tCLH);
 #endif
 }
-static void test_add_fill_nfi_timing(const nand_timing *nandtiming)
+static void fill_nfi_timing(const nand_timing *nandtiming,nand_timing_param *timing_param)
 {
 	nfi_nand_timing *timing = &nandtiming->nfi;
 #define assign(member,val) timing->member = val
+#if 1 //mode 0
 	assign(tWH,10);
 	assign(tCH,5);
 	assign(tRP,25);
@@ -92,6 +94,21 @@ static void test_add_fill_nfi_timing(const nand_timing *nandtiming)
 	assign(tCWAW,0);
 	assign(tCS,25);
 	assign(tREH,10);
+#else // mode 5
+	assign(tWH,7);
+	assign(tCH,5);
+	assign(tRP,15);
+	assign(tWP,10);
+	assign(tDH,5);
+	assign(tWHR,60);
+	assign(tWHR2,200);
+	assign(tRR,20);
+	assign(tWB,80);
+	assign(tADL,70);
+	assign(tCWAW,0);
+	assign(tCS,15);
+	assign(tREH,7);
+#endif
 #undef assign
 }
 
@@ -121,7 +138,7 @@ void fill_nand_flash_info(nand_flash_param *nand_info)
 	if (nand_info->options & NAND_DRIVER_STRENGTH)
 		    nand_flash_info.options |= NAND_DRIVER_STRENGTH;
 #ifdef CONFIG_NAND_NFI
-	test_add_fill_nfi_timing(&(nand_flash_info.timing));
+	fill_nfi_timing(&(nand_flash_info.timing),&(nand_info->timing));
 #else
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
 #endif
@@ -398,6 +415,7 @@ static inline int get_devices_resources(io_base *base)
 
 	return 0;
 }
+extern unsigned int cpm_get_h2clk(void);
 
 static inline int get_devices_clk(io_base *base)
 {
@@ -536,8 +554,12 @@ static nand_flash_param *get_nand_info_from_ids(nand_flash_id *fid,nand_flash_pa
 		if ((fid->id == nand_info_table[index].id) && ((fid->extid & EXTID_MARK) == (nand_info_table[index].extid & EXTID_MARK)))
 			break;
 	}
-	if(index >= total_nand)
+	if(index >= total_nand){
 		printf("ERROR:  Can't match the nand params ,the nand id is %x extid is %x  please add the nand params in ids",fid->id,fid->extid);
+		for (index = 0; index < total_nand; index++){
+			printf("the nand id is %x extid is %x  total_nand =%d\n",nand_info_table[index].id,nand_info_table[index].extid,total_nand);
+		}
+	}
 	return &nand_info_table[index];
 }
 
@@ -736,6 +758,7 @@ int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int 
 		goto err_alloc_ptinfo;
 	else
 		platdep.platptinfo->pt_table = (plat_ptitem*)((unsigned char *)platdep.platptinfo + sizeof(plat_ptinfo));
+
 	fill_plat_ptinfo(pinfo, platdep.platptinfo);
 	//dump_partitioninfo(pinfo);
 	//__ndd_dump_plat_partition(platdep.platptinfo);
