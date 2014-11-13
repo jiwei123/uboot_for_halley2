@@ -531,6 +531,13 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	     ++shift, ++idp)
 		continue;
 
+#ifdef CONFIG_SPI_FLASH_INGENIC
+	flash = flashes[0].probe(spi, idp);
+	if (!flash){
+		printf("the flash malloc error\n");
+	}
+
+#else
 	/* search the table for matches in shift and id */
 	for (i = 0; i < ARRAY_SIZE(flashes); ++i)
 		if (flashes[i].shift == shift && flashes[i].idcode == *idp) {
@@ -539,10 +546,13 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 			if (flash)
 				break;
 		}
+#endif
 
 	if (!flash) {
 		printf("SF: Unsupported manufacturer %02x\n", *idp);
 		goto err_manufacturer_probe;
+	}else{
+		printf("the manufacturer %02x\n", *idp);
 	}
 
 #ifdef CONFIG_SPI_FLASH_BAR
@@ -558,9 +568,13 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		goto err_manufacturer_probe;
 	}
 #endif
+	printf("SF: Detected %s\n", flash->name);
+
+#ifdef DEBUG
 	printf("SF: Detected %s with page size ", flash->name);
 	print_size(flash->sector_size, ", total ");
 	print_size(flash->size, "");
+#endif
 	if (flash->memory_map)
 		printf(", mapped at %p", flash->memory_map);
 	puts("\n");

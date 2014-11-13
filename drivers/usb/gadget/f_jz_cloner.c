@@ -547,6 +547,7 @@ int spi_program(struct cloner *cloner)
 	spi.clk   = spi_arg->clk;
 	spi.data_in  = spi_arg->data_in;
 	spi.data_out  = spi_arg->data_out;
+	spi.rate  = spi_arg->rate * 1000000;
 #ifdef CONFIG_JZ_SPI
 	spi_init();
 #endif
@@ -554,7 +555,7 @@ int spi_program(struct cloner *cloner)
 	spi_init_jz(&spi);
 #endif
 	if(flash == NULL){
-		flash = spi_flash_probe(bus, cs, speed, mode);
+		flash = spi_flash_probe(bus, cs, spi.rate, mode);
 		if (!flash) {
 			printf("Failed to initialize SPI flash at %u:%u\n", bus, cs);
 			return 1;
