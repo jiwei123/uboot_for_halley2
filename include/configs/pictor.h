@@ -50,6 +50,7 @@
 
 #define CONFIG_SYS_UART_INDEX		0
 #define CONFIG_BAUDRATE			57600
+#define CONFIG_JZ_SLT
 
 /*#define CONFIG_DDR_TEST_CPU
 #define CONFIG_DDR_TEST*/
@@ -69,6 +70,21 @@
 #define CONFIG_DDR_PHY_DQS_ODT
 #define CONFIG_DDR_PHY_IMPED_PULLUP	0xe
 #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
+
+#ifdef CONFIG_JZ_SLT
+#define GPIO_UART_RX	GPIO_PF(0)
+#define GPIO_UART_TX	GPIO_PF(3)
+/*#define GPIO_FREQ_SEL0	GPIO_PF(14)
+#define GPIO_FREQ_SEL1	GPIO_PF(15)
+#define SLT_CPU_FREQ0	1200000000		//0-->MPLL
+#define SLT_DDR_DIV0	6
+#define SLT_CPU_FREQ1	1200000000		//1-->APLL
+#define SLT_DDR_DIV1	6
+#define SLT_CPU_FREQ2	CONFIG_SYS_CPU_FREQ	//2-->MPLL
+#define SLT_DDR_DIV2	CONFIG_SYS_MEM_DIV
+#define SLT_CPU_FREQ3	CONFIG_SYS_CPU_FREQ	//3-->APLL
+#define SLT_DDR_DIV3	CONFIG_SYS_MEM_DIV*/
+#endif
 
 /**
  * Boot arguments definitions.
@@ -106,7 +122,7 @@
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm" */
-	#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "print; mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
