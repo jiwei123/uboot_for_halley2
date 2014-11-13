@@ -115,6 +115,7 @@ struct spi_args {
 	uint32_t data_in;
 	uint32_t data_out;
 	uint32_t enable;
+	uint32_t rate;
 };
 
 struct arguments {
