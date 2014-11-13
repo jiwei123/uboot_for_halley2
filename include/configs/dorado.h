@@ -48,12 +48,12 @@
 #endif //endif CONFIG_DORADO_V30
 
 #else /* defined CONFIG_RVMS */
-#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		1200000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		1200000000
-#define CONFIG_SYS_MEM_FREQ		300000000
+#define CONFIG_SYS_CPU_FREQ		800000000
+#define CONFIG_SYS_MEM_FREQ		200000000
 #endif
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
@@ -115,7 +115,11 @@
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=768M@0x30000000"
 #endif
 #else
+#ifdef CONFIG_DORADO_V21
+#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=256M@0x30000000"
+#else
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=768M@0x30000000"
+#endif
 #endif
 
 #ifdef CONFIG_BOOT_ANDROID
@@ -174,6 +178,7 @@
  */
 
 /* LCD */
+#ifndef CONFIG_RVMS
 #define CONFIG_LCD
 #ifdef CONFIG_LCD
 
@@ -212,7 +217,7 @@
 #endif
 
 #endif /* CONFIG_LCD */
-
+#endif /*CONFIG_RVMS*/
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
