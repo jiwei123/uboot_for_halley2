@@ -7,6 +7,7 @@ struct spi {
 	unsigned int data_in ;
 	unsigned int data_out ;
 	unsigned int enable  ;
+	unsigned int rate  ;
 };
 
 void spi_init_jz(struct spi *spi);
