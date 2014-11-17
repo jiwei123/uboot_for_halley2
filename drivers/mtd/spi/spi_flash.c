@@ -454,6 +454,7 @@ static const struct {
 	/* Keep it sorted by define name */
 #ifdef CONFIG_SPI_FLASH_INGENIC
 	{ 0, 0xe0, spi_flash_probe_ingenic, },
+	{ 0, 0xc2, spi_flash_probe_ingenic, },
 	{ 0, 0xc8, spi_flash_probe_ingenic, },
 #endif
 #ifdef CONFIG_SPI_FLASH_ATMEL
@@ -531,7 +532,7 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	     ++shift, ++idp)
 		continue;
 
-#ifdef CONFIG_SPI_FLASH_INGENIC
+#ifdef CONFIG_BURNER
 	flash = flashes[0].probe(spi, idp);
 	if (!flash){
 		printf("the flash malloc error\n");

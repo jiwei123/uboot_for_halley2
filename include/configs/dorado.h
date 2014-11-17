@@ -53,10 +53,10 @@
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
 #define CONFIG_SYS_CPU_FREQ		800000000
-#define CONFIG_SYS_MEM_FREQ		200000000
+#define CONFIG_SYS_MEM_FREQ		300000000
 #endif
 
-#define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
+#define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
 
 
@@ -180,8 +180,9 @@
 /* LCD */
 #ifndef CONFIG_RVMS
 #define CONFIG_LCD
-#ifdef CONFIG_LCD
+#endif
 
+#ifdef CONFIG_LCD
 #define CONFIG_LCD_FORMAT_X8B8G8R8
 #ifdef CONFIG_DORADO_V21
 #define CONFIG_JZ_MIPI_DSI
@@ -217,7 +218,37 @@
 #endif
 
 #endif /* CONFIG_LCD */
-#endif /*CONFIG_RVMS*/
+
+/* SPI */
+#if defined(CONFIG_SPL_SPI_SUPPORT)
+#ifdef CONFIG_SOFT_SPI
+#define SPI_DELAY
+#define SPI_SDA(val)                    gpio_direction_output(GPIO_PE(21), val)
+#define SPI_SCL(val)                    gpio_direction_output(GPIO_PE(28), val)
+#define SPI_READ                        gpio_get_value(GPIO_PE(20))
+#define CONFIG_SF_DEFAULT_CS            1
+#else
+#define CONFIG_JZ_SSI0_PA		/* gpio */
+#define CONFIG_SSI_BASE			SSI0_BASE
+#endif
+#define CONFIG_JZ_SPI			/* compile drivers/spi/jz_spi.c */
+#define CONFIG_CMD_SF			/* compile commom/cmd_sf.c */
+#define CONFIG_SPI_FLASH		/* compile drivers/mtd/spi/spi_flash.c */
+#define CONFIG_SPI_FLASH_INGENIC
+#define CONFIG_UBOOT_OFFSET             (26  * 1024)
+
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SPI_SPL_CHECK
+#define CONFIG_SYS_SPI_BOOT_FREQ	1000000
+
+#define CONFIG_SYS_MONITOR_LEN		(230 * 1024)
+#define CONFIG_ENV_SIZE                 (256 * 1024)
+#define CONFIG_ENV_OFFSET		(256 * 1024)
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#define CONFIG_ENV_SECT_SIZE		(4 * 1024)
+#endif
+/* END SPI */
+
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
@@ -453,12 +484,6 @@
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 
 #endif /* CONFIG_SPL_NAND_SUPPORT */
-
-#ifdef CONFIG_SPL_SPI_SUPPORT
-#define CONFIG_SPL_SERIAL_SUPPORT
-#define CONFIG_SPI_SPL_CHECK
-#define CONFIG_SYS_SPI_BOOT_FREQ	1000000
-#endif
 
 #ifdef CONFIG_SPL_NOR_SUPPORT
 #define CONFIG_SPL_SERIAL_SUPPORT

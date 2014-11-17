@@ -31,7 +31,6 @@
 #include <asm/arch/clk.h>
 #include <power/d2041_core.h>
 
-
 struct cgu_clk_src cgu_clk_src[] = {
 	{VPU, MPLL},
 	{OTG, EXCLK},
@@ -131,12 +130,6 @@ int board_eth_init(bd_t *bis)
 	return 0;
 }
 
-#ifdef CONFIG_SPL_SPI_SUPPORT
-void spl_spi_load_image(void)
-{
-
-}
-#endif
 
 #ifdef CONFIG_SPL_NAND_SUPPORT
 void nand_init(void)
@@ -173,3 +166,4 @@ void spl_board_init(void)
 }
 
 #endif /* CONFIG_SPL_BUILD */
+

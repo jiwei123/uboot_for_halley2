@@ -380,9 +380,42 @@ static unsigned int set_lcd_rate(int clk, unsigned long rate)
 	return 0;
 }
 
+static unsigned int set_ssi_rate(int clk, unsigned long rate)
+{
+	unsigned int cdr;
+	unsigned int pll_rate;
+	unsigned int ssicdr = cpm_inl(CPM_SSICDR);
+
+	switch (ssicdr >> 30) {
+	case 0:
+		pll_rate = pll_get_rate(APLL);
+		break;
+	case 1:
+		pll_rate = pll_get_rate(MPLL);
+		break;
+	case 2:
+		pll_rate = CONFIG_SYS_EXTAL;
+		break;
+	default:
+		printf("set_ssi_rate is error !\n");
+	}
+
+	cdr = ((pll_rate + rate - 1)/rate - 1 )& 0xff;
+	ssicdr &= ~(3 << 27 | 0xff);
+	ssicdr |= ((1 << 29) | cdr);
+	cpm_outl(ssicdr, CPM_SSICDR);
+	while (cpm_inl(CPM_SSICDR) & (1 << 28))
+		;
+	debug("CPM_SSICDR(%x) = %x\n",CPM_SSICDR, cpm_inl(CPM_SSICDR));
+	return 0;
+}
+
 void clk_set_rate(int clk, unsigned long rate)
 {
 	switch (clk) {
+	case SSI:
+		set_ssi_rate(clk, rate);
+		return;
 	case DDR:
 		set_ddr_rate(clk, rate);
 		return;
@@ -423,6 +456,9 @@ void clk_init(void)
 #ifdef CONFIG_NAND_NFI
 		|CPM_CLKGR_PDMA
 		|CPM_CLKGR_BCH
+#endif
+#ifdef CONFIG_SPI_FLASH_INGENIC
+		| CPM_CLKGR_SSI0
 #endif
 		;
 

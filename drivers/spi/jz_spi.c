@@ -29,6 +29,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/spi.h>
+#include <asm/arch/clk.h>
 #include <asm/arch/base.h>
 
 #define SSI_BASE CONFIG_SSI_BASE
@@ -43,33 +44,62 @@ static void jz_spi_writel(unsigned int value, unsigned int offset)
 	writel(value, SSI_BASE + offset);
 }
 
-static void jz_spi_flush()
+static void jz_spi_flush(void )
 {
 	jz_spi_writel(jz_spi_readl(SSI_CR0) | SSI_CR0_TFLUSH | SSI_CR0_RFLUSH, SSI_CR0);
 }
 
-static unsigned int spi_rxfifo_empty()
+static unsigned int spi_rxfifo_empty(void )
 {
 	return (jz_spi_readl(SSI_SR) & SSI_SR_RFE);
 }
 
-static unsigned int spi_txfifo_full()
+static unsigned int spi_txfifo_full(void )
 {
 	return (jz_spi_readl(SSI_SR) & SSI_SR_TFF);
 }
 
-static unsigned int spi_get_rxfifo_count()
+static unsigned int spi_get_rxfifo_count(void )
 {
 	return ((jz_spi_readl(SSI_SR) & SSI_SR_RFIFONUM_MASK) >> SSI_SR_RFIFONUM_BIT);
 }
 
-
-void spi_init()
+#ifdef CONFIG_SOFT_SPI
+int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
+	gpio_direction_input(GPIO_PE(20));	//spi-dr
+	return 1;
+}
+
+void spi_cs_activate(struct spi_slave *slave)
+{
+	gpio_direction_output(GPIO_PE(29), 0); //cs
+}
+
+void spi_cs_deactivate(struct spi_slave *slave)
+{
+	gpio_direction_output(GPIO_PE(29), 1); //cs
+}
+#endif
+
+void spi_init(void )
+{
+#if DEBUG
+	unsigned int errorpc;
+		__asm__ __volatile__ (
+				"mfc0  %0, $30,  0   \n\t"
+				"nop                  \n\t"
+				:"=r"(errorpc)
+				:);
+
+		printf("RESET ERROR PC:%x\n",errorpc);
+#endif
+	unsigned int ssi_rate = 24000000;
+	clk_set_rate(SSI, ssi_rate);
 	jz_spi_writel(~SSI_CR0_SSIE & jz_spi_readl(SSI_CR0), SSI_CR0);
 	jz_spi_writel(0, SSI_GR);
 	jz_spi_writel(SSI_CR0_EACLRUN | SSI_CR0_RFLUSH | SSI_CR0_TFLUSH, SSI_CR0);
-	jz_spi_writel(SSI_CR1_TFVCK_3 | SSI_CR1_TCKFI_3 | SSI_CR1_FLEN_8BIT | SSI_CR1_PHA | SSI_CR1_POL, SSI_CR1);
+	jz_spi_writel(SSI_FRMHL_CE0_LOW_CE1_LOW | SSI_GPCMD | SSI_GPCHL_HIGH | SSI_CR1_TFVCK_3 | SSI_CR1_TCKFI_3 | SSI_CR1_FLEN_8BIT | SSI_CR1_PHA | SSI_CR1_POL, SSI_CR1);
 	jz_spi_writel(SSI_CR0_SSIE | jz_spi_readl(SSI_CR0), SSI_CR0);
 }
 
@@ -94,7 +124,8 @@ void spi_recv_cmd(unsigned char *read_buf, unsigned int count)
 	while(!spi_rxfifo_empty());
 	while (count) {
 		jz_spi_writel(0, SSI_DR);
-		while (spi_rxfifo_empty());
+		while (spi_rxfifo_empty())
+			;
 		writeb(jz_spi_readl(SSI_DR), read_buf + offset);
 		offset++;
 		count--;
@@ -131,9 +162,6 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	spi_init();
 	struct jz_spi_slave *ss;
 
-	if (!spi_cs_is_valid(bus, cs))
-		return NULL;
-
 	ss = spi_alloc_slave(struct jz_spi_slave, bus, cs);
 	if (!ss)
 		return NULL;
@@ -163,28 +191,6 @@ void spi_release_bus(struct spi_slave *slave)
 	jz_spi_writel(jz_spi_readl(SSI_SR) & (~SSI_SR_UNDR) , SSI_SR);
 }
 
-struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
-{
-	struct spi_flash *flash;
-
-	flash = spi_flash_alloc_base(spi, "ingenic");
-	if (!flash) {
-		printf("%s Failed to allocate memory\n", __FILE__);
-		return NULL;
-	}
-
-	flash->page_size = 256;
-	flash->sector_size = 4 * 1024;
-	flash->size = 32 * 1024 * 1024;
-
-	return flash;
-}
-
-int spi_cs_is_valid(unsigned int bus, unsigned int cs)
-{
-	return bus == 0 && cs == 0;
-}
-
 int  spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 		const void *dout, void *din, unsigned long flags)
 {
@@ -212,3 +218,208 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 
 	return 0;
 }
+
+static void jz_cs_reversal(void )
+{
+	spi_release_bus(NULL);
+
+	udelay(1000);
+
+	spi_claim_bus(NULL);
+
+	return ;
+}
+
+int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
+{
+	unsigned char cmd[5];
+	unsigned long remain_len, read_len;
+
+	cmd[0] = CMD_FAST_READ;
+	cmd[1] = offset >> 16;
+	cmd[2] = offset >> 8;
+	cmd[3] = offset >> 0;
+	cmd[4] = 0x00;
+
+	read_len = flash->size - offset;
+
+	if(len < read_len)
+		read_len = len;
+
+	jz_cs_reversal();
+	spi_send_cmd(&cmd[0], 5);
+	spi_recv_cmd(data, read_len);
+
+	return 0;
+}
+
+int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
+{
+	unsigned char cmd[6], tmp;
+	int chunk_len, actual, i;
+	unsigned long byte_addr, page_size;
+
+	page_size = flash->page_size;
+
+	cmd[0] = CMD_WREN;
+
+	cmd[1] = CMD_PP;
+
+	cmd[5] = CMD_RDSR;
+
+	for (actual = 0; actual < len; actual += chunk_len) {
+		byte_addr = offset % page_size;
+		chunk_len = min(len - actual, page_size - byte_addr);
+
+		cmd[2] = offset >> 16;
+		cmd[3] = offset >> 8;
+		cmd[4] = offset >> 0;
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[0], 1);
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[1], 4);
+		for(i = 0; i < chunk_len; i += 100) {
+			if((chunk_len - i) < 100)
+				spi_send_cmd((buf + actual + i), (chunk_len - i));
+			else
+				spi_send_cmd((buf + actual + i), 100);
+
+		}
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[5], 1);
+		spi_recv_cmd(&tmp, 1);
+		while(tmp & CMD_SR_WIP) {
+			spi_recv_cmd(&tmp, 1);
+		}
+
+		offset += chunk_len;
+	}
+
+	return 0;
+}
+
+int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
+{
+	unsigned long erase_size;
+	unsigned char cmd[6], buf;
+
+	erase_size = flash->sector_size;
+	if (offset % erase_size || len % erase_size) {
+		printf("Erase offset/length not multiple of erase size\n");
+		return -1;
+	}
+
+	cmd[0] = CMD_WREN;
+
+	switch(erase_size) {
+	case 0x1000 :
+		cmd[1] = CMD_ERASE_4K;
+		break;
+	case 0x8000 :
+		cmd[1] = CMD_ERASE_32K;
+		break;
+	case 0x10000 :
+		cmd[1] = CMD_ERASE_64K;
+		break;
+	default:
+		printf("unknown erase size !\n");
+		return -1;
+	}
+
+	cmd[5] = CMD_RDSR;
+
+	while(len) {
+		cmd[2] = offset >> 16;
+		cmd[3] = offset >> 8;
+		cmd[4] = offset >> 0;
+
+		printf("erase %x %x %x %x %x %x %x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], offset);
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[0], 1);
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[1], 4);
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[5], 1);
+		spi_recv_cmd(&buf, 1);
+		while(buf & CMD_SR_WIP) {
+			spi_recv_cmd(&buf, 1);
+		}
+
+		offset += erase_size;
+		len -= erase_size;
+	}
+
+	return 0;
+}
+#ifdef CONFIG_SPI_FLASH_INGENIC
+#define SIZEOF_NAME	32
+
+struct jz_spi_support {
+	u8 id;
+	char name[SIZEOF_NAME];
+	int page_size;
+	int sector_size;
+	int size;
+};
+
+static struct jz_spi_support jz_spi_support_table[] = {
+	{
+		.id = 0xc2,
+		.name = "MX25L12835F",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.size = 16 * 1024 * 1024,
+	},
+};
+
+struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
+{
+	int i;
+	struct spi_flash *flash;
+	struct jz_spi_support *params;
+
+	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
+		params = &jz_spi_support_table[i];
+		if (params->id == idcode[0])
+			break;
+	}
+
+	if (i == ARRAY_SIZE(jz_spi_support_table)) {
+		printf("ingenic: Unsupported ID %04x\n", idcode[0]);
+		return NULL;
+	}
+
+	flash = spi_flash_alloc_base(spi, params->name);
+	if (!flash) {
+		printf("ingenic: Failed to allocate memory\n");
+		return NULL;
+	}
+	flash->erase = jz_erase;
+	flash->write = jz_write;
+	flash->read  = jz_read;
+
+	flash->page_size = params->page_size;
+	flash->sector_size = params->sector_size;
+	flash->size = params->size;
+
+	return flash;
+}
+#endif
+#ifdef CONFIG_SPL_SPI_SUPPORT
+void spl_spi_load_image(void)
+{
+	struct image_header *header;
+
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
+
+	spl_parse_image_header(header);
+
+	spi_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN, CONFIG_SYS_TEXT_BASE);
+}
+#endif
