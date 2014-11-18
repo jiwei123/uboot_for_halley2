@@ -59,7 +59,9 @@ struct cgu cgu_clk_sel[CGU_CNT] = {
 	[MSC] = {1, CPM_MSC0CDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
 	[BCH] = {1, CPM_BCHCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
 	[VPU] = {1, CPM_VPUCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+#ifndef CONFIG_BURNER
 	[OTG] = {1, CPM_USBCDR, 30, EXCLK, {EXCLK, EXCLK, APLL, MPLL}, 29, 28, 27},
+#endif
 	[I2S] = {1, CPM_I2SCDR, 30, EXCLK, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
 	[LCD] = {1, CPM_LPCDR,  31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 28, 27, 26},
 	[MSC1] = {0, CPM_MSC1CDR, 0, 0, {-1, -1, -1, -1}, 29, 28, 27},
