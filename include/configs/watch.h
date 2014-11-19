@@ -161,7 +161,8 @@
 
 /*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/
 /*#define CONFIG_VIDEO_TRULY_TFT320320*/
-#define CONFIG_VIDEO_X163
+/*CONFIG_VIDEO_X163*/
+/*CONFIG_VIDEO_SAMSUNG*/
 
 #ifdef  CONFIG_VIDEO_X163
 #define CONFIG_JZ_MIPI_DSI
@@ -214,8 +215,6 @@
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
 
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
