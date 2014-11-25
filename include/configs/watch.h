@@ -33,8 +33,9 @@
 #define CONFIG_M200		/* M200 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 #define CONFIG_SPL_DDR_SOFT_TRAINING
+/*#define CONFIG_26M*/
 
-#ifndef CONFIG_RVMS
+#if !defined(CONFIG_26M)
 #define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
@@ -42,29 +43,26 @@
 #define CONFIG_SYS_CPU_FREQ		800000000
 #define CONFIG_SYS_MEM_FREQ		150000000
 
-#else /* defined CONFIG_RVMS */
-#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		1200000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
+#define CONFIG_SYS_HZ			1000		/* incrementer freq */
+#elif defined(CONFIG_26M)
+#define CONFIG_SYS_APLL_FREQ		780000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		1200000000
-#define CONFIG_SYS_MEM_FREQ		300000000
-#endif
+#define CONFIG_SYS_CPU_FREQ		780000000
+#define CONFIG_SYS_MEM_FREQ		150000000
 
-#define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
+#define CONFIG_SYS_EXTAL		26000000	/* EXTAL freq: 26 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
-
+#endif
 
 #define CONFIG_SYS_DCACHE_SIZE		32768
 #define CONFIG_SYS_ICACHE_SIZE		32768
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		3
-#ifndef CONFIG_RVMS
 #define CONFIG_BAUDRATE			57600
-#else /* defined CONFIG_RVMS */
-#define CONFIG_BAUDRATE			115200
-#endif
 
 /*#define CONFIG_DDR_TEST_CPU
 #define CONFIG_DDR_TEST*/
@@ -92,11 +90,7 @@
 /**
  * Boot arguments definitions.
  */
-#ifndef CONFIG_RVMS
 #define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=250M@0x0 mem=256M@0x30000000"
-#else
-#define BOOTARGS_COMMON "console=ttyS3,115200n8 mem=256M@0x0 mem=256M@0x30000000"
-#endif
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
