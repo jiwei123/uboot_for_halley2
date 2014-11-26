@@ -25,6 +25,8 @@
 #include <config.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
+#include <linux/ctype.h>
+extern ulong simple_strtoul(const char *cp, char **endp, unsigned int base);
 
 #if defined (CONFIG_JZ4775)
 #include "jz_gpio/jz4775_gpio.c"
@@ -246,4 +248,23 @@ void dump_gpio_func( unsigned int gpio)
 	d = d | ((readl(base + PXPAT1) >> pin) & 1) << 1;
 	d = d | ((readl(base + PXPAT0) >> pin) & 1) << 0;
     printf("gpio[%d] fun %x\n",gpio,d);	
+}
+
+int jz_name_to_gpio(const char *name)
+{
+	int port_base;
+	char port;
+
+	if (tolower(*name) == 'p') {
+		++name;
+		port = tolower(*name);
+		if ( port >= 'a' && port <= 'g')
+			port_base = (port - 'a') * 32;
+		else
+			return -1;
+		++name;
+	} else
+		port_base = 0;
+
+	return port_base + simple_strtoul(name, NULL, 10);
 }

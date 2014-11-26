@@ -114,4 +114,7 @@ void gpio_as_irq_rise_edge(unsigned gpio);
 void gpio_as_irq_fall_edge(unsigned gpio);
 void gpio_ack_irq(unsigned gpio);
 
+int jz_name_to_gpio(const char *name);
+#define name_to_gpio(n) jz_name_to_gpio(n)
+
 #endif /* __GPIO_H__ */

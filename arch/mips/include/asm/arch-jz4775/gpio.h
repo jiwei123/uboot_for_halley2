@@ -119,4 +119,7 @@ void gpio_ack_irq(unsigned gpio);
 int gpio_clear_flag(unsigned gpio);
 int gpio_get_flag(unsigned int gpio);
 
+int jz_name_to_gpio(const char *name);
+#define name_to_gpio(n) jz_name_to_gpio(n)
+
 #endif /* __GPIO_H__ */

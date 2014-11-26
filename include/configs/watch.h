@@ -229,6 +229,7 @@
 */
 /* GPIO */
 #define CONFIG_JZ_GPIO
+#define CONFIG_CMD_GPIO
 
 /**
  * Command configuration.
