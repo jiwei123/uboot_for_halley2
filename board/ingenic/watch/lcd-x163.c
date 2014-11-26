@@ -15,12 +15,23 @@
 #include <jz_lcd/jz_lcd_v1_2.h>
 
 #include <jz_lcd/jz_dsim.h>
+#include <jz_lcd/auo_x163.h>
 
 #ifdef CONFIG_PMU_RICOH6x
 #define CONFIG_LCD_REGULATOR_9    "RICOH619_LDO9"
 #define CONFIG_LCD_REGULATOR_10    "RICOH619_LDO10"
 #elif defined CONFIG_PMU_D2041
 #define CONFIG_LCD_REGULATOR    ""
+#endif
+
+#ifdef CONFIG_ACRAB
+#define GPIO_LCD_BLK_EN GPIO_PC(9)
+#endif
+
+#ifdef CONFIG_ACRAB
+#define MIPI_RST_N GPIO_PC(16)
+#else
+#define MIPI_RST_N GPIO_PC(19)
 #endif
 
 void board_set_lcd_power_on(void)
@@ -34,7 +45,15 @@ void board_set_lcd_power_on(void)
     regulator_set_voltage(lcd_regulator_10, 3300000, 3300000);
     regulator_enable(lcd_regulator_9);
     regulator_enable(lcd_regulator_10);
+
+#ifdef CONFIG_ACRAB
+	gpio_direction_output(GPIO_LCD_BLK_EN, 1);
+#endif
 }
+
+struct auo_x163_platform_data auo_x163_pdata = {
+    .gpio_rst = MIPI_RST_N,
+};
 
 struct dsi_config jz_dsi_config={
     .max_lanes = 1,

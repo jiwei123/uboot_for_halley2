@@ -23,11 +23,10 @@
 #include <regulator.h>
 
 #include <jz_lcd/jz_dsim.h>
+#include <jz_lcd/auo_x163.h>
 #include "../jz_mipi_dsi/jz_mipi_dsih_hal.h"
 
 vidinfo_t panel_info = { 320, 320, LCD_BPP, };
-#define MIPI_RST_N GPIO_PC(19)
-
 
 void auo_x163_regulator_enable(struct dsi_device *dsi)
 {
@@ -101,11 +100,11 @@ void auo_x163_display_off(struct dsi_device *dsi)
 void panel_power_on(void)
 {
 	debug("--------------------%s\n", __func__);
-	gpio_direction_output(MIPI_RST_N, 1);
+	gpio_direction_output(auo_x163_pdata.gpio_rst, 1);
 	mdelay(300);
-	gpio_direction_output(MIPI_RST_N, 0);  //reset active low
+	gpio_direction_output(auo_x163_pdata.gpio_rst, 0);  //reset active low
 	mdelay(10);
-	gpio_direction_output(MIPI_RST_N, 1);
+	gpio_direction_output(auo_x163_pdata.gpio_rst, 1);
 	mdelay(50);
 	serial_puts("auo_x163 panel display on\n");
 }
@@ -171,7 +170,7 @@ void panel_pin_init(void)
 {
 	debug("--------------------%s\n", __func__);
 	int ret= 0;
-	ret = gpio_request(MIPI_RST_N, "lcd mipi panel rst");
+	ret = gpio_request(auo_x163_pdata.gpio_rst, "lcd mipi panel rst");
 
 	serial_puts("auo_x163 panel display pin init\n");
 }
