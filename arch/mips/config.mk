@@ -21,7 +21,11 @@
 # MA 02111-1307 USA
 #
 
+ifndef CONFIG_CROSS_COMPILE
 CROSS_COMPILE ?= mipsel-linux-android-
+else
+CROSS_COMPILE ?= $(CONFIG_CROSS_COMPILE:"%"=%)
+endif
 
 # Handle special prefix in ELDK 4.0 toolchain
 ifneq (,$(findstring 4KCle,$(CROSS_COMPILE)))
