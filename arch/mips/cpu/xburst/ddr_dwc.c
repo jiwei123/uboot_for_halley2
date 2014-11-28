@@ -174,8 +174,10 @@ static void mem_remap(void)
 	size1 = (unsigned int)(DDR_CHIP_1_SIZE);
 
 	/* For two different size ddr chips, just don't remmap */
+#if (CONFIG_DDR_CS1 == 1)
 	if (size0 != size1)
 		return;
+#endif
 
 #if (CONFIG_DDR_CS0 == 1)
 #if (CONFIG_DDR_CS1 == 1)
