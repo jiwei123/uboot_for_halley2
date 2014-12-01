@@ -78,7 +78,7 @@
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
   #else
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 root=ubi0:root rootfstype=ubifs rw"
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"
   #endif
 #endif
 

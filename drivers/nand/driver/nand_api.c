@@ -540,6 +540,13 @@ unsigned int get_nandflash_maxvalidblocks(void)
 	return ((nand_flash *)(nddata->cinfo->flash))->maxvalidblocks;
 }
 
+unsigned int get_nandflash_pagesize(void)
+{
+	if(!nddata && !(nddata->cinfo) && !(nddata->cinfo->flash))
+		return 0;
+	return ((nand_flash *)(nddata->cinfo->flash))->pagesize;
+}
+
 static inline int next_platpt_connected(unsigned int plat_index,
 					plat_ptitem *plat_pt, unsigned int plat_ptcount)
 {
@@ -738,9 +745,9 @@ static pt_info* get_ptinfo(chip_info *cinfo, unsigned short totalchips,
 					pt[pt_index].vblockpgroup * pt[pt_index].groupspzone;
 				unsigned int zonecount = pt[pt_index].totalblocks / zoneblocks;
 				if (zonecount < ZONE_COUNT_LIMIT) {
-					if (pt[pt_index].vblockpgroup > 1)
+					if (pt[pt_index].vblockpgroup > 2)
 						pt[pt_index].vblockpgroup /= 2;
-					else if (pt[pt_index].blockpvblock > 1) {
+					else if (pt[pt_index].blockpvblock > 2) {
 						pt[pt_index].blockpvblock /= 2;
 						pt[pt_index].planes /=2;
 					} else {

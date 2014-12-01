@@ -19,7 +19,7 @@
 #define SPL_ECCSIZE		256
 
 #define REF_ZONE_SIZE 		(4 * 1024 * 1024) //4M
-#define ZONE_COUNT_LIMIT	32 //min ndpartition zone count limit
+#define ZONE_COUNT_LIMIT	256 //min ndpartition zone count limit
 #define ERR_PT_TOTALBLOCKS	4 //virtual blocks
 
 #define MAX_NAME_SIZE		32

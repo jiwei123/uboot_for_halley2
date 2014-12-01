@@ -31,7 +31,9 @@
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
+#ifndef CONFIG_DORADO_V30 // no def
 #define CONFIG_DDR_AUTO_SELF_REFRESH
+#endif //endif CONFIG_DORADO_V30
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 
 #ifndef CONFIG_RVMS

@@ -84,21 +84,16 @@ static inline void nand_wait_ready(void)
 //#ifndef CONFIG_NAND_NFI // no define
 
 #if 1
-//	printf("WWWWWWWWWWWWWWWWW %s %d  GPIOA = %x\n",__func__,__LINE__,*((volatile unsigned int *)GPIO_PXPIN(0)));
+
 	while ((*((volatile unsigned int *)GPIO_PXPIN(0)) & 0x00100000) && timeout--);
 	while (!((*(volatile unsigned int *)GPIO_PXPIN(0)) & 0x00100000));
-//	printf("WWWWWWWWWWWWWWWWW %s %d  GPIOA = %x timeout = %d\n",__func__,__LINE__,*((volatile unsigned int *)GPIO_PXPIN(0)),timeout);
 #else
 
-	printf("WWWWWWWWWWWWWWWWW %s %d  NFBC = %x\n",__func__,__LINE__,*(volatile unsigned int *)(0xb341000c));
 	while(!(*(volatile unsigned int *)(0xb341000c) & (1 << 16)) && (timeout--)); //NFBC
-	printf("WWWWWWWWWWWWWWWWW %s %d  NFBC = %x timeout = %d\n",__func__,__LINE__,*(volatile unsigned int *)(0xb341000c),timeout);
 	if(timeout > 0)
 		*(volatile unsigned int *)(0xb341000c) |= (1 << 16);
 	else
 		printf("-------- WARNING: wait rb timeout ---------\n");
-
-//		printf("---------- %s %d GPIO_FLAG = %x \n",__func__,__LINE__,*(volatile unsigned int *)(0xb0010050));
 
 #endif //no def  CONFIG_NAND_NFI
 }
@@ -410,13 +405,6 @@ static void nand_init(void)
 	init_param_addr();
 	fill_nfi_base();
 	fill_bch_base();
-#if 1
-//		*(volatile unsigned int *)(0xb0010010) |= (1 << 20);
-//		*(volatile unsigned int *)(0xb0010020) |= (1 << 20);
-//		*(volatile unsigned int *)(0xb0010030) |= (1 << 20);
-//		*(volatile unsigned int *)(0xb0010040) |= (1 << 20);
-//	}
-#endif
 
 #ifdef CONFIG_NAND_NFI
 	clk_set_rate(BCH,clk_get_rate(H2CLK));

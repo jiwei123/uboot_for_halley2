@@ -98,6 +98,7 @@ static int nand_prepare(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 	cpu_msg->msg_cnt = msg->msgdata.prepare.totaltasknum;
 	cpu_msg->eccbit = msg->msgdata.prepare.eccbit;
 	cpu_msg->par_size = get_parity_size(cpu_msg->eccbit);
+	cpu_msg->par_size = (cpu_msg->par_size + 3 ) / 4 * 4;
 	cpu_msg->free_oobsize = cpu_msg->oobsize - (cpu_msg->eccblock_cnt * cpu_msg->par_size);
 	if (cpu_msg->free_oobsize < FF_BUF_SIZE)
 		RETURN_ERR(ENAND, "free oobsize [%d] is less than badblock flag size\n", cpu_msg->free_oobsize);

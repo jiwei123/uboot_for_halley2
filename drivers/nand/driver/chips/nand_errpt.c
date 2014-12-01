@@ -1100,15 +1100,14 @@ static inline void adjust_plat_ptinfo(nand_data *nddata, plat_ptinfo *ptinfo, in
 //	int i = 0;
 
 	while(pt_index--){
+		pt_startblk = get_startblockid(&pt_table[pt_index], nddata->cinfo, totalrbs, raw_boundary);
+		pt_table[pt_index].offset = (unsigned long long)pt_startblk * (unsigned long long)blksize;
 
 		if (next_platpt_connected(pt_index, pt_table, ptinfo->ptcount))
 			pt_endblk = ndd_div_s64_32(pt_table[pt_index + 1].offset, blksize) - 1;
 		else
 			pt_endblk = get_endblockid(&pt_table[pt_index], nddata->cinfo, nddata->csinfo->totalchips,
 						    totalrbs, raw_boundary);
-
-		pt_startblk = get_startblockid(&pt_table[pt_index], nddata->cinfo, totalrbs, raw_boundary);
-		pt_table[pt_index].offset = (unsigned long long)pt_startblk * (unsigned long long)blksize;
 
 		pt_table[pt_index].size = (unsigned long long)(pt_endblk - pt_startblk + 1) * (unsigned long long)blksize;
 #if 0
@@ -1617,8 +1616,8 @@ int nand_write_errpt(nand_data *nddata, plat_ptinfo *ptinfo, nand_flash *ndflash
 		}
 	}
 err3:
-	ERR_LABLE(initbuf):
-		ndd_free(l2pblock.csinrb);
+ERR_LABLE(initbuf):
+	ndd_free(l2pblock.csinrb);
 err2:
 	ndd_free(wbuf);
 err1:
