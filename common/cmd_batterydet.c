@@ -546,7 +546,7 @@ static int poweron_key_long_pressed(void)
 
 static int battery_is_low(void)
 {
-#ifdef CONFIG_PMU_RICOH6x
+#ifdef CONFIG_BATTERYDET_LED
 	int ret = 0;
 	uint8_t reg_val;
 	unsigned int bat_vol_h = 0;
