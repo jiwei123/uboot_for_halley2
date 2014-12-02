@@ -130,10 +130,14 @@ RSA_OBJ_FILES-$(CONFIG_FIT_SIGNATURE) += rsa-sign.o
 
 # Generated LCD/video logo
 LOGO_H = $(OBJTREE)/include/bmp_logo.h
+ifndef CONFIG_BATTERYDET_LED
 CHARGE_LOGO_H = $(OBJTREE)/include/charge_logo.h
+endif
 LOGO_DATA_H = $(OBJTREE)/include/bmp_logo_data.h
 LOGO-$(CONFIG_LCD_LOGO) += $(LOGO_H)
+ifndef CONFIG_BATTERYDET_LED
 LOGO-$(CONFIG_CMD_BATTERYDET) += $(CHARGE_LOGO_H)
+endif
 LOGO-$(CONFIG_LCD_LOGO) += $(LOGO_DATA_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_DATA_H)
@@ -301,8 +305,11 @@ $(LOGO_H):	$(obj)bmp_logo $(LOGO_BMP)
 
 $(LOGO_DATA_H):	$(obj)bmp_logo $(LOGO_BMP)
 	$(obj)./bmp_logo --gen-data $(LOGO_BMP) > $@
+
+ifndef CONFIG_BATTERYDET_LED
 $(CHARGE_LOGO_H) : $(obj)bmp_logo $(CHARGE_LOGO_BMP)
 	$(obj)./bmp_logo  $(CHARGE_LOGO_BMP) > $@
+endif
 #########################################################################
 
 # defines $(obj).depend target

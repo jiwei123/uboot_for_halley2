@@ -52,6 +52,7 @@
 #define RICOH61x_INT_EN_ADC3		0x8A
 #define RICOH61x_INT_EN_GPIO		0x94
 #define RICOH61x_INT_EN_GPIO2		0x94 /* dummy */
+#define RICOH61x_CHGSTATE			0xBD
 #define RICOH61x_INT_MSK_CHGCTR		0xBE
 #define RICOH61x_INT_MSK_CHGSTS1	0xBF
 #define RICOH61x_INT_MSK_CHGSTS2	0xC0
@@ -121,6 +122,8 @@
 #define RICOH61x_ADC_VSYS_THL		0x80
 
 #define	RICOH61x_FG_CTRL		0xE0
+#define	RICOH61x_VOLTAGE_1		0xEB
+#define	RICOH61x_VOLTAGE_0		0xEC
 #define	RICOH61x_PSWR			0x07
 
 /* RICOH61x IRQ definitions */

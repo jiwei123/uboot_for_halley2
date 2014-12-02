@@ -108,7 +108,7 @@
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm" */
-	#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "batterydet; mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
     #define CONFIG_BOOTCOMMAND						\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
@@ -141,6 +141,16 @@
 #endif
 #endif /* CONFIG_LCD */
 
+#define CONFIG_BATTERYDET_LED
+#define CONFIG_BATTERYDET_RED_LED		GPIO_PC(12)
+#define CONFIG_BATTERYDET_GREEN_LED		GPIO_PD(27)
+
+
+#define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
+#define CONFIG_GPIO_PWR_WAKE                GPIO_PA(30)
+#define CONFIG_GPIO_PWR_WAKE_ENLEVEL        0
+#define CONFIG_PMU_RICOH6x
+
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
@@ -159,13 +169,20 @@
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
-
-
-/* PMU
-#define CONFIG_REGULATOR
+/*
+ *#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
+ *#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
  */
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PA(13)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PA(12)
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+
+
+/*
+ *PMU
+*/
+#define CONFIG_REGULATOR
+
 
 /* DEBUG ETHERNET */
 /*
@@ -199,12 +216,15 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_EEPROM
-/*#define CONFIG_CMD_I2C*/
+
+#define CONFIG_CMD_I2C
 
 /*eeprom*/
 #ifdef CONFIG_CMD_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_ADDR  0x50
-/*#define CONFIG_ENV_EEPROM_IS_ON_I2C*/
+/*
+ *#define CONFIG_ENV_EEPROM_IS_ON_I2C
+ */
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #endif
 
@@ -304,9 +324,12 @@
 #define CONFIG_SPL_BOARD_INIT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
 #define CONFIG_SPL_GPIO_SUPPORT
-/* #define CONFIG_SPL_I2C_SUPPORT */
-/* #define CONFIG_SPL_REGULATOR_SUPPORT */
-/* #define CONFIG_SPL_CORE_VOLTAGE		1300 */
+
+/*low*/
+#define CONFIG_SPL_I2C_SUPPORT
+#define CONFIG_SPL_REGULATOR_SUPPORT
+#define CONFIG_SPL_CORE_VOLTAGE		1300
+/* before */
 #ifdef CONFIG_SPL_NOR_SUPPORT
 #define CONFIG_SPL_TEXT_BASE		0xba000000
 #else

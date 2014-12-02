@@ -33,9 +33,13 @@ SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
 #IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
 #BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
 LOGO-$(CONFIG_RLE_LCD_LOGO) = $(RLE_BOOT_LOGO_H)
+ifndef CONFIG_BATTERYDET_LED
 CHARGE_LOGO-$(CONFIG_CMD_BATTERYDET) = $(RLE_CHARGE_LOGO_H)
+endif
 RLE_BOOT_LOGO_H = $(OBJTREE)/include/rle_boot_logo.h
+ifndef CONFIG_BATTERYDET_LED
 RLE_CHARGE_LOGO_H = $(OBJTREE)/include/rle_charge_logo.h
+endif
 
 TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y) $(SPL-y) $(LOGO-y) $(CHARGE_LOGO-y) #$(IMG2RLE-y) $(BIN2ARRAY-y)
 TOOLS	:= $(addprefix $(obj),$(TOOLS))

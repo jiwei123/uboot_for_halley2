@@ -96,7 +96,11 @@ enum regulator_type {
 };
 #endif
 
+#ifndef CONFIG_BATTERYDET_LED
 static int ricoh61x_write_reg(u8 reg, u8 *val)
+#else
+int ricoh61x_write_reg(u8 reg, u8 *val)
+#endif
 {
 	unsigned int  ret;
 
@@ -109,7 +113,11 @@ static int ricoh61x_write_reg(u8 reg, u8 *val)
 }
 
 #ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_BATTERYDET_LED
 static int ricoh61x_read_reg(u8 reg, u8 *val, u32 len)
+#else
+int ricoh61x_read_reg(u8 reg, u8 *val, u32 len)
+#endif
 {
 	int ret;
 	ret = i2c_read(RICOH61x_I2C_ADDR, reg, 1, val, len);

@@ -30,6 +30,48 @@
 #include <asm/arch/mmc.h>
 #include <asm/arch/clk.h>
 
+#ifdef CONFIG_BATTERYDET_LED
+#include <power/ricoh619.h>
+
+#define LED_NUB	2
+
+#if (LED_NUB == 0)
+#elif (LED_NUB > 1)
+unsigned int led_red = CONFIG_BATTERYDET_RED_LED;
+unsigned int led_green  = CONFIG_BATTERYDET_GREEN_LED;
+#else
+unsigned int led_status  = CONFIG_BATTERYDET_RED_LED;
+#endif
+
+void show_led_status_complete(void)
+{
+#if (LED_NUB == 0)
+#elif (LED_NUB > 1)
+	gpio_set_value(led_green, 0);
+	gpio_set_value(led_red, 1);
+	mdelay(1000);
+#else
+	gpio_set_value(led_status, 1);
+#endif
+}
+
+void show_led_status_flicker(void)
+{
+#if (LED_NUB == 0)
+#elif (LED_NUB > 1)
+	gpio_set_value(led_green,  1);
+	gpio_set_value(led_red, 0);
+	mdelay(1000);
+#else
+	gpio_set_value(led_status, 1);
+	mdelay(1000);
+	gpio_set_value(led_status, 0);
+	mdelay(1000);
+#endif
+}
+
+#endif
+
 struct cgu_clk_src cgu_clk_src[] = {
 	{VPU, MPLL},
 	{OTG, EXCLK},
@@ -55,11 +97,24 @@ static void battery_init_gpio(void)
 }
 #endif
 
+#ifdef CONFIG_PMU_RICOH6x
+extern int ricoh61x_regulator_init(void);
+#endif
+
 int board_early_init_f(void)
 {
 	return 0;
 }
 
+int board_early_init_r(void)
+{
+	int ret = 0;
+#ifdef CONFIG_REGULATOR
+	printf("board early int r\n");
+	ret = ricoh61x_regulator_init();
+#endif
+	return ret;
+}
 #ifdef CONFIG_USB_GADGET
 int jz_udc_probe(void);
 void board_usb_init(void)

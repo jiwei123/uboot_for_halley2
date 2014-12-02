@@ -32,6 +32,9 @@
 #include <asm/arch/sadc.h>
 #include <lcd.h>
 #include <rle_charge_logo.h>
+#ifdef CONFIG_BATTERYDET_LED
+#include <power/ricoh619.h>
+#endif
 #include <malloc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -90,8 +93,7 @@ static unsigned int battery_voltage_min;
 static unsigned int battery_voltage_max;
 static unsigned int battery_voltage_scale;
 
-
-
+#ifndef CONFIG_BATTERYDET_LED
 static void lcd_close_backlight(void)
 {
 	gpio_direction_output(CONFIG_GPIO_LCD_PWM, 0);
@@ -103,6 +105,7 @@ static void lcd_open_backlight(void)
 	unsigned pin = CONFIG_GPIO_LCD_PWM % 32;
 	gpio_set_func(port, GPIO_FUNC_0, 1 << pin);
 }
+#endif
 
 #define INTC_ICMCR0	0x0C
 #define INTC_ICMR0_GPIO0_BIT	17
@@ -277,12 +280,18 @@ static int ppreset_occurred(void)
 	return (rtc_read_reg(RTC_HWRSR) & RTC_HWRSR_PPR);
 }
 
+#ifndef CONFIG_BATTERYDET_LED
 static int jz_pm_do_hibernate(void)
+#else
+int jz_pm_do_hibernate(void)
+#endif
 {
 	int a = 1000;
 	printf("jz_do_hibernate...\n");
 
+#ifndef CONFIG_BATTERYDET_LED
 	lcd_close_backlight();
+#endif
 	/*
 	 * RTC Wakeup or 1Hz interrupt can be enabled or disabled
 	 * through  RTC driver's ioctl (linux/driver/char/rtc_jz.c).
@@ -535,6 +544,38 @@ static int poweron_key_long_pressed(void)
 
 static int battery_is_low(void)
 {
+#ifdef CONFIG_PMU_RICOH6x
+	int ret = 0;
+	uint8_t reg_val;
+	unsigned int bat_vol_h = 0;
+	unsigned int bat_vol_l = 0;
+	unsigned int bat_voltage = 0;
+	if (!(ricoh61x_read_reg(RICOH61x_FG_CTRL, &reg_val,1))) {
+		if (!(reg_val & 0x01))
+			reg_val |= 0x01;
+		if (!(reg_val & 0x10))
+			reg_val |= 0x10;
+		if(ricoh61x_write_reg(RICOH61x_FG_CTRL, &reg_val)) {
+			printf("%s, %d: write error!\n", __func__, __LINE__);
+			return;
+		}
+	} else {
+		printf("%s, %d: read error!\n", __func__, __LINE__);
+	}
+
+	if (ricoh61x_read_reg(RICOH61x_VOLTAGE_1, &bat_vol_h,1))
+		printf("%s, %d: read error!\n", __func__, __LINE__);
+	if (ricoh61x_read_reg(RICOH61x_VOLTAGE_0, &bat_vol_l,1))
+		printf("%s, %d: read error!\n", __func__, __LINE__);
+
+	bat_voltage = ((bat_vol_h << 8) | bat_vol_l);
+	bat_voltage = (bat_voltage * 50000 / 4095) / 10;//mv
+	/*printf("--------------- bat v = %d mv\n", bat_voltage);*/
+	if (bat_voltage < 3600)
+		return 1;
+	else
+		return 0;
+#else
 	unsigned int voltage = 0;
 	voltage = read_battery_voltage();
 
@@ -547,8 +588,8 @@ static int battery_is_low(void)
 #endif
 	else
 		return 0;
+#endif
 }
-
 static void * malloc_charge_logo(int buf_size)
 {
 	void *addr;
@@ -578,6 +619,7 @@ static void fb_fill(void *logo_addr, void *fb_addr, int count)
 
 static int show_charge_logo_rle(int rle_num)
 {
+#ifndef CONFIG_BATTERYDET_LED
 	void *lcd_base = (void *)gd->fb_base;
 	int vm_width = panel_info.vl_col;
 	int vm_height = panel_info.vl_row;
@@ -612,6 +654,7 @@ static int show_charge_logo_rle(int rle_num)
 orig:
 	rle_plot(rle_charge_logo_addr[rle_num], lcd_base);
 	lcd_sync();
+#endif
 	return 0;
 }
 
@@ -630,8 +673,61 @@ static int voltage_to_rle_num(void)
 	return rle_num_base;
 }
 
+#ifdef CONFIG_BATTERYDET_LED
+extern void show_led_status_complete(void);
+extern void show_led_status_flicker(void);
+void show_charging_led_status(void)
+{
+	int ret = 0;
+	int reg_val_status;
+	int reg_val_usb;
+	int reg_val;
+	int count_n = 0;
+
+	while(1) {
+		if (__poweron_key_pressed()){
+			printf("poweron pressed \n");
+			if (poweron_key_long_pressed()){
+				printf("poweron long pressed \n");
+				gpio_set_value(CONFIG_BATTERYDET_GREEN_LED,  1);
+				gpio_set_value(CONFIG_BATTERYDET_RED_LED, 1);
+				return;
+			}
+		}
+		if (!(ricoh61x_read_reg(RICOH61x_CHGSTATE, &reg_val,1))) {
+			/*printf("read status1: reg_val = 0x%08x\n", reg_val);*/
+			reg_val_status = reg_val & 0xf;
+			reg_val_usb	   = reg_val & 0xf0;
+			/*printf("read status2: reg_val_status = 0x%08x\n", reg_val_status);*/
+			/*printf("read status3: reg_val_usb    = 0x%08x\n", reg_val_usb);*/
+
+			if (!(reg_val_usb & 0x80)) {
+				for (count_n = 0; count_n < 10; count_n++) {
+					ricoh61x_read_reg(RICOH61x_CHGSTATE, &reg_val_usb,1);
+					if (0x80 == (reg_val_usb & 0xf0)){
+						goto usb_detect;
+					}
+				}
+				printf("The battery CHG OFF , Usb not insert!\n");
+				mdelay(200);
+				jz_pm_do_hibernate();
+			}
+usb_detect:
+			if ((reg_val_status == 0x04) || (reg_val_status == 0x09)) {
+				show_led_status_complete();
+			} else if ((reg_val_status == 0x03) || (reg_val_status == 0x02)){
+				show_led_status_flicker();
+			} else {
+				/*printf("The battery CHG in other status!\n");*/
+			}
+		}
+	}
+	return;
+}
+#endif
 static void show_charging_logo(void)
 {
+#ifndef CONFIG_BATTERYDET_LED
 /* Show time for the charge flash */
 #define FLASH_INTERVAL_TIME	500	/* 500 ms */
 #define FLASH_SHOW_TIME	12000	/* 12S */
@@ -709,25 +805,43 @@ static void show_charging_logo(void)
 			}
 		}
 	}
+#else
+	show_charging_led_status();
+#endif
 }
 
 static void show_battery_low_logo(void)
 {
+#ifndef CONFIG_BATTERYDET_LED
 	lcd_clear_black();
 	show_charge_logo_rle(0);
 	mdelay(5000);
 	lcd_close_backlight();
+#endif
 }
-
 static void battery_detect(void)
 {
+#ifdef CONFIG_BATTERYDET_LED
+	int usb_insert = 0;
+	gpio_direction_output(CONFIG_BATTERYDET_RED_LED,   1);
+	gpio_direction_output(CONFIG_BATTERYDET_GREEN_LED, 1);
+	ricoh61x_read_reg(0xbd, &usb_insert,1);
+	/* DBUG */
+	/*printf("----- pmu status = 0x%08x\n", usb_insert);*/
+	if (usb_insert & 0x80) {
+#else
 	if (charge_detect()) {
+#endif
 		show_charging_logo();
 	} else if (battery_is_low()) {
 		show_battery_low_logo();
 		printf("The battery voltage is too low. Please charge\n");
 		printf("Battery low level,Into hibernate mode ... \n");
+#ifndef CONFIG_BATTERYDET_LED
+		/* This func should be open! But because of pmu
+		   detect usb have some bug in pawscan, so note it.*/
 		jz_pm_do_hibernate();
+#endif
 	}
 
 }
