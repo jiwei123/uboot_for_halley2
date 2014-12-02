@@ -43,7 +43,9 @@ unsigned int led_green  = CONFIG_BATTERYDET_GREEN_LED;
 unsigned int led_status  = CONFIG_BATTERYDET_RED_LED;
 #endif
 
-void show_led_status_complete(void)
+void show_led_status_low_power(void)
+{}
+void show_led_status_charge_full(void)
 {
 #if (LED_NUB == 0)
 #elif (LED_NUB > 1)
@@ -55,7 +57,7 @@ void show_led_status_complete(void)
 #endif
 }
 
-void show_led_status_flicker(void)
+void show_led_status_charging(void)
 {
 #if (LED_NUB == 0)
 #elif (LED_NUB > 1)

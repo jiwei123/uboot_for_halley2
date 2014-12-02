@@ -31,7 +31,9 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/sadc.h>
 #include <lcd.h>
+#ifdef CONFIG_RLE_LCD_LOGO
 #include <rle_charge_logo.h>
+#endif
 #ifdef CONFIG_BATTERYDET_LED
 #include <power/ricoh619.h>
 #endif
@@ -674,8 +676,11 @@ static int voltage_to_rle_num(void)
 }
 
 #ifdef CONFIG_BATTERYDET_LED
-extern void show_led_status_complete(void);
-extern void show_led_status_flicker(void);
+extern void show_led_status_charge_full(void);
+extern void show_led_status_charging(void);
+extern void show_led_status_low_power(void);
+#endif
+#ifdef CONFIG_BATTERYDET_LED
 void show_charging_led_status(void)
 {
 	int ret = 0;
@@ -714,9 +719,9 @@ void show_charging_led_status(void)
 			}
 usb_detect:
 			if ((reg_val_status == 0x04) || (reg_val_status == 0x09)) {
-				show_led_status_complete();
+				show_led_status_charge_full();
 			} else if ((reg_val_status == 0x03) || (reg_val_status == 0x02)){
-				show_led_status_flicker();
+				show_led_status_charging();
 			} else {
 				/*printf("The battery CHG in other status!\n");*/
 			}
@@ -817,6 +822,8 @@ static void show_battery_low_logo(void)
 	show_charge_logo_rle(0);
 	mdelay(5000);
 	lcd_close_backlight();
+#else
+	show_led_status_low_power();
 #endif
 }
 static void battery_detect(void)
