@@ -30,7 +30,8 @@ typedef struct __nand_basic_info {
 typedef struct __nand_params {
 	unsigned int magic;
 	nand_basic_info ndbaseinfo;
-        unsigned int kernel_offset; //kernel partition position
+	unsigned int kernel_offset; //kernel partition position
+	unsigned int nand_manager_version;
 } nand_params; //total size 44Bytes
 
 #define REBUILD_GET_NAND_TYPE(n)	(((n)>>14) & 0x3)

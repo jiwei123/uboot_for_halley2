@@ -57,6 +57,8 @@ static unsigned int ecc_block;
 static unsigned int ecc_count;
 static unsigned int parity_size;
 
+static unsigned int spl_read_align = 0;
+
 void (*ndd_ndelay) (unsigned long nsecs);
 int (*ndd_printf)(const char *fmt, ...);
 extern int printf(const char* fmt, ...);
@@ -324,6 +326,7 @@ static void dump_nand_common_params(nand_sharing_params *nandparams)
 	printf("rowcycles = %d\n",nandparams->nandinfo.rowcycles);
 	printf("options = %d\n",nandparams->nandinfo.options);
 	printf("kernel_offset = %x\n",nandparams->kernel_offset);
+	printf("nand_manager_version = %x\n",nandparams->nand_manager_version);
 
 }
 
@@ -332,6 +335,17 @@ static inline void fill_nand_io_cinfo(struct spl_basic_param *param)
 	nandio->cinfo->rowcycles = param->rowcycles;
 	nandio->cinfo->pagesize = param->pagesize;
 	nandio->base->cycle = param->rowcycles;
+}
+
+static void get_nand_manager_version(nand_sharing_params *nandparams)
+{
+	if(nandparams->nand_manager_version == 0xffffffff) // nand_manager_version lower than 1.9.0
+		spl_read_align = 0;
+	else if(nandparams->nand_manager_version >= 190) // nand manager version highter than 1.9.0
+		spl_read_align = 1;
+	else
+		printf("can't parse nand manager version , spl read uboot will be error !!!\n");
+
 }
 
 static struct nand_sharing_params *get_nand_basic_params_emc()
@@ -361,6 +375,7 @@ static struct nand_sharing_params *get_nand_basic_params_emc()
 	memcpy(NAND_SHARING_PARMS_ADDR,data_space,NAND_PARAMS_LEN);
 
 	//dump_nand_common_params((nand_sharing_params *)NAND_SHARING_PARMS_ADDR);
+	get_nand_manager_version((nand_sharing_params *)NAND_SHARING_PARMS_ADDR);
 	return (nand_sharing_params *)NAND_SHARING_PARMS_ADDR;
 }
 static inline void init_param_addr()
@@ -493,7 +508,9 @@ static int nand_read_page(unsigned int pageaddr,unsigned char *data_buf,unsigned
 	int i;
 	unsigned int bit0cnt;
 	PipeNode pipenode;
-	parity_size = (parity_size + 3) / 4 * 4;
+
+	if(spl_read_align)
+		parity_size = (parity_size + 3) / 4 * 4;
 
 	send_read_start_cmd(pageaddr,0,1);
 

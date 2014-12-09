@@ -159,7 +159,8 @@ struct nand_basic_info {
 typedef struct __nand_sharing_params {
 	unsigned int magic;
 	struct nand_basic_info nandinfo;
-        unsigned int kernel_offset;
+	unsigned int kernel_offset;
+	unsigned int nand_manager_version;
 } nand_sharing_params;
 const nand_flash *get_nand_flash(nand_flash_id *fid);
 

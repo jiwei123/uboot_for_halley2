@@ -30,6 +30,7 @@ nand_sharing_params share_parms;
 nand_flash nand_flash_info;
 
 int g_have_wp = 1;//use the wp gpio can't request
+int cpu_trans_align = 0; // work on that uboot read kernel whether need to align as word
 
 int get_nand_param(void);
 #define __raw_readl(reg)     \
@@ -143,6 +144,28 @@ void fill_nand_flash_info(nand_flash_param *nand_info)
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
 #endif
 	//dump_nand_flash_info();
+}
+
+/* parse the cpu transfer whether need align as word */
+static void get_cpu_trans_formart()
+{
+	if(share_parms.nand_manager_version == 0xffffffff) // nand manager version lower than 1.9.0
+		cpu_trans_align = 0;
+	else if (share_parms.nand_manager_version >= 190) // nand manager version higter than 1.9.0
+		cpu_trans_align = 1;
+	else
+		printf("can't get nand manager version, cpu transfer dou't align as word, uboot load kernel will be error !!!\n ");
+}
+static void set_cpu_trans_formart()
+{
+	int manager_version;
+
+	manager_version = get_nand_manager_version();
+
+	if(manager_version >= 190) // nand manager version higter than 1.9.0
+		cpu_trans_align = 1;
+	else
+		cpu_trans_align = 0;
 }
 
 static void ndd_ndelay(unsigned long nsecs)
@@ -651,6 +674,7 @@ static int try_to_get_nand_id(int rb_gpio,nand_flash_id *fid)
 extern int __ndd_dump_nand_id(nfi_base *base, unsigned int cs_id,nand_flash_id *fid);
 extern void fill_nand_basic_info(nand_flash_param *nand_info);
 extern int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall,unsigned int *ops_pt_startaddrs,int erase_pt_cnt);
+extern int get_nand_manager_version();
 
 extern void my_print_epc(void);
 
@@ -679,6 +703,8 @@ int nand_probe(void)
 {
 	int ret;
 	get_nand_param();
+
+	get_cpu_trans_formart();
 
 	/**************************** STEP1: nand api init *****************************/
 	/* alloc memory for io_base and fill nand base */
@@ -773,6 +799,8 @@ int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int 
 
 	/* nandmanager init */
 	burn_nandmanager_init(pinfo, eraseall, pt_startadd_offset, ops_pt_cnt);
+
+	set_cpu_trans_formart();
 
 	/* nand api reinit */
 	ret = nand_api_reinit(&platdep);

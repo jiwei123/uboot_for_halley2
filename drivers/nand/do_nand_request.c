@@ -7,6 +7,7 @@
 #include "vnandinfo.h"
 #include "nandmanagerinterface.h"
 #include "./driver/utils/rebuild_nand_spl.h"
+#include "nandinterface.h"
 
 #define SECTOR_SIZE 512
 #define MAX_PARTITION_NUM 20
@@ -139,6 +140,14 @@ char * jz_strncpy(char *dest,const char *src, unsigned int count)
 		count--;
 	}
 	return dest;
+}
+
+int  get_nand_manager_version()
+{
+	nm_version version;
+	Get_NandManagerVersion(&version);
+
+	return version.major * 100 + version.minor * 10 + version.revision;
 }
 
 int burn_nandmanager_init(PartitionInfo *pinfo,int eraseall,unsigned int *ops_pt_startaddrs,int erase_pt_cnt)
@@ -337,8 +346,10 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			ndparams.magic = 0x646e616e;	//nand
 			ndparams.kernel_offset = g_handle.m_ppt[pt_index + 1].startPage / g_handle.m_ppt[pt_index + 1].groupperzone;
 			printf("-------------->>> kernel_offset = %x\n",ndparams.kernel_offset);
+			printf("-------------->>> nand_manager_version = %d\n",get_nand_manager_version());
 			/* update maxvalidblocks after initing nand_driver successfully */
 			ndparams.ndbaseinfo.maxvalidblocks = get_nandflash_maxvalidblocks();
+			ndparams.nand_manager_version = get_nand_manager_version();
 			memcpy(spl_buf + NAND_PARAMS_OFFSET, &ndparams, sizeof(nand_params));
 		}
 	}
