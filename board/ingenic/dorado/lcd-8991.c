@@ -56,6 +56,9 @@ struct jzfb_config_info jzfb1_init_data = {
 #ifdef CONFIG_DORADO_V21
 #define GPIO_LCD_DISP GPIO_PB(0)
 #endif
+#ifdef CONFIG_DORADO_V22
+#define GPIO_LCD_DISP GPIO_PB(0)
+#endif
 struct byd_8991_data byd_8991_pdata = {
 	.gpio_lcd_disp = GPIO_LCD_DISP,
 	.gpio_lcd_de = 0,

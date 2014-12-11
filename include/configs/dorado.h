@@ -111,7 +111,7 @@
  * Boot arguments definitions.
  */
 #ifndef CONFIG_RVMS
-#ifdef CONFIG_DORADO_V21
+#if defined(CONFIG_DORADO_V21) || defined(CONFIG_DORADO_V22)
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=256M@0x30000000"
 #else
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=768M@0x30000000"
@@ -270,12 +270,6 @@
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 
-#ifdef CONFIG_DORADO_V10
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
-#define CONFIG_PMU_D2041
-#endif
-
 #ifdef CONFIG_DORADO_V20
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
@@ -288,6 +282,13 @@
 #ifdef CONFIG_DORADO_V21
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PA(13)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PA(12)
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+#define CONFIG_PMU_RICOH6x
+#endif
+
+#ifdef CONFIG_DORADO_V22
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
 #define CONFIG_PMU_RICOH6x
 #endif
