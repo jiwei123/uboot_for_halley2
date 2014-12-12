@@ -76,14 +76,14 @@ _start:
 	ori	v0, v0, 2
 	mtc0	v0, CP0_CONFIG, 7
 	nop
-
+#if 0
 	mfc0	v0, $12, 2
 	nop
 	li	v1, 0x7fffffff
 	and	v0, v0, v1
 	mtc0	v0, $12, 2
 	nop
-
+#endif
 	/*
 	 * CU0=UM=EXL=IE=0, BEV=ERL=1, IP2~7=1
 	 */
