@@ -610,6 +610,9 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 	int flag;
 	int bpp;
 
+#ifndef CONFIG_SLCDC_CONTINUA
+        int smart_ctrl = 0;
+#endif
 	unsigned short *photo_ptr = (unsigned short *)buf;
 	unsigned short *lcd_fb = (unsigned short *)dst_buf;
 	bpp = NBITS(panel_info.vl_bpix);
@@ -626,6 +629,15 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 	}else if(flag > 0){
 		rle_plot_biger(photo_ptr, lcd_fb, bpp);
 	}
+
+	flush_cache_all();
+
+#ifndef CONFIG_SLCDC_CONTINUA
+        smart_ctrl = reg_read(SLCDC_CTRL);
+        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+        reg_write(SLCDC_CTRL, smart_ctrl);
+#endif
+
 	return;
 }
 
@@ -634,6 +646,27 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 {
 }
 #endif
+void fb_fill(void *logo_addr, void *fb_addr, int count)
+{
+	//memcpy(logo_buf, fb_addr, count);
+	int i;
+	int *dest_addr = (int *)fb_addr;
+	int *src_addr = (int *)logo_addr;
+#ifndef CONFIG_SLCDC_CONTINUA
+        int smart_ctrl = 0;
+#endif
+	for(i = 0; i < count; i = i + 4){
+		*dest_addr =  *src_addr;
+		src_addr++;
+		dest_addr++;
+	}
+#ifndef CONFIG_SLCDC_CONTINUA
+        smart_ctrl = reg_read(SLCDC_CTRL);
+        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+        reg_write(SLCDC_CTRL, smart_ctrl);
+#endif
+
+}
 
 int jzfb_get_controller_bpp(unsigned int bpp)
 {
@@ -655,7 +688,7 @@ static void jzfb_config_fg0(struct jzfb_config_info *info)
 	/* OSD mode enable and alpha blending is enabled */
 	cfg = LCDC_OSDC_OSDEN | LCDC_OSDC_ALPHAEN;	//|  LCDC_OSDC_PREMULTI0;
 	cfg |= 1 << 16;		/* once transfer two pixels */
-	cfg |= LCDC_OSDC_COEF_SLE0_1;
+	//cfg |= LCDC_OSDC_COEF_SLE0_1; //ykliu
 	/* OSD control register is read only */
 
 	if (info->fmt_order == FORMAT_X8B8G8R8) {
@@ -857,6 +890,7 @@ static int jzfb_prepare_dma_desc(struct jzfb_config_info *info)
 		jzfb_config_smart_lcd_dma(info);
 	}
 	jzfb_config_fg1_dma(info);
+	reg_write(LCDC_DA0, info->fdadr0);
 	return 0;
 }
 
@@ -902,7 +936,7 @@ void lcd_enable(void)
 	unsigned ctrl;
 	if (lcd_enable_state == 0) {
 		reg_write(LCDC_STATE, 0);
-		reg_write(LCDC_DA0, lcd_config_info.fdadr0);
+		reg_write(LCDC_OSDS, 0);
 		ctrl = reg_read(LCDC_CTRL);
 		ctrl |= LCDC_CTRL_ENA;
 		ctrl &= ~LCDC_CTRL_DIS;
@@ -1140,7 +1174,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		smart_ctrl |= 1 << 7 | 1 << 6;
 
     		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG,
-				                    0x00000000);
+				                    0x1); //te
 		mipi_dsih_dphy_enable_hs_clk(dsi, 1);
 		mipi_dsih_hal_gen_set_mode(dsi, 1);
 		mipi_dsih_hal_dpi_color_coding(dsi,

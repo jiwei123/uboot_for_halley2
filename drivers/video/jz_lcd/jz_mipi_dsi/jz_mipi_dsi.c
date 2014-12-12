@@ -265,7 +265,6 @@ void jz_dsi_init(struct dsi_device *dsi)
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);
 
 	/*select mipi dsi */
-	*((volatile unsigned int *)0xb30500a4) = 1 << 7;	//MCTRL
 	jz_dsi_phy_open(dsi);
 
 	/*set command mode */
