@@ -22,6 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
+#include <jz_pca953x.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
 #include <jz_lcd/byd_8991.h>
 #ifdef CONFIG_PMU_RICOH6x
@@ -52,12 +53,15 @@ struct jzfb_config_info jzfb1_init_data = {
 
 #ifdef CONFIG_DORADO_V20
 #define GPIO_LCD_DISP GPIO_PE(10)
+#define GPIO_LCD_SPI_CLK	GPIO_PD(28)
 #endif
 #ifdef CONFIG_DORADO_V21
 #define GPIO_LCD_DISP GPIO_PB(0)
+#define GPIO_LCD_SPI_CLK	GPIO_PD(28)
 #endif
 #ifdef CONFIG_DORADO_V22
-#define GPIO_LCD_DISP GPIO_PB(0)
+#define GPIO_LCD_DISP PCA953X_GPIO(9)
+#define GPIO_LCD_SPI_CLK	GPIO_PB(0)
 #endif
 struct byd_8991_data byd_8991_pdata = {
 	.gpio_lcd_disp = GPIO_LCD_DISP,
@@ -65,7 +69,7 @@ struct byd_8991_data byd_8991_pdata = {
 	.gpio_lcd_vsync = 0,
 	.gpio_lcd_hsync = 0,
 	.gpio_spi_cs = GPIO_PA(11),
-	.gpio_spi_clk = GPIO_PD(28),
+	.gpio_spi_clk = GPIO_LCD_SPI_CLK,
 	.gpio_spi_mosi = GPIO_PE(3),
 	.gpio_spi_miso = GPIO_PE(0),
 };

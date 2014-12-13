@@ -26,6 +26,9 @@
 #include <asm/io.h>
 #include <asm/gpio.h>
 
+#include <ingenic_soft_i2c.h>
+#include <jz_pca953x.h>
+
 #if defined (CONFIG_JZ4775)
 #include "jz_gpio/jz4775_gpio.c"
 #elif defined (CONFIG_JZ4780)
@@ -35,6 +38,11 @@
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
+
+static inline is_gpio_from_chip(int gpio_num)
+{
+	return gpio_num < (GPIO_NR_PORTS * 32) ? 1 : 0;
+}
 
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 {
@@ -93,8 +101,13 @@ int gpio_set_value(unsigned gpio, int value)
 {
 	int port = gpio / 32;
 	int pin = gpio % 32;
-	gpio_port_set_value(port, pin, value);
-
+	if(is_gpio_from_chip(gpio)) {
+		gpio_port_set_value(port, pin, value);
+	} else {
+#ifdef CONFIG_JZ_PCA953X
+	pca953x_set_value(gpio, value);
+#endif
+	}
 	return 0;
 }
 
@@ -102,8 +115,13 @@ int gpio_get_value(unsigned gpio)
 {
 	unsigned port = gpio / 32;
 	unsigned pin = gpio % 32;
-	
+	if(is_gpio_from_chip(gpio)) {
 	return !!(readl(GPIO_PXPIN(port)) & (1 << pin));
+	} else {
+#ifdef CONFIG_JZ_PCA953X
+	return pca953x_get_value(gpio);
+#endif
+	}
 }
 
 int gpio_get_flag(unsigned int gpio)
@@ -127,8 +145,13 @@ int gpio_direction_input(unsigned gpio)
 {
 	unsigned port = gpio / 32;
 	unsigned pin = gpio % 32;
-
-	gpio_port_direction_input(port, pin);
+	if(is_gpio_from_chip(gpio)) {
+		gpio_port_direction_input(port, pin);
+	} else {
+#ifdef CONFIG_JZ_PCA953X
+	pca953x_direction_input(TO_PCA953X_GPIO(gpio));
+#endif
+	}
 
 	return 0;
 }
@@ -137,9 +160,13 @@ int gpio_direction_output(unsigned gpio, int value)
 {
 	unsigned port = gpio / 32;
 	unsigned pin = gpio % 32;
-
-	gpio_port_direction_output(port, pin, value);
-
+	if(is_gpio_from_chip(gpio)) {
+		gpio_port_direction_output(port, pin, value);
+	} else {
+#ifdef CONFIG_JZ_PCA953X
+	pca953x_direction_output(TO_PCA953X_GPIO(gpio), value);
+#endif
+	}
 	return 0;
 }
 
@@ -234,6 +261,11 @@ void gpio_init(void)
 	g = &uart_gpio_func[gd->arch.gi->uart_idx];
 	gpio_set_func(g->port, g->func, g->pins);
 
+#ifndef CONFIG_SPL_BUILD
+#ifdef CONFIG_JZ_PCA953X
+	pca953x_init();
+#endif
+#endif
 }
 void dump_gpio_func( unsigned int gpio)
 {
@@ -245,5 +277,5 @@ void dump_gpio_func( unsigned int gpio)
 	d = d | ((readl(base + PXMSK) >> pin) & 1) << 2;
 	d = d | ((readl(base + PXPAT1) >> pin) & 1) << 1;
 	d = d | ((readl(base + PXPAT0) >> pin) & 1) << 0;
-    printf("gpio[%d] fun %x\n",gpio,d);	
+    printf("gpio[%d] fun %x\n",gpio,d);
 }

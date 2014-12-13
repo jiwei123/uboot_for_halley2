@@ -49,7 +49,11 @@ static void i2c_scl(struct i2c *i2c,int bit)
 
 static void i2c_sda(struct i2c *i2c,int bit)
 {
-	gpio_direction_output(i2c->sda,bit);
+	if(bit) {
+		gpio_direction_input(i2c->sda);
+	} else {
+		gpio_direction_output(i2c->sda,bit);
+	}
 }
 
 static int i2c_read_sda(struct i2c *i2c)
@@ -150,7 +154,7 @@ static int write_byte(struct i2c *i2c,unsigned char data)
 	 */
 	i2c_scl(i2c,0);
 	udelay(5);
-	i2c_sda(i2c,0);
+	i2c_sda(i2c,1);
 	udelay(5);
 	i2c_scl(i2c,1);
 	udelay(5);
@@ -209,13 +213,14 @@ void i2c_init(struct i2c *i2c)
 /*-----------------------------------------------------------------------
  * Read bytes
  */
-int  i2c_read(struct i2c *i2c,unsigned char chip, 
+int  i2c_read(struct i2c *i2c,unsigned char chip,
 		unsigned int addr, int alen, unsigned char *buffer, int len)
 {
 	int shift;
+#ifdef DEBUG
 	printf("i2c_read: chip %x addr %x alen %d buffer %p len %d\n",
-		chip, addr, alen, buffer, len);
-
+			chip, addr, alen, buffer, len);
+#endif
 	/*
 	 * Do the addressing portion of a write cycle to set the
 	 * chip's address pointer.  If the address length is zero,
@@ -243,8 +248,12 @@ int  i2c_read(struct i2c *i2c,unsigned char chip,
 		 * only a start.  Default behaviour is to send the
 		 * stop/start sequence.
 		 */
+#ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
+		send_start(i2c);
+#else
 		send_stop(i2c);
 		send_start(i2c);
+#endif
 	}
 	/*
 	 * Send the chip address again, this time for a read cycle.
@@ -266,9 +275,10 @@ int  i2c_write(struct i2c *i2c,unsigned char chip, unsigned int addr, int alen, 
 {
 	int shift, failures = 0;
 
+#ifdef DEBUG
 	printf("i2c_write: chip %x addr %x alen %d buffer %p len %d\n",
 		chip, addr, alen, buffer, len);
-
+#endif
 	send_start(i2c);
 	if(write_byte(i2c,chip << 1)) {	/* write cycle */
 		send_stop(i2c);
@@ -291,4 +301,16 @@ int  i2c_write(struct i2c *i2c,unsigned char chip, unsigned int addr, int alen, 
 	}
 	send_stop(i2c);
 	return(failures);
+}
+
+int i2c_probe(struct i2c *i2c, unsigned char addr)
+{
+	int rc;
+
+	send_start(i2c);
+	rc = write_byte(i2c, (addr << 1) | 0);
+	send_stop(i2c);
+	printf("i2c probe:%d, addr:%x\n", rc, addr);
+
+	return (rc ? 1 : 0);
 }

@@ -30,7 +30,9 @@
 #include <linux/err.h>
 #include <linux/list.h>
 #include <regulator.h>
-#include <i2c.h>
+//#include <i2c.h>
+//
+#include <ingenic_soft_i2c.h>
 #ifndef CONFIG_SPL_BUILD
 #include <power/ricoh619.h>
 #include <power/ricoh619-regulator.h>
@@ -96,6 +98,9 @@ enum regulator_type {
 };
 #endif
 
+static struct i2c ricoh61x_i2c;
+static struct i2c *i2c;
+
 #ifndef CONFIG_BATTERYDET_LED
 static int ricoh61x_write_reg(u8 reg, u8 *val)
 #else
@@ -103,8 +108,7 @@ int ricoh61x_write_reg(u8 reg, u8 *val)
 #endif
 {
 	unsigned int  ret;
-
-	ret = i2c_write(RICOH61x_I2C_ADDR, reg, 1, val, 1);
+	ret = i2c_write(i2c, RICOH61x_I2C_ADDR, reg, 1, val, 1);
 	if(ret) {
 		debug("ricoh61x write register error\n");
 		return -EIO;
@@ -120,7 +124,7 @@ int ricoh61x_read_reg(u8 reg, u8 *val, u32 len)
 #endif
 {
 	int ret;
-	ret = i2c_read(RICOH61x_I2C_ADDR, reg, 1, val, len);
+	ret = i2c_read(i2c, RICOH61x_I2C_ADDR, reg, 1, val, len);
 	if(ret) {
 		printf("ricoh61x read register error\n");
 		return -EIO;
@@ -287,10 +291,11 @@ static  int ricoh61x_set_voltage(struct regulator *rdev,
 void test_richo()
 {
 	int val =0;
-//	spl_ricoh61x_regulator_set_voltage(RICOH619_LDO4, 1200);
+	//spl_ricoh61x_regulator_set_voltage(RICOH619_LDO4, 1200);
 	ricoh61x_read_reg(0x2c, &val, 1);
+	printf("val:%d\n", val);
 	ricoh61x_read_reg(0xbd, &val, 1);
-
+	printf("val:%d\n", val);
 //	ricoh61x_read_reg(u8 reg, u8 *val, u32 len);
 }
 int ricoh61x_reg_charge_status(u8 reg, uint8_t bit_status)
@@ -435,7 +440,13 @@ int ricoh61x_regulator_init(void)
 {
 
 	int ret,i;
-	ret = i2c_probe(RICOH61x_I2C_ADDR);
+	ricoh61x_i2c.scl = CONFIG_RICOH61X_I2C_SCL;
+	ricoh61x_i2c.sda = CONFIG_RICOH61X_I2C_SDA;
+	i2c = &ricoh61x_i2c;
+	i2c_init(i2c);
+
+	ret = i2c_probe(i2c, RICOH61x_I2C_ADDR);
+
 	if(ret) {
 		printf("probe richo61x error, i2c addr ox%x\n", RICOH61x_I2C_ADDR);
 		return -EIO;
@@ -453,6 +464,19 @@ int ricoh61x_regulator_init(void)
 #endif
 
 #ifdef CONFIG_SPL_BUILD
+int spl_regulator_init()
+{
+	int ret;
+
+	ricoh61x_i2c.scl = CONFIG_RICOH61X_I2C_SCL;
+	ricoh61x_i2c.sda = CONFIG_RICOH61X_I2C_SDA;
+	i2c = &ricoh61x_i2c;
+	i2c_init(i2c);
+
+	ret = i2c_probe(i2c, RICOH61x_I2C_ADDR);
+
+	return ret;
+}
 int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv)
 {
 	char reg;

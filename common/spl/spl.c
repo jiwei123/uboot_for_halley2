@@ -275,6 +275,7 @@ void preloader_console_init(void)
 void spl_regulator_set(void)
 {
 #ifdef CONFIG_SPL_CORE_VOLTAGE
+	spl_regulator_init();
 	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
 	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
 #endif

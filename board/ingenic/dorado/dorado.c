@@ -81,6 +81,9 @@ int board_early_init_r(void)
 #ifdef CONFIG_REGULATOR
 	regulator_init();
 #endif
+#ifdef CONFIG_JZ_GPIO
+	gpio_init();
+#endif
 	return 0;
 }
 

@@ -40,7 +40,7 @@ vidinfo_t panel_info = { 480, 800, LCD_BPP, };
 
 void panel_pin_init(void)
 {
-	gpio_direction_output(byd_8991_pdata.gpio_lcd_disp, -1);
+	gpio_direction_output(byd_8991_pdata.gpio_lcd_disp, 1);
 	gpio_direction_output(byd_8991_pdata.gpio_spi_cs, 1);
 	gpio_direction_output(byd_8991_pdata.gpio_spi_clk, 1);
 	gpio_direction_output(byd_8991_pdata.gpio_spi_mosi, 1);
