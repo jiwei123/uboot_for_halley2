@@ -138,12 +138,12 @@
 #define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
 #define CONFIG_VIDEO_JZ4775
 #define CONFIG_JZ_PWM
-#define CONFIG_VIDEO_BYD_BM8766U
+/*#define CONFIG_VIDEO_BYD_BM8766U*/
+#define CONFIG_VIDEO_BM347WV_F_8991FTGF
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET  	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
 #endif
-/*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
 #endif /* CONFIG_LCD */
 
 /* MMC */
@@ -350,11 +350,16 @@
 #define CONFIG_CMD_ZM_NAND  /* nand zone manager support */
 #define CONFIG_SPL_PAD_TO		16384
 #endif
-
+/**
+* GPT configuration
+ */
+#ifdef CONFIG_GPT_CREATOR
+#define CONFIG_GPT_TABLE_PATH   "$(TOPDIR)/board/$(BOARDDIR)"
+#else
 /**
  * MBR configuration
  */
-#ifdef CONFIG_MBR_CREATOR
+/*#ifdef CONFIG_MBR_CREATOR*/
 #define CONFIG_MBR_P0_OFF	64mb
 #define CONFIG_MBR_P0_END	556mb
 #define CONFIG_MBR_P0_TYPE 	linux
