@@ -1278,7 +1278,6 @@ void lcd_ctrl_init(void *lcd_base)
 	/* init registers base address */
 	lcd_config_info = jzfb1_init_data;
 	lcd_config_info.lcdbaseoff = 0;
-
 #ifdef CONFIG_JZ_MIPI_DSI
 	dsi = &jz_dsi;
 #endif

@@ -1279,7 +1279,7 @@ dsih_error_t mipi_dsih_gen_wr_packet(struct dsi_device * dsi,
 		return ERR_DSI_OUT_OF_BOUND;
 	}
 	if (param_length > 2) {	/* long packet - write word count to header, and the rest to payload */
-		payload = params + (2 * sizeof(params[0]));
+		payload = params + (2 * sizeof(params[0])); /* point to the really data */
 		word_count = (params[1] << 8) | params[0];
 		if ((param_length - 2) < word_count) {
 			printf
@@ -1292,7 +1292,8 @@ dsih_error_t mipi_dsih_gen_wr_packet(struct dsi_device * dsi,
 		}
 		for (i = 0; i < (param_length - 2); i += j) {
 			temp = 0;
-			for (j = 0; (j < 4) && ((j + i) < (param_length - 2)); j++) {	/* temp = (payload[i + 3] << 24) | (payload[i + 2] << 16) | (payload[i + 1] << 8) | payload[i]; */
+			for (j = 0; (j < 4) && ((j + i) < (param_length - 2)); j++) {
+			 /* temp = (payload[i + 3] << 24) | (payload[i + 2] << 16) | (payload[i + 1] << 8) | payload[i]; */
 				temp |= payload[i + j] << (j * 8);
 			}
 

@@ -69,31 +69,55 @@ out:
 #endif
 }
 
-void auo_x163_sleep_in(struct dsi_device *dsi)
+void auo_x163_sleep_in(struct dsi_device *dsi) /* enter sleep */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x10, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void auo_x163_sleep_out(struct dsi_device *dsi)
+void auo_x163_sleep_out(struct dsi_device *dsi) /* exit sleep */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x11, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void auo_x163_display_on(struct dsi_device *dsi)
+void auo_x163_display_on(struct dsi_device *dsi) /* display on */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x29, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void auo_x163_display_off(struct dsi_device *dsi)
+void auo_x163_display_off(struct dsi_device *dsi) /* display off */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x28, 0x00};
 
+	write_command(dsi, data_to_send);
+}
+
+void auo_x163_set_pixel_off(struct dsi_device *dsi) /* set_pixels_off */
+{
+	struct dsi_cmd_packet data_to_send = {0x39, 0x02, 0x00, {0x22,0x00}};
+
+	write_command(dsi, data_to_send);
+}
+
+void auo_x163_set_pixel_on(struct dsi_device *dsi) /* set_pixels_on */
+{
+	struct dsi_cmd_packet data_to_send = {0x39, 0x02, 0x00, {0x23,0x00}};
+
+	write_command(dsi, data_to_send);
+}
+
+void auo_x163_set_brightness(struct dsi_device *dsi, unsigned int brightness) /* set brightness */
+{
+	if(brightness >= 255) {
+		debug("the max brightness is 255, set it 255\n");
+		brightness = 255;
+	}
+	struct dsi_cmd_packet data_to_send = {0x39, 0x02, 0x00, {0x51, brightness}};
 	write_command(dsi, data_to_send);
 }
 
@@ -142,6 +166,7 @@ struct dsi_cmd_packet auo_x163_cmd_list1[] = {
 	{0x39, 0x02, 0x00, {0x35, 0x00}},
 	{0x15, 0x02, 0x00, {0x36, 0x00}},
 	{0x15, 0x02, 0x00, {0xc0, 0x20}},
+	{0x39, 0x02, 0x00, {0x39, 0x00}},
 
 	{0x39, 0x07, 0x00, {0xc2, 0x17, 0x17, 0x17, 0x17, 0x17, 0x0b}},
 	{0x39, 0x01, 0x00, 0x2c},
@@ -153,7 +178,6 @@ static void auo_x163_panel_condition_setting(struct dsi_device *dsi)
 	for(i = 0; i < ARRAY_SIZE(auo_x163_cmd_list1); i++) {
 		write_command(dsi,  auo_x163_cmd_list1[i]);
 	}
-
 }
 void panel_init_set_sequence(struct dsi_device *dsi)
 {
@@ -191,4 +215,3 @@ struct fb_videomode jzfb1_videomode = {
 	.vmode = FB_VMODE_NONINTERLACED,
 	.flag = 0,
 };
-
