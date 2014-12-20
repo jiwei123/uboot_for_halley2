@@ -70,8 +70,28 @@ int regulator_init(void)
 }
 #endif /* CONFIG_REGULATOR */
 
+#ifdef CONFIG_GPIO_EARLY_INIT
+int gpio_early_init(void)
+{
+	int ret = 0;
+
+	ret = gpio_request(GPIO_PAH8001_PD, "PAH8001_PD");
+	if (ret < 0) {
+		printf("gpio request PAH8001_PD failed\n");
+		return ret;
+	}
+	gpio_direction_output(GPIO_PAH8001_PD, 1);
+
+	return 0;
+}
+#endif
+
 int board_early_init_r(void)
 {
+#ifdef CONFIG_GPIO_EARLY_INIT
+	gpio_early_init();
+#endif
+
 #ifdef CONFIG_REGULATOR
 	regulator_init();
 #endif

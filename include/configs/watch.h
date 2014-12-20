@@ -289,6 +289,7 @@
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #define CONFIG_BOARD_EARLY_INIT_F
+#define CONFIG_GPIO_EARLY_INIT
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_SYS_FLASH_BASE	0 /* init flash_base as 0 */
 #define CONFIG_ENV_OVERWRITE
@@ -462,4 +463,6 @@
 #define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
+
+#define GPIO_PAH8001_PD 	GPIO_PC(23)
 #endif /* __CONFIG_DORAOD_H__ */
