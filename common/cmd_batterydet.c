@@ -606,18 +606,6 @@ static void free_charge_logo(void *addr)
 	free(addr);
 }
 
-static void fb_fill(void *logo_addr, void *fb_addr, int count)
-{
-	//memcpy(logo_buf, fb_addr, count);
-	int i;
-	int *dest_addr = (int *)fb_addr;
-	int *src_addr = (int *)logo_addr;
-	for(i = 0; i < count; i = i + 4){
-		*dest_addr =  *src_addr;
-		src_addr++;
-		dest_addr++;
-	}
-}
 
 static int show_charge_logo_rle(int rle_num)
 {

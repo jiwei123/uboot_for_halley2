@@ -637,6 +637,27 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 {
 }
 #endif
+void fb_fill(void *logo_addr, void *fb_addr, int count)
+{
+	//memcpy(logo_buf, fb_addr, count);
+	int i;
+	int *dest_addr = (int *)fb_addr;
+	int *src_addr = (int *)logo_addr;
+#ifndef CONFIG_SLCDC_CONTINUA
+        int smart_ctrl = 0;
+#endif
+	for(i = 0; i < count; i = i + 4){
+		*dest_addr =  *src_addr;
+		src_addr++;
+		dest_addr++;
+	}
+#ifndef CONFIG_SLCDC_CONTINUA
+        smart_ctrl = reg_read(SLCDC_CTRL);
+        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+        reg_write(SLCDC_CTRL, smart_ctrl);
+#endif
+
+}
 
 int jzfb_get_controller_bpp(unsigned int bpp)
 {
@@ -1141,7 +1162,7 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		smart_cfg |= 1 << 16;
 		smart_new_cfg |= 4 << 13;
 		smart_ctrl |= 1 << 7 | 1 << 6;
-
+		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG,0x1); //te
 		mipi_dsih_dphy_enable_hs_clk(dsi, 1);
 		mipi_dsih_hal_gen_set_mode(dsi, 1);
 		mipi_dsih_hal_dpi_color_coding(dsi,

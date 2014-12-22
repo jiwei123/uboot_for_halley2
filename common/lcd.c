@@ -461,9 +461,20 @@ void lcd_clear_black(void)
 {
 	unsigned int i;
 	int *lcdbase_p = (int *) gd->fb_base;
+        int *p = malloc(panel_info.vl_col * panel_info.vl_row * 4);
+        if(p == NULL)
+                return ;
+
+        memset(p, 0, panel_info.vl_col * panel_info.vl_row * 4);
+        fb_fill(p, lcd_base, panel_info.vl_col * panel_info.vl_row * 4);
+        lcd_sync();
+        free(p);
+#if 0
+	int *lcdbase_p = (int *) gd->fb_base;
 	for (i = 0; i < lcd_line_length * panel_info.vl_row / 4; i++) {
 		*lcdbase_p++ = 0x0;
 	}
+#endif
 }
 
 /*----------------------------------------------------------------------*/
