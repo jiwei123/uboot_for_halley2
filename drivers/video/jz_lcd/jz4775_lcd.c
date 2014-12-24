@@ -479,6 +479,27 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 {
 }
 #endif
+void fb_fill(void *logo_addr, void *fb_addr, int count)
+{
+	//memcpy(logo_buf, fb_addr, count);
+	int i;
+	int *dest_addr = (int *)fb_addr;
+	int *src_addr = (int *)logo_addr;
+#ifndef CONFIG_SLCDC_CONTINUA
+        int smart_ctrl = 0;
+#endif
+	for(i = 0; i < count; i = i + 4){
+		*dest_addr =  *src_addr;
+		src_addr++;
+		dest_addr++;
+	}
+#ifndef CONFIG_SLCDC_CONTINUA
+        smart_ctrl = reg_read(SLCDC_CTRL);
+        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+        reg_write(SLCDC_CTRL, smart_ctrl);
+#endif
+
+}
 
 int jzfb_get_controller_bpp(unsigned int bpp)
 {
