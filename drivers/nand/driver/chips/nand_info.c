@@ -120,7 +120,7 @@ struct hy_rr_msg {
 struct mt_rr_ada_msg{
 	unsigned int offset;
 	unsigned int feature_addr;
-	unsigned int set_value[7];
+	unsigned int set_value[8];
 };
 
 struct mt_rr_ada_msg mt_rr_29f_32g_ada = {
@@ -229,13 +229,15 @@ static int set_retry_mt_ada(int data,int context,struct mt_rr_ada_msg *msg,int i
 	int ret;
 	int timeout = 10;
 	int timeout_ns = timeout * 1000 * 1000;
+	unsigned char feature_value[4] = {0};
 
 	ndata->clear_rb(cs_id);
 
 	nand_io_send_cmd(context, CMD_SET_FEATURES, 0);
 	nand_io_send_spec_addr(context,msg->feature_addr , 1, 300);
 
-	nand_io_send_data(context,&(msg->set_value[index]), 4);
+	feature_value[0] = msg->set_value[index];
+	nand_io_send_data(context,&feature_value, 4);
 
 	ret = ndata->wait_rb(cs_id, timeout);
 	if(ret < 0)

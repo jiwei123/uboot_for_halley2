@@ -167,7 +167,7 @@ static int bch_decode_correct(nand_bch *ndbch, PipeNode *pipe)
 	}
 
 	if (stat & BCH_INTS_UNCOR) {
-		//RETURN_ERR(ECC_ERROR, "Uncorrectable ECC error -- stat = 0x%08x", stat);
+		ndd_print(NDD_DEBUG, "Uncorrectable ECC error -- stat = 0x%08x", stat);
 		return ECC_ERROR;
 	} else {
 		if (stat & BCH_INTS_ERR) {
