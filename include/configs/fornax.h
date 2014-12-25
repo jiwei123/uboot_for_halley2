@@ -22,8 +22,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __CONFIG_DORAOD_H__
-#define __CONFIG_DORAOD_H__
+#ifndef __CONFIG_FORNAX_H__
+#define __CONFIG_FORNAX_H__
 
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
@@ -49,7 +49,11 @@
 #define CONFIG_SYS_ICACHE_SIZE		32768
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
+#ifdef CONFIG_FORNAX_V20
+#define CONFIG_SYS_UART_INDEX		3
+#else
 #define CONFIG_SYS_UART_INDEX		1
+#endif
 #define CONFIG_BAUDRATE			115200
 
 /*#define CONFIG_DDR_TEST_CPU
@@ -75,7 +79,11 @@
 /**
  * Boot arguments definitions.
  */
+#ifdef CONFIG_FORNAX_V20
+#define BOOTARGS_COMMON "console=ttyS3,115200n8 mem=256M@0x0 mem=256M@0x30000000"
+#else
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=256M@0x30000000"
+#endif
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -137,9 +145,13 @@
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
+#ifdef CONFIG_FORNAX_V20
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(3)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(0)
+#else
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
-
+#endif
 
 /* GPIO */
 #define CONFIG_JZ_GPIO
@@ -321,8 +333,10 @@
 /**
  * Keys.
  */
-#define CONFIG_GPIO_USB_DETECT		GPIO_PA(14)
-#define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
+#ifndef CONFIG_FORNAX_V20
+
+define CONFIG_GPIO_USB_DETECT         GPIO_PA(14)
+define CONFIG_GPIO_USB_DETECT_ENLEVEL 1
 
 /* Wrong keys. */
 #define CONFIG_GPIO_RECOVERY		GPIO_PD(19)	/* SW7 */
@@ -354,4 +368,6 @@
 #define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
-#endif /* __CONFIG_DORAOD_H__ */
+#endif
+
+#endif /* __CONFIG_FORNAX_H__ */
