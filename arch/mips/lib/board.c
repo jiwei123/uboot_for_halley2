@@ -366,7 +366,9 @@ extern void board_usb_init(void);
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r();
 #endif
-
+#ifdef CONFIG_PMU_RICOH6x
+	ricoh619_battery_init();
+#endif
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init();
 #endif

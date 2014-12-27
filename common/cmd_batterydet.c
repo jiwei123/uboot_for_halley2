@@ -38,9 +38,18 @@ DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
 #define RLE_LOGO_BASE_ADDR  (0x00000000)	//need to fixed!
 
+#ifdef CONFIG_PMU_RICOH6x
+#define BATTERY_DEFAULT_MIN         (3600000)
+#define BATTERY_DEFAULT_MAX         (4200000)
+#define BATTERY_DEFAULT_SCALE       (100000)
+#else
 #define BATTERY_DEFAULT_MIN         (3600)
 #define BATTERY_DEFAULT_MAX         (4200)
 #define BATTERY_DEFAULT_SCALE       (100)
+#endif
+
+#define CONFIG_CAPA_MEASURE_FG
+
 /*
 extern void board_powerdown_device(void);
 */
@@ -297,6 +306,10 @@ static int jz_pm_do_hibernate(void)
 	d2041_shutdown();
 #endif
 
+#ifdef CONFIG_PMU_RICOH6x
+	printf("The battery voltage is too low, will power down\n");
+	ricoh619_power_off();
+#endif
 	while (a--) {
 		printf
 			("We should not come here, please check the jz4760rtc.h!!!\n");
@@ -511,6 +524,33 @@ static int poweron_key_long_pressed(void)
 
 static int battery_is_low(void)
 {
+
+#ifdef CONFIG_PMU_RICOH6x
+	int capa = 0, vsys = 0, first = 0;
+	first = detection_first_poweron();
+	if(first){
+		capa = ricoh61x_get_capacity();
+		if (capa == 1){
+			return 1;
+		}
+		else{
+			return 0;
+		}
+
+	}else{
+		vsys = cmd_measure_vsys_ADC();
+#ifdef LOW_BATTERY_MIN
+		if (vsys <= LOW_BATTERY_MIN)
+			return 1;
+#else
+		if (vsys <= battery_voltage_min)
+			return 1;
+#endif
+		else
+			return 0;
+
+	}
+#else
 	unsigned int voltage = 0;
 	voltage = read_battery_voltage();
 
@@ -523,6 +563,8 @@ static int battery_is_low(void)
 #endif
 	else
 		return 0;
+#endif 
+
 }
 
 static void * malloc_charge_logo(int buf_size)
@@ -539,6 +581,18 @@ static void free_charge_logo(void *addr)
 	free(addr);
 }
 
+static void fb_fill(void *logo_addr, void *fb_addr, int count)
+{
+	//memcpy(logo_buf, fb_addr, count);
+	int i;
+	int *dest_addr = (int *)fb_addr;
+	int *src_addr = (int *)logo_addr;
+	for(i = 0; i < count; i = i + 4){
+		*dest_addr =  *src_addr;
+		src_addr++;
+		dest_addr++;
+	}
+}
 
 static int show_charge_logo_rle(int rle_num)
 {
@@ -548,8 +602,6 @@ static int show_charge_logo_rle(int rle_num)
 	int bpp = NBITS(panel_info.vl_bpix);
 	int buf_size = vm_height * vm_width * bpp / 8;
 	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
-
-
 	if (rle_num < 0 && rle_num > logo_charge_num)
 		return -EINVAL;
 	//rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
@@ -567,6 +619,7 @@ static int show_charge_logo_rle(int rle_num)
 		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
 		lcd_sync();
 	}else if(logo_addr != NULL){
+		lcd_clear_black();
 		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
 		lcd_sync();
 	}else{
@@ -581,17 +634,67 @@ orig:
 
 static int voltage_to_rle_num(void)
 {
-	unsigned int voltage;
+	int voltage, capa;
+	unsigned int voltage_adc;
+	int vsys;
 	int rle_num_base;
-	voltage = read_battery_voltage();
-	if (voltage < battery_voltage_min) {
+	int first;
+
+#ifdef CONFIG_PMU_RICOH6x
+	first = detection_first_poweron();
+	if(first){
+#ifdef CONFIG_VOL_MEASURE_FG
+		voltage = cmd_measure_vbatt_FG();
+		if (voltage < battery_voltage_min) {
+			rle_num_base = 0;
+		} else if (voltage < battery_voltage_max) {
+			rle_num_base = (voltage - battery_voltage_min) / battery_voltage_scale - 1;
+		} else {
+			rle_num_base = 5;
+		}
+		return rle_num_base;
+#endif
+
+#ifdef CONFIG_CAPA_MEASURE_FG
+		capa = ricoh61x_get_capacity1();
+		if(capa <= 10){
+			rle_num_base = 0;
+		}else if((capa > 10) && (capa <= 20)){
+			rle_num_base = 1;
+		}else if((capa > 20) && (capa <= 40)){
+			rle_num_base = 2;
+		}else if((capa > 40) && (capa <= 60)){
+			rle_num_base = 3;
+		}else if((capa > 60) && (capa <= 80)){
+			rle_num_base = 4;
+		}else if((capa > 80) && (capa <= 100)){
+			rle_num_base = 5;
+		}
+		return rle_num_base;
+#endif
+
+	}else{
+		vsys = cmd_measure_vsys_ADC();
+		if (vsys < battery_voltage_min) {
+			rle_num_base = 0;
+		} else if (vsys < battery_voltage_max) {
+			rle_num_base = (vsys - battery_voltage_min) / battery_voltage_scale - 1;
+		} else {
+			rle_num_base = 5;
+		}   
+		return rle_num_base;
+	}
+#else
+	voltage_adc = read_battery_voltage();
+	if (voltage_adc < battery_voltage_min) {
 		rle_num_base = 0;
-	} else if (voltage < battery_voltage_max) {
-		rle_num_base = (voltage - battery_voltage_min) / battery_voltage_scale - 1;
+	} else if (voltage_adc < battery_voltage_max) {
+		rle_num_base = (voltage_adc - battery_voltage_min) / battery_voltage_scale - 1;
 	} else {
 		rle_num_base = 5;
 	}
 	return rle_num_base;
+#endif
 }
 
 static void show_charging_logo(void)
@@ -687,7 +790,7 @@ static void battery_detect(void)
 {
 	if (charge_detect()) {
 		show_charging_logo();
-	} else if (battery_is_low()) {
+	} else if(battery_is_low()){
 		show_battery_low_logo();
 		printf("The battery voltage is too low. Please charge\n");
 		printf("Battery low level,Into hibernate mode ... \n");
