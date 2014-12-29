@@ -1506,3 +1506,23 @@ int mmc_boot_part_access(struct mmc *mmc, u8 ack, u8 part_num, u8 access)
 	return 0;
 }
 #endif
+
+int do_msc(unsigned long addr, unsigned long off, unsigned long size)
+{
+        int i;
+
+        /* find_mmc_device(0) need fix */
+        struct mmc *mmc = find_mmc_device(0);
+        unsigned long src, num_b;
+        unsigned char tmp[2048];
+
+        src = addr / 512;
+        num_b = size / 512;
+        if(size % 512 > 0)
+                num_b++;
+
+        mmc_read_blocks(mmc, tmp, src, num_b);
+
+        memcpy((void *)off, tmp, size);
+        return 0;
+}
