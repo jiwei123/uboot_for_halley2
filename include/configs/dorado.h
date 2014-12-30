@@ -339,6 +339,7 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #endif
 
+#define PARTITION_NUM 10
 
 /* USB */
 /*#define CONFIG_CMD_FASTBOOT*/
