@@ -1,13 +1,20 @@
 # make boot logo and charge logo rule
+
+ifneq ($(wildcard $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOGO_FILE))),)
+	BOOT_LOGO_JPG ?= $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOGO_FILE))
+endif
+
 ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg),)
 	BOOT_LOGO_JPG ?= $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg
 endif
+
 ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(VENDOR).jpg),)
 	BOOT_LOGO_JPG ?= $(TOPDIR)/board/$(BOARDDIR)/logo/$(VENDOR).jpg
 endif
 ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/*.jpg),)
 	BOOT_LOGO_JPG ?= $(TOPDIR)/board/$(BOARDDIR)/logo/ingenic.jpg
 endif
+
 BOOT_LOGO_JPG ?= $(TOPDIR)/tools/logos/ingenic.jpg
 
 ifneq ($(wildcard $(TOPDIR)/board/$(BOAwDDIR)/charge_logo/*.jpg),)
@@ -15,6 +22,7 @@ DIR_PREFIX = $(TOPDIR)/board/$(BOARDDIR)/charge_logo
 else
 DIR_PREFIX = $(TOPDIR)/tools/charge_logo
 endif
+
 CHARGE_LOGO_JPG = $(shell ls  $(DIR_PREFIX)/*.jpg)
 
 
