@@ -63,7 +63,7 @@
 #define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 /*#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2*/
 #define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1          1   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
 
 /* #define CONFIG_DDR_DLL_OFF */
@@ -79,7 +79,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=255M@0x0 mem=768M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=255M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -133,7 +133,7 @@
  */
 
 /* LCD */
-/*#define CONFIG_LCD*/
+#define CONFIG_LCD
 
 #ifdef CONFIG_LCD
 #define CONFIG_LCD_FORMAT_X8B8G8R8
@@ -151,15 +151,11 @@
 #define CONFIG_JZ_LCD_V12
 #define CONFIG_JZ_PWM
 
-#ifdef CONFIG_JZ_MIPI_DSI
-#define CONFIG_VIDEO_BYD_9177AA
-/* #define CONFIG_VIDEO_LH155 */
-#define CONFIG_DEFAULT_BYTE_CLOCK	450
-#else
-#define CONFIG_LCD_GPIO_FUNC0_24BIT
-/*#define CONFIG_LCD_GPIO_FUNC2_SLCD*/
-#define CONFIG_VIDEO_BM347WV_F_8991FTGF
-/*#define CONFIG_VIDEO_TRULY_TFT240240_2_E*/
+#define CONFIG_VIDEO_X163
+
+#ifdef  CONFIG_VIDEO_X163
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK   150 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_RLE_LCD_LOGO
