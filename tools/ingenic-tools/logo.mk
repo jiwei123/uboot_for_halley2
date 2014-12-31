@@ -1,7 +1,7 @@
 # make boot logo and charge logo rule
 
-ifneq ($(wildcard $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOGO_FILE))),)
-	BOOT_LOGO_JPG ?= $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOGO_FILE))
+ifneq ($(wildcard $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOGO_FILE)).jpg),)
+	BOOT_LOGO_JPG ?= $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOGO_FILE).jpg)
 endif
 
 ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).jpg),)
