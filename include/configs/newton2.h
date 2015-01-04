@@ -60,8 +60,8 @@
 #define CONFIG_DDR_FORCE_SELECT_CS1
 
 #define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
-/*#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2*/
+/*#define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2*/
+#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2
 #define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
@@ -155,7 +155,7 @@
 
 #ifdef  CONFIG_VIDEO_X163
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK   150 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+#define CONFIG_DEFAULT_BYTE_CLOCK   320 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_RLE_LCD_LOGO
