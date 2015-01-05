@@ -79,8 +79,8 @@ int gpio_early_init(void)
 	if (ret < 0) {
 		printf("gpio request PAH8001_PD failed\n");
 		return ret;
-	}
-	gpio_direction_output(GPIO_PAH8001_PD, 1);
+	} else
+		gpio_direction_output(GPIO_PAH8001_PD, 1);
 
 	return 0;
 }

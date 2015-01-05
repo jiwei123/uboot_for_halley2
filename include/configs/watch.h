@@ -468,5 +468,5 @@
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
 
-#define GPIO_PAH8001_PD 	GPIO_PC(23)
+#define GPIO_PAH8001_PD 	-1
 #endif /* __CONFIG_DORAOD_H__ */
