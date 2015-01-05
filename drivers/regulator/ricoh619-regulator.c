@@ -23,7 +23,7 @@
  *
  */
 
-/*#define DEBUG			1*/
+/* #define DEBUG			1 */
 /*#define VERBOSE_DEBUG		1*/
 #include <config.h>
 #include <common.h>
@@ -157,7 +157,7 @@ int ricoh61x_set_bits(u8 reg, uint8_t bit_mask)
 		if ((reg_val & bit_mask) != bit_mask) {
 			reg_val |= bit_mask;
 			ret = ricoh61x_write_reg(reg,&reg_val);
-			if(reg){
+			if(ret){
 				debug("ricoh61x write error\n");
 				return 1;
 			}
@@ -179,7 +179,7 @@ int ricoh61x_clr_bits(u8 reg, uint8_t bit_mask)
 	if (reg_val & bit_mask) {
 		reg_val &= ~bit_mask;
 		ret = ricoh61x_write_reg(reg,&reg_val);
-		if(reg){
+		if(ret){
 			debug("ricoh61x write error\n");
 			return 1;
 		}
