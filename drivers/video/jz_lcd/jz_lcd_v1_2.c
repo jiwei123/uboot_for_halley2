@@ -1303,6 +1303,7 @@ void lcd_ctrl_init(void *lcd_base)
 
 	jzfb_set_par(&lcd_config_info);
 	flush_cache_all();
+	panel_display_on(dsi);
 
 #ifdef DEFAULT_BACKLIGHT_LEVEL
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);

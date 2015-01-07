@@ -183,10 +183,14 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 	auo_x163_panel_condition_setting(dsi);
 	auo_x163_sleep_out(dsi);
 	mdelay(350);
-	//auo_x163_memory_access(dsi);
-	auo_x163_display_on(dsi);
-	//auo_x163_memory_access(dsi);
+//	auo_x163_memory_access(dsi);
+//	auo_x163_display_on(dsi);
+//	auo_x163_memory_access(dsi);
 	mdelay(10);
+}
+void panel_display_on(struct dsi_device *dsi)
+{
+	auo_x163_display_on(dsi);
 }
 
 void panel_pin_init(void)
