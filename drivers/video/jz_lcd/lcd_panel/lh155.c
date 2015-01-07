@@ -117,6 +117,10 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 	lh155_display_on(dsi);
 	udelay(10*1000);
 }
+void panel_display_on(struct dsi_device *dsi)
+{
+}
+
 
 void panel_power_on(void)
 {
