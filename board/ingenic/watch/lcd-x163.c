@@ -24,11 +24,11 @@
 #define CONFIG_LCD_REGULATOR    ""
 #endif
 
-#ifdef CONFIG_ACRAB
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
 #define GPIO_LCD_BLK_EN GPIO_PC(9)
 #endif
 
-#ifdef CONFIG_ACRAB
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
 #define MIPI_RST_N GPIO_PC(16)
 #else
 #define MIPI_RST_N GPIO_PC(19)
@@ -46,7 +46,7 @@ void board_set_lcd_power_on(void)
     regulator_enable(lcd_regulator_9);
     regulator_enable(lcd_regulator_10);
 
-#ifdef CONFIG_ACRAB
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
 	gpio_direction_output(GPIO_LCD_BLK_EN, 1);
 #endif
 }

@@ -204,7 +204,7 @@ struct jzfb_config_info jzfb1_init_data = {
 	.dither_enable = 0,
 };
 
-#ifdef	CONFIG_ACRAB
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
 struct truly_tft240240_2_e_data truly_tft240240_2_e_pdata = {
 	.gpio_lcd_rd  = -1,
 	.gpio_lcd_rst = GPIO_PC(18),
