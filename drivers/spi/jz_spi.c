@@ -86,16 +86,19 @@ void spi_init(void )
 {
 #if DEBUG
 	unsigned int errorpc;
-		__asm__ __volatile__ (
-				"mfc0  %0, $30,  0   \n\t"
-				"nop                  \n\t"
-				:"=r"(errorpc)
-				:);
+	__asm__ __volatile__ (
+			"mfc0  %0, $30,  0   \n\t"
+			"nop                  \n\t"
+			:"=r"(errorpc)
+			:);
 
-		printf("RESET ERROR PC:%x\n",errorpc);
+	printf("RESET ERROR PC:%x\n",errorpc);
 #endif
+
+#ifndef CONFIG_BURNER
 	unsigned int ssi_rate = 24000000;
 	clk_set_rate(SSI, ssi_rate);
+#endif
 	jz_spi_writel(~SSI_CR0_SSIE & jz_spi_readl(SSI_CR0), SSI_CR0);
 	jz_spi_writel(0, SSI_GR);
 	jz_spi_writel(SSI_CR0_EACLRUN | SSI_CR0_RFLUSH | SSI_CR0_TFLUSH, SSI_CR0);
@@ -223,7 +226,7 @@ static void jz_cs_reversal(void )
 {
 	spi_release_bus(NULL);
 
-	udelay(1000);
+	udelay(1);
 
 	spi_claim_bus(NULL);
 
@@ -280,6 +283,8 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[1], 4);
+
+
 		for(i = 0; i < chunk_len; i += 100) {
 			if((chunk_len - i) < 100)
 				spi_send_cmd((buf + actual + i), (chunk_len - i));
@@ -306,7 +311,11 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned long erase_size;
 	unsigned char cmd[6], buf;
 
+#ifdef CONFIG_BURNER
+	erase_size = len;
+#else
 	erase_size = flash->sector_size;
+#endif
 	if (offset % erase_size || len % erase_size) {
 		printf("Erase offset/length not multiple of erase size\n");
 		return -1;
@@ -365,6 +374,7 @@ struct jz_spi_support {
 	char name[SIZEOF_NAME];
 	int page_size;
 	int sector_size;
+	int block_size;
 	int size;
 };
 
@@ -376,6 +386,13 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.sector_size = 4 * 1024,
 		.size = 16 * 1024 * 1024,
 	},
+	{
+		.id = 0xc8,
+		.name = "GD25LQ64C",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.size = 8 * 1024 * 1024,
+	}
 };
 
 struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
@@ -391,8 +408,19 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 	}
 
 	if (i == ARRAY_SIZE(jz_spi_support_table)) {
-		printf("ingenic: Unsupported ID %04x\n", idcode[0]);
-		return NULL;
+#ifdef CONFIG_BURNER
+		if (idcode[0] != 0){
+			printf("unsupport ID is %04x if the id not be 0x00,the flash is ok for burner\n",idcode[0]);
+			params = &jz_spi_support_table[1];
+		}else{
+			printf("ingenic: Unsupported ID %04x\n", idcode[0]);
+			return NULL;
+
+		}
+#else
+			printf("ingenic: Unsupported ID %04x\n", idcode[0]);
+			return NULL;
+#endif
 	}
 
 	flash = spi_flash_alloc_base(spi, params->name);

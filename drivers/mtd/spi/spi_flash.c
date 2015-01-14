@@ -160,7 +160,12 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 	u8 cmd[4];
 	int ret = -1;
 
+#ifdef CONFIG_BURNER
+	erase_size = len;
+#else
 	erase_size = flash->sector_size;
+#endif
+
 	if (offset % erase_size || len % erase_size) {
 		debug("SF: Erase offset/length not multiple of erase size\n");
 		return -1;

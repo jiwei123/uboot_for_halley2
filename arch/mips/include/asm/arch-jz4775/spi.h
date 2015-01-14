@@ -32,6 +32,9 @@
 #define SSI_CR1_TFVCK_3		(3 << SSI_CR1_TFVCK_BIT)
 #define SSI_CR1_TFVCK_BIT	28
 #define SSI_CR1_UNFIN		(1 << 23)
+#define SSI_GPCHL_LOW           (0 << 2)
+#define SSI_GPCHL_HIGH          (1 << 2)
+
 
 #define SSI_SR_BUSY             (1 << 6)
 #define SSI_SR_RFE		(1 << 4)
@@ -54,3 +57,14 @@
 #define CMD_DP 		0xB9	/* Deep Power-Down */
 #define CMD_RES 	0xAB	/* Release from Power-Down and Read Electronic Signature */
 #define CMD_RDID 	0x9F	/* Read Identification */
+#define CMD_SR_WIP          (1 << 0)
+#define CMD_ERASE_4K            0x20
+#define CMD_ERASE_32K           0x52
+#define CMD_ERASE_64K           0xd8
+#define CMD_ERASE_CE            0x60
+#define SSI_FRMHL_CE0_LOW_CE1_LOW   (0 << 30)
+#define SSI_FRMHL_CE0_HIGH_CE1_LOW  (1 << 30)
+#define SSI_FRMHL_CE0_LOW_CE1_HIGH  (2 << 30)
+#define SSI_FRMHL_CE0_HIGH_CE1_HIGH (3 << 30)
+#define SSI_GPCMD           (1 << 25)
+
