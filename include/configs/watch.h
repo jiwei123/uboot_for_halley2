@@ -112,7 +112,7 @@
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
-	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
+	  "cls; batterydet; lcd_logo on; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
@@ -429,7 +429,11 @@
 /**
  * Keys.
  */
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+#define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
+#else
 #define CONFIG_GPIO_USB_DETECT		GPIO_PE(10)
+#endif
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
 
 /* Wrong keys. */

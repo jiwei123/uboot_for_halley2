@@ -152,8 +152,41 @@ static void *lcd_base;			/* Start of framebuffer memory	*/
 
 static char lcd_flush_dcache;	/* 1 to flush dcache after each lcd update */
 extern int flush_cache_all(void);
+extern void lcd_restart_dma(void);
+extern void auo_x163_display_on(struct dsi_device *dsi);
+extern struct dsi_device jz_dsi;
 
 /************************************************************************/
+
+/**
+ * lcd_restart_dma() - Restart the dma of lcd controler
+ * This is a weak function, a typical
+ * implementation at drivers/video/jz_lcd/jz_lcd_v1_2.c
+ */
+__weak void lcd_restart_dma(void)
+{
+	return;
+}
+
+/**
+ * lcd_open_backlight() - Turn on backlight
+ * This is a weak function, should be implemented in LCD drivers
+ * such as drivers/video/jz_lcd/lcd_panel/truly_tft240240_2_e.c
+ */
+__weak void lcd_open_backlight(void)
+{
+	return;
+}
+
+/*
+ * lcd_backlight_turnoff() - Turn off backlight
+ * This is a weak function, should be implemented in LCD drivers
+ * such as drivers/video/jz_lcd/lcd_panel/truly_tft240240_2_e.c
+ */
+__weak void lcd_close_backlight(void)
+{
+	return;
+}
 
 /* Flush LCD activity to the caches */
 void lcd_sync(void)
@@ -169,7 +202,9 @@ void lcd_sync(void)
 	if (lcd_flush_dcache)
 		flush_dcache_range((u32)lcd_base,
 			(u32)(lcd_base + lcd_get_size(&line_length)));
+
 #endif
+	lcd_restart_dma();
 }
 
 void lcd_set_flush_dcache(int flush)
@@ -541,10 +576,18 @@ void lcd_clear(void)
 	lcd_sync();
 }
 
+/*
+ * clear the screen, as the first frame, and turn on backlight's power switch,
+ * in order to avoid lcd flicker, make sure "cls" as the first command of
+ * BOOTCOMMAND
+ */
 static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 			char *const argv[])
 {
-	lcd_clear();
+	/* first lcd frame, black screen */
+	lcd_clear_black();
+	lcd_open_backlight();
+
 	return 0;
 }
 
@@ -555,7 +598,6 @@ U_BOOT_CMD(
 );
 
 /*----------------------------------------------------------------------*/
-
 static int lcd_init(void *lcdbase)
 {
 	/* Initialize the lcd controller */
@@ -577,9 +619,13 @@ static int lcd_init(void *lcdbase)
 	lcd_get_size(&lcd_line_length);
 	lcd_line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
 	lcd_is_enabled = 1;
-
 	lcd_clear();
 	lcd_enable();
+
+#ifdef CONFIG_VIDEO_X163
+	mdelay(100);
+	auo_x163_display_on(&jz_dsi);
+#endif
 
 	/* Initialize the console */
 	console_col = 0;
@@ -589,6 +635,7 @@ static int lcd_init(void *lcdbase)
 	console_row = 1;	/* leave 1 blank line below logo */
 #endif
 	lcd_is_enabled = 1;
+
 
 	return 0;
 }
@@ -1240,7 +1287,7 @@ static void *lcd_logo(void)
 #endif /* CONFIG_SPLASH_SCREEN */
 
 #if defined(CONFIG_RLE_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
-	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
+//	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
 #else
 	bitmap_plot(0, 0);
 #endif
@@ -1390,3 +1437,30 @@ int lcd_dt_simplefb_enable_existing_node(void *blob)
 	return lcd_dt_simplefb_configure_node(blob, off);
 }
 #endif
+
+/*
+ * show a logo on lcd while startup
+ */
+static int
+do_lcd_logo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (argc != 2)
+		return CMD_RET_USAGE;
+
+	if (strcmp("on", argv[1]) == 0) {
+		rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
+		lcd_sync();
+	} else if (strcmp("off", argv[1]) == 0) {
+		lcd_clear_black();
+	} else {
+		return CMD_RET_USAGE;
+	}
+
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(lcd_logo, 2, 0, do_lcd_logo,
+	"on/off lcd logo",
+	"<on|off>\n"
+	"    - on/off the lcd logo");
+

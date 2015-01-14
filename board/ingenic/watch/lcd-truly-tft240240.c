@@ -42,9 +42,9 @@ void board_set_lcd_power_on(void)
         struct regulator *lcd_regulator_10 = regulator_get(id_10);
         regulator_set_voltage(lcd_regulator_9, 1800000, 1800000);
         regulator_set_voltage(lcd_regulator_10, 3000000, 3000000);
-        regulator_enable(lcd_regulator_9);
         regulator_enable(lcd_regulator_10);
-
+        mdelay(5);
+        regulator_enable(lcd_regulator_9);
 }
 
 struct smart_lcd_data_table truly_tft240240_data_table[] = {

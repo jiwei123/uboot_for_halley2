@@ -4,7 +4,8 @@
 #include <jz_lcd/jz_dsim.h>
 
 struct auo_x163_platform_data {
-	int gpio_rst;
+	unsigned int gpio_rst;
+	unsigned int gpio_lcd_bl;
 };
 
 extern struct auo_x163_platform_data auo_x163_pdata;

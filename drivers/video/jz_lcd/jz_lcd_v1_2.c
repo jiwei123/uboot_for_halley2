@@ -53,6 +53,7 @@ void lcd_set_backlight_level(int num);
 	readl(lcd_config_info.lcdbaseoff+addr)
 
 #ifdef DEBUG
+#ifdef CONFIG_JZ_MIPI_DSI
 void dump_dsi_reg(struct dsi_device *dsi)
 {
 	printf( "===========>dump dsi reg\n");
@@ -194,6 +195,7 @@ void dump_dsi_reg(struct dsi_device *dsi)
 		 mipi_dsih_read_word(dsi, R_DSI_HOST_SDF_3D_ACT));
 
 }
+#else
 void dump_lcd_reg()
 {
 	printf("$$$dump_lcd_reg\n");
@@ -286,6 +288,7 @@ void dump_lcd_reg()
 	printf("==================================\n");
 
 }/*end dump_lcd_reg*/
+#endif
 #endif
 
 #if defined(CONFIG_LCD_LOGO)
@@ -610,9 +613,6 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 	int flag;
 	int bpp;
 
-#ifndef CONFIG_SLCDC_CONTINUA
-        int smart_ctrl = 0;
-#endif
 	unsigned short *photo_ptr = (unsigned short *)buf;
 	unsigned short *lcd_fb = (unsigned short *)dst_buf;
 	bpp = NBITS(panel_info.vl_bpix);
@@ -632,12 +632,6 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 
 	flush_cache_all();
 
-#ifndef CONFIG_SLCDC_CONTINUA
-        smart_ctrl = reg_read(SLCDC_CTRL);
-        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
-        reg_write(SLCDC_CTRL, smart_ctrl);
-#endif
-
 	return;
 }
 
@@ -652,20 +646,12 @@ void fb_fill(void *logo_addr, void *fb_addr, int count)
 	int i;
 	int *dest_addr = (int *)fb_addr;
 	int *src_addr = (int *)logo_addr;
-#ifndef CONFIG_SLCDC_CONTINUA
-        int smart_ctrl = 0;
-#endif
+
 	for(i = 0; i < count; i = i + 4){
 		*dest_addr =  *src_addr;
 		src_addr++;
 		dest_addr++;
 	}
-#ifndef CONFIG_SLCDC_CONTINUA
-        smart_ctrl = reg_read(SLCDC_CTRL);
-        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
-        reg_write(SLCDC_CTRL, smart_ctrl);
-#endif
-
 }
 
 int jzfb_get_controller_bpp(unsigned int bpp)
@@ -701,6 +687,18 @@ static void jzfb_config_fg0(struct jzfb_config_info *info)
 	}
 	reg_write(LCDC_OSDC, cfg);
 	reg_write(LCDC_RGBC, rgb_ctrl);
+}
+
+void lcd_restart_dma(void)
+{
+#ifndef CONFIG_SLCDC_CONTINUA
+	if (lcd_enable_state != 0) {
+		int smart_ctrl = 0;
+		smart_ctrl = reg_read(SLCDC_CTRL);
+		smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+		reg_write(SLCDC_CTRL, smart_ctrl);
+	}
+#endif
 }
 
 static void jzfb_config_tft_lcd_dma(struct jzfb_config_info *info)
@@ -945,8 +943,11 @@ void lcd_enable(void)
 	}
 	lcd_enable_state = 1;
 #ifdef DEBUG
-	dump_lcd_reg();
+#ifdef CONFIG_JZ_MIPI_DSI
 	dump_dsi_reg(dsi);
+#else
+	dump_lcd_reg();
+#endif
 #endif
 }
 

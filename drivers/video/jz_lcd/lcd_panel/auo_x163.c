@@ -133,6 +133,24 @@ void panel_power_on(void)
 	serial_puts("auo_x163 panel display on\n");
 }
 
+/**
+ * lcd_open_backlight() - Overwrite the weak function defined at common/lcd.c
+ */
+void lcd_open_backlight(void)
+{
+	gpio_direction_output(auo_x163_pdata.gpio_lcd_bl, 1);
+	return;
+}
+
+/**
+ * lcd_close_backlight() - Overwrite the weak function defined at common/lcd.c
+ */
+void lcd_close_backlight(void)
+{
+	gpio_direction_output(auo_x163_pdata.gpio_lcd_bl, 0);
+	return;
+}
+
 struct dsi_cmd_packet auo_x163_cmd_list1[] = {
 
 	{0x39, 0x06, 0x00, {0xf0, 0x55, 0xaa, 0x52, 0x08, 0x00}},
@@ -188,7 +206,7 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 	auo_x163_sleep_out(dsi);
 	mdelay(350);
 	//auo_x163_memory_access(dsi);
-	auo_x163_display_on(dsi);
+	//auo_x163_display_on(dsi);
 	//auo_x163_memory_access(dsi);
 	mdelay(10);
 }

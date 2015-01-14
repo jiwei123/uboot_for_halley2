@@ -43,6 +43,9 @@ void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue);
 void lcd_initcolregs(void);
 
 int lcd_getfgcolor(void);
+void lcd_restart_dma(void);
+void lcd_open_backlight(void);
+void lcd_close_backlight(void);
 
 /* gunzip_bmp used if CONFIG_VIDEO_BMP_GZIP */
 struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,

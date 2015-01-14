@@ -64,7 +64,6 @@ void panel_pin_init(void)
 
 void panel_power_on(void)
 {
-	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_bl, 1);
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_cs, 1);
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_rd, 1);
 
@@ -73,10 +72,28 @@ void panel_power_on(void)
         mdelay(20);
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_rst, 1);
 	mdelay(10);
-
+	mdelay(5);
 	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_cs, 0);
-
+mdelay(5);
 	serial_puts("truly_tft240240_2_e panel display on\n");
+}
+
+/**
+ * lcd_open_backlight() - Overwrite the weak function defined at common/lcd.c
+ */
+void lcd_open_backlight(void)
+{
+	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_bl, 1);
+	return;
+}
+
+/**
+ * lcd_close_backlight() - Overwrite the weak function defined at common/lcd.c
+ */
+void lcd_close_backlight(void)
+{
+	gpio_direction_output(truly_tft240240_2_e_pdata.gpio_lcd_bl, 0);
+	return;
 }
 
 void panel_power_off(void)

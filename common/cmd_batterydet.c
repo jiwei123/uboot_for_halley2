@@ -21,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-
+//#define DEBUG
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -82,25 +82,10 @@ extern void board_powerdown_device(void);
 static long slop = 0;
 static long cut = 0;
 static	unsigned char  *logo_addr;
-static	unsigned char  logo_id;
 
 static unsigned int battery_voltage_min;
 static unsigned int battery_voltage_max;
 static unsigned int battery_voltage_scale;
-
-
-
-static void lcd_close_backlight(void)
-{
-	gpio_direction_output(CONFIG_GPIO_LCD_PWM, 0);
-}
-
-static void lcd_open_backlight(void)
-{
-	unsigned port = CONFIG_GPIO_LCD_PWM / 32;
-	unsigned pin = CONFIG_GPIO_LCD_PWM % 32;
-	gpio_set_func(port, GPIO_FUNC_0, 1 << pin);
-}
 
 #define INTC_ICMCR0	0x0C
 #define INTC_ICMR0_GPIO0_BIT	17
@@ -502,24 +487,31 @@ static int charge_detect(void)
 	return ret;
 }
 
-static int poweron_key_long_pressed(void)
+
+#define NO_PRESS -1
+#define SHORT_PRESS 0
+#define LONG_PRESS 1
+static int poweron_key_pressed_status(void)
 {
 	int count = 0;
-	if (__poweron_key_pressed()) {
-		while (1) {
-			if (__poweron_key_pressed()) {
-				mdelay(10);
-				count++;
-			} else {
-				count = 0;
-				return 0;
-			}
-			if (count >= 100) {
-				return 1;
+
+	while (1) {
+		if (__poweron_key_pressed()) {
+			mdelay(10);
+			count++;
+		} else {
+			if (count == 0)
+				return NO_PRESS;
+			else {
+				debug("count = %d\n", count);
+				return SHORT_PRESS;
 			}
 		}
+		if (count >= 100) {
+			return LONG_PRESS;
+		}
 	}
-	return 0;
+	return NO_PRESS;
 }
 
 static int battery_is_low(void)
@@ -581,19 +573,6 @@ static void free_charge_logo(void *addr)
 	free(addr);
 }
 
-static void fb_fill(void *logo_addr, void *fb_addr, int count)
-{
-	//memcpy(logo_buf, fb_addr, count);
-	int i;
-	int *dest_addr = (int *)fb_addr;
-	int *src_addr = (int *)logo_addr;
-	for(i = 0; i < count; i = i + 4){
-		*dest_addr =  *src_addr;
-		src_addr++;
-		dest_addr++;
-	}
-}
-
 static int show_charge_logo_rle(int rle_num)
 {
 	void *lcd_base = (void *)gd->fb_base;
@@ -604,31 +583,19 @@ static int show_charge_logo_rle(int rle_num)
 	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
 	if (rle_num < 0 && rle_num > logo_charge_num)
 		return -EINVAL;
-	//rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
-	if(logo_id < logo_charge_num ){
-		if(logo_addr == NULL) {
-			logo_addr = (unsigned char *)malloc_charge_logo(buf_size);
-			if(logo_addr == NULL){
-				printf("famebuffer malloc failed\n");
-				goto orig;
-			}
+	if(logo_addr == NULL) {
+		logo_addr = (unsigned char *)malloc_charge_logo(buf_size);
+		if(logo_addr == NULL){
+			printf("famebuffer malloc failed\n");
+			goto orig;
 		}
-		logo_id += 1;
-		debug("logo_id == %d\n", logo_id);
-		rle_plot(rle_charge_logo_addr[rle_num], logo_addr + rle_num * buf_size);
-		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
-		lcd_sync();
-	}else if(logo_addr != NULL){
-		lcd_clear_black();
-		fb_fill(logo_addr + rle_num * buf_size, lcd_base, buf_size);
-		lcd_sync();
-	}else{
-		goto orig;
 	}
-	return 0;
-orig:
-	rle_plot(rle_charge_logo_addr[rle_num], lcd_base);
+
+	rle_plot(rle_charge_logo_addr[rle_num], logo_addr);
+	fb_fill(logo_addr, lcd_base, buf_size);
 	lcd_sync();
+
+orig:
 	return 0;
 }
 
@@ -697,84 +664,105 @@ static int voltage_to_rle_num(void)
 #endif
 }
 
+static inline void wait_lcd_refresh_finish(void)
+{
+	mdelay(100);
+}
+/*
+ * show charging flash every second(flash means animation)
+ * go to idle every FLASH_IDLE_FREQUENCY seconds while in charging state
+ * there are three states: idle, charging and hibernate
+ * if it is not idle state, we think it as charging state
+ */
 static void show_charging_logo(void)
 {
 /* Show time for the charge flash */
-#define FLASH_INTERVAL_TIME	500	/* 500 ms */
-#define FLASH_SHOW_TIME	12000	/* 12S */
+#define FLASH_IDLE_FREQUENCY 12
 
-	int show_flash;
+
 	int kpressed = 0;
 	int rle_num = 0;
 	int rle_num_base = 0;
 	unsigned long start_time;
-	unsigned long timeout = FLASH_INTERVAL_TIME;
 	unsigned int charge_logo_num = (battery_voltage_max - battery_voltage_min) / battery_voltage_scale;
+	int is_out_from_idle = 0;
+	int go_to_idle = 0;
+	ulong sec_current = 0;
+	ulong sec_last = 0;
+	ulong charge_logo_cnt = 0;
+	int poweron_key;
 
 	/* Shut some modules power down,cdma,gsm e.g. */
 	/* board_powerdown_device(); */
-
 	key_init_gpio();
 	rle_num_base = voltage_to_rle_num();
 	rle_num = rle_num_base;
 	start_time = get_timer(0);
-	show_flash = 1;
 
-	lcd_clear_black();
 	while (1) {
 		if (kpressed == 0) {
 			kpressed = keys_pressed();
 			if (kpressed) {
-				show_flash = 1;
-				timeout = FLASH_INTERVAL_TIME;
-				start_time = get_timer(0);
 				debug("---key pressed!\n");
 			}
 		}
-		if (__poweron_key_pressed()) {
-			show_flash = 1;
-			timeout = FLASH_INTERVAL_TIME;
-			start_time = get_timer(0);
-			debug("---poweron pressed!\n");
-			if (poweron_key_long_pressed()) {
-				lcd_clear_black();
-				debug("poweron long pressed \n");
-				return;
+
+		poweron_key = poweron_key_pressed_status();
+		if (poweron_key == LONG_PRESS) {
+			wait_lcd_refresh_finish();
+			lcd_clear_black();
+			debug("poweron long pressed \n");
+			return;
+		} else if (poweron_key == SHORT_PRESS) {
+			debug("poweron short pressed \n");
+			/* press power on key while in charging flash then go to idle */
+			if (!is_out_from_idle) {
+				go_to_idle = 1;
 			}
 		}
 		// During the charge process ,User extract the USB cable ,Enter hibernate mode
 		if (!(__usb_detected() || __dc_detected())) {
 			debug("charge is stop\n");
-			show_charge_logo_rle(rle_num_base);
-			mdelay(200);
+//			show_charge_logo_rle(rle_num_base);
+//			wait_lcd_refresh_finish();
 			jz_pm_do_hibernate();
 		}
 
-		/* show the charge flash */
-		if (show_flash && (get_timer(start_time) > timeout)) {
+		start_time = get_timer(0);
+		sec_current = start_time / 1000;
+
+		/* current second is not the same as last, it's a new second */
+		if ((sec_current != sec_last)) {
+			debug("sec_current = %d sec_last = %d rle_num = %d\n",
+					sec_current, sec_last, rle_num);
+			charge_logo_cnt++;
 			show_charge_logo_rle(rle_num);
-			mdelay(1000);
-			kpressed = 0;
 			rle_num++;
 			if (rle_num >= charge_logo_num)
 				rle_num = rle_num_base;
 
-			timeout += FLASH_INTERVAL_TIME;
-			if (timeout > FLASH_SHOW_TIME) {
-				show_flash = 0;
-				lcd_clear_black();
-				lcd_close_backlight();
-				jz_pm_do_idle();
-				mdelay(10);
-				lcd_open_backlight();
-				rle_num_base = voltage_to_rle_num();
-				rle_num = rle_num_base;
-				debug("rle_num_base = %d\n", rle_num_base);
-				show_flash = 1;
-				timeout = FLASH_INTERVAL_TIME;
-				start_time = get_timer(0);
+			/* go to idle every FLASH_IDLE_FREQUENCY seconds */
+			if (charge_logo_cnt == FLASH_IDLE_FREQUENCY) {
+				go_to_idle = 1;
 			}
+			sec_last = sec_current;
 		}
+
+		is_out_from_idle = 0;
+		if (go_to_idle) {
+			wait_lcd_refresh_finish();
+			lcd_clear_black();
+			lcd_close_backlight();
+			jz_pm_do_idle();
+			lcd_open_backlight();
+			rle_num_base = voltage_to_rle_num();
+			rle_num = rle_num_base;
+
+			go_to_idle = 0;
+			charge_logo_cnt = 0;
+			is_out_from_idle = 1;
+		}
+		mdelay(10);
 	}
 }
 

@@ -45,14 +45,13 @@ void board_set_lcd_power_on(void)
     regulator_set_voltage(lcd_regulator_10, 3300000, 3300000);
     regulator_enable(lcd_regulator_9);
     regulator_enable(lcd_regulator_10);
-
-#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
-	gpio_direction_output(GPIO_LCD_BLK_EN, 1);
-#endif
 }
 
 struct auo_x163_platform_data auo_x163_pdata = {
     .gpio_rst = MIPI_RST_N,
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+	.gpio_lcd_bl = GPIO_LCD_BLK_EN,
+#endif
 };
 
 struct dsi_config jz_dsi_config={

@@ -66,12 +66,6 @@ void lcd_set_backlight_level(int num)
 	pwm_init(&pwm_backlight);
 }
 
-void lcd_close_backlight(void)
-{
-        gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
-        gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
-}
-
 #else
 
 #define MAX_BRIGHTNESS_STEP	16				/* RT9365 supports 16 brightness step */
@@ -107,11 +101,5 @@ void lcd_set_backlight_level(int num)
 		send_low_pulse(last + MAX_BRIGHTNESS_STEP - tmp);
 	}
 	udelay(30);
-}
-
-void lcd_close_backlight(void)
-{
-		gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
-		gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
 }
 #endif
