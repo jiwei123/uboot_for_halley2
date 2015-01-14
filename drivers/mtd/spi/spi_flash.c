@@ -574,7 +574,11 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		goto err_manufacturer_probe;
 	}
 #endif
+
+
+#ifndef CONFIG_BURNER
 	printf("SF: Detected %s\n", flash->name);
+#endif
 
 #ifdef DEBUG
 	printf("SF: Detected %s with page size ", flash->name);
