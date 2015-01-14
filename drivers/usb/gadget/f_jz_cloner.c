@@ -68,6 +68,8 @@ struct spi spi;
 #define MMC_ERASE_PART	2
 #define MMC_ERASE_CNT_MAX	10
 
+#define SPI_NO_ERASE	0
+#define SPI_ERASE_PART	1
 #ifndef CONFIG_SF_DEFAULT_SPEED
 # define CONFIG_SF_DEFAULT_SPEED    20000000
 #endif
@@ -118,10 +120,24 @@ struct spi_args {
 	uint32_t rate;
 };
 
+struct spi_erase_range{
+	uint32_t blocksize;
+	uint32_t blockcount;
+};
+
+struct jz_spi_support{
+	uint8_t id;
+	char name[32];
+	int page_size;
+	int sector_size;
+	int size;
+};
+
 struct arguments {
 	int efuse_gpio;
 	int use_nand_mgr;
 	int use_mmc;
+	int use_spi;
 
 	int nand_erase;
 	int nand_erase_count;
@@ -133,6 +149,9 @@ struct arguments {
 	struct mmc_erase_range mmc_erase_range[MMC_ERASE_CNT_MAX];
 
 	struct spi_args spi_args;
+	uint32_t spi_erase;
+	struct jz_spi_support jz_spi_support_table;
+	struct spi_erase_range spi_erase_range;
 
 	int transfer_data_chk;
 	int write_back_chk;
@@ -417,6 +436,49 @@ static int mmc_erase(struct cloner *cloner)
 	return 0;
 }
 
+static int spi_erase(struct cloner *cloner)
+{
+	unsigned int bus = CONFIG_SF_DEFAULT_BUS;
+	unsigned int cs = CONFIG_SF_DEFAULT_CS;
+	unsigned int speed = CONFIG_SF_DEFAULT_SPEED;
+	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
+	int blk_cnt = cloner->args->spi_erase_range.blockcount;
+	int blk_size = cloner->args->spi_erase_range.blocksize;
+	int curr_device = 0;
+	uint32_t erase_cnt = 0;
+	struct spi_flash *flash;
+	int timeout = 30000;
+	int offset = 0;
+	int i;
+	int ret;
+#ifdef CONFIG_JZ_SPI
+	spi_init();
+#endif
+#ifdef CONFIG_INGENIC_SOFT_SPI
+	spi_init_jz(&spi);
+#endif
+
+	if(flash == NULL){
+		flash = spi_flash_probe(bus, cs, spi.rate, mode);
+		if (!flash) {
+			printf("Failed to initialize SPI flash at %u:%u\n", bus, cs);
+			return 1;
+		}
+	}
+
+	for (i = 0;i < blk_cnt; i++) {
+		ret = spi_flash_erase(flash, offset, blk_size);
+		printf("SF: %zu bytes @ %#x Erased: %s\n", blk_size, (u32)offset,
+				ret ? "ERROR" : "OK");
+		offset += blk_size;
+	}
+	printf("spi erase ok\n");
+	return 0;
+}
+
+
+
+
 int cloner_init(struct cloner *cloner)
 {
 	if(cloner->args->use_nand_mgr) {
@@ -434,12 +496,24 @@ int cloner_init(struct cloner *cloner)
 		}
 	}
 
-	if(!(cloner->args->use_nand_mgr || cloner->args->use_mmc)){
+	if (cloner->args->use_spi) {
+		if (cloner->args->spi_erase == SPI_ERASE_PART) {
+			spi_erase(cloner);
+		}
+	}
+
+	if(cloner->args->use_spi){
 		printf("cloner->args->spi_args.clk:%d\n",cloner->args->spi_args.clk);
 		printf("cloner->args->spi_args.data_in:%d\n",cloner->args->spi_args.data_in);
 		printf("cloner->args->spi_args.data_out:%d\n",cloner->args->spi_args.data_out);
 		printf("cloner->args->spi_args.enable:%d\n",cloner->args->spi_args.enable);
+
+		printf("cloner->args->count:%d\n",cloner->args->spi_erase_range.blockcount);
+		printf("cloner->args->size:%d\n",cloner->args->spi_erase_range.blocksize);
+		printf("cloner->args->jz_spi_support_table.size:%d\n",cloner->args->jz_spi_support_table.size);
+		printf("name:%s\n",cloner->args->jz_spi_support_table.name);
 	}
+
 
 }
 
@@ -538,6 +612,8 @@ int spi_program(struct cloner *cloner)
 	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
 	u32 offset = cloner->cmd->write.partation + cloner->cmd->write.offset;
 	u32 length = cloner->cmd->write.length;
+	int blk_cnt = cloner->args->spi_erase_range.blockcount;
+	int blk_size = cloner->args->spi_erase_range.blocksize;
 	void *addr = (void *)cloner->write_req->buf;
 	struct spi_args *spi_arg = &cloner->args->spi_args;
 	unsigned int ret;
@@ -548,12 +624,16 @@ int spi_program(struct cloner *cloner)
 	spi.data_in  = spi_arg->data_in;
 	spi.data_out  = spi_arg->data_out;
 	spi.rate  = spi_arg->rate * 1000000;
+
+
 #ifdef CONFIG_JZ_SPI
 	spi_init();
 #endif
 #ifdef CONFIG_INGENIC_SOFT_SPI
 	spi_init_jz(&spi);
 #endif
+
+
 	if(flash == NULL){
 		flash = spi_flash_probe(bus, cs, spi.rate, mode);
 		if (!flash) {
@@ -565,22 +645,24 @@ int spi_program(struct cloner *cloner)
 	debug("the offset = %x\n",offset);
 	debug("the length = %x\n",length);
 
-	if (length%4096 == 0){
+
+	if (length%blk_size == 0){
 		len = length;
 		printf("the length = %x\n",length);
 	}
 	else{
-		printf("the length = %x, is no 4096\n",length);
-		len = (length/4096)*4096 + 4096;
+		printf("the length = %x, is no enough %x\n",length,blk_size);
+		len = (length/blk_size)*blk_size + blk_size;
 	}
-
-	ret = spi_flash_erase(flash, offset, len);
-	printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
-			ret ? "ERROR" : "OK");
-
+	if (cloner->args->spi_erase == SPI_NO_ERASE) {
+		ret = spi_flash_erase(flash, offset, len);
+		printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
+				ret ? "ERROR" : "OK");
+	}
 	ret = spi_flash_write(flash, offset, len, addr);
 	printf("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
 			ret ? "ERROR" : "OK");
+
 #if debug
 	int buf_debug[8*1024*1024];
 	if (spi_flash_read(flash, 1024, /*len*/2048, buf_debug)) {
@@ -593,7 +675,6 @@ int spi_program(struct cloner *cloner)
 	}
 
 #endif
-
 	return 0;
 }
 
