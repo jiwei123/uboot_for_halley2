@@ -132,26 +132,27 @@
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
-	  "batterydet; cls; boota mmc 0 0x80f00000 6144"
+	  "cls; batterydet; lcd_logo on; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "cls; lcd_logo on; boota mmc 0 0x80f00000 24576"
   #else
     /*#define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"*/
-		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000" 
+		#define CONFIG_BOOTCOMMAND  "cls; lcd_logo on; nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "cls; lcd_logo on; boota nand 0 0x80f00000 24576"
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm" */
-	#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "cls; lcd_logo on; mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
 	#ifdef CONFIG_JZ_NAND_MGR
-		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x600000 0x80600000;bootm" 
+		#define CONFIG_BOOTCOMMAND  "cls; lcd_logo on; nand_zm read ndboot 0 0x600000 0x80600000;bootm"
                                                             /*order ops pt offset len dst */
 		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
 	#else
     #define CONFIG_BOOTCOMMAND						\
+	"cls; lcd_logo on; "	\
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
 	#endif /* endif CONFIG_JZ_NAND_MGR*/
