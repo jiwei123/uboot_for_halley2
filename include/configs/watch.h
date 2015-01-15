@@ -211,8 +211,13 @@
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 
+#ifdef CONFIG_AW808
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
+#else
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
+#endif
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
 #define CONFIG_PMU_RICOH6x
 
@@ -430,8 +435,10 @@
 /**
  * Keys.
  */
-#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+#if defined(CONFIG_ACRAB)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
+#elif defined(CONFIG_AW808)
+#define CONFIG_GPIO_USB_DETECT		GPIO_PA(1)
 #else
 #define CONFIG_GPIO_USB_DETECT		GPIO_PE(10)
 #endif

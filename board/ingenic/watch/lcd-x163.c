@@ -8,7 +8,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+#include <common.h>
 #include <regulator.h>
 //#include <include/regulator.h>
 #include <asm/gpio.h>
@@ -17,34 +17,77 @@
 #include <jz_lcd/jz_dsim.h>
 #include <jz_lcd/auo_x163.h>
 
+struct lcd_power_regulator {
+    char *name;
+    int  voltage;
+    int  mdelay;
+};
+
+#define LCD_REGULATOR_REG(_name, _voltage, _mdelay) \
+{ \
+    .name    = _name, \
+    .voltage = _voltage, \
+    .mdelay  = _mdelay, \
+}
+
+static struct lcd_power_regulator lcd_power_regulator[] = {
 #ifdef CONFIG_PMU_RICOH6x
-#define CONFIG_LCD_REGULATOR_9    "RICOH619_LDO9"
-#define CONFIG_LCD_REGULATOR_10    "RICOH619_LDO10"
+#if defined(CONFIG_AW808)
+    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO1",  3400000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  2800000, 0),
+#else
+    LCD_REGULATOR_REG("RICOH619_LDO9",  1800000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO10", 3300000, 0),
+#endif
 #elif defined CONFIG_PMU_D2041
-#define CONFIG_LCD_REGULATOR    ""
 #endif
+};
 
-#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+#if defined(CONFIG_ACRAB)
 #define GPIO_LCD_BLK_EN GPIO_PC(9)
+#elif defined(CONFIG_AW808)
+#define GPIO_LCD_BLK_EN GPIO_PC(23)
 #endif
 
-#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+#if defined(CONFIG_ACRAB)
 #define MIPI_RST_N GPIO_PC(16)
 #else
 #define MIPI_RST_N GPIO_PC(19)
 #endif
 
+static int inline lcd_power_regulator_init(const char *id, int voltage, int delay)
+{
+    struct regulator *lcd_regulator;
+    if (voltage < 0 || id == NULL ) {
+        printf("lcd power regulator init args wrong\n");
+        return -1;
+    }
+
+    lcd_regulator = regulator_get(id);
+    if (lcd_regulator) {
+        regulator_set_voltage(lcd_regulator, voltage, voltage);
+        regulator_enable(lcd_regulator);
+    } else {
+        printf("%s regulator get failed\n", id);
+        return -1;
+    }
+
+    if (delay);
+        mdelay(delay);
+
+    return 0;
+}
+
 void board_set_lcd_power_on(void)
 {
-
-    char *id_9  = CONFIG_LCD_REGULATOR_9;
-    char *id_10 = CONFIG_LCD_REGULATOR_10;
-    struct regulator *lcd_regulator_9 = regulator_get(id_9);
-    struct regulator *lcd_regulator_10 = regulator_get(id_10);
-    regulator_set_voltage(lcd_regulator_9, 1800000, 1800000);
-    regulator_set_voltage(lcd_regulator_10, 3300000, 3300000);
-    regulator_enable(lcd_regulator_9);
-    regulator_enable(lcd_regulator_10);
+    int i;
+    for (i = 0; i < ARRAY_SIZE(lcd_power_regulator); i++) {
+        lcd_power_regulator_init(lcd_power_regulator[i].name,
+                lcd_power_regulator[i].voltage,
+                lcd_power_regulator[i].mdelay);
+    }
 }
 
 struct auo_x163_platform_data auo_x163_pdata = {
