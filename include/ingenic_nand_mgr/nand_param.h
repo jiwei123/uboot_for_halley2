@@ -69,6 +69,11 @@ typedef struct __nand_timing_param {
 	unsigned int tCWAW; /* ... duration/width/time */
 	unsigned int tCS;   /* ... duration/width/time */
 	unsigned int tCLH;  /* ... duration/width/time */
+	unsigned int tWH;   /* ... duration/width/time */
+	unsigned int tCH;   /* ... duration/width/time */
+	unsigned int tDH;   /* ... duration/width/time */
+	unsigned int tREH;  /* ... duration/width/time */
+
 } nand_timing_param;
 
  

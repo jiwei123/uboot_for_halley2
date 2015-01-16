@@ -21,7 +21,7 @@ typedef struct __nand_io {
 	transadaptor trans;
 	chip_info *cinfo;
 #ifndef CONFIG_NAND_NFI
-	const emc_nand_timing *timing;
+	const nand_timing_com *timing;
 #endif
 	unsigned int copy_context;
 } nand_io;

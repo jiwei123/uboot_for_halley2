@@ -60,26 +60,28 @@ static void dump_nand_flash_info(void)
 	printf("\t planeoffset =  %d\n",nand_flash_info.planeoffset);
 	printf("\t options =      %x\n",nand_flash_info.options);
 
-#ifndef CONFIG_NAND_NFI
 	printf("\ndump nand flash timing:\n");
-	printf("\t tals =     %d \n",nand_flash_info.timing.emc.tALS);
-	printf("\t talh =     %d \n",nand_flash_info.timing.emc.tALH);
-	printf("\t trp  =     %d \n",nand_flash_info.timing.emc.tRP);
-	printf("\t twp  =     %d \n",nand_flash_info.timing.emc.tWP);
-	printf("\t trhw =     %d \n",nand_flash_info.timing.emc.tRHW);
-	printf("\t twhr =     %d \n",nand_flash_info.timing.emc.tWHR);
-	printf("\t twhr2 =    %d \n",nand_flash_info.timing.emc.tWHR2);
-	printf("\t trr =      %d \n",nand_flash_info.timing.emc.tRR);
-	printf("\t twb =      %d \n",nand_flash_info.timing.emc.tWB);
-	printf("\t tadl =     %d \n",nand_flash_info.timing.emc.tADL);
-	printf("\t tCWAW =    %d \n",nand_flash_info.timing.emc.tCWAW);
-	printf("\t tcs =      %d \n",nand_flash_info.timing.emc.tCS);
-	printf("\t tCLH =     %d \n",nand_flash_info.timing.emc.tCLH);
-#endif
+	printf("\t tals =     %d \n",nand_flash_info.timing.timing.tALS);
+	printf("\t talh =     %d \n",nand_flash_info.timing.timing.tALH);
+	printf("\t trp  =     %d \n",nand_flash_info.timing.timing.tRP);
+	printf("\t twp  =     %d \n",nand_flash_info.timing.timing.tWP);
+	printf("\t trhw =     %d \n",nand_flash_info.timing.timing.tRHW);
+	printf("\t twhr =     %d \n",nand_flash_info.timing.timing.tWHR);
+	printf("\t twhr2 =    %d \n",nand_flash_info.timing.timing.tWHR2);
+	printf("\t trr =      %d \n",nand_flash_info.timing.timing.tRR);
+	printf("\t twb =      %d \n",nand_flash_info.timing.timing.tWB);
+	printf("\t tadl =     %d \n",nand_flash_info.timing.timing.tADL);
+	printf("\t tCWAW =    %d \n",nand_flash_info.timing.timing.tCWAW);
+	printf("\t tcs =      %d \n",nand_flash_info.timing.timing.tCS);
+	printf("\t tCLH =     %d \n",nand_flash_info.timing.timing.tCLH);
+	printf("\t tWH =     %d \n",nand_flash_info.timing.timing.tWH);
+	printf("\t tCH =     %d \n",nand_flash_info.timing.timing.tCH);
+	printf("\t tDH =     %d \n",nand_flash_info.timing.timing.tDH);
+	printf("\t tREH =     %d \n",nand_flash_info.timing.timing.tREH);
 }
 static void fill_nfi_timing(const nand_timing *nandtiming,nand_timing_param *timing_param)
 {
-	nfi_nand_timing *timing = &nandtiming->nfi;
+	nand_timing_com *timing = &nandtiming->timing;
 #define assign(member,val) timing->member = val
 #if 1 //mode 0
 	assign(tWH,10);
@@ -139,7 +141,8 @@ void fill_nand_flash_info(nand_flash_param *nand_info)
 	if (nand_info->options & NAND_DRIVER_STRENGTH)
 		    nand_flash_info.options |= NAND_DRIVER_STRENGTH;
 #ifdef CONFIG_NAND_NFI
-	fill_nfi_timing(&(nand_flash_info.timing),&(nand_info->timing));
+//	fill_nfi_timing(&(nand_flash_info.timing),&(nand_info->timing));
+	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
 #else
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
 #endif

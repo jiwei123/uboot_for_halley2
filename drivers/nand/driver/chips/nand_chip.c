@@ -156,7 +156,7 @@ const nand_flash nand_flash_table[] = {
 	 24,		2,		1,		1,
 	 8,		2,		4,		3,		0,
 	 (0),
-	 .timing.emc =
+	 .timing.timing =
 	 {12,		5,	25,	25,	100,	120,	300,	20,	100,	300,	300,	0,	0}},
 
 	{"SAMSUNG_K9GAG08U0D", 		0xECD5,		0x41342994,
@@ -164,7 +164,7 @@ const nand_flash nand_flash_table[] = {
 	 24,		2,		1,		1,
 	 8,		2,		4,		3,		0,
 	 (0),
-	 .timing.emc =
+	 .timing.timing =
 	 {15,		5,	15,	15,	100,	60,	60,     20,     0,      100,     0,	0,	0}},
 
 	{"SAMSUNG_K524G2ACI-B050",	0xECBC,		0x00545500,
@@ -172,7 +172,7 @@ const nand_flash nand_flash_table[] = {
 	 8,		2,		1,		1,
 	 16,		1,		4,		3,		0,
 	 (0),
-	 .timing.emc =
+	 .timing.timing =
 	 {21,		5,	21,	21,	100,	60,	200,	20,	100,	100,	0,	20,	0}},
 
 	{"SAMSUNG_K9F1208U0C_PCB0",	0xEC76,		0x00743F5A,
@@ -180,7 +180,7 @@ const nand_flash nand_flash_table[] = {
 	 4,		1,		1,		1,
 	 8,		1,		4,		3,		0,
 	 (0),
-	 .timing.emc =
+	 .timing.timing =
 	 {21,		5,	21,	21,	100,	60,	200,	20,	100,	100,	0,	31,	5}},
 
 	/****************************** MICRON *********************************/
@@ -189,7 +189,7 @@ const nand_flash nand_flash_table[] = {
 	 24,		2,		1,		1,
 	 8,		2,		4,		3,		0,
 	 (NAND_MICRON_NORMAL),
-	 .timing.emc =
+	 .timing.timing =
 	 {10,   	5,      15,	15,	100,    60,	200,	20,     100,    70,    	0,	25,	5}},
 
 	{"MICRON_MT29F64G08CBAAAWP",	0x2C88,		0x00A94B04,
@@ -197,7 +197,7 @@ const nand_flash nand_flash_table[] = {
 	 24,		2,		1,		1,
 	 8,		2,		0,		3,		0,
 	 (NAND_MICRON_NORMAL),
-	 .timing.emc =
+	 .timing.timing =
 	 {10,		5,	15,	15,	100,	60,	200,	20,	100,	70,	0,	20,	5}},
 
 	{"MICRON_MT29F64G08CBABA",	0x2C64,		0x00A94B44,
@@ -205,7 +205,7 @@ const nand_flash nand_flash_table[] = {
 	 40,		2,		1,		1,
 	 8,		2,		0,		3,		0,
 	 (NAND_MICRON_NORMAL | NAND_TIMING_MODE | NAND_TIMING_MODE_V(MR_TIMING_MODE3) | NAND_DRIVER_STRENGTH),
-	 .timing.emc =
+	 .timing.timing =
 	 {10,		5,	15,	15,	100,	60,	200,	20,	100,	70,	0,	20,	5}},
 
 	{"MICRON_MT29F128G08CFABA",	0x2C64,		0x00A94B44,
@@ -213,7 +213,7 @@ const nand_flash nand_flash_table[] = {
          40,		2,              1,	        2,
          8,	        2,	        4,	        3,		0,
 	 (0),
-	 .timing.emc =
+	 .timing.timing =
 	 {10,		5,	15,	15,     100,    60,     200,    20,     100,    70,      0,	20,	5}},
 
 	/****************************** HYNIX *********************************/
@@ -222,7 +222,7 @@ const nand_flash nand_flash_table[] = {
          40,		2,              1,	        1,
          8,	        2,	        4,	        3,		0,
 	 (NAND_READ_RETRY | NAND_READ_RETRY_MODE(HY_RR_F26_32G_MLC)),
-	 .timing.emc =
+	 .timing.timing =
 	 {10,		5,	15,	15,     100,    80,     200,    20,     100,    200,     0,	20,	5}},
 
 	{"HYNIX_H27UCG8T2ATR",		0xADDE,		0xC474DA94,
@@ -230,7 +230,7 @@ const nand_flash nand_flash_table[] = {
          40,		2,              1,	        1,
          8,	        2,	        4,	        3,		0,
 	 (NAND_READ_RETRY | NAND_READ_RETRY_MODE(HY_RR_F20_64G_MLC_A)),
-	 .timing.emc =
+	 .timing.timing =
 	 {6,		3,	8,	8,     100,    80,     200,    20,     100,    200,     0,	20,	3}},
 
 	{"HYNIX_H9DA4GH2GJBMCR-4EM",	0xADBC,		0x00565590,
@@ -238,7 +238,7 @@ const nand_flash nand_flash_table[] = {
 	 8,		2,		1,		1,
 	 16,		1,		4,		3,		0,
 	 (0),
-	 .timing.emc =
+	 .timing.timing =
 	 {25,		10,	25,	25,	100,	60,	200,	20,	100,	100,	0,	20,	3}},
 
 	/****************************** TOSHIBA *********************************/
@@ -248,7 +248,7 @@ const nand_flash nand_flash_table[] = {
          40,		2,              1,	        1,
          8,	        1,	        4,	        3,              0,
 	 (NAND_READ_RETRY),
-	 .timing.emc =
+	 .timing.timing =
 	 {10,		5,	15,	15,     30,    180,     300,    20,     100,    300,     0,	20,	5}},
 };
 

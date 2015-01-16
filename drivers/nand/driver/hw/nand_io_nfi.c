@@ -127,7 +127,7 @@ static void set_nand_timing_default(nfi_base *base)
 	base->writel(NAND_NFIT4, (NAND_NFIT4_BUSY(0xff) | NAND_NFIT4_EDO(0xf)));
 
 }
-static void set_nand_timing_optimize(nfi_base *base, nfi_nand_timing *timing)
+static void set_nand_timing_optimize(nfi_base *base, nand_timing_com *timing)
 {
 
 
@@ -294,7 +294,7 @@ int auto_adapt_edo_nand(int context, chip_info *cinfo, rb_item *rbitem)
 	static unsigned int edo_t = 1;	//the min value is 1;
 	unsigned int ret = SUCCESS;
 	unsigned int cycle = base->cycle;  //unit: ps
-	nfi_nand_timing *timing = (nfi_nand_timing *)cinfo->ops_timing.io_timing;
+	nand_timing_com *timing = (nand_timing_com *)cinfo->ops_timing.io_timing;
 	int nfcr = base->readl(NAND_NFCR);
 	reg = base->readl(NAND_NFIT4);
 	b_ok = f_ok = 0;
@@ -353,7 +353,7 @@ int auto_adapt_toggle_nand(int context, chip_info *cinfo)
 	nand_io *io = (nand_io *)context;
 	unsigned int reg = 0, tmp;
 	nfi_base *base = io->base;
-	nfi_nand_timing *timing = (nfi_nand_timing *)cinfo->ops_timing.io_timing;
+	nand_timing_com *timing = (nand_timing_com *)cinfo->ops_timing.io_timing;
 	nfi_toggle_timing *t_timing = (nfi_toggle_timing *)cinfo->ops_timing.io_etiming;
 	unsigned int cycle = base->cycle;  //unit: ps
 
@@ -543,7 +543,7 @@ int nand_io_setup_timing_optimize(int context, chip_info *cinfo)
 #endif
 	}
 	set_nand_bus_mode(io->base, bus, GET_NAND_TYPE(cinfo));
-	set_nand_timing_optimize(io->base, (nfi_nand_timing *)cinfo->ops_timing.io_timing);
+	set_nand_timing_optimize(io->base, (nand_timing_com *)cinfo->ops_timing.io_timing);
 	if(edo_timing)
 		nfi_set_edo_mode(io->base);
 
@@ -678,7 +678,7 @@ int nand_io_resume(void)
 
 //------------------------------------------------------------------------------
 static void convert2opstiming(nand_ops_timing *ops_timing, const nand_timing *nandtiming) {
-	const nfi_nand_timing *timing = &nandtiming->nfi;
+	const nand_timing_com *timing = &nandtiming->timing;
 #define assign(member) ops_timing->member = timing->member
 	assign(tRP);
 	assign(tWP);

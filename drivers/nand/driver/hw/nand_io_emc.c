@@ -16,7 +16,7 @@ typedef struct __nand_io {
 	void *addrport;
 	transadaptor trans;
 	chip_info *cinfo;
-	const emc_nand_timing *timing;
+	const nand_timing_com *timing;
 	unsigned int copy_context;
 } nand_io;
 
@@ -74,7 +74,7 @@ static inline void init_nandchip_smcr_n(nfi_base *base, unsigned int cs, unsigne
 
 static inline void nand_enable(nand_io *io, unsigned int cs)
 {
-	const emc_nand_timing *timing = io->timing;
+	const nand_timing_com *timing = io->timing;
 	ndd_ndelay(timing ? timing->tALH : 500);
 	io->base->writel(NEMC_NFCSR, (NEMC_NFCSR_NFE(cs) | NEMC_NFCSR_NFCE(cs)));
 	ndd_ndelay(timing ? timing->tCS : 500);
@@ -82,7 +82,7 @@ static inline void nand_enable(nand_io *io, unsigned int cs)
 
 static void nand_disable(nand_io *io, unsigned int cs)
 {
-	const emc_nand_timing *timing = io->timing;
+	const nand_timing_com *timing = io->timing;
 	ndd_ndelay(timing ? timing->tALH : 500);
 	io->base->writel(NEMC_NFCSR, (NEMC_NFCSR_NFEC(cs) | NEMC_NFCSR_NFCEC(cs)));
 }
@@ -102,7 +102,7 @@ static void nand_io_setup_default(nfi_base *base)
 	setup_timing(base, SMCR_DEFAULT_VAL);
 }
 
-static void nand_io_setup_optimize(nfi_base *base, const emc_nand_timing *timing, int buswidth)
+static void nand_io_setup_optimize(nfi_base *base, const nand_timing_com *timing, int buswidth)
 {
 	int valume, smcr = 0;
 	int cycle = 1000000000 / (base->rate / 1000);  //unit: ps
@@ -204,7 +204,7 @@ int nand_io_open(nfi_base *base, chip_info *cinfo)
 	nand_io_init(nandio->base);
 	if (cinfo) {
 		nandio->cinfo = cinfo;
-		nandio->timing = (const emc_nand_timing *)(cinfo->ops_timing.io_timing);
+		nandio->timing = (const nand_timing_com *)(cinfo->ops_timing.io_timing);
 		nand_io_setup_optimize(nandio->base, nandio->timing, cinfo->buswidth);
 	} else {
 		nandio->cinfo = NULL;
@@ -341,7 +341,7 @@ char* nand_io_get_clk_name(void) {
 
 //------------------------------------------------------------------------------
 static void convert2opstiming(nand_ops_timing *ops_timing, const nand_timing *nandtiming) {
-	const emc_nand_timing *timing = &nandtiming->emc;
+	const nand_timing_com *timing = &nandtiming->timing;
 #define assign(member) ops_timing->member = timing->member
 	assign(tRP);
 	assign(tWP);
