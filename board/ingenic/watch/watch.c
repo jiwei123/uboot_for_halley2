@@ -78,16 +78,14 @@ int gpio_early_init(void)
 	ret = gpio_request(GPIO_PAH8001_PD, "PAH8001_PD");
 	if (ret < 0) {
 		printf("gpio request PAH8001_PD failed\n");
-		return ret;
 	} else
 		gpio_direction_output(GPIO_PAH8001_PD, 1);
 #ifdef CONFIG_GPIO_PRE_TEST
 	ret = gpio_request(CONFIG_GPIO_PRE_TEST, "pre_test");
-		if (ret < 0) {
-			printf("gpio request pre_test failed\n");
-			return ret;
-		} else
-			gpio_direction_input(CONFIG_GPIO_PRE_TEST);
+	if (ret < 0) {
+		printf("gpio request pre_test failed\n");
+	} else
+		gpio_direction_input(CONFIG_GPIO_PRE_TEST);
 #endif
 	return 0;
 }
