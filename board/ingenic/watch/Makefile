@@ -35,6 +35,7 @@ COBJS-$(CONFIG_VIDEO_BYD_9177AA) += lcd-9177aa.o
 COBJS-$(CONFIG_VIDEO_LH155) += lcd-lh155.o
 COBJS-$(CONFIG_VIDEO_SAMSUNG) += lcd-samsung.o
 COBJS-$(CONFIG_VIDEO_X163) += lcd-x163.o
+COBJS-$(CONFIG_VIDEO_ORISE_OTM3201A) += lcd-orise-otm3201a.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
