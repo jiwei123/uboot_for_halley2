@@ -44,6 +44,9 @@
 DECLARE_GLOBAL_DATA_PTR;
 extern unsigned int sdram_size(int cs, struct ddr_params *p);
 struct ddr_params *ddr_params_p = NULL;
+#ifndef CONFIG_FPGA
+extern void reset_dll(void);
+#endif
 
 #if defined(CONFIG_SPL_DDR_SOFT_TRAINING) || defined(CONFIG_DDR_FORCE_SOFT_TRAINING)
 extern bool dqs_gate_train(int rank_cnt, int byte_cnt);
@@ -113,22 +116,6 @@ static void dump_ddrp_register(void)
 	}
 #endif
 }
-
-#ifndef CONFIG_FPGA
-static void reset_dll(void)
-{
-/*
- * WARNING: 2015-01-08
- * 	DDR CLK GATE(CPM_DRCG 0xB00000D0), BIT6 must set to 1 (or 0x40).
- * 	If clear BIT6, chip memory will not stable, gpu hang occur.
- */
-	writel(3 | (1<<6), CPM_DRCG);
-	mdelay(5);
-	writel(0x11 | (1<<6), CPM_DRCG);
-	mdelay(5);
-}
-#endif
-
 static void reset_controller(void)
 {
 #ifndef CONFIG_FPGA

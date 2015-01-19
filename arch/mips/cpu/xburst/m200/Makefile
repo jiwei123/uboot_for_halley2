@@ -32,6 +32,7 @@ ifndef CONFIG_FPGA
 COBJS-y += pll.o
 COBJS-y += clk.o
 endif
+COBJS-y += ddr_set_dll.o
 COBJS-y += ../ddr_dwc.o
 COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
 COBJS-$(CONFIG_SPL_DDR_SOFT_TRAINING) += ../ddr_dqs_training.o

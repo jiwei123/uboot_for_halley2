@@ -29,6 +29,7 @@ LIB	= $(obj)lib$(SOC).o
 SOBJS-y	=
 COBJS-y	= $(SOC).o
 COBJS-y += clk.o
+COBJS-y += ddr_set_dll.o
 COBJS-y += ../ddr_dwc.o
 ifdef CONFIG_SPL_DDR_SOFT_TRAINING
 COBJS-y += ../ddr_dqs_training.o
