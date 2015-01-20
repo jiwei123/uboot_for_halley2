@@ -37,12 +37,12 @@
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 
 #ifndef CONFIG_RVMS
-#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		1000000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		800000000
-#define CONFIG_SYS_MEM_FREQ		150000000
+#define CONFIG_SYS_CPU_FREQ		1000000000
+#define CONFIG_SYS_MEM_FREQ		200000000
 
 #else /* defined CONFIG_RVMS */
 #define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
