@@ -279,6 +279,9 @@ void clk_set_rate(int clk, unsigned long rate)
 	case BCH:
 		set_bch_rate(clk, rate);
 		return;
+	case SSI:
+		/*use config set in burn*/
+		return;
 	default:
 		break;
 	}
