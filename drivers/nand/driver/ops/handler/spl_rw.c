@@ -20,7 +20,7 @@ struct Spl {
         unsigned char *bchbuf;
 };
 
-struct AlignList alist[28];
+struct AlignList alist[128];
 
 static void nand_busy_clear(struct Spl *spl)
 {

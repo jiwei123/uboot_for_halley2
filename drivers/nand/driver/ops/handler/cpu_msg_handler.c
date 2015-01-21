@@ -373,8 +373,6 @@ static int nand_read_data(struct cpu_msg_ops *cpu_msg, struct task_msg *msg)
 	if (cpu_msg->cinfo->pagesize == 512) {
 		unsigned char spare_buf[cpu_msg->free_oobsize];
 		nand_io_receive_data(io_context, spare_buf, cpu_msg->free_oobsize);
-		if (wait_nand_busy(cpu_msg, msg) < 0)
-			ndd_print(NDD_WARNING, "wait rb of data complete timeout\n");
 	}
 #ifdef CFG_NAND_USE_PN
 	pn_disable(io_context);

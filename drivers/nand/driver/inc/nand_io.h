@@ -11,6 +11,7 @@
  * Standard NAND flash commands
  */
 #define NAND_CMD_READ0			0x00
+#define NAND_CMD_READ_OOB_512   0x50
 #define NAND_CMD_RNDOUT			0x05
 #define NAND_CMD_STATUS			0x70
 #define NAND_CMD_READID			0x90

@@ -294,8 +294,13 @@ static void spl_bch_init(int ecc_leavel,int eccsize)
 static void send_read_start_cmd(unsigned int page_addr,unsigned int offset,int delay)
 {
 
-	nand_io_send_cmd((int)(nandio),NAND_CMD_READ0,delay);
-	nand_io_send_addr((int)(nandio),offset,page_addr,delay);
+	if ((buswidth == 8)&&(offset == 512)){
+		nand_io_send_cmd((int)(nandio),NAND_CMD_READ_OOB_512,delay);
+		nand_io_send_addr((int)(nandio),0,page_addr,delay);
+	}else{
+		nand_io_send_cmd((int)(nandio),NAND_CMD_READ0,delay);
+		nand_io_send_addr((int)(nandio),offset,page_addr,delay);
+	}
 	if(pagesize != 512)
 		nand_io_send_cmd((int)(nandio),NAND_CMD_READSTART,delay);
 
@@ -445,7 +450,7 @@ static void nand_read_oob(unsigned int page,unsigned char *oob_buf,unsigned int 
 		else
 			col_addr = pagesize / 2;
 	}else
-		col_addr = 0;
+		col_addr = 512;
 
 	send_read_start_cmd(page,col_addr,1);
 
@@ -548,11 +553,17 @@ static int nand_spl_load_image(long  offs, long size, void *dst)
 	int page_per_blk;
 	int blk;
 	int ret;
-
+	int ubootoffs;
 	page_per_blk = blocksize / pagesize;
+	if (pagesize == 512){
+		/*+pagesize for params *2 for bch */
+		ubootoffs = ((SPL_SIZE + pagesize) / pagesize * 2 + page_per_blk -1) / (page_per_blk);
+	}else{
+		ubootoffs = 2;
+	}
 
 	if(offs < 0){
-		page = (page_per_blk < 128 ? ((128 / page_per_blk) + 1) : 2) * page_per_blk;
+		page = (page_per_blk < 128 ? ((128 / page_per_blk) + ubootoffs) : ubootoffs) * page_per_blk;
 	}else
 		page = offs / pagesize;
 
