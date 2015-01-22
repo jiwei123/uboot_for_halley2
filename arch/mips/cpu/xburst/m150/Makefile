@@ -1,9 +1,9 @@
 #
-# Ingenic mensa makefile
+# Ingenic JZ4775 makefile
 #
 # Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
 # Author: Zoro <ykli@ingenic.cn>
-# Based on: board/reliableIPTV/urboard/Makefile
+# Based on: arch/mips/cpu/xburst/jz4780/Makefile
 #           Written by Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -24,16 +24,34 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(SOC).o
 
-COBJS-y	:= $(BOARD).o
-COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
+SOBJS-y	=
+COBJS-y	= $(SOC).o
 
-SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS-y))
-SOBJS   := $(addprefix $(obj),$(SOBJS-y))
+COBJS-$(CONFIG_BURNER) += dym_pll.o
+COBJS-$(CONFIG_JZ_SLT) += dym_pll.o
 
-$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+ifndef CONFIG_BURNER
+ifndef CONFIG_JZ_SLT
+COBJS-y += pll.o
+endif
+endif
+
+COBJS-y += clk.o
+COBJS-y += ddr_set_dll.o
+COBJS-y += ../ddr_dwc.o
+COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
+COBJS-$(CONFIG_SPL_DDR_SOFT_TRAINING) += ../ddr_dqs_training.o
+COBJS-$(CONFIG_DDR_FORCE_SOFT_TRAINING) += ../ddr_dqs_training.o
+
+SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+START	:= $(addprefix $(obj),$(START))
+
+all:	$(obj).depend $(LIB)
+
+$(LIB):	$(OBJS)
 	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################

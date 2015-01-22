@@ -16,6 +16,10 @@
 #include <asm/ddr_dwc.h>
 #include <ddr/ddrc.h>
 #include <ddr/ddrp_dwc.h>
+#elif defined(CONFIG_M150)
+#include <asm/ddr_dwc.h>
+#include <ddr/ddrc.h>
+#include <ddr/ddrp_dwc.h>
 #endif
 
 

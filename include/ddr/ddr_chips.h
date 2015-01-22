@@ -20,7 +20,7 @@
 #include "./chips/MCP_KMS5U000JM_B308.h"
 #endif
 
-#ifdef CONFIG_MCP_KMS5U000KM-B308
+#ifdef CONFIG_MCP_KMS5U000KM_B308
 #include "./chips/MCP_KMS5U000KM-B308.h"
 #endif
 
@@ -32,7 +32,7 @@
 #include "./chips/MCP_SAMSUNG_KMN5X000ZM_LPDDR2.h"
 #endif
 
-#ifdef CONFIG_DDR2_PWE809416BBR-E7DN
+#ifdef CONFIG_DDR2_PWE809416BBR_E7DN
 #include "./chips/DDR2_PWE809416BBR-E7DN.h"
 #endif
 #endif /* __DDR_CHIPS_H__ */

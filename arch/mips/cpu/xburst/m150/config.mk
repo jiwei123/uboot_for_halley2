@@ -1,9 +1,9 @@
 #
-# Ingenic mensa makefile
+# Ingenic JZ4775 configuration
 #
 # Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
 # Author: Zoro <ykli@ingenic.cn>
-# Based on: board/reliableIPTV/urboard/Makefile
+# Based on: arch/mips/cpu/xburst/jz4780/config.mk
 #           Written by Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -22,25 +22,5 @@
 # MA 02111-1307 USA
 #
 
-include $(TOPDIR)/config.mk
-
-LIB	= $(obj)lib$(BOARD).o
-
-COBJS-y	:= $(BOARD).o
-COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
-
-SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS-y))
-SOBJS   := $(addprefix $(obj),$(SOBJS-y))
-
-$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS))
-
-#########################################################################
-
-# defines $(obj).depend target
-include $(SRCTREE)/rules.mk
-
-sinclude $(obj).depend
-
-#########################################################################
+# branch likely triggers a reserved instruction exception
+PLATFORM_CPPFLAGS += -mno-branch-likely
