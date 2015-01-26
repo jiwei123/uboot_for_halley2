@@ -127,7 +127,11 @@ void slt_uart_mode(void) {
 			test_uart_as_gpio = 1;
 		}
 	}
-	gpio_set_func(GPIO_PORT_F, GPIO_FUNC_0, 0x0f);
+	gpio_set_func(gpio_port_gp(GPIO_UART_RX), GPIO_UART_RX_FUNC,
+			(1 << gpio_pin(GPIO_UART_RX)));
+	gpio_set_func(gpio_port_gp(GPIO_UART_TX), GPIO_UART_TX_FUNC,
+			(1 << gpio_pin(GPIO_UART_TX)));
+
 	if (test_uart_as_gpio) {
 		for (env = default_environment, size = sizeof(default_environment);
 				start < size;
