@@ -134,14 +134,16 @@ void fill_nand_flash_info(nand_flash_param *nand_info)
 	nand_flash_info.badblockpos = nand_info->badblockpos;
 	nand_flash_info.rowcycles = nand_info->rowcycles;
 	nand_flash_info.planeoffset = nand_info->planeoffset;
+
 	if (nand_info->timingmod) // NOTE: time mode 0 is default, need not to set
-		    nand_flash_info.options |= NAND_TIMING_MODE | NAND_TIMING_MODE_V(nand_info->timingmod);
+		nand_info->options |= NAND_TIMING_MODE | NAND_TIMING_MODE_V(nand_info->timingmod);
+
 	if (nand_info->options & NAND_READ_RETRY)
-		    nand_flash_info.options |= NAND_READ_RETRY | NAND_READ_RETRY_MODE(nand_info->options);
-	if (nand_info->options & NAND_DRIVER_STRENGTH)
-		    nand_flash_info.options |= NAND_DRIVER_STRENGTH;
+		nand_info->options |= NAND_READ_RETRY_MODE(nand_info->options);
+
+	nand_flash_info.options = nand_info->options;
 #ifdef CONFIG_NAND_NFI
-//	fill_nfi_timing(&(nand_flash_info.timing),&(nand_info->timing));
+	//	fill_nfi_timing(&(nand_flash_info.timing),&(nand_info->timing));
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
 #else
 	memcpy(&(nand_flash_info.timing),&(nand_info->timing),sizeof(nand_info->timing));
