@@ -618,7 +618,7 @@ static int show_charge_logo_rle(int rle_num)
 	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
 
 
-	if (rle_num < 0 && rle_num > logo_charge_num)
+	if (rle_num < 0 || rle_num > logo_charge_num)
 		return -EINVAL;
 	//rle_plot(rle_num * LOGO_CHARGE_SIZE + RLE_LOGO_BASE_ADDR, lcd_base);
 	if(logo_id < logo_charge_num ){
@@ -653,7 +653,7 @@ static int voltage_to_rle_num(void)
 	unsigned int voltage;
 	int rle_num_base;
 	voltage = read_battery_voltage();
-	if (voltage < battery_voltage_min) {
+	if (voltage <= battery_voltage_min) {
 		rle_num_base = 0;
 	} else if (voltage < battery_voltage_max) {
 		rle_num_base = (voltage - battery_voltage_min) / battery_voltage_scale - 1;
