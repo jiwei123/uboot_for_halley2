@@ -174,7 +174,12 @@
 #define CONFIG_DEFAULT_BYTE_CLOCK       150
 #endif
 
-#ifdef CONFIG_CW004
+#ifdef CONFIG_VIDEO_ORISE_OTM3201A
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+#endif
+
+#ifdef CONFIG_VIDEO_BOE_TFT320320
 #define CONFIG_JZ_MIPI_DSI
 #define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
