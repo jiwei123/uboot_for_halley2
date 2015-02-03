@@ -256,7 +256,7 @@ int set_hynix_retry_feature(int data, unsigned int cs_id, int cycle)
 	retry_parms *retryparms = cinfo->retryparms;
 
 	/* io open */
-	context = nand_io_open(&(iobase->nfi), NULL);
+	context = nand_io_open(&(iobase->nfi), cinfo);
 	if (!context)
 		RETURN_ERR(ENAND, "nand io open error");
 
@@ -306,7 +306,7 @@ int set_micron_retry_feature(int data, unsigned int cs_id, int cycle)
 	retry_parms *retryparms = cinfo->retryparms;
 
 	/* io open */
-	context = nand_io_open(&(iobase->nfi), NULL);
+	context = nand_io_open(&(iobase->nfi), cinfo);
 	if (!context)
 		RETURN_ERR(ENAND, "nand io open error");
 
@@ -607,7 +607,7 @@ int nand_set_features(nfi_base *base, unsigned int cs_id, rb_item *rbitem, chip_
 	unsigned char data[4] = {0x00};
 	nand_ops_timing *timing = &cinfo->ops_timing;
 
-	io_context = nand_io_open(base, NULL);
+	io_context = nand_io_open(base, cinfo);
 	if (!io_context)
 		RETURN_ERR(ENAND, "nand io open error");
 
