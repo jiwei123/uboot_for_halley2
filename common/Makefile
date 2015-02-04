@@ -197,6 +197,7 @@ COBJS-$(CONFIG_CMD_SPL) += cmd_spl.o
 COBJS-$(CONFIG_CMD_ZIP) += cmd_zip.o
 COBJS-$(CONFIG_CMD_ZFS) += cmd_zfs.o
 
+COBJS-$(CONFIG_DDR_PARAM_DEBUG) += cmd_ddr.o
 # others
 COBJS-$(CONFIG_BOOTSTAGE) += bootstage.o
 COBJS-$(CONFIG_CONSOLE_MUX) += iomux.o
@@ -258,7 +259,6 @@ COBJS-$(CONFIG_FIT) += image-fit.o
 COBJS-$(CONFIG_FIT_SIGNATURE) += image-sig.o
 COBJS-y += memsize.o
 COBJS-y += stdio.o
-
 
 COBJS	:= $(sort $(COBJS-y))
 XCOBJS	:= $(sort $(XCOBJS-y))

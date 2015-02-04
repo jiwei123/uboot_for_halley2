@@ -568,4 +568,8 @@
 #define CONFIG_PCA953X_I2C_SDA  GPIO_PA(12)
 #endif
 
+/* ddr DEBUG */
+/*#define CONFIG_DDR_PARAM_DEBUG*/
+
+
 #endif /* __CONFIG_DORAOD_H__ */
