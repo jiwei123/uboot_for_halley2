@@ -46,8 +46,8 @@
 
 #define DDR_BL	 	8	/* LPDDR2 Burst length: 3 - 8 burst, 2 - 4 burst , 4 - 16 burst*/
 //#define DDR_tAL  	0	/* Additive Latency, tCK*/
-#define DDR_tRL  	4	/* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
-#define DDR_tWL		2	/* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
+#define DDR_tRL  	MATCH(CONFIG_SYS_MEM_FREQ,0)/*4*/	/* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
+#define DDR_tWL		MATCH(CONFIG_SYS_MEM_FREQ,1)/*2*/	/* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
 //#define DDR_tRL  	3	/* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
 //#define DDR_tWL		1	/* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
 #define DDR_tCCD 	2	/* CAS# to CAS# command delay , tCK*/
