@@ -96,7 +96,7 @@ void spi_init(void )
 #endif
 
 #ifndef CONFIG_BURNER
-	unsigned int ssi_rate = 24000000;
+	unsigned int ssi_rate = 70000000;
 	clk_set_rate(SSI, ssi_rate);
 #endif
 	jz_spi_writel(~SSI_CR0_SSIE & jz_spi_readl(SSI_CR0), SSI_CR0);

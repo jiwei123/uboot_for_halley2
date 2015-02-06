@@ -221,6 +221,22 @@ static unsigned int set_bch_rate(int clk, unsigned long rate)
 }
 #endif
 
+#ifndef CONFIG_SPL_BUILD
+static unsigned int set_ssi_rate(int clk, unsigned long rate)
+{
+	unsigned int pll_rate = pll_get_rate(APLL);
+
+	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
+		? (pll_rate / rate)
+		: (pll_rate / rate + 1)) - 2;
+
+	cpm_outl(cdr | (1 << 29) | (1 << 31), CPM_SSICDR);
+
+	while (cpm_inl(CPM_SSICDR) & (1 << 28));
+
+	return 0;
+}
+#endif
 
 static unsigned int set_msc_rate(int clk, unsigned long rate)
 {
@@ -280,6 +296,7 @@ void clk_set_rate(int clk, unsigned long rate)
 		set_bch_rate(clk, rate);
 		return;
 	case SSI:
+		set_ssi_rate(clk, rate);
 		/*use config set in burn*/
 		return;
 	default:
