@@ -51,9 +51,8 @@
 //#define DDR_tRL  	3	/* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
 //#define DDR_tWL		1	/* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
 #define DDR_tCCD 	2	/* CAS# to CAS# command delay , tCK*/
-#define DDR_tRTW        (DDR_tRL + (((DDR_tDQSCKMAX * 1000) % tck_g.ps) ? \
-			(DDR_tDQSCKMAX * 1000 / tck_g.ps + 1) : \
-			(DDR_tDQSCKMAX * 1000 / tck_g.ps)) + DDR_BL / 2 + 1 - DDR_tWL)
+#define DDR_tRTW        (DDR_tRL + (((DDR_tDQSCKMAX * 1000) + tck_g.ps -1)/tck_g.ps) \
+							 + DDR_BL / 2 + 1 - DDR_tWL)
 #define DDR_tFAW 	MAX(8, 50 * 1000)	/* Four bank activate period, ns */
 #define DDR_tCKE	3		/* CKE minimum pulse width, tCK */
 #define DDR_tRDLAT	(DDR_tRL - 1)
