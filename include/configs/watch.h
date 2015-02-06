@@ -36,22 +36,56 @@
 /*#define CONFIG_26M*/
 
 #if !defined(CONFIG_26M)
-#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
+#if defined(CONFIG_INC_FREQ_CPU_1200M)
+#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
+#else
+#define CONFIG_SYS_APLL_FREQ        800000000   /*If APLL not use mast be set 0*/
+#endif
+
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		800000000
-#define CONFIG_SYS_MEM_FREQ		150000000
+
+#if defined(CONFIG_INC_FREQ_CPU_1200M)
+#define CONFIG_SYS_CPU_FREQ        1200000000  /*If APLL not use mast be set 0*/
+#else
+#define CONFIG_SYS_CPU_FREQ        800000000   /*If APLL not use mast be set 0*/
+#endif
+
+#if defined(CONFIG_INC_FREQ_MEM_300M)
+#define CONFIG_SYS_MEM_FREQ        300000000  /*If APLL not use mast be set 0*/
+#else
+#define CONFIG_SYS_MEM_FREQ        150000000   /*If APLL not use mast be set 0*/
+#endif
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
 #elif defined(CONFIG_26M)
-#define CONFIG_SYS_APLL_FREQ		780000000	/*If APLL not use mast be set 0*/
+#if defined(CONFIG_INC_FREQ_CPU_1200M)
+#define CONFIG_SYS_APLL_FREQ        1200000000  /*If APLL not use mast be set 0*/
+aaaaaaa
+#else
+#define CONFIG_SYS_APLL_FREQ        780000000   /*If APLL not use mast be set 0*/
+bbbbbb
+#endif
+
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		780000000
-#define CONFIG_SYS_MEM_FREQ		150000000
+
+#if defined(CONFIG_INC_FREQ_CPU_1200M)
+#define CONFIG_SYS_CPU_FREQ        1200000000  /*If APLL not use mast be set 0*/
+#else
+#define CONFIG_SYS_CPU_FREQ        780000000   /*If APLL not use mast be set 0*/
+#endif
+
+#if defined(CONFIG_INC_FREQ_MEM_300M)
+#define CONFIG_SYS_MEM_FREQ        300000000  /*If APLL not use mast be set 0*/
+cccccc
+#else
+#define CONFIG_SYS_MEM_FREQ        150000000   /*If APLL not use mast be set 0*/
+ddddd
+#endif
 
 #define CONFIG_SYS_EXTAL		26000000	/* EXTAL freq: 26 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
