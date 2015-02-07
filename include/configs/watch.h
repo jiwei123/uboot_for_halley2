@@ -35,57 +35,22 @@
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 /*#define CONFIG_26M*/
 
-#if !defined(CONFIG_26M)
 #if defined(CONFIG_IWOP)
-#define CONFIG_SYS_APLL_FREQ		1000000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ        1000000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_CPU_FREQ         1000000000  /*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MEM_FREQ         300000000  /*If APLL not use mast be set 0*/
 #else
-#define CONFIG_SYS_APLL_FREQ        1000000000   /*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ        800000000   /*If APLL not use mast be set 0*/
+#define CONFIG_SYS_CPU_FREQ         800000000   /*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MEM_FREQ         150000000   /*If APLL not use mast be set 0*/
 #endif
 
-#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
-#define CONFIG_CPU_SEL_PLL		APLL
-#define CONFIG_DDR_SEL_PLL		MPLL
+#define CONFIG_SYS_MPLL_FREQ        600000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_CPU_SEL_PLL          APLL
+#define CONFIG_DDR_SEL_PLL          MPLL
+#define CONFIG_SYS_EXTAL            24000000    /* EXTAL freq: 24 MHz */
+#define CONFIG_SYS_HZ               1000        /* incrementer freq */
 
-#if defined(CONFIG_IWOP)
-#define CONFIG_SYS_CPU_FREQ        1000000000  /*If APLL not use mast be set 0*/
-#else
-#define CONFIG_SYS_CPU_FREQ        1000000000   /*If APLL not use mast be set 0*/
-#endif
-
-#if defined(CONFIG_IWOP)
-#define CONFIG_SYS_MEM_FREQ        300000000  /*If APLL not use mast be set 0*/
-#else
-#define CONFIG_SYS_MEM_FREQ        150000000   /*If APLL not use mast be set 0*/
-#endif
-
-#define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
-#define CONFIG_SYS_HZ			1000		/* incrementer freq */
-#elif defined(CONFIG_26M)
-#if defined(CONFIG_IWOP)
-#define CONFIG_SYS_APLL_FREQ        1000000000  /*If APLL not use mast be set 0*/
-#else
-#define CONFIG_SYS_APLL_FREQ        780000000   /*If APLL not use mast be set 0*/
-#endif
-
-#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
-#define CONFIG_CPU_SEL_PLL		APLL
-#define CONFIG_DDR_SEL_PLL		MPLL
-
-#if defined(CONFIG_IWOP)
-#define CONFIG_SYS_CPU_FREQ        1000000000  /*If APLL not use mast be set 0*/
-#else
-#define CONFIG_SYS_CPU_FREQ        780000000   /*If APLL not use mast be set 0*/
-#endif
-
-#if defined(CONFIG_IWOP)
-#define CONFIG_SYS_MEM_FREQ        300000000  /*If APLL not use mast be set 0*/
-#else
-#define CONFIG_SYS_MEM_FREQ        150000000   /*If APLL not use mast be set 0*/
-#endif
-
-#define CONFIG_SYS_EXTAL		26000000	/* EXTAL freq: 26 MHz */
-#define CONFIG_SYS_HZ			1000		/* incrementer freq */
-#endif
 
 #define CONFIG_SYS_DCACHE_SIZE		32768
 #define CONFIG_SYS_ICACHE_SIZE		32768
@@ -251,10 +216,7 @@
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 
-#ifdef CONFIG_AW808
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
-#elif defined(CONFIG_CW004)
+#ifdef CONFIG_SOFT_I2C0
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
 #else
