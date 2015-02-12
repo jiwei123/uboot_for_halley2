@@ -81,12 +81,12 @@ struct fb_videomode jzfb1_videomode = {
 	.xres = 320,
 	.yres = 320,
 	.pixclock = KHZ2PICOS(5310), //PCLK Frequency: 5.31MHz
-	.left_margin  = 0,
-	.right_margin = 0,
-	.upper_margin = 0,
-	.lower_margin = 0,
-	.hsync_len = 0,
-	.vsync_len = 0,
+	.left_margin  = 3,
+	.right_margin = 3,
+	.upper_margin = 2,
+	.lower_margin = 2,
+	.hsync_len = 3,
+	.vsync_len = 1,
 	.sync = ~FB_SYNC_HOR_HIGH_ACT & ~FB_SYNC_VERT_HIGH_ACT,
 	.vmode = FB_VMODE_NONINTERLACED,
 	.flag = 0,
@@ -119,17 +119,18 @@ struct dsi_device jz_dsi = {
 struct jzfb_config_info jzfb1_init_data = {
 	.modes = &jzfb1_videomode,
 
-    .lcd_type = LCD_TYPE_SLCD,
-    .bpp = 24,
+	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
+	.bpp = 24,
 
-    .smart_config.smart_type = SMART_LCD_TYPE_PARALLEL,
-    .smart_config.clkply_active_rising = 0,
-    .smart_config.rsply_cmd_high    = 0,
-    .smart_config.csply_active_high = 0,
-    .smart_config.bus_width = 8,
-    .dither_enable = 1,
-    .dither.dither_red = 1,	/* 6bit */
-    .dither.dither_red = 1,	/* 6bit */
-    .dither.dither_red = 1,	/* 6bit */
+	.smart_config.smart_type = SMART_LCD_TYPE_PARALLEL,
+	.smart_config.clkply_active_rising = 0,
+	.smart_config.rsply_cmd_high    = 0,
+	.smart_config.csply_active_high = 0,
+	.smart_config.bus_width = 8,
+	.dither_enable = 1,
+	.dither.dither_red = 1,    /* 6bit */
+	.dither.dither_red = 1,    /* 6bit */
+	.dither.dither_red = 1,    /* 6bit */
+
 };
 

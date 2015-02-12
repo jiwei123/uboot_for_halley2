@@ -78,28 +78,28 @@ void panel_power_on(void)
 	return;
 }
 
-void orise_otm3210a_sleep_in(struct dsi_device *dsi) /* enter sleep */
+void boe_tft320320_sleep_in(struct dsi_device *dsi) /* enter sleep */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x10, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void orise_otm3210a_sleep_out(struct dsi_device *dsi) /* exit sleep */
+void boe_tft320320_sleep_out(struct dsi_device *dsi) /* exit sleep */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x11, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void orise_otm3210a_display_on(struct dsi_device *dsi) /* display on */
+void boe_tft320320_display_on(struct dsi_device *dsi) /* display on */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x29, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void orise_otm3210a_display_off(struct dsi_device *dsi) /* display off */
+void boe_tft320320_display_off(struct dsi_device *dsi) /* display off */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x28, 0x00};
 
@@ -109,7 +109,7 @@ void orise_otm3210a_display_off(struct dsi_device *dsi) /* display off */
 /*
  * display inversion on
  */
-void orise_otm3210a_display_inversion_on(struct dsi_device *dsi)
+void boe_tft320320_display_inversion_on(struct dsi_device *dsi)
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x21, 0x00};
 
@@ -119,7 +119,7 @@ void orise_otm3210a_display_inversion_on(struct dsi_device *dsi)
 /*
  * display inversion off
  */
-void orise_otm3210a_display_inversion_off(struct dsi_device *dsi)
+void boe_tft320320_display_inversion_off(struct dsi_device *dsi)
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x20, 0x00};
 
@@ -152,7 +152,6 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 	struct dsi_cmd_packet boe_tft320320_cmd_list[] = {
 		{0x39, 0x05, 0x00, {0x2A, 0x00, 0x00, 0x01, 0x3F}},
 		{0x39, 0x05, 0x00, {0x2B, 0x00, 0x00, 0x01, 0x3F}},
-		{0x39, 0x02, 0x00, {0x3A, 0x66}},
 		{0x39, 0x03, 0x00, {0xB1, 0xA0}},
 		{0x39, 0x05, 0x00, {0xB5, 0x02, 0x02, 0x0A, 0x04}},
 		{0x39, 0x02, 0x00, {0xB4, 0x02}},
@@ -171,6 +170,10 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 		{0x39, 0x02, 0x00, {0xC2, 0x22}},
 		{0x39, 0x10, 0x00, {0xE0, 0x00, 0x0D, 0x13, 0x03, 0x0F, 0x05, 0x40, 0x67, 0x57, 0x06, 0x0C, 0x0C, 0x32, 0x36, 0x0F}},
 		{0x39, 0x10, 0x00, {0xE1, 0x00, 0x0A, 0x0F, 0x03, 0x0F, 0x06, 0x2B, 0x33, 0x41, 0x05, 0x0D, 0x0B, 0x29, 0x30, 0x0F}},
+		{0x39, 0x02, 0x00, {0x3A, 0x77}},
+		{0x39, 0x02, 0x00, {0xE9, 0x01}},
+		{0x39, 0x03, 0x00, {0xF8, 0x21, 0x05}},
+		{0x39, 0x04, 0x00, {0xB6, 0x82, 0x22, 0x3B}},
 		{0x05, 0x11, 0x00},
 	};
 
@@ -180,7 +183,7 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 
 	mdelay(120);
 
-	orise_otm3210a_display_on(dsi);
+	boe_tft320320_display_on(dsi);
 	debug("init BOE 1.54 320*320 TFT LCD...\n");
 
 	return;
