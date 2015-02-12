@@ -77,7 +77,7 @@ _start:
 	mtc0	v0, CP0_CONFIG, 7
 	nop
 
-#if 0
+#if 1
 	mfc0	v0, $12, 2
 	nop
 	li	v1, 0x7fffffff
