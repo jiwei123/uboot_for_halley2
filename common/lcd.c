@@ -512,6 +512,50 @@ void lcd_clear_black(void)
 #endif
 }
 
+/*
+ * show color bar on LCD, support both horizontal and vertical direction
+ * @HV, COLOR_BAR_HORIZONTAL or COLOR_BAR_VERTICAL,when HV is
+ * COLOR_BAR_HORIZONTAL i means row index, in COLOR_BAR_VERTICAL i means
+ * column index, panel_info.vl_row always equal to panel_info.vl_col
+ * @color1, 4bytes value, such as red 0x00ff0000, green 0x0000ff00
+ * @color2, 4bytes value, such as blue 0x000000ff
+ * @delta, the width of color bar in pixel
+ */
+enum lcd_color_bar_direction {COLOR_BAR_HORIZONTAL, COLOR_BAR_VERTICAL};
+void lcd_color_bar(enum lcd_color_bar_direction HV, unsigned int color1,
+		unsigned int color2, unsigned int delta)
+{
+	unsigned int *color;
+	unsigned int i, j, k, position;
+
+	color = lcd_base;
+	for (i = 0; i < panel_info.vl_row; i += delta) {
+		for(j = 0; j < panel_info.vl_col; j++) {
+			/* even index bar show color1, odd show color2 */
+			for (k = 0; k < delta && (i + k) < panel_info.vl_row; k++) {
+				if (HV == COLOR_BAR_HORIZONTAL) {
+					position = (i + k) * panel_info.vl_row + j;
+				} else if (HV == COLOR_BAR_VERTICAL) {
+					position = j * panel_info.vl_row + i + k;
+				} else {
+					printf("Unsupport parameter\n");
+					return;
+				}
+
+				if (((i / delta) % 2) == 0) {
+					color[position] = color1;
+				} else {
+					color[position] = color2;
+				}
+			}
+		}
+	}
+
+	lcd_sync();
+
+	return;
+}
+
 /*----------------------------------------------------------------------*/
 void lcd_clear(void)
 {
@@ -587,7 +631,6 @@ static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 	/* first lcd frame, black screen */
 	lcd_clear_black();
 	lcd_open_backlight();
-
 	return 0;
 }
 
@@ -597,6 +640,39 @@ U_BOOT_CMD(
 	""
 );
 
+/*
+ * display horizontal/vertical/ color bar on lcd used for testing lcd driver
+ * @cmdtp,
+ * @flag,
+ * @argc, is always 5, 4 is also support and use 0x14 as default value of delta
+ * @argv,
+ */
+static int
+do_color_bar(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	unsigned int color1, color2, delta;
+	enum lcd_color_bar_direction HV;
+
+	if (argc < 4)
+		return CMD_RET_USAGE;
+	HV = strcmp(argv[1], "H") == 0 ? COLOR_BAR_HORIZONTAL: COLOR_BAR_VERTICAL;
+	color1 = simple_strtoul(argv[2], NULL, 16);
+	color2 = simple_strtoul(argv[3], NULL, 16);
+	delta = 0x14; //default value if without argv[4]
+	if (argc == 5) {
+		delta = simple_strtoul(argv[4], NULL, 16);
+	}
+	lcd_color_bar(HV, color1, color2, delta);
+
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(
+	color_bar, 5, 5, do_color_bar,
+	"display horizontal/vertical/ color bar on lcd",
+	"<H|V> <color1> <color2> <spacing>\n"
+	"         -color_bar H/V 0x00ff0000 0x0000ff00 0x14"
+);
 /*----------------------------------------------------------------------*/
 static int lcd_init(void *lcdbase)
 {
