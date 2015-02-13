@@ -87,6 +87,7 @@
 #define DDRP_DXGCR(n)	(DDR_PHY_OFFSET + 0x1c0 + n * 0x40) /* DATX8 n General Configuration Register */
 #define DDRP_DXGSR0(n)	(DDR_PHY_OFFSET + 0x1c4 + n * 0x40) /* DATX8 n General Status Register */
 #define DDRP_DXGSR1(n)	(DDR_PHY_OFFSET + 0x1c8 + n * 0x40) /* DATX8 n General Status Register */
+#define DDRP_DXDLLCR(n)	(DDR_PHY_OFFSET + 0x1cc + n * 0x40) /* DATX8 n General Status Register */
 #define DDRP_DXDQSTR(n)	(DDR_PHY_OFFSET + 0x1d4 + n * 0x40) /* DATX8 n DQS Timing Register */
 #define DDRP_ZQXCR0(n)	(DDR_PHY_OFFSET + 0x180 + n * 0x10) /* ZQ impedance Control Register 0 */
 #define DDRP_ZQXCR1(n)	(DDR_PHY_OFFSET + 0x184 + n * 0x10) /* ZQ impedance Control Register 1 */
@@ -577,6 +578,8 @@
 #define DDR_GET_VALUE(x, y) (((x * 1000)% y == 0) ?	\
 		((x * 1000)/ y) : ((x * 1000) / y + 1))
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #define ddr_writel(value, reg)	writel((value), DDRC_BASE + reg)
 #define ddr_readl(reg)		readl(DDRC_BASE + reg)
 
@@ -598,5 +601,27 @@
 	 value = (temp % y == 0) ? (temp / y) : (temp / y + 1); \
 	 value;							\
  })
-#endif /* __DDR_H__ */
 
+/*only for lpddr2 tRL and tWL*/
+#define MATCH(clk,type)							\
+	({								\
+		unsigned long value,i;					\
+		if(type == 0){						\
+			for(i = 0; i < ARRAY_SIZE(rl_LPDDR2);i++){	\
+				if(rl_LPDDR2[i].memclk > clk){		\
+					value = rl_LPDDR2[i-1].RL;	\
+					break;				\
+				}					\
+			}						\
+		}else{							\
+			for(i = 0; i < ARRAY_SIZE(wl_LPDDR2);i++){	\
+				if(wl_LPDDR2[i].memclk > clk){		\
+					value = wl_LPDDR2[i-1].WL;	\
+					break;				\
+				}					\
+			}						\
+		}							\
+		value;							\
+	})
+
+#endif /* __DDR_H__ */

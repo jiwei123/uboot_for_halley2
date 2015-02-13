@@ -20,8 +20,8 @@
 #include "./chips/MCP_KMS5U000JM_B308.h"
 #endif
 
-#ifdef CONFIG_MCP_KMS5U000KM-B308
-#include "./chips/MCP_KMS5U000KM-B308.h"
+#ifdef CONFIG_MCP_KMS5U000KM_B308
+#include "./chips/MCP_KMS5U000KM_B308.h"
 #endif
 
 #ifdef CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
