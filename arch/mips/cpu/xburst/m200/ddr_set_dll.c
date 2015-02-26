@@ -37,7 +37,7 @@ void reset_dll(void)
  */
 	writel(3 | (1<<6), CPM_DRCG);
 	mdelay(5);
-	writel(0x51 | (1<<6), CPM_DRCG);
+	writel(0x7d | (1<<6), CPM_DRCG);
 	mdelay(5);
 }
 #endif
