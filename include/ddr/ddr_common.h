@@ -4,23 +4,10 @@
 #include <ddr/ddr_chips.h>
 #include <ddr/ddr_params.h>
 
-#if defined(CONFIG_JZ4775)
-#include <asm/ddr_dwc.h>
-#include <ddr/ddrc.h>
-#include <ddr/ddrp_dwc.h>
-#elif defined(CONFIG_JZ4780)
-#include <asm/ddr_dwc.h>
-#include <ddr/ddrc.h>
-#include <ddr/ddrp_dwc.h>
-#elif defined(CONFIG_M200)
-#include <asm/ddr_dwc.h>
-#include <ddr/ddrc.h>
-#include <ddr/ddrp_dwc.h>
-#elif defined(CONFIG_M150)
+#ifdef CONFIG_CPU_XBURST
 #include <asm/ddr_dwc.h>
 #include <ddr/ddrc.h>
 #include <ddr/ddrp_dwc.h>
 #endif
-
 
 #endif /* __DDR_COMMON_H__ */

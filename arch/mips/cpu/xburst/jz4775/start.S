@@ -30,7 +30,8 @@
 	.set noreorder
 
 	.globl _start
-	.text
+	.section .start_section
+
 _start:
 #ifdef CONFIG_SPL_MMC_SUPPORT
 	/* magic value ("MSPL") */

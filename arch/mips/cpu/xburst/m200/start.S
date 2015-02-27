@@ -31,7 +31,8 @@
 
 	.set noreorder
 	.globl _start
-	.text
+	.section .start_section
+
 _start:
 #ifdef CONFIG_SPL_MMC_SUPPORT
 	/* magic value ("MSPL") */
@@ -164,3 +165,4 @@ cache_alloc_a_line:
 #endif
 	j	board_init_f
 	nop
+

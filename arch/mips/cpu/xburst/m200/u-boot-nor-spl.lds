@@ -8,7 +8,7 @@ SECTIONS
 	.text      :
 	{
 		__start = .;
-		arch/mips/cpu/xburst/m200/start.o	(.text*)
+		*(.start_section*)
 		*(.text*)
 		. = ALIGN(4);
 	} >.sram
