@@ -26,7 +26,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
-COBJS-y	:= $(BOARD).o
+COBJS-y	:= board.o
 COBJS-$(CONFIG_VIDEO_JZ4775) += lcd.o
 COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
 
