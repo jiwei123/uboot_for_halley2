@@ -38,7 +38,7 @@
 #if defined(CONFIG_IWOP)
 #define CONFIG_SYS_APLL_FREQ        1000000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_CPU_FREQ         1000000000  /*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MEM_FREQ         300000000  /*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MEM_FREQ         150000000  /*If APLL not use mast be set 0*/
 #else
 #define CONFIG_SYS_APLL_FREQ        1080000000   /*If APLL not use mast be set 0*/
 #define CONFIG_SYS_CPU_FREQ         1080000000   /*If APLL not use mast be set 0*/
