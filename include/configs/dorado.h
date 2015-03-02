@@ -105,10 +105,14 @@
 
 /**
  * Boot arguments definitions.
+ *
+ * console=ttyS1: kernel boot time (7s)
+ * console=null:  kernel boot time (4s), for product board
  */
 #ifndef CONFIG_RVMS
 #if defined(CONFIG_DORADO_V21) || defined(CONFIG_DORADO_V22)
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=256M@0x30000000"
+/*#define BOOTARGS_COMMON "console=null, mem=255M@0x0 mem=256M@0x30000000"*/
 #else
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=768M@0x30000000"
 #endif
