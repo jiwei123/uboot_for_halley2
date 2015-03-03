@@ -91,8 +91,8 @@ _start:
 	li	v1, 0x7fffffff
 	and	v0, v0, v1
 
-	li      v1, 0x20000000
-	or      v0,v0,v1
+//	li      v1, 0x20000000
+//	or      v0,v0,v1
 #endif
 
 	mtc0	v0, $12, 2
