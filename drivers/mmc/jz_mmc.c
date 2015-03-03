@@ -127,7 +127,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 
 	/* wait for completion */
 	while (!(stat = (jz_mmc_readl(priv, MSC_IREG) & (MSC_IREG_END_CMD_RES | MSC_IREG_TIME_OUT_RES))))
-		udelay(10000);
+		udelay(100);
 	jz_mmc_writel(stat, priv, MSC_IREG);
 	if (stat & MSC_IREG_TIME_OUT_RES)
 		return TIMEOUT;

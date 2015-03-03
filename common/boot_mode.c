@@ -134,7 +134,6 @@ static int get_boot_sel(void)
  */
 static int handle_bootloader_command(void)
 {
-        printf("-----------handle_bootloader_command ----------\n");
         /* Command: boot-recovery-ftest */
         if ( !memcmp(g_boot_msg.command, "boot-recovery-ftest", strlen("boot-recovery-ftest")) ) {
                 printf("In handle_bootloader_command ... boot-recovery-ftest...\n");
@@ -182,9 +181,7 @@ int get_bootloader_message(struct bootloader_message *out)
 #elif defined(CONFIG_MSC_U_BOOT)
         unsigned char data[sizeof(struct bootloader_message)];
         memset(data, '\0', sizeof(struct bootloader_message));
-        printf("-------------------------------------before---------\n");
         do_msc (PTN_MISC_OFFSET, data, sizeof(struct bootloader_message));
-        printf("==============after=============\n");
 #endif
 
         memcpy(out, data, sizeof(struct bootloader_message));
@@ -230,7 +227,6 @@ void boot_mode_select(void)
                 printf("Got bootloader message failed !\n");
         } else {
                 boot_cmd = handle_bootloader_command();
-                printf("-----boot cmd is %d=====\n", boot_cmd);
                 if (boot_cmd == FTEST_BOOT) {
                         printf("Bootloader message: boot-recovery-ftest\n");
                         boot_select = RECOVERY_BOOT;

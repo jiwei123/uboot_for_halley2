@@ -125,11 +125,10 @@ void panel_power_on(void)
 {
 	debug("--------------------%s\n", __func__);
 	gpio_direction_output(auo_x163_pdata.gpio_rst, 1);
-	mdelay(300);
 	gpio_direction_output(auo_x163_pdata.gpio_rst, 0);  //reset active low
-	mdelay(10);
+	mdelay(5);
 	gpio_direction_output(auo_x163_pdata.gpio_rst, 1);
-	mdelay(50);
+	mdelay(5);
 	serial_puts("auo_x163 panel display on\n");
 }
 
@@ -204,11 +203,11 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 {
 	auo_x163_panel_condition_setting(dsi);
 	auo_x163_sleep_out(dsi);
-	mdelay(350);
+	mdelay(40);
 	//auo_x163_memory_access(dsi);
 	//auo_x163_display_on(dsi);
 	//auo_x163_memory_access(dsi);
-	mdelay(10);
+	//mdelay(10);
 }
 
 void panel_pin_init(void)
