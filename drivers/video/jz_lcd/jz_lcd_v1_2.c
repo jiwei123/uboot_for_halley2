@@ -299,21 +299,27 @@ static void fbmem_set(void *_ptr, unsigned short val, unsigned count)
 			*ptr++ = val;
 	} else if (bpp == 32){
 		int val_32;
-		int rdata, gdata, bdata;
+		int alpha, rdata, gdata, bdata;
 		unsigned int *ptr = (unsigned int *)_ptr;
 
+		alpha = 0xff;
+
 		rdata = val >> 11;
-		gdata = val >> 5 & 0x003F;
+		rdata = (rdata << 3) | 0x7;
+
+		gdata = (val >> 5) & 0x003F;
+		gdata = (gdata << 2) | 0x3;
+
 		bdata = val & 0x001F;
+		bdata = (bdata << 3) | 0x7;
+
 		if (lcd_config_info.fmt_order == FORMAT_X8B8G8R8) {
 			val_32 =
-			    bdata << 19 | 0x7 << 16 | gdata << 10 | 0x3 << 8 | rdata <<
-			    3 | 0x7;
+			    (alpha << 24) | (bdata << 16) | (gdata << 8) | rdata;
 			/*fixed */
 		} else if (lcd_config_info.fmt_order == FORMAT_X8R8G8B8) {
 			val_32 =
-			    rdata << 19 | 0x7 << 16 | gdata << 10 | 0x3 << 8 | bdata <<
-			    3 | 0x7;
+			    (alpha << 24) | (rdata << 16) | (gdata << 8) | bdata;
 		}
 
 		while (count--){
