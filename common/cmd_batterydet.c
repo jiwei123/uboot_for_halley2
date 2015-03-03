@@ -491,13 +491,18 @@ static int charge_detect(void)
 #define NO_PRESS -1
 #define SHORT_PRESS 0
 #define LONG_PRESS 1
-static int poweron_key_pressed_status(void)
+static int poweron_key_pressed_status(int charge_logo_first_show)
 {
 	int count = 0;
 
 	while (1) {
 		if (__poweron_key_pressed()) {
-			mdelay(10);
+		    if (charge_logo_first_show == 0) {
+		    /* if never show charge logo,boot the system immediately */
+		        return LONG_PRESS;
+		    } else
+		        mdelay(10);
+
 			count++;
 		} else {
 			if (count == 0)
@@ -690,6 +695,7 @@ static void show_charging_logo(void)
 	ulong sec_current = 0;
 	ulong sec_last = 0;
 	ulong charge_logo_cnt = 0;
+	int charge_logo_first_show = 0;
 	int poweron_key;
 
 	/* Shut some modules power down,cdma,gsm e.g. */
@@ -707,7 +713,7 @@ static void show_charging_logo(void)
 			}
 		}
 
-		poweron_key = poweron_key_pressed_status();
+		poweron_key = poweron_key_pressed_status(charge_logo_first_show);
 		if (poweron_key == LONG_PRESS) {
 			wait_lcd_refresh_finish();
 			lcd_clear_black();
@@ -736,6 +742,7 @@ static void show_charging_logo(void)
 			debug("sec_current = %d sec_last = %d rle_num = %d\n",
 					sec_current, sec_last, rle_num);
 			charge_logo_cnt++;
+			charge_logo_first_show = 1;
 			show_charge_logo_rle(rle_num);
 			rle_num++;
 			if (rle_num >= charge_logo_num)
