@@ -152,6 +152,11 @@ static int keys_pressed(void)
 	return pressed;
 }
 
+int poweron_key_pressed(void)
+{
+    return __poweron_key_pressed();
+}
+
 #define RD_ADJ		15
 #define RD_STROBE	7
 #define ADDRESS		0x10
@@ -295,10 +300,9 @@ static int jz_pm_do_hibernate(void)
 	printf("The battery voltage is too low, will power down\n");
 	ricoh619_power_off();
 #endif
-	while (a--) {
-		printf
-			("We should not come here, please check the jz4760rtc.h!!!\n");
-	};
+
+	mdelay(100);
+	printf("We should not come here, please check the PMU config!!!\n");
 
 	/* We can't get here */
 	return 0;
@@ -466,6 +470,19 @@ static void battery_init_gpio(void)
 #endif
 }
 
+static int get_viberation_signature(void)
+{
+    unsigned int flag = cpm_get_scrpad();
+
+    if ((flag & 0xffff) == VIBRATION_SIGNATURE) {
+        /* Clear the signature */
+        cpm_set_scrpad(flag & ~(0xffff));
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 static int charge_detect(void)
 {
 	int ret = 0;
@@ -473,6 +490,11 @@ static int charge_detect(void)
 
 	if (readl(CPM_BASE + CPM_RSR) & CPM_RSR_WR)
 		return ret;
+
+	if (get_viberation_signature()) {
+	    return ret;
+	}
+
 #ifndef CONFIG_BATTERY_INIT_GPIO
 	/* IF default battery_init_gpio function is not suitable for actual board,
 	 * define and call the init function in board setup file. For example ,

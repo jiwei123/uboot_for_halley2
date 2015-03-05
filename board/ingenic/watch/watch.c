@@ -24,6 +24,7 @@
 #include <nand.h>
 #include <net.h>
 #include <netdev.h>
+#include <asm/io.h>
 #include <asm/gpio.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/nand.h>
@@ -181,6 +182,11 @@ int spl_start_uboot(void)
 int checkboard(void)
 {
 	puts("Board: watch (Ingenic XBurst M200 SoC)\n");
+
+	if (poweron_key_pressed()) {
+	    cpm_set_scrpad(VIBRATION_SIGNATURE);
+	}
+
 	return 0;
 }
 
