@@ -180,6 +180,11 @@
 #define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
+#ifdef CONFIG_VIDEO_EDO_E1392AM1
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+#endif
+
 #ifdef  CONFIG_VIDEO_BM347WV_F_8991FTGF
 #define CONFIG_LCD_GPIO_FUNC2_SLCD
 #endif
@@ -269,6 +274,10 @@
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
 /*#define CONFIG_CMD_I2C*/
+
+/* Console configure */
+#define CONFIG_AUTO_COMPLETE
+#define CONFIG_CMDLINE_EDITING
 
 /*eeprom*/
 #ifdef CONFIG_CMD_EEPROM
