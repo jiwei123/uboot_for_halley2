@@ -146,7 +146,8 @@
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
-#ifdef CONFIG_FORNAX_V20
+
+#if defined(CONFIG_FORNAX_V20) || defined(CONFIG_FORNAX_V30)
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(3)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(0)
 #else
@@ -336,7 +337,11 @@
  */
 #ifndef CONFIG_FORNAX_V20
 
+#ifdef CONFIG_FORNAX_V20
+#define CONFIG_GPIO_USB_DETECT         GPIO_PD(28)
+#else
 #define CONFIG_GPIO_USB_DETECT         GPIO_PA(14)
+#endif
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL 1
 
 /* Wrong keys. */
