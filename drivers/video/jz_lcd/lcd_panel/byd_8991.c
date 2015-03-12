@@ -51,7 +51,7 @@ void panel_pin_init(void)
 void panel_power_on(void)
 {
 	Initial_IC();
-	mdelay(80);
+	//mdelay(80); //for decreasing by ykliu
 	serial_puts("8991ftgf panel display on\n");
 }
 

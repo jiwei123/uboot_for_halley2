@@ -33,6 +33,7 @@ struct jz_mmc_priv {
 	int clk;
 };
 
+#define udelay(int) do{}while(0); //for decreasing time by ykliu
 /* jz_mmc_priv flags */
 #define JZ_MMC_BUS_WIDTH_MASK 0x3
 #define JZ_MMC_BUS_WIDTH_1    0x0
@@ -312,7 +313,7 @@ static int jz_mmc_core_init(struct mmc *mmc)
 	jz_mmc_writel(0x1, priv, MSC_LPM);
 
 	/* maximum timeouts */
-	jz_mmc_writel(0xffffffff, priv, MSC_RESTO);
+//	jz_mmc_writel(0xffffffff, priv, MSC_RESTO); //use the default value for decreasing time by ykliu
 	jz_mmc_writel(0xffffffff, priv, MSC_RDTO);
 
 	jz_mmc_writel(clkrt, priv, MSC_CLKRT);
