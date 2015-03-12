@@ -134,12 +134,22 @@ int i2x_mux_select_mux(int bus);
 int i2c_mux_ident_muxstring_f (uchar *buf);
 #endif
 
+#ifdef CONFIG_MUTIPLE_I2C_BUS
+struct client_i2c_bus {
+	unsigned int bus_num;
+	int scl_gpio;
+	int sda_gpio;
+};
+struct client_i2c_bus *mutiple_i2c_probe(uchar addr);
+int mutiple_i2c_read(struct client_i2c_bus *i2c_bus_select, uchar chip, uint addr, int alen, uchar *buffer, int len);
+int mutiple_i2c_write(struct client_i2c_bus *i2c_bus_select, uchar chip, uint addr, int alen, uchar *buffer, int len);
+#endif
 /*
  * Probe the given I2C chip address.  Returns 0 if a chip responded,
  * not 0 on failure.
  */
-int i2c_probe(uchar chip);
 
+int i2c_probe(uchar chip); /* if define CONFIG_MUTIPLE_I2C_BUS, we'd better use mutiple_i2c_probe() interface  */
 /*
  * Read/Write interface:
  *   chip:    I2C chip address, range 0..127
@@ -172,7 +182,6 @@ static inline u8 i2c_reg_read(u8 addr, u8 reg)
 #endif
 
 	i2c_read(addr, reg, 1, &buf, 1);
-
 	return buf;
 }
 
@@ -190,6 +199,42 @@ static inline void i2c_reg_write(u8 addr, u8 reg, u8 val)
 
 	i2c_write(addr, reg, 1, &val, 1);
 }
+
+/* if you need mutiple i2c bus to use, the interfaces need change these, you need more a param */
+#ifdef CONFIG_MUTIPLE_I2C_BUS
+static inline u8 mutiple_i2c_reg_read(struct client_i2c_bus *i2c_bus, u8 addr, u8 reg)
+{
+	u8 buf;
+
+#ifdef CONFIG_8xx
+	/* MPC8xx needs this.  Maybe one day we can get rid of it. */
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+#endif
+
+#ifdef DEBUG
+	printf("%s: addr=0x%02x, reg=0x%02x\n", __func__, addr, reg);
+#endif
+
+	mutiple_i2c_read(i2c_bus, addr, reg, 1, &buf, 1);
+	return buf;
+}
+
+static inline void mutiple_i2c_reg_write(struct client_i2c_bus *i2c_bus, u8 addr, u8 reg, u8 val)
+{
+#ifdef CONFIG_8xx
+	/* MPC8xx needs this.  Maybe one day we can get rid of it. */
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+#endif
+
+#ifdef DEBUG
+	printf("%s: addr=0x%02x, reg=0x%02x, val=0x%02x\n",
+	       __func__, addr, reg, val);
+#endif
+
+	mutiple_i2c_write(i2c_bus, addr, reg, 1, &val, 1);
+}
+#endif
+
 
 /*
  * Functions for setting the current I2C bus and its speed

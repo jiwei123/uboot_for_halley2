@@ -28,6 +28,7 @@
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
  */
+
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
@@ -218,13 +219,23 @@
 #endif
 
 /* I2C */
+#define CONFIG_MUTIPLE_I2C_BUS 	   /* mutiple i2c bus enable */
 #define CONFIG_SOFT_I2C
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 
-#ifdef CONFIG_SOFT_I2C0
+#ifdef CONFIG_SOFT_I2C0 /* the first (the default) i2c bus */
 #define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PD(31)
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
+#endif
+
+#if defined(CONFIG_SOFT_I2C0) && defined(CONFIG_MUTIPLE_I2C_BUS) /* the second i2c bus if mutiple i2c bus config */
+#define CONFIG_SOFT_I2C_GPIO_SCL0	CONFIG_SOFT_I2C_GPIO_SCL
+#define CONFIG_SOFT_I2C_GPIO_SDA0	CONFIG_SOFT_I2C_GPIO_SDA
+/*
+#define CONFIG_SOFT_I2C_GPIO_SCL1	GPIO_PD(29)
+#define CONFIG_SOFT_I2C_GPIO_SDA1	GPIO_PD(28)
+*/
 #endif
 
 #ifndef CONFIG_SOFT_I2C0

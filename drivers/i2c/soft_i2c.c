@@ -49,6 +49,30 @@
 #endif
 #include <i2c.h>
 
+#ifdef CONFIG_MUTIPLE_I2C_BUS
+static struct client_i2c_bus i2c_bus[] = {
+#if defined(CONFIG_SOFT_I2C_GPIO_SCL0) /* you need define the CONFIG_SOFT_I2C_GPIO_SCL */
+		{
+				/*.bus_num = 0,*/
+				.scl_gpio = CONFIG_SOFT_I2C_GPIO_SCL0,
+				.sda_gpio = CONFIG_SOFT_I2C_GPIO_SDA0,
+		},
+#if defined(CONFIG_SOFT_I2C_GPIO_SCL1) /* you must define CONFIG_SOFT_I2C_GPIO_SCL before, and then define it */
+		{
+				/*.bus_num = 1,*/
+				.scl_gpio = CONFIG_SOFT_I2C_GPIO_SCL1,
+				.sda_gpio = CONFIG_SOFT_I2C_GPIO_SDA1,
+		},
+#endif
+#endif
+};
+
+#define GET_I2C_BUS_SIZE (sizeof(i2c_bus) / sizeof(struct client_i2c_bus))
+#endif
+
+static int client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
+static int client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+
 #if defined(CONFIG_SOFT_I2C_GPIO_SCL)
 # include <asm/gpio.h>
 
@@ -59,8 +83,8 @@
 # ifndef I2C_INIT
 #  define I2C_INIT \
 	do { \
-		gpio_request(CONFIG_SOFT_I2C_GPIO_SCL, "soft_i2c"); \
-		gpio_request(CONFIG_SOFT_I2C_GPIO_SDA, "soft_i2c"); \
+		gpio_request(client_i2c_select_gpio_scl, "soft_i2c"); \
+		gpio_request(client_i2c_select_gpio_sda, "soft_i2c"); \
 	} while (0)
 # endif
 
@@ -73,16 +97,16 @@
 # endif
 
 # ifndef I2C_READ
-#  define I2C_READ gpio_get_value(CONFIG_SOFT_I2C_GPIO_SDA)
+#  define I2C_READ gpio_get_value(client_i2c_select_gpio_sda)
 # endif
 
 # ifndef I2C_SDA
 #  define I2C_SDA(bit) \
 	do { \
 		if (bit) \
-			gpio_direction_input(CONFIG_SOFT_I2C_GPIO_SDA); \
+			gpio_direction_input(client_i2c_select_gpio_sda); \
 		else \
-			gpio_direction_output(CONFIG_SOFT_I2C_GPIO_SDA, 0); \
+			gpio_direction_output(client_i2c_select_gpio_sda, 0); \
 		I2C_GPIO_SYNC; \
 	} while (0)
 # endif
@@ -90,7 +114,7 @@
 # ifndef I2C_SCL
 #  define I2C_SCL(bit) \
 	do { \
-		gpio_direction_output(CONFIG_SOFT_I2C_GPIO_SCL, bit); \
+		gpio_direction_output(client_i2c_select_gpio_scl, bit); \
 		I2C_GPIO_SYNC; \
 	} while (0)
 # endif
@@ -147,10 +171,14 @@ static uchar read_byte	(int);
  * to clock any confused device back into an idle state.  Also send a
  * <stop> at the end of the sequence for belts & suspenders.
  */
+#ifndef CONFIG_MUTIPLE_I2C_BUS
 static void send_reset(void)
 {
 	I2C_SOFT_DECLARATIONS	/* intentional without ';' */
 	int j;
+
+	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
+	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 
 	I2C_SCL(1);
 	I2C_SDA(1);
@@ -169,6 +197,40 @@ static void send_reset(void)
 	send_stop();
 	I2C_TRISTATE;
 }
+#else
+static void send_reset(void)
+{
+	I2C_SOFT_DECLARATIONS	/* intentional without ';' */
+	int j;
+	int i = 0;
+	int i2c_bus_size = GET_I2C_BUS_SIZE;
+
+	struct client_i2c_bus *p_i2c_bus;
+
+	for(i = 0, p_i2c_bus = i2c_bus; i < i2c_bus_size; p_i2c_bus++, i++) { /* init all the i2c bus */
+		client_i2c_select_gpio_scl = p_i2c_bus->scl_gpio;
+		client_i2c_select_gpio_sda = p_i2c_bus->sda_gpio;
+		I2C_SCL(1);
+		I2C_SDA(1);
+
+#ifdef I2C_INIT
+		I2C_INIT;
+#endif
+		I2C_TRISTATE;
+		for(j = 0; j < 9; j++) {
+			I2C_SCL(0);
+			I2C_DELAY;
+			I2C_DELAY;
+			I2C_SCL(1);
+			I2C_DELAY;
+			I2C_DELAY;
+		}
+		send_stop();
+		I2C_TRISTATE;
+	}
+}
+#endif
+
 #endif
 
 /*-----------------------------------------------------------------------
@@ -360,14 +422,17 @@ void i2c_init (int speed, int slaveaddr)
  * completion of EEPROM writes since the chip stops responding until
  * the write completes (typically 10mSec).
  */
-int i2c_probe(uchar addr)
+int i2c_probe(uchar addr) /* if define CONFIG_MUTIPLE_I2C_BUS, you better to use mutiple_i2c_probe() interface */
 {
 	int rc;
-
 	/*
 	 * perform 1 byte write transaction with just address byte
 	 * (fake write)
 	 */
+
+	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
+	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+
 	send_start();
 	rc = write_byte ((addr << 1) | 0);
 	send_stop();
@@ -378,11 +443,15 @@ int i2c_probe(uchar addr)
 /*-----------------------------------------------------------------------
  * Read bytes
  */
-int  i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
+int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
 	int shift;
+
 	PRINTD("i2c_read: chip %02X addr %02X alen %d buffer %p len %d\n",
 		chip, addr, alen, buffer, len);
+
+	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
+	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 
 #ifdef CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW
 	/*
@@ -452,9 +521,159 @@ int  i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 /*-----------------------------------------------------------------------
  * Write bytes
  */
+
 int  i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
 	int shift, failures = 0;
+
+	PRINTD("i2c_write: chip %02X addr %02X alen %d buffer %p len %d\n",
+		chip, addr, alen, buffer, len);
+
+	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
+	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+
+	send_start();
+	if(write_byte(chip << 1)) {	/* write cycle */
+		send_stop();
+		PRINTD("i2c_write, no chip responded %02X\n", chip);
+		return(1);
+	}
+	shift = (alen-1) * 8;
+	while(alen-- > 0) {
+		if(write_byte(addr >> shift)) {
+			PRINTD("i2c_write, address not <ACK>ed\n");
+			return(1);
+		}
+		shift -= 8;
+	}
+
+	while(len-- > 0) {
+		if(write_byte(*buffer++)) {
+			failures++;
+		}
+	}
+	send_stop();
+	return(failures);
+}
+
+/* if you need mutiple i2c bus to use, the interfaces need change these, you need more a param */
+#ifdef CONFIG_MUTIPLE_I2C_BUS
+struct client_i2c_bus *mutiple_i2c_probe(uchar addr)
+{
+	int ret = 0;
+	int i = 0 ;
+	int i2c_bus_size = GET_I2C_BUS_SIZE;
+
+	struct client_i2c_bus *i2c_bus_select;
+
+	for(i = 0, i2c_bus_select = i2c_bus; i < i2c_bus_size; i2c_bus_select++, i++) {
+		client_i2c_select_gpio_scl = i2c_bus_select->scl_gpio;
+		client_i2c_select_gpio_sda = i2c_bus_select->sda_gpio;
+
+		/* perform 1 byte write transaction with just address byte (fake write) */
+		send_start();
+		ret = write_byte ((addr << 1) | 0);
+		send_stop();
+
+		if(ret == 0)
+			break; /* find it */
+	}
+
+	if(ret == 1) {
+		PRINTD("error: not match i2c bus \n");
+	}
+
+	return (ret ? NULL : i2c_bus_select); /* if success, return the i2c_bus we select */
+}
+
+int mutiple_i2c_read(struct client_i2c_bus *i2c_bus, uchar chip, uint addr, int alen, uchar *buffer, int len)
+{
+	int shift;
+	if(!i2c_bus) {
+		PRINTD("not match i2c bus, read error!\n");
+		return 1;
+	}
+		client_i2c_select_gpio_scl = i2c_bus->scl_gpio;
+		client_i2c_select_gpio_sda = i2c_bus->sda_gpio;
+
+	PRINTD("i2c_read: chip %02X addr %02X alen %d buffer %p len %d\n",
+		chip, addr, alen, buffer, len);
+
+#ifdef CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW
+	/*
+	 * EEPROM chips that implement "address overflow" are ones
+	 * like Catalyst 24WC04/08/16 which has 9/10/11 bits of
+	 * address and the extra bits end up in the "chip address"
+	 * bit slots. This makes a 24WC08 (1Kbyte) chip look like
+	 * four 256 byte chips.
+	 *
+	 * Note that we consider the length of the address field to
+	 * still be one byte because the extra address bits are
+	 * hidden in the chip address.
+	 */
+	chip |= ((addr >> (alen * 8)) & CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
+
+	PRINTD("i2c_read: fix addr_overflow: chip %02X addr %02X\n",
+		chip, addr);
+#endif
+
+	/*
+	 * Do the addressing portion of a write cycle to set the
+	 * chip's address pointer.  If the address length is zero,
+	 * don't do the normal write cycle to set the address pointer,
+	 * there is no address pointer in this chip.
+	 */
+	send_start();
+	if(alen > 0) {
+		if(write_byte(chip << 1)) {	/* write cycle */
+			send_stop();
+			PRINTD("i2c_read, no chip responded %02X\n", chip);
+			return(1);
+		}
+		shift = (alen-1) * 8;
+		while(alen-- > 0) {
+			if(write_byte(addr >> shift)) {
+				PRINTD("i2c_read, address not <ACK>ed\n");
+				return(1);
+			}
+			shift -= 8;
+		}
+
+		/* Some I2C chips need a stop/start sequence here,
+		 * other chips don't work with a full stop and need
+		 * only a start.  Default behaviour is to send the
+		 * stop/start sequence.
+		 */
+#ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
+		send_start();
+#else
+		send_stop();
+		send_start();
+#endif
+	}
+	/*
+	 * Send the chip address again, this time for a read cycle.
+	 * Then read the data.  On the last byte, we do a NACK instead
+	 * of an ACK(len == 0) to terminate the read.
+	 */
+	write_byte((chip << 1) | 1);	/* read cycle */
+	while(len-- > 0) {
+		*buffer++ = read_byte(len == 0);
+	}
+	send_stop();
+	return(0);
+}
+
+int  mutiple_i2c_write(struct client_i2c_bus *i2c_bus, uchar chip, uint addr, int alen, uchar *buffer, int len)
+{
+	int shift, failures = 0;
+
+	if(!i2c_bus) {
+		PRINTD("not match i2c bus, write error!\n");
+		return 1;
+	}
+	client_i2c_select_gpio_scl = i2c_bus->scl_gpio;
+	client_i2c_select_gpio_sda = i2c_bus->sda_gpio;
 
 	PRINTD("i2c_write: chip %02X addr %02X alen %d buffer %p len %d\n",
 		chip, addr, alen, buffer, len);
@@ -482,3 +701,5 @@ int  i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	send_stop();
 	return(failures);
 }
+
+#endif
