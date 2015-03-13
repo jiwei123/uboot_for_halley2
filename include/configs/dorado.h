@@ -29,6 +29,7 @@
  * Basic configuration(SOC, Cache, UART, DDR).
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
+#define CONFIG_CPU_XBURST
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
 #ifndef CONFIG_DORADO_V30 // no def
@@ -37,12 +38,12 @@
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 
 #ifndef CONFIG_RVMS
-#define CONFIG_SYS_APLL_FREQ		1000000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		1000000000
-#define CONFIG_SYS_MEM_FREQ		200000000
+#define CONFIG_SYS_CPU_FREQ		1200000000
+#define CONFIG_SYS_MEM_FREQ		300000000
 
 #else /* defined CONFIG_RVMS */
 #define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
@@ -104,10 +105,14 @@
 
 /**
  * Boot arguments definitions.
+ *
+ * console=ttyS1: kernel boot time (7s)
+ * console=null:  kernel boot time (4s), for product board
  */
 #ifndef CONFIG_RVMS
 #if defined(CONFIG_DORADO_V21) || defined(CONFIG_DORADO_V22)
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=256M@0x30000000"
+/*#define BOOTARGS_COMMON "console=null, mem=255M@0x0 mem=256M@0x30000000"*/
 #else
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=768M@0x30000000"
 #endif
@@ -567,5 +572,9 @@
 #define CONFIG_PCA953X_I2C_SCL  GPIO_PA(13)
 #define CONFIG_PCA953X_I2C_SDA  GPIO_PA(12)
 #endif
+
+/* ddr DEBUG */
+/*#define CONFIG_DDR_PARAM_DEBUG*/
+
 
 #endif /* __CONFIG_DORAOD_H__ */

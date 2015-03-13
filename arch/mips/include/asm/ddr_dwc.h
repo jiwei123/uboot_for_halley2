@@ -578,6 +578,8 @@
 #define DDR_GET_VALUE(x, y) (((x * 1000)% y == 0) ?	\
 		((x * 1000)/ y) : ((x * 1000) / y + 1))
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #define ddr_writel(value, reg)	writel((value), DDRC_BASE + reg)
 #define ddr_readl(reg)		readl(DDRC_BASE + reg)
 
@@ -599,4 +601,27 @@
 	 value = (temp % y == 0) ? (temp / y) : (temp / y + 1); \
 	 value;							\
  })
+
+/*only for lpddr2 tRL and tWL*/
+#define MATCH(clk,type)								\
+({										\
+	unsigned long value,i;							\
+	if(type == 0){    \
+		for(i = 0; i < ARRAY_SIZE(rl_LPDDR2);i++){		\
+			if(rl_LPDDR2[i].memclk > clk){				\
+				value = rl_LPDDR2[i-1].RL;				\
+				break;                                  \
+			}							\
+		}									\
+	}else{	\
+		for(i = 0; i < ARRAY_SIZE(wl_LPDDR2);i++){		\
+			if(wl_LPDDR2[i].memclk > clk){				\
+				value = wl_LPDDR2[i-1].WL;	\
+				break;              \
+			}				\
+		}			\
+	}			\
+	value;              \
+})
+
 #endif /* __DDR_H__ */

@@ -29,6 +29,7 @@
  * Basic configuration(SOC, Cache, UART, DDR).
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
+#define CONFIG_CPU_XBURST
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* M200 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
@@ -335,8 +336,8 @@
  */
 #ifndef CONFIG_FORNAX_V20
 
-define CONFIG_GPIO_USB_DETECT         GPIO_PA(14)
-define CONFIG_GPIO_USB_DETECT_ENLEVEL 1
+#define CONFIG_GPIO_USB_DETECT         GPIO_PA(14)
+#define CONFIG_GPIO_USB_DETECT_ENLEVEL 1
 
 /* Wrong keys. */
 #define CONFIG_GPIO_RECOVERY		GPIO_PD(19)	/* SW7 */

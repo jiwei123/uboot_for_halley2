@@ -41,7 +41,29 @@
 #endif /* DDR_COL1 */
 #endif /* CONFIG_DDR_CS1 */
 
+
+#define BETWEEN(T, MIN, MAX) if (T < MIN) T = MIN; if (T > MAX) T = MAX
 struct tck tck_g = {0, 0};
+
+struct RL_LPDDR2 rl_LPDDR2[] = {
+	{100000000,3},/*memclk xxM, RL*/
+	{150000000,3},
+	{200000000,4},
+	{300000000,5},
+	{400000000,6},
+	{450000000,7},
+	{500000000,8},
+};
+
+struct WL_LPDDR2 wl_LPDDR2[]= {
+	{100000000,1},/*memclk xxM, WL*/
+	{150000000,1},
+	{200000000,2},
+	{300000000,2},
+	{400000000,3},
+	{450000000,4},
+	{500000000,4},
+};
 
 static int calc_nck(int x, int y)
 {
@@ -246,7 +268,7 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 			calc_nck(p->private_params.lpddr2_params.tRTP, tck->ps);
 		ddrc->timing1.b.tWTR =
 			calc_nck(p->private_params.lpddr2_params.tWTR, tck->ps) +
-			p->private_params.lpddr2_params.tWL + p->bl / 2; //??
+			p->private_params.lpddr2_params.tWL + p->bl / 2 + 1; //??
 		ddrc->timing1.b.tWR =
 			calc_nck(p->private_params.lpddr2_params.tWR, tck->ps);
 		if (ddrc->timing1.b.tWR < 5)
@@ -280,8 +302,8 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 
 		ddrc->timing4.b.tRFC =
 			(calc_nck(p->private_params.lpddr2_params.tRFC, tck->ps) - 1) / 2;
-		ddrc->timing4.b.tEXTRW = 3;/* Why?*/
-		ddrc->timing4.b.tRWCOV = 3;/* Why?*/
+		ddrc->timing4.b.tEXTRW = 3;/* internal use, don't care */
+		ddrc->timing4.b.tRWCOV = 3;/* interanl use, don't care */
 		ddrc->timing4.b.tCKE =
 			calc_nck(p->private_params.lpddr2_params.tCKE, tck->ps);
 		tmp = p->private_params.lpddr2_params.tMINSR;
@@ -291,20 +313,33 @@ static void ddrc_params_creat(struct ddrc_reg *ddrc, struct ddr_params *p)
 			tmp = 129;
 		tmp = ((tmp - 1) % 8) ? ((tmp - 1) / 8) : ((tmp - 1) / 8 - 1);
 		ddrc->timing4.b.tMINSR = tmp;
-		ddrc->timing4.b.tXP = p->private_params.lpddr2_params.tXP;
-		ddrc->timing4.b.tMRD = p->private_params.lpddr2_params.tMRD - 1;
 
-		ddrc->timing5.b.tCTLUPD = 0x0; /* 0xff is the default value */
+		tmp = p->private_params.lpddr2_params.tXP;
+		tmp = calc_nck(tmp, tck->ps);
+		BETWEEN(tmp, 0, 7);
+		ddrc->timing4.b.tXP = tmp;
+
+		ddrc->timing4.b.tMRD = 0; /* LPDDR2 not use. don't care */
+
+		ddrc->timing5.b.tCTLUPD = 0x0; /* 0xff is the default value, unsupport feature. don't care */
+
 		ddrc->timing5.b.tRTW = p->private_params.lpddr2_params.tRTW;
+
 		ddrc->timing5.b.tRDLAT = p->private_params.lpddr2_params.tRDLAT;
 		ddrc->timing5.b.tWDLAT = p->private_params.lpddr2_params.tWL;
 
-		ddrc->timing6.b.tXSRD = p->private_params.lpddr2_params.tXSRD / 4;
-		tmp = calc_nck(p->private_params.lpddr2_params.tFAW, tck->ps); /* NOT sure */
-		if (tmp < 1) tmp = 1;
-		ddrc->timing6.b.tFAW = tmp; /* NOT sure */
-		ddrc->timing6.b.tCFGW = 2;
-		ddrc->timing6.b.tCFGR = 2;
+		tmp = p->private_params.lpddr2_params.tXSRD;
+		tmp = calc_nck(tmp, tck->ps);
+		tmp = (tmp + 4-1)/4;
+		BETWEEN(tmp, 0, 255);
+		ddrc->timing6.b.tXSRD = tmp;
+
+		tmp = calc_nck(p->private_params.lpddr2_params.tFAW, tck->ps);
+		BETWEEN(tmp, 0, 31);
+		ddrc->timing6.b.tFAW = tmp;
+
+		ddrc->timing6.b.tCFGW = 2; /* internal use. don't care */
+		ddrc->timing6.b.tCFGR = 2; /* internal use. don't care */
 	}
 #endif /*CONFIG_DDR_TYPE_LPDDR2 */
 
@@ -497,7 +532,6 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 #endif
 
 
-#define BETWEEN(T, MIN, MAX) if (T < MIN) T = MIN; if (T > MAX) T = MAX
 #define PNDEF(N, P, T, MIN, MAX, PS, type)	\
 		T = calc_nck(p->private_params.type.P, PS);	\
 		BETWEEN(T, MIN, MAX);	\
@@ -689,7 +723,7 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 		ddrp->ptr2.b.tDINIT3 = calc_nck(1000, tck->ps);
 
 		/* DTPR0 registers */
-		ddrp->dtpr0.b.tMRD = p->private_params.lpddr2_params.tMRD - 3;
+		ddrp->dtpr0.b.tMRD = 0; /* LPDDR2 no use, don't care */
 		PNDEF(0, tRTP, tmp, 2, 6, tck->ps, lpddr2_params);
 		PNDEF(0, tWTR, tmp, 1, 6, tck->ps, lpddr2_params);
 		PNDEF(0, tRP, tmp, 2, 11, tck->ps, lpddr2_params);

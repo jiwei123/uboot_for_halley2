@@ -35,7 +35,17 @@ struct tck {
 	uint32_t ps;
 	uint32_t ns;
 };
+/*only for lpddr2 tRL and tWL*/
+struct RL_LPDDR2 {
+	uint32_t memclk;
+	uint32_t RL;
+};
 
+struct WL_LPDDR2 {
+	uint32_t memclk;
+	uint32_t WL;
+};
+/* ----------------------- */
 struct size {
 	uint32_t chip0;
 	uint32_t chip1;

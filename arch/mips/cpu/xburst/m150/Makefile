@@ -27,7 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).o
 
 SOBJS-y	=
-COBJS-y	= $(SOC).o
+COBJS-y	= soc.o
 
 COBJS-$(CONFIG_BURNER) += dym_pll.o
 COBJS-$(CONFIG_JZ_SLT) += dym_pll.o

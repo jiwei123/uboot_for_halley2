@@ -27,7 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).o
 
 SOBJS-y	=
-COBJS-y	= $(SOC).o
+COBJS-y	= soc.o
 COBJS-y += clk.o
 COBJS-y += ddr_set_dll.o
 COBJS-y += ../ddr_dwc.o

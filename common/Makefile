@@ -147,7 +147,6 @@ endif
 COBJS-$(CONFIG_CMD_MISC) += cmd_misc.o
 COBJS-$(CONFIG_CMD_MMC) += cmd_mmc.o
 COBJS-$(CONFIG_CMD_MMC_SPI) += cmd_mmc_spi.o
-COBJS-$(CONFIG_CMD_SPI) += cmd_nor_spi.o
 COBJS-$(CONFIG_MP) += cmd_mp.o
 COBJS-$(CONFIG_CMD_MTDPARTS) += cmd_mtdparts.o
 COBJS-$(CONFIG_CMD_NAND) += cmd_nand.o
@@ -172,7 +171,11 @@ COBJS-$(CONFIG_CMD_SCSI) += cmd_scsi.o
 COBJS-$(CONFIG_CMD_SHA1SUM) += cmd_sha1sum.o
 COBJS-$(CONFIG_CMD_SETEXPR) += cmd_setexpr.o
 COBJS-$(CONFIG_CMD_SOFTSWITCH) += cmd_softswitch.o
+ifdef CONFIG_CMD_BURN
 COBJS-$(CONFIG_CMD_SPI) += cmd_spi.o
+else
+COBJS-$(CONFIG_CMD_SPI) += cmd_nor_spi.o
+endif
 COBJS-$(CONFIG_CMD_SPIBOOTLDR) += cmd_spibootldr.o
 COBJS-$(CONFIG_CMD_STRINGS) += cmd_strings.o
 COBJS-$(CONFIG_CMD_TERMINAL) += cmd_terminal.o
@@ -197,6 +200,7 @@ COBJS-$(CONFIG_CMD_SPL) += cmd_spl.o
 COBJS-$(CONFIG_CMD_ZIP) += cmd_zip.o
 COBJS-$(CONFIG_CMD_ZFS) += cmd_zfs.o
 
+COBJS-$(CONFIG_DDR_PARAM_DEBUG) += cmd_ddr.o
 # others
 COBJS-$(CONFIG_BOOTSTAGE) += bootstage.o
 COBJS-$(CONFIG_CONSOLE_MUX) += iomux.o
@@ -258,7 +262,6 @@ COBJS-$(CONFIG_FIT) += image-fit.o
 COBJS-$(CONFIG_FIT_SIGNATURE) += image-sig.o
 COBJS-y += memsize.o
 COBJS-y += stdio.o
-
 
 COBJS	:= $(sort $(COBJS-y))
 XCOBJS	:= $(sort $(XCOBJS-y))

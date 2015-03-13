@@ -29,6 +29,7 @@
  * Basic configuration(SOC, Cache, UART, DDR).
  */
 #define CONFIG_MIPS32		/* MIPS32 CPU core */
+#define CONFIG_CPU_XBURST
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M200		/* Jz4785 SoC */
 #define CONFIG_FPGA		/* Jz4785 FPGA */
