@@ -68,6 +68,7 @@ COBJS-$(CONFIG_VIDEO_TRULY_TFT320320) += jz_lcd/lcd_panel/truly_tft320320.o
 COBJS-$(CONFIG_VIDEO_ORISE_OTM3201A) += jz_lcd/lcd_panel/orise_otm3210a.o
 COBJS-$(CONFIG_VIDEO_BOE_TFT320320) += jz_lcd/lcd_panel/boe_tft320320.o
 COBJS-$(CONFIG_VIDEO_EDO_E1392AM1) += jz_lcd/lcd_panel/edo_e1392am1.o
+COBJS-$(CONFIG_VIDEO_AUO_H139BLN01) += jz_lcd/lcd_panel/auo_h139bln01.o
 COBJS-$(CONFIG_VIDEO_LH155) += jz_lcd/lcd_panel/lh155.o
 COBJS-$(CONFIG_JZ_MIPI_DSI) += jz_lcd/jz_mipi_dsi/jz_mipi_dsi.o jz_lcd/jz_mipi_dsi/jz_mipi_dsi_lowlevel.o jz_lcd/jz_mipi_dsi/jz_mipi_dsih_hal.o \
 				jz_lcd/jz_mipi_dsi/write_command_to_mipi.o

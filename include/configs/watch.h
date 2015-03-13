@@ -186,6 +186,11 @@
 #define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
+#ifdef CONFIG_VIDEO_AUO_H139BLN01
+#define CONFIG_JZ_MIPI_DSI
+#define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+#endif
+
 #ifdef  CONFIG_VIDEO_BM347WV_F_8991FTGF
 #define CONFIG_LCD_GPIO_FUNC2_SLCD
 #endif
