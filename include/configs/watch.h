@@ -466,7 +466,7 @@
  */
 #if defined(CONFIG_ACRAB)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
-#elif defined(CONFIG_AW808)
+#elif defined(CONFIG_AW808) || defined(CONFIG_X3)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(1)
 #define CONFIG_GPIO_PRE_TEST		GPIO_PE(10)
 #else

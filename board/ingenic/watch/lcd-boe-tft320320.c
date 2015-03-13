@@ -36,6 +36,13 @@
 #define MIPI_RST_N     GPIO_PC(16)
 #define LCD_VDD_1V8   "RICOH619_LDO9"
 #define LCD_VCI_2V8   "RICOH619_LDO10"
+
+#elif defined(CONFIG_X3)
+#define PWM_LCD_BLK_EN GPIO_PE(1)
+#define MIPI_RST_N     GPIO_PC(19)
+#define LCD_VDD_1V8   "RICOH619_LDO4"
+#define LCD_VCI_2V8   "RICOH619_LDO6"
+
 #else
 #define PWM_LCD_BLK_EN -1
 #define MIPI_RST_N     -1
@@ -70,7 +77,7 @@ void board_set_lcd_power_on(void)
 struct boe_tft320320_platform_data boe_tft320320_pdata =
 {
 	.gpio_rest = MIPI_RST_N,
-#if defined(CONFIG_ACRAB)
+#if defined(CONFIG_ACRAB) || defined(CONFIG_X3)
 	.pwm_lcd_brightness = PWM_LCD_BLK_EN,
 #endif
 };
