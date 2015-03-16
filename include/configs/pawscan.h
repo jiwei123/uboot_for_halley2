@@ -56,6 +56,7 @@
 #define CONFIG_DDR_TEST*/
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
+#define CONFIG_DDR_FORCE_SELECT_CS1
 #define CONFIG_DDR_TYPE_LPDDR2
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
