@@ -34,19 +34,25 @@ void SPI_3W_SET_CMD(unsigned char c)
 {
 	unsigned char i;
 	
-	udelay(1);
+/*delete timedelays for increasing the start-up speed.
+    Oscilloscope test shows that : without timedelays,the signal CKL's high level
+    is able to keep 360ns,and the low level can keep up to 700ns,meeting with the lcd's 
+    timing requirements(see details in the 8991F.PDF  page18).
+    if your 8991_lcd can't work normally because of the chang,try to recover those udelays,and connect with me.
+    */
+//	udelay(1);             
 	SCK(0);
 	SDO(0);
-	udelay(1);
+//	udelay(1);
 	SCK(1);
-	udelay(2);
+//	udelay(2);
 	for(i=0;i<8;i++)
 	{
 		SCK(0);
 		SDO(((c&0x80)>>7));
-		udelay(1);
+//		udelay(1);
 		SCK(1);
-		udelay(2);
+//		udelay(2);
 		c=c<<1;
 	}
 }
@@ -55,19 +61,19 @@ void SPI_3W_SET_PAs(unsigned char d)
 {
 	unsigned char i;
 	
-	udelay(1);
+//	udelay(1);
 	SCK(0);
 	SDO(1);
-	udelay(1);
+//	udelay(1);
 	SCK(1);
-	udelay(2);
+//	udelay(2);
 	for(i=0;i<8;i++)
 	{
 		SCK(0);
 		SDO(((d&0x80)>>7));
-		udelay(1);
+//		udelay(1);
 		SCK(1);
-		udelay(2);
+//		udelay(2);
 		d=d<<1;
 	}
 }
@@ -77,16 +83,16 @@ unsigned char SPI_GET_REG_VAL()
 	unsigned char data = 0;
 	unsigned char tmp = 0;
 
-	udelay(1);
+//	udelay(1);
 	for(i=0;i<8;i++)
 	{
 		SCK(0);
 		data <<= 1;
 		tmp=SDI();
 		data|=tmp;
-		udelay(1);
+//		udelay(1);
 		SCK(1);
-		udelay(2);
+//		udelay(2);
 		serial_puts("sdi= ");
 		serial_putc((tmp+0x30));
 		serial_putc('\n');
@@ -99,7 +105,7 @@ unsigned char SPI_READ_REG(unsigned char reg)
 	int data = 0;
 	
 	CS(0);
-	udelay(1);
+//	udelay(1);
 	SPI_3W_SET_CMD(0xB9); //Set_EXTC
 	SPI_3W_SET_PAs(0xFF);
 	SPI_3W_SET_PAs(0x83);
@@ -108,7 +114,7 @@ unsigned char SPI_READ_REG(unsigned char reg)
 	SPI_3W_SET_CMD(reg);
 	data = SPI_GET_REG_VAL();
 	CS(1);
-	udelay(1);
+//	udelay(1);
 	serial_puts("reg = 0x");
 	serial_putc((data+0x30));
 	serial_putc('\n');
@@ -132,7 +138,7 @@ void Initial_IC(void)
 #endif
 
 	CS(0);
-	udelay(10);
+//	udelay(10);
 	
 	SPI_3W_SET_CMD(0xB9); //Set_EXTC
 	SPI_3W_SET_PAs(0xFF);
