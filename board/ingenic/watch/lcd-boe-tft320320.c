@@ -38,10 +38,11 @@
 #define LCD_VCI_2V8   "RICOH619_LDO10"
 
 #elif defined(CONFIG_X3)
-#define PWM_LCD_BLK_EN GPIO_PE(1)
+#define PWM_LCD_BLK_EN GPIO_PC(23)
 #define MIPI_RST_N     GPIO_PC(19)
 #define LCD_VDD_1V8   "RICOH619_LDO4"
 #define LCD_VCI_2V8   "RICOH619_LDO6"
+#define BUCK5_3V      "RICOH619_DC5"
 
 #else
 #define PWM_LCD_BLK_EN -1
@@ -57,6 +58,7 @@ void board_set_lcd_power_on(void)
 {
 	struct regulator *lcd_vdd_1v8 = NULL;
 	struct regulator *lcd_vci_2v8 = NULL;
+	struct regulator *buck5_3v    = NULL;
 
 	lcd_vdd_1v8 = regulator_get(LCD_VDD_1V8);
 	if (lcd_vdd_1v8 == NULL)
@@ -66,11 +68,16 @@ void board_set_lcd_power_on(void)
 	if (lcd_vci_2v8 == NULL)
 		return;
 
-	regulator_set_voltage(lcd_vdd_1v8, 1800000, 1800000);
-	regulator_set_voltage(lcd_vci_2v8, 2800000, 2800000);
+	buck5_3v = regulator_get(BUCK5_3V);
+	if (buck5_3v == NULL)
+		return;
 
+	regulator_set_voltage(buck5_3v, 3000000, 3000000);
+	regulator_set_voltage(lcd_vci_2v8, 2800000, 2800000);
+	regulator_set_voltage(lcd_vdd_1v8, 1800000, 1800000);
+
+	regulator_enable(buck5_3v);
 	regulator_enable(lcd_vci_2v8);
-	udelay(10);
 	regulator_enable(lcd_vdd_1v8);
 }
 
@@ -87,13 +94,13 @@ struct fb_videomode jzfb1_videomode = {
 	.refresh = 60,
 	.xres = 320,
 	.yres = 320,
-	.pixclock = KHZ2PICOS(5310), //PCLK Frequency: 5.31MHz
-	.left_margin  = 3,
-	.right_margin = 3,
-	.upper_margin = 2,
-	.lower_margin = 2,
-	.hsync_len = 3,
-	.vsync_len = 1,
+	.pixclock = KHZ2PICOS(6144), //PCLK Frequency: 6.144MHz
+	.left_margin  = 0,
+	.right_margin = 0,
+	.upper_margin = 0,
+	.lower_margin = 0,
+	.hsync_len = 0,
+	.vsync_len = 0,
 	.sync = ~FB_SYNC_HOR_HIGH_ACT & ~FB_SYNC_VERT_HIGH_ACT,
 	.vmode = FB_VMODE_NONINTERLACED,
 	.flag = 0,
@@ -126,7 +133,7 @@ struct dsi_device jz_dsi = {
 struct jzfb_config_info jzfb1_init_data = {
 	.modes = &jzfb1_videomode,
 
-	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
+	.lcd_type = LCD_TYPE_SLCD,
 	.bpp = 24,
 
 	.smart_config.smart_type = SMART_LCD_TYPE_PARALLEL,
@@ -135,9 +142,9 @@ struct jzfb_config_info jzfb1_init_data = {
 	.smart_config.csply_active_high = 0,
 	.smart_config.bus_width = 8,
 	.dither_enable = 1,
-	.dither.dither_red = 1,    /* 6bit */
-	.dither.dither_red = 1,    /* 6bit */
-	.dither.dither_red = 1,    /* 6bit */
+	.dither.dither_red   = 1,	/* 6bit */
+	.dither.dither_green = 1,	/* 6bit */
+	.dither.dither_blue  = 1,	/* 6bit */
 
 };
 
