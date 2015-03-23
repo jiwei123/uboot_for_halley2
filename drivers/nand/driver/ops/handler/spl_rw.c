@@ -218,6 +218,7 @@ static int write_nand(struct Spl *spl, struct AlignList *al)
 
         pageid = al->pagelist->startPageID;
 	copy_offset = spl->cinfo->ppblock > 128 ? spl->cinfo->ppblock : 128;
+
         for (i = 0; i <= SPL_BAK_NUM; i++) {
                 ret = write_data(spl, al, (pageid * 2) + copy_offset * i);
                 if (ret < 0)
@@ -333,8 +334,8 @@ static int read_data(struct Spl *spl, struct AlignList *al, int pageid)
 		if (spl->cinfo->pagesize == 512) {
 			unsigned char spare_buf[spl->cinfo->oobsize];
 			nand_read_data(spl, spare_buf, spl->cinfo->oobsize);
-			if (nand_wait_busy(spl) < 0)
-				ndd_print(NDD_WARNING, "wait rb of spl data complete timeout\n");
+		//	if (nand_wait_busy(spl) < 0)
+		//		ndd_print(NDD_WARNING, "wait rb of spl data complete timeout\n");
 		}
         }
 
@@ -352,8 +353,8 @@ static int read_bch(struct Spl *spl, int pageid)
 		nand_read_data(spl, spl->bchbuf, spl->bchsize);
 	else {
 		nand_read_data(spl, spl->bchbuf, spl->cinfo->pagesize + spl->cinfo->oobsize);
-		if (nand_wait_busy(spl) < 0)
-			ndd_print(NDD_WARNING, "wait rb of spl bch complete timeout\n");
+	//	if (nand_wait_busy(spl) < 0)
+	//		ndd_print(NDD_WARNING, "wait rb of spl bch complete timeout\n");
 	}
 	pn_disable(spl->io_context);
 
