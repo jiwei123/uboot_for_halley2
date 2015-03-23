@@ -376,6 +376,9 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		NandManger_ptIoctrl(pHandle, NANDMANAGER_SET_XBOOT_OFFSET, spl_align_sectorcount * 512);
 	}
 
+	if(pt_index == 0 && startaddr != 0)
+		g_handle.sectorid += (1 * 1024 + g_handle.pagesize - 1) / g_handle.pagesize * g_handle.pagesize / 512;
+
 	while(totalbytes){
 		if(totalbytes >= 256 *512)
 			wlen = 256 * 512;

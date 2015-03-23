@@ -22,6 +22,13 @@
 #include "errptinfo.h"
 
 //#define COMPAT_OLD_USB_BURN
+#define SECTOR_SIZE 512
+#define L4INFOLEN_2K    1136
+#define L4INFOLEN_512   372
+
+#define L4INFOLEN(pagesize)     ((pagesize) >= 2048 ? L4INFOLEN_2K : L4INFOLEN_512)
+#define VNANDCACHESIZE(pagesize)    (L4INFOLEN(pagesize) / sizeof(unsigned int) * SECTOR_SIZE)
+#define REFZONESIZE(pagesize,blocksize)		(((VNANDCACHESIZE(pagesize) + 1) * 4 + (blocksize) -1) / (blocksize) * (blocksize))
 
 /* global */
 nand_data *nddata = NULL;
@@ -57,6 +64,17 @@ extern int os_clib_init(os_clib *clib);
  *	   ------------------------- (virtual end)
  *	   column
 **/
+static  unsigned int get_ref_zone_size(chip_info *cinfo, unsigned int totalrbs, unsigned int planenum)
+{
+	int align_size;
+	int zone_size;
+	align_size = totalrbs * planenum;
+//	ndd_print(NDD_ERROR,"pagesize = %d,blocksize =%d,alsize = %d\n",cinfo->pagesize,cinfo->pagesize * cinfo->ppblock,align_size);
+//	ndd_print(NDD_ERROR,"REF-SIZE = %d\n",REFZONESIZE(512,16384));
+	zone_size = (REFZONESIZE(cinfo->pagesize,cinfo->pagesize * cinfo->ppblock) + align_size - 1) / align_size;
+	return zone_size;
+
+}
 static inline int is_blockid_virtual(ndpartition *npt, int blockid)
 {
 	int totalrbs = nddata->rbinfo->totalrbs;
@@ -554,7 +572,7 @@ static inline int next_platpt_connected(unsigned int plat_index,
 		((plat_pt[plat_index].offset + plat_pt[plat_index].size) == plat_pt[plat_index + 1].offset));
 }
 
-static inline int get_group_vblocks(chip_info *cinfo, unsigned short blockpvlblock, unsigned int groupspzone)
+static inline int get_group_vblocks(chip_info *cinfo, unsigned short blockpvlblock, unsigned int groupspzone,unsigned int ref_zone_size)
 {
 	unsigned int vblocksize = (cinfo->pagesize * cinfo->ppblock) * blockpvlblock;
 
@@ -562,12 +580,12 @@ static inline int get_group_vblocks(chip_info *cinfo, unsigned short blockpvlblo
 	return 4;
 #endif
 	/* group vblocks may be at 2 ~ 16 */
-	if ((REF_ZONE_SIZE / groupspzone / vblocksize) < 2)
+	if ((ref_zone_size / groupspzone / vblocksize) < 2)
 		return 2;
-	else if ((REF_ZONE_SIZE / groupspzone / vblocksize) > 16)
+	else if ((ref_zone_size / groupspzone / vblocksize) > 16)
 		return 16;
 	else
-		return REF_ZONE_SIZE / groupspzone / vblocksize;
+		return ref_zone_size / groupspzone / vblocksize;
 }
 
 static inline unsigned int get_raw_boundary(plat_ptinfo *platptinfo, chip_info *cinfo, unsigned short totalrbs)
@@ -684,6 +702,7 @@ static pt_info* get_ptinfo(chip_info *cinfo, unsigned short totalchips,
 	ndpartition *pt = NULL;
 	pt_info *ptinfo = NULL;
 	unsigned int endblockid;
+	unsigned int ref_zone_size;
 	unsigned short plat_ptcount = platptinfo->ptcount;
 	unsigned short ptcount = plat_ptcount + REDUN_PT_NUM;
 	plat_ptitem *plat_pt = platptinfo->pt_table;
@@ -730,7 +749,10 @@ static pt_info* get_ptinfo(chip_info *cinfo, unsigned short totalchips,
 #else
 			pt[pt_index].blockpvblock = cinfo->planenum;
 #endif
-			pt[pt_index].vblockpgroup = get_group_vblocks(cinfo, cinfo->planenum, totalrbs);
+		//	ndd_print(NDD_ERROR,"ref_zone_size = %d\n",ref_zone_size);
+			ref_zone_size = get_ref_zone_size(cinfo, totalrbs, cinfo->planenum);
+		//	ndd_print(NDD_ERROR,"ref_zone_size = %d\n",ref_zone_size);
+			pt[pt_index].vblockpgroup = get_group_vblocks(cinfo, cinfo->planenum, totalrbs,ref_zone_size);
 #ifdef COMPAT_OLD_USB_BURN
 			if (!ndd_strcmp("ndsystem", pt[pt_index].name))
 				pt[pt_index].planes = 1;
@@ -745,9 +767,10 @@ static pt_info* get_ptinfo(chip_info *cinfo, unsigned short totalchips,
 					pt[pt_index].vblockpgroup * pt[pt_index].groupspzone;
 				unsigned int zonecount = pt[pt_index].totalblocks / zoneblocks;
 				if (zonecount < ZONE_COUNT_LIMIT) {
-					if (pt[pt_index].vblockpgroup > 2)
+					if (pt[pt_index].vblockpgroup > 1){
 						pt[pt_index].vblockpgroup /= 2;
-					else if (pt[pt_index].blockpvblock > 2) {
+					}
+					else if (pt[pt_index].blockpvblock > 1) {
 						pt[pt_index].blockpvblock /= 2;
 						pt[pt_index].planes /=2;
 					} else {
@@ -785,7 +808,7 @@ static pt_info* get_ptinfo(chip_info *cinfo, unsigned short totalchips,
 		pt[redunpt_start].totalblocks += totalrbs * ptinfo->raw_boundary;
 	pt[redunpt_start].blockpvblock = 1;
 	pt[redunpt_start].groupspzone = totalrbs;
-	pt[redunpt_start].vblockpgroup = get_group_vblocks(cinfo, cinfo->planenum, totalrbs);
+	pt[redunpt_start].vblockpgroup = get_group_vblocks(cinfo, cinfo->planenum, totalrbs,ref_zone_size);
 	pt[redunpt_start].eccbit = cinfo->eccbit;
 	pt[redunpt_start].planes = ONE_PLANE;
 	pt[redunpt_start].ops_mode = DEFAULT_OPS_MODE;
