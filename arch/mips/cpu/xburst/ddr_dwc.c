@@ -432,6 +432,10 @@ static void ddr_chip_init(unsigned int mode)
 		 * wakeup time request satisfies the DLL lock time */
 		val &= ~(1 << 4);
 		ddr_writel(val,DDRP_DSGCR);
+		val = ddr_readl(DDRP_DLLGCR);
+		val |= 1 << 23;
+		ddr_writel(val,DDRP_DLLGCR);
+
 
 	}
 	ddr_writel(pir_val, DDRP_PIR);
@@ -675,7 +679,7 @@ void sdram_init(void)
 #endif
 	rate = clk_get_rate(DDR);
 #ifdef CONFIG_M200
-	if(rate <= 150000000)
+	if(rate <= 300000000)
 		bypass = 1;
 #endif
 	reset_controller();
