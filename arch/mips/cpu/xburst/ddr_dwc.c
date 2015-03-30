@@ -430,6 +430,10 @@ static void ddr_chip_init(unsigned int mode)
 		val &= ~(1 << 4);
 		ddr_writel(val,DDRP_DSGCR);
 
+		val = ddr_readl(DDRP_DLLGCR);
+		val |= 1 << 23;
+		ddr_writel(val,DDRP_DLLGCR);
+
 	}
 	ddr_writel(pir_val, DDRP_PIR);
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
@@ -682,7 +686,7 @@ void sdram_init(void)
 	rate = gd->arch.gi->ddrfreq;
 #endif
 #ifdef CONFIG_M200
-	if(rate <= 150000000)
+	if(rate <= 260000000)
 		bypass = 1;
 #endif
 	reset_controller();
