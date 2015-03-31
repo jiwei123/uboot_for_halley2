@@ -108,21 +108,21 @@
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
-	  "cls; batterydet; lcd_logo on; boota mmc 0 0x80f00000 6144"
+	  "cls; batterydet; vibrate; lcd_logo on; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "cls; lcd_logo on; boota mmc 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "cls; vibrate; lcd_logo on; boota mmc 0 0x80f00000 24576"
   #else
-    #define CONFIG_BOOTCOMMAND "cls; lcd_logo on; boota nand 0 0x80f00000 6144"
+    #define CONFIG_BOOTCOMMAND "cls; vibrate; lcd_logo on; boota nand 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
-    #define CONFIG_RECOVERY_BOOT "cls; lcd_logo on; boota nand 0 0x80f00000 24576"
+    #define CONFIG_RECOVERY_BOOT "cls; vibrate; lcd_logo on; boota nand 0 0x80f00000 24576"
   #endif
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm" */
-	#define CONFIG_BOOTCOMMAND "cls; lcd_logo on; mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "cls; vibrate; lcd_logo on; mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
   #else
     #define CONFIG_BOOTCOMMAND						\
-	"cls; lcd_logo on;" \
+	"cls; vibrate; lcd_logo on;" \
 	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
 	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
   #endif
@@ -516,4 +516,12 @@
 */
 
 #define GPIO_PAH8001_PD 	-1
+
+/* ***************************GPIO VIBRATOR ***************************** */
+#if defined(CONFIG_X3)
+#define	VIBRATOR_EN		GPIO_PE(2)
+#define	ACTIVE_LEVEL	0
+#endif
+/* ***************************GPIO VIBRATOR ***************************** */
+
 #endif /* __CONFIG_DORAOD_H__ */
