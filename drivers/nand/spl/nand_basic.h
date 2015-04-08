@@ -15,7 +15,7 @@
 #define SPL_ECC_SIZE  256
 #define SPL_BCH_BIT   64
 
-#ifdef CONFIG_JZ4775
+#if defined(CONFIG_JZ4775) || defined(CONFIG_M150)
 
 #define BUSWIDTH_FLAG_OFFSET    0               /* [0 : 63] */
 #define NANDTYPE_FLAG_OFFSET    (BUSWIDTH_FLAG_OFFSET + 64) /* [64 : 127] */

@@ -259,7 +259,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			 **/
 			nand_basic_info *ndinfo = &ndparams.ndbaseinfo;
 			int pagesize_flag;
-#ifdef CONFIG_JZ4775
+#if defined(CONFIG_JZ4775) || defined(CONFIG_M150)
 			struct parm_buf {
 				void *bw_buf;
 				void *tp_buf;
@@ -324,7 +324,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 				return -1;
 			}
 #ifndef CONFIG_NAND_NFI  // no define nfi
-#ifdef CONFIG_JZ4775
+#if defined(CONFIG_JZ4775) || defined(CONFIG_M150)
 			memset(parm_buf.bw_buf, (ndinfo->buswidth == 16) ? 0xAA : 0x55, 64);
 #endif
 			memset(parm_buf.tp_buf, (REBUILD_GET_NAND_TYPE(ndinfo->options) == NAND_TYPE_TOGGLE) ? 0xAA : 0x55, 64);
