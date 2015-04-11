@@ -47,7 +47,7 @@ void board_set_lcd_power_on(void)
 	struct regulator *lcd_regulator_6 = regulator_get(id_6);
 	struct regulator *lcd_regulator_5 = regulator_get(id_5);
 
-	regulator_set_voltage(lcd_regulator_4, 3000000, 3000000);
+	regulator_set_voltage(lcd_regulator_5, 3000000, 3000000);
 	regulator_set_voltage(lcd_regulator_4, 1800000, 1800000);
 	regulator_set_voltage(lcd_regulator_6, 2800000, 2800000);
 
