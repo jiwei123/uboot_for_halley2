@@ -25,6 +25,7 @@
 #include <asm/types.h>
 #include <asm/arch/tcu.h>
 #include <asm/arch/gpio.h>
+#include <common.h>
 
 
 /*
@@ -38,6 +39,7 @@
 
 #define PWM_BACKLIGHT_CHIP 1/*0: digital pusle; 1: PWM*/
 
+#ifndef CONFIG_EASYSCALE_BACKLIGHT
 #if PWM_BACKLIGHT_CHIP
 void lcd_set_backlight_level(int num)
 {
@@ -103,3 +105,43 @@ void lcd_set_backlight_level(int num)
 	udelay(30);
 }
 #endif
+#else  /* CONFIG_EASYSCALE_BACKLIGHT */
+
+/* use easyscale mode to config backlight */
+extern void EasyScale_set_brightness(unsigned int brightness);
+
+void lcd_set_backlight_level(int num) {
+	EasyScale_set_brightness(num);
+}
+
+#endif
+
+#ifndef CONFIG_SYS_BACKLIGHT_LEVELS
+#define CONFIG_SYS_BACKLIGHT_LEVELS 256
+#endif
+
+static int do_lcd_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	unsigned int brightness;
+
+	if (argc != 2) {
+		printf("%s: invalid args\n");
+		return 0;
+	}
+
+	brightness = simple_strtoul(argv[1], NULL, 10);
+	if (brightness >= CONFIG_SYS_BACKLIGHT_LEVELS) {
+		printf("%s: %d is not a valid level [0, %d]\n", __func__, brightness, CONFIG_SYS_BACKLIGHT_LEVELS);
+		return 0;
+	}
+
+	lcd_set_backlight_level(brightness);
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	lcd_backlight,	10,	1,	do_lcd_backlight,
+	"set lcd backlight: lcd_backlight brightness",
+	"set lcd backlight: lcd_backlight brightness"
+);
