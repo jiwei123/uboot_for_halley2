@@ -246,10 +246,11 @@
 #if defined(CONFIG_SOFT_I2C0) && defined(CONFIG_MUTIPLE_I2C_BUS) /* the second i2c bus if mutiple i2c bus config */
 #define CONFIG_SOFT_I2C_GPIO_SCL0	CONFIG_SOFT_I2C_GPIO_SCL
 #define CONFIG_SOFT_I2C_GPIO_SDA0	CONFIG_SOFT_I2C_GPIO_SDA
-/*
-#define CONFIG_SOFT_I2C_GPIO_SCL1	GPIO_PD(29)
-#define CONFIG_SOFT_I2C_GPIO_SDA1	GPIO_PD(28)
-*/
+
+#if defined(CONFIG_VIBRATE_DRV2605)
+#define CONFIG_SOFT_I2C_GPIO_SCL1	GPIO_PB(8)
+#define CONFIG_SOFT_I2C_GPIO_SDA1	GPIO_PB(7)
+#endif
 #endif
 
 #ifndef CONFIG_SOFT_I2C0
@@ -527,10 +528,18 @@
 #define GPIO_PAH8001_PD 	-1
 
 /* ***************************GPIO VIBRATOR ***************************** */
-#if defined(CONFIG_X3)
+#if defined(CONFIG_VIBRATE_GPIO)
 #define	VIBRATOR_EN		GPIO_PE(2)
 #define	ACTIVE_LEVEL	0
 #endif
 /* ***************************GPIO VIBRATOR ***************************** */
+
+/* ***************************GPIO VIBRATOR START *********************** */
+#if defined(CONFIG_VIBRATE_DRV2605)
+#define DRV2605_ENABLE          GPIO_PE(2)
+#define DRV2605_ACTIVE_LEVEL    1
+#define DRV2605_I2C_ADDR        0x5a
+#endif
+/* ***************************GPIO VIBRATOR END ************************* */
 
 #endif /* __CONFIG_DORAOD_H__ */
