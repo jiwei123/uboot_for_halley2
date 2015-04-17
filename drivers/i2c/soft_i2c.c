@@ -57,6 +57,7 @@ static struct client_i2c_bus i2c_bus[] = {
 				.scl_gpio = CONFIG_SOFT_I2C_GPIO_SCL0,
 				.sda_gpio = CONFIG_SOFT_I2C_GPIO_SDA0,
 		},
+#endif
 #if defined(CONFIG_SOFT_I2C_GPIO_SCL1) /* you must define CONFIG_SOFT_I2C_GPIO_SCL before, and then define it */
 		{
 				/*.bus_num = 1,*/
@@ -64,14 +65,61 @@ static struct client_i2c_bus i2c_bus[] = {
 				.sda_gpio = CONFIG_SOFT_I2C_GPIO_SDA1,
 		},
 #endif
-#endif
 };
 
 #define GET_I2C_BUS_SIZE (sizeof(i2c_bus) / sizeof(struct client_i2c_bus))
-#endif
-
 static int client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
 static int client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+#endif
+
+#if defined(CONFIG_MUTIPLE_I2C_BUS)
+/*
+ * if define CONFIG_MUTIPLE_I2C_BUS, it need change as the gpio change,
+ * so, I2C_INIT, I2C_READ, I2C_SDA, I2C_SCL should define here,
+ * and it can't config in the board file.
+*/
+# include <asm/gpio.h>
+
+# ifndef I2C_GPIO_SYNC
+#  define I2C_GPIO_SYNC
+# endif
+
+#  define I2C_INIT \
+	do { \
+		gpio_request(client_i2c_select_gpio_scl, "soft_i2c"); \
+		gpio_request(client_i2c_select_gpio_sda, "soft_i2c"); \
+	} while (0)
+
+# ifndef I2C_ACTIVE
+#  define I2C_ACTIVE do { } while (0)
+# endif
+
+# ifndef I2C_TRISTATE
+#  define I2C_TRISTATE do { } while (0)
+# endif
+
+#  define I2C_READ gpio_get_value(client_i2c_select_gpio_sda)
+
+#  define I2C_SDA(bit) \
+	do { \
+		if (bit) \
+			gpio_direction_input(client_i2c_select_gpio_sda); \
+		else \
+			gpio_direction_output(client_i2c_select_gpio_sda, 0); \
+		I2C_GPIO_SYNC; \
+	} while (0)
+
+#  define I2C_SCL(bit) \
+	do { \
+		gpio_direction_output(client_i2c_select_gpio_scl, bit); \
+		I2C_GPIO_SYNC; \
+	} while (0)
+
+# ifndef I2C_DELAY
+#  define I2C_DELAY udelay(5)	/* 1/4 I2C clock duration */
+# endif
+
+#else /* not CONFIG_MUTIPLE_I2C_BUS */
 
 #if defined(CONFIG_SOFT_I2C_GPIO_SCL)
 # include <asm/gpio.h>
@@ -83,8 +131,8 @@ static int client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 # ifndef I2C_INIT
 #  define I2C_INIT \
 	do { \
-		gpio_request(client_i2c_select_gpio_scl, "soft_i2c"); \
-		gpio_request(client_i2c_select_gpio_sda, "soft_i2c"); \
+		gpio_request(CONFIG_SOFT_I2C_GPIO_SCL, "soft_i2c"); \
+		gpio_request(CONFIG_SOFT_I2C_GPIO_SDA, "soft_i2c"); \
 	} while (0)
 # endif
 
@@ -97,16 +145,16 @@ static int client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 # endif
 
 # ifndef I2C_READ
-#  define I2C_READ gpio_get_value(client_i2c_select_gpio_sda)
+#  define I2C_READ gpio_get_value(CONFIG_SOFT_I2C_GPIO_SDA)
 # endif
 
 # ifndef I2C_SDA
 #  define I2C_SDA(bit) \
 	do { \
 		if (bit) \
-			gpio_direction_input(client_i2c_select_gpio_sda); \
+			gpio_direction_input(CONFIG_SOFT_I2C_GPIO_SDA); \
 		else \
-			gpio_direction_output(client_i2c_select_gpio_sda, 0); \
+			gpio_direction_output(CONFIG_SOFT_I2C_GPIO_SDA, 0); \
 		I2C_GPIO_SYNC; \
 	} while (0)
 # endif
@@ -114,7 +162,7 @@ static int client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 # ifndef I2C_SCL
 #  define I2C_SCL(bit) \
 	do { \
-		gpio_direction_output(client_i2c_select_gpio_scl, bit); \
+		gpio_direction_output(CONFIG_SOFT_I2C_GPIO_SCL, bit); \
 		I2C_GPIO_SYNC; \
 	} while (0)
 # endif
@@ -123,10 +171,11 @@ static int client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 #  define I2C_DELAY udelay(5)	/* 1/4 I2C clock duration */
 # endif
 
-#endif
+#endif /* CONFIG_SOFT_I2C_GPIO_SCL */
+
+#endif /* CONFIG_MUTIPLE_I2C_BUS */
 
 /* #define	DEBUG_I2C	*/
-
 #ifdef DEBUG_I2C
 DECLARE_GLOBAL_DATA_PTR;
 #endif
@@ -176,9 +225,6 @@ static void send_reset(void)
 {
 	I2C_SOFT_DECLARATIONS	/* intentional without ';' */
 	int j;
-
-	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
-	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
 
 	I2C_SCL(1);
 	I2C_SDA(1);
@@ -430,8 +476,10 @@ int i2c_probe(uchar addr) /* if define CONFIG_MUTIPLE_I2C_BUS, you better to use
 	 * (fake write)
 	 */
 
+#if defined(CONFIG_MUTIPLE_I2C_BUS) && defined(CONFIG_SOFT_I2C_GPIO_SCL)
 	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
 	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+#endif
 
 	send_start();
 	rc = write_byte ((addr << 1) | 0);
@@ -450,8 +498,10 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	PRINTD("i2c_read: chip %02X addr %02X alen %d buffer %p len %d\n",
 		chip, addr, alen, buffer, len);
 
+#if defined(CONFIG_MUTIPLE_I2C_BUS) && defined(CONFIG_SOFT_I2C_GPIO_SCL)
 	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
 	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+#endif
 
 #ifdef CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW
 	/*
@@ -529,8 +579,10 @@ int  i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	PRINTD("i2c_write: chip %02X addr %02X alen %d buffer %p len %d\n",
 		chip, addr, alen, buffer, len);
 
+#if defined(CONFIG_MUTIPLE_I2C_BUS) && defined(CONFIG_SOFT_I2C_GPIO_SCL)
 	client_i2c_select_gpio_scl = CONFIG_SOFT_I2C_GPIO_SCL; /* default */
 	client_i2c_select_gpio_sda = CONFIG_SOFT_I2C_GPIO_SDA; /* default */
+#endif
 
 	send_start();
 	if(write_byte(chip << 1)) {	/* write cycle */
@@ -561,7 +613,7 @@ int  i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 struct client_i2c_bus *mutiple_i2c_probe(uchar addr)
 {
 	int ret = 0;
-	int i = 0 ;
+	int i = 0;
 	int i2c_bus_size = GET_I2C_BUS_SIZE;
 
 	struct client_i2c_bus *i2c_bus_select;

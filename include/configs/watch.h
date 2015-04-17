@@ -243,7 +243,13 @@
 #define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PD(30)
 #endif
 
-#if defined(CONFIG_SOFT_I2C0) && defined(CONFIG_MUTIPLE_I2C_BUS) /* the second i2c bus if mutiple i2c bus config */
+#ifndef CONFIG_SOFT_I2C0
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
+#endif
+
+#if defined(CONFIG_MUTIPLE_I2C_BUS) /* the second i2c bus if mutiple i2c bus config */
+
 #define CONFIG_SOFT_I2C_GPIO_SCL0	CONFIG_SOFT_I2C_GPIO_SCL
 #define CONFIG_SOFT_I2C_GPIO_SDA0	CONFIG_SOFT_I2C_GPIO_SDA
 
@@ -251,11 +257,6 @@
 #define CONFIG_SOFT_I2C_GPIO_SCL1	GPIO_PB(8)
 #define CONFIG_SOFT_I2C_GPIO_SDA1	GPIO_PB(7)
 #endif
-#endif
-
-#ifndef CONFIG_SOFT_I2C0
-#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_PE(31)
-#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_PE(30)
 #endif
 
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
