@@ -43,6 +43,14 @@ static int drv2605_select_mode(struct client_i2c_bus *bus)
         return -1;
     }
 
+    /* select LRA mode */
+    buf = 0xb6;
+    err = mutiple_i2c_write(bus, chip, 0x1a, 1, &buf, 1);
+    if (err != 0) {
+        printf("%s, fail to write (%d)\n", __FUNCTION__, err);
+        return -1;
+    }
+
     return 0;
 }
 
