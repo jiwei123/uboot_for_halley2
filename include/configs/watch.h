@@ -482,7 +482,7 @@
  */
 #if defined(CONFIG_ACRAB)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
-#elif defined(CONFIG_AW808) || defined(CONFIG_X3)
+#elif defined(CONFIG_AW808) || defined(CONFIG_X3) || defined(CONFIG_IN901)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(1)
 #define CONFIG_GPIO_PRE_TEST		GPIO_PE(10)
 #else
@@ -526,8 +526,10 @@
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
 #if defined(CONFIG_SENSORS_PIXART_PAH8001)
+#if defined(CONFIG_IN901)
 #define GPIO_PAH8001_INT        GPIO_PA(10)
 #define GPIO_PAH8001_RESET      GPIO_PA(11)
+#endif
 #endif
 
 /* ***************************GPIO VIBRATOR ***************************** */
@@ -537,12 +539,14 @@
 #endif
 /* ***************************GPIO VIBRATOR ***************************** */
 
-/* ***************************GPIO VIBRATOR START *********************** */
+/* ***************************DRV2605 VIBRATOR START ******************** */
 #if defined(CONFIG_VIBRATE_DRV2605)
+#if defined(CONFIG_IN901)
 #define DRV2605_ENABLE          GPIO_PE(2)
 #define DRV2605_ACTIVE_LEVEL    1
 #define DRV2605_I2C_ADDR        0x5a
 #endif
-/* ***************************GPIO VIBRATOR END ************************* */
+#endif
+/* ***************************DRV2605 VIBRATOR END ********************** */
 
 #endif /* __CONFIG_DORAOD_H__ */

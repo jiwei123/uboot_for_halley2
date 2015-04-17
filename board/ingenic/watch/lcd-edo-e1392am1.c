@@ -36,7 +36,7 @@
 #define MIPI_RST_N     GPIO_PC(16)
 #define LCD_VDD_1V8   "RICOH619_LDO9"
 #define LCD_VCI_2V8   "RICOH619_LDO10"
-#elif defined(CONFIG_X3)
+#elif defined(CONFIG_IN901)
 #define MIPI_RST_N     GPIO_PC(19)
 #define LCD_VDD_1V8   "RICOH619_LDO4"
 #define LCD_VCI_2V8   "RICOH619_LDO6"

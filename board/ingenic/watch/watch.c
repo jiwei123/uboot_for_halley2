@@ -77,14 +77,17 @@ int gpio_early_init(void)
     int ret = 0;
 
 #if defined(CONFIG_SENSORS_PIXART_PAH8001)
-    if (gpio_request(GPIO_PAH8001_RESET, "pah8001_reset") < 0) {
+    ret = gpio_request(GPIO_PAH8001_RESET, "pah8001_reset");
+    if (ret < 0) {
         printf("%s : Request GPIO %d failed----------\n", __FUNCTION__,
                 GPIO_PAH8001_RESET);
         return -1;
     } else {
         gpio_direction_output(GPIO_PAH8001_RESET, 1);
     }
-    if (gpio_request(GPIO_PAH8001_INT, "pah8001_int") < 0) {
+
+    ret = gpio_request(GPIO_PAH8001_INT, "pah8001_int");
+    if (ret < 0) {
         printf("%s : Request GPIO %d failed----------\n", __FUNCTION__,
                 GPIO_PAH8001_INT);
         gpio_free(GPIO_PAH8001_RESET);
