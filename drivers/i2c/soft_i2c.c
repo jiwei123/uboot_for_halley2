@@ -53,14 +53,14 @@
 static struct client_i2c_bus i2c_bus[] = {
 #if defined(CONFIG_SOFT_I2C_GPIO_SCL0) /* you need define the CONFIG_SOFT_I2C_GPIO_SCL */
 		{
-				/*.bus_num = 0,*/
+				.bus_num = 0,
 				.scl_gpio = CONFIG_SOFT_I2C_GPIO_SCL0,
 				.sda_gpio = CONFIG_SOFT_I2C_GPIO_SDA0,
 		},
 #endif
 #if defined(CONFIG_SOFT_I2C_GPIO_SCL1) /* you must define CONFIG_SOFT_I2C_GPIO_SCL before, and then define it */
 		{
-				/*.bus_num = 1,*/
+				.bus_num = 1,
 				.scl_gpio = CONFIG_SOFT_I2C_GPIO_SCL1,
 				.sda_gpio = CONFIG_SOFT_I2C_GPIO_SDA1,
 		},
@@ -610,13 +610,28 @@ int  i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 
 /* if you need mutiple i2c bus to use, the interfaces need change these, you need more a param */
 #ifdef CONFIG_MUTIPLE_I2C_BUS
+
+struct client_i2c_bus *get_client_i2c_bus(unsigned int bus_num)
+{
+	struct client_i2c_bus *select_bus;
+	int i = 0;
+	int i2c_bus_size = GET_I2C_BUS_SIZE;
+	for(i = 0, select_bus = i2c_bus; i < i2c_bus_size; select_bus++, i++) {
+		if(select_bus->bus_num == bus_num)
+			return select_bus;
+	}
+
+	PRINTD("error: not match the bus_num\n");
+	return NULL;
+}
+
 struct client_i2c_bus *mutiple_i2c_probe(uchar addr)
 {
 	int ret = 0;
-	int i = 0;
+	int i = 0 ,find_count = 0;
 	int i2c_bus_size = GET_I2C_BUS_SIZE;
 
-	struct client_i2c_bus *i2c_bus_select;
+	struct client_i2c_bus *i2c_bus_select, *bus_select_tmp;
 
 	for(i = 0, i2c_bus_select = i2c_bus; i < i2c_bus_size; i2c_bus_select++, i++) {
 		client_i2c_select_gpio_scl = i2c_bus_select->scl_gpio;
@@ -627,15 +642,22 @@ struct client_i2c_bus *mutiple_i2c_probe(uchar addr)
 		ret = write_byte ((addr << 1) | 0);
 		send_stop();
 
-		if(ret == 0)
-			break; /* find it */
+		if(ret == 0) {
+			find_count++; /* find it */
+			bus_select_tmp = i2c_bus_select;
+		}
 	}
 
-	if(ret == 1) {
+	if(find_count == 0) {
 		PRINTD("error: not match i2c bus \n");
+		return NULL;
+	} else if(find_count > 1) {
+		PRINTD("error: address not unique,others buses have the same address\n");
+		return NULL;
 	}
 
-	return (ret ? NULL : i2c_bus_select); /* if success, return the i2c_bus we select */
+	i2c_bus_select = bus_select_tmp;
+	return i2c_bus_select; /* if success, return the i2c_bus we select */
 }
 
 int mutiple_i2c_read(struct client_i2c_bus *i2c_bus, uchar chip, uint addr, int alen, uchar *buffer, int len)

@@ -140,6 +140,7 @@ struct client_i2c_bus {
 	int scl_gpio;
 	int sda_gpio;
 };
+struct client_i2c_bus *get_client_i2c_bus(unsigned int bus_num);
 struct client_i2c_bus *mutiple_i2c_probe(uchar addr);
 int mutiple_i2c_read(struct client_i2c_bus *i2c_bus_select, uchar chip, uint addr, int alen, uchar *buffer, int len);
 int mutiple_i2c_write(struct client_i2c_bus *i2c_bus_select, uchar chip, uint addr, int alen, uchar *buffer, int len);
