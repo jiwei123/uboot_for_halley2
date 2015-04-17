@@ -525,8 +525,10 @@
 #define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
-
-#define GPIO_PAH8001_PD 	-1
+#if defined(CONFIG_SENSORS_PIXART_PAH8001)
+#define GPIO_PAH8001_INT        GPIO_PA(10)
+#define GPIO_PAH8001_RESET      GPIO_PA(11)
+#endif
 
 /* ***************************GPIO VIBRATOR ***************************** */
 #if defined(CONFIG_VIBRATE_GPIO)

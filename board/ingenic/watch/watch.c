@@ -74,21 +74,34 @@ int regulator_init(void)
 #ifdef CONFIG_GPIO_EARLY_INIT
 int gpio_early_init(void)
 {
-	int ret = 0;
+    int ret = 0;
 
-	ret = gpio_request(GPIO_PAH8001_PD, "PAH8001_PD");
-	if (ret < 0) {
-		printf("gpio request PAH8001_PD failed\n");
-	} else
-		gpio_direction_output(GPIO_PAH8001_PD, 1);
-#ifdef CONFIG_GPIO_PRE_TEST
-	ret = gpio_request(CONFIG_GPIO_PRE_TEST, "pre_test");
-	if (ret < 0) {
-		printf("gpio request pre_test failed\n");
-	} else
-		gpio_direction_input(CONFIG_GPIO_PRE_TEST);
+#if defined(CONFIG_SENSORS_PIXART_PAH8001)
+    if (gpio_request(GPIO_PAH8001_RESET, "pah8001_reset") < 0) {
+        printf("%s : Request GPIO %d failed----------\n", __FUNCTION__,
+                GPIO_PAH8001_RESET);
+        return -1;
+    } else {
+        gpio_direction_output(GPIO_PAH8001_RESET, 1);
+    }
+    if (gpio_request(GPIO_PAH8001_INT, "pah8001_int") < 0) {
+        printf("%s : Request GPIO %d failed----------\n", __FUNCTION__,
+                GPIO_PAH8001_INT);
+        gpio_free(GPIO_PAH8001_RESET);
+        return -1;
+    } else {
+        gpio_direction_output(GPIO_PAH8001_INT, 1);
+    }
 #endif
-	return 0;
+
+#ifdef CONFIG_GPIO_PRE_TEST
+    ret = gpio_request(CONFIG_GPIO_PRE_TEST, "pre_test");
+    if (ret < 0) {
+        printf("gpio request pre_test failed\n");
+    } else
+        gpio_direction_input(CONFIG_GPIO_PRE_TEST);
+#endif
+    return 0;
 }
 #endif
 
