@@ -491,8 +491,13 @@
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
 
 /* Pretest keys. */
-#define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* SW7 */
+#if  defined(CONFIG_X3)
+#define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* pretest key */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	1
+#else
+#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)      	/* SW7 */
+#define CONFIG_GPIO_RECOVERY_ENLEVEL	0
+#endif
 
 /* Wrong keys. */
 #define CONFIG_GPIO_FASTBOOT		GPIO_PG(30)      	/* SW2 */
