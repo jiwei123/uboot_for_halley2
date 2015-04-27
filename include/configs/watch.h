@@ -491,7 +491,7 @@
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
 
 /* Pretest keys. */
-#if  defined(CONFIG_X3)
+#if  defined(CONFIG_X3) || defined(CONFIG_AW808)
 #define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* pretest key */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	1
 #else
