@@ -75,7 +75,7 @@
 #if defined(CONFIG_SPL_NOR_SUPPORT) || defined(CONFIG_SPL_SPI_SUPPORT)
 	#if defined(CONFIG_SPL_SPI_SUPPORT)
 	#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "mem=128M@0x0 ip=off root=/dev/ram0 rw rdinit=/linuxrc"
-	#define CONFIG_BOOTCOMMAND "spinor read 0x40000 0x600000 0x80600000;bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "spinor read 0x40000 0x7B0000 0x80600000;bootm 0x80600000"
 	#else
 	#define	 CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.3:/home/rootdir rw"
 	#define CONFIG_BOOTCOMMAND "tftpboot xxx/uImage; bootm"
