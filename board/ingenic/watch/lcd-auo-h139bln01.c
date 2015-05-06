@@ -36,6 +36,12 @@
 #define MIPI_RST_N     GPIO_PC(16)
 #define LCD_VDD_1V8   "RICOH619_LDO9"
 #define LCD_VCI_2V8   "RICOH619_LDO10"
+#elif CONFIG_AW808
+#define GPIO_LCD_BLK_EN -1
+#define MIPI_RST_N     GPIO_PC(19)
+#define LCD_VDD_1V8   "RICOH619_LDO4"
+#define LCD_VCI_2V8   "RICOH619_LDO6"
+#define BUCK5_3V      "RICOH619_DC5"
 #else
 #define GPIO_LCD_BLK_EN -1
 #define MIPI_RST_N     -1
@@ -50,6 +56,7 @@ void board_set_lcd_power_on(void)
 {
 	struct regulator *lcd_vddio_1v8 = NULL;
 	struct regulator *lcd_vci_2v8 = NULL;
+	struct regulator *buck5_3v    = NULL;
 
 	lcd_vddio_1v8 = regulator_get(LCD_VDD_1V8);
 	if (lcd_vddio_1v8 == NULL)
@@ -59,9 +66,15 @@ void board_set_lcd_power_on(void)
 	if (lcd_vci_2v8 == NULL)
 		return;
 
+	buck5_3v = regulator_get(BUCK5_3V);
+	if (buck5_3v == NULL)
+		return;
+
+	regulator_set_voltage(buck5_3v, 3000000, 3000000);
 	regulator_set_voltage(lcd_vddio_1v8, 1800000, 1800000);
 	regulator_set_voltage(lcd_vci_2v8, 2800000, 2800000);
 
+	regulator_enable(buck5_3v);
 	regulator_enable(lcd_vddio_1v8);
 	regulator_enable(lcd_vci_2v8);
 }
@@ -69,7 +82,7 @@ void board_set_lcd_power_on(void)
 struct auo_h139bln01_platform_data auo_h139bln01_pdata =
 {
 	.gpio_rest = MIPI_RST_N,
-#if defined(CONFIG_ACRAB)
+#if defined(CONFIG_ACRAB) || defined(CONFIG_AW808)
 	.gpio_lcd_bl = GPIO_LCD_BLK_EN,
 #endif
 };
@@ -79,7 +92,7 @@ struct fb_videomode jzfb1_videomode = {
 	.refresh = 60,
 	.xres = 400,
 	.yres = 400,
-	.pixclock = KHZ2PICOS(5310), //PCLK Frequency: 5.31MHz
+	.pixclock = KHZ2PICOS(9600), //PCLK Frequency: 9.6MHz
 	.left_margin  = 0,
 	.right_margin = 0,
 	.upper_margin = 0,
