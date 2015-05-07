@@ -462,6 +462,10 @@ void clk_init(void)
 #ifdef CONFIG_SPI_FLASH_INGENIC
 		| CPM_CLKGR_SSI0
 #endif
+
+#ifdef CONFIG_JZ_SSI1_PE
+		| CPM_CLKGR_SSI1
+#endif
 		;
 
 	reg_clkgr &= ~gate;

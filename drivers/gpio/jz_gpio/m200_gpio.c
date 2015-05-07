@@ -88,4 +88,7 @@ static struct jz_gpio_func_def gpio_func[] = {
 #ifdef CONFIG_JZ_PWM_GPIO_E3
 	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 3, },
 #endif
+#if defined(CONFIG_JZ_SSI1_PE)
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 0x30f00000},
+#endif
 };

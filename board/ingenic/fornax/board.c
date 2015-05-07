@@ -82,6 +82,15 @@ void board_usb_init(void)
 
 int misc_init_r(void)
 {
+#ifdef CONFIG_PMU_D2041_BULK4_3_3
+	struct regulator * regu = regulator_get("BUCK_4");
+	if (regu) {
+		regulator_set_voltage(regu, 3300000, 3300000);
+		printf("set regulator BUCK_4=3.3V\n");
+	} else {
+		printf("get regulator failed\n");
+	}
+#endif
 #if 0 /* TO DO */
 	uint8_t mac[6] = { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc };
 

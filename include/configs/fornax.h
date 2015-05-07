@@ -124,6 +124,36 @@
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
 
+#ifdef CONFIG_SSI1_TO_SPI_NOR
+/*
+ * fornax1.0 board
+ *
+ * spi nor			m200 ssi1
+ * VCC				+3.3
+ * HOLD				NC
+ * CLK				SSI1_CLK/PE28
+ * MOSI				SSI1_DT/PE21
+ * CS				SSI1_CE0_N/PE29
+ * MISO				SSI1_DR/PE20
+ * WP				NC
+ * GND				GND
+*/
+
+/* SPI */
+#define CONFIG_SSI_BASE SSI1_BASE
+#define CONFIG_JZ_SSI1_PE
+#define CONFIG_JZ_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_SPI_FLASH_INGENIC
+#define CONFIG_SPI_FLASH
+/* END SPI */
+
+/* PMU  */
+#define CONFIG_REGULATOR
+#define CONFIG_PMU_D2041
+#define CONFIG_PMU_D2041_BULK4_3_3
+#endif
+
 /**
  * Drivers configuration.
  */
