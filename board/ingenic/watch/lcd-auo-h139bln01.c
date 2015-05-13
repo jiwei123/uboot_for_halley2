@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015 Ingenic Electronics
  *
- * AUO 1.39 400*400 MIPI LCD Driver (driver's data part)
+ * AUO 1.39" 400*400 MIPI LCD Driver (driver's data part)
  *
  * Model : H139BLN01.1
  *

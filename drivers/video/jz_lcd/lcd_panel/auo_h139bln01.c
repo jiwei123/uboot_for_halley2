@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015 Ingenic Electronics
  *
- * AUO 1.39 400*400 MIPI LCD Driver
+ * AUO 1.39" 400*400 MIPI LCD Driver
  *
  * Model : H139BLN01.1
  *
@@ -68,15 +68,22 @@ void panel_pin_init(void)
 void panel_power_on(void)
 {
 	gpio_direction_output(auo_h139bln01_pdata.gpio_rest, 1);
-	mdelay(50);
+	udelay(5);
 	gpio_direction_output(auo_h139bln01_pdata.gpio_rest, 0);  //reset active low
-	mdelay(50);
+	mdelay(10);
 	gpio_direction_output(auo_h139bln01_pdata.gpio_rest, 1);
 	gpio_direction_output(auo_h139bln01_pdata.gpio_lcd_bl, 1);
-	udelay(600);
+
 	debug("auo_h139bln01 panel power on\n");
 
 	return;
+}
+
+void auo_h139bln01_nop(struct dsi_device *dsi)
+{
+	struct dsi_cmd_packet data_to_send = {0x15, 0x00, 0x00};
+
+	write_command(dsi, data_to_send);
 }
 
 void auo_h139bln01_sleep_in(struct dsi_device *dsi) /* enter sleep */
@@ -166,15 +173,18 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 {
 	int  i;
 	struct dsi_cmd_packet auo_h139bln01_cmd_list[] = {
+		{0x15, 0xFE, 0x05},
+		{0x15, 0x05, 0x00},
 		{0x15, 0xFE, 0x07},
 		{0x15, 0x07, 0x4F},
 		{0x15, 0xFE, 0x0A},
 		{0x15, 0x1C, 0x1B},
-		{0x15, 0xFE, 0x05},
-		{0x15, 0x2B, 0xF8},
 		{0x15, 0xFE, 0x00},
 		{0x15, 0x35, 0x00},
 	};
+
+	auo_h139bln01_nop(dsi); // do nothing, just for logic integrity
+	mdelay(4); // used to avoid screen corrosion/pitting
 
 	for(i = 0; i < ARRAY_SIZE(auo_h139bln01_cmd_list); i++) {
 		write_command(dsi, auo_h139bln01_cmd_list[i]);
