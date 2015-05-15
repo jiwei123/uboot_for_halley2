@@ -228,7 +228,7 @@ static unsigned int set_ssi_rate(int clk, unsigned long rate)
 
 	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
 		? (pll_rate / rate)
-		: (pll_rate / rate + 1)) - 2;
+		: (pll_rate / rate + 1)) - 1;
 
 	cpm_outl(cdr | (1 << 29) | (1 << 31), CPM_SSICDR);
 
