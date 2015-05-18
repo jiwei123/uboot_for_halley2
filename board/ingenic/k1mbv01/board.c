@@ -60,13 +60,31 @@ extern int ricoh61x_regulator_init(void);
 
 int board_early_init_f(void)
 {
+	return 0;
+}
+
+#ifdef CONFIG_REGULATOR
+int regulator_init(void)
+{
+	int ret;
 #ifdef CONFIG_PMU_D2041
-	d2041_regulator_init();
+	ret = d2041_regulator_init();
 #endif
 
 #ifdef CONFIG_PMU_RICOH6x
-	ricoh61x_regulator_init();
-//	test_richo();
+	ret = ricoh61x_regulator_init();
+#endif
+	return ret;
+}
+#endif /* CONFIG_REGULATOR */
+
+int board_early_init_r(void)
+{
+#ifdef CONFIG_REGULATOR
+	regulator_init();
+#endif
+#ifdef CONFIG_JZ_GPIO
+	gpio_init();
 #endif
 	return 0;
 }

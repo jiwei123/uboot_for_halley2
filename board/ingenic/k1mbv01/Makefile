@@ -27,7 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	:= board.o
-#COBJS-$(CONFIG_JZ_LCD_V12) += lcd.o
+COBJS-$(CONFIG_JZ_LCD_V12) += lcd.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
