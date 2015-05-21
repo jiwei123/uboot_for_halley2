@@ -77,6 +77,11 @@
  */
 
 /**
+ * newton2 displayer problem
+ */
+#define CONFIG_AUO_X163_V1
+
+/**
  * Boot arguments definitions.
  */
 #define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=255M@0x0 mem=256M@0x30000000"
@@ -155,7 +160,7 @@
 
 #ifdef  CONFIG_VIDEO_X163
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK   320 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
+#define CONFIG_DATALANE_BPS_MHZ   320 /* NOTE: CONFIG_DATALANE_BPS_MHZ should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_RLE_LCD_LOGO

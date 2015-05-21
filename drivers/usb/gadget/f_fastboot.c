@@ -843,7 +843,7 @@ static int handle_cmd_flash(struct fastboot_dev *fastboot)
 		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 6,(strlen(partition_info[i].pname)-2))){
 			strcpy(pname,partition_info[i].pname);
 			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
-			cnt = partition_info[i].size / MMC_BYTE_PER_BLOCK;
+			cnt = (fastboot->data_length + MMC_BYTE_PER_BLOCK - 1) / MMC_BYTE_PER_BLOCK;
 			goto do_flash;
 			break;
 		}
@@ -909,7 +909,7 @@ static int handle_cmd_erase(struct fastboot_dev *fastboot)
 		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 6,(strlen(partition_info[i].pname)-2))){
 			strcpy(pname,partition_info[i].pname);
 			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
-			cnt = partition_info[i].size / MMC_BYTE_PER_BLOCK;
+			cnt = (partition_info[i].size + MMC_BYTE_PER_BLOCK - 1) / MMC_BYTE_PER_BLOCK;
 			goto do_erase;
 			break;
 		}

@@ -555,13 +555,13 @@ static int nand_spl_load_image(long  offs, long size, void *dst)
 	int ret;
 	int ubootoffs;
 	page_per_blk = blocksize / pagesize;
-	if (pagesize == 512){
+
+	if (pagesize < 4096){
 		/*+pagesize for params *2 for bch */
 		ubootoffs = ((SPL_SIZE + pagesize) / pagesize * 2 + page_per_blk -1) / (page_per_blk);
 	}else{
 		ubootoffs = 2;
 	}
-
 	if(offs < 0){
 		page = (page_per_blk < 128 ? ((128 / page_per_blk) + ubootoffs) : ubootoffs) * page_per_blk;
 	}else

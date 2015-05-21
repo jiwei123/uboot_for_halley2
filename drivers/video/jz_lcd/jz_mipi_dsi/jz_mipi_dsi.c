@@ -245,19 +245,19 @@ void jz_dsi_init(struct dsi_device *dsi)
 	dsi->address = dsi->dsi_phy->address = DSI_BASE;
 	dsi->dsi_phy->bsp_pre_config = set_base_dir_tx;
 	dsi->dsi_phy->reference_freq = REFERENCE_FREQ;
-	dsi->video_config->byte_clock = DEFAULT_BYTE_CLOCK / 8,	/* KHz  */
+	dsi->video_config->byte_clock = DATALANE_BYTECLOCK_KHZ,	/* KHz  */
 	dsi->video_config->video_mode = VIDEO_BURST_WITH_SYNC_PULSES,
 	dsi->video_config->pixel_clock = PICOS2KHZ(jzfb1_videomode.pixclock); // dpi_clock
 	dsi->video_config->h_polarity = jzfb1_videomode.sync & FB_SYNC_HOR_HIGH_ACT;
 	dsi->video_config->h_active_pixels = jzfb1_videomode.xres;
 	dsi->video_config->h_sync_pixels = jzfb1_videomode.hsync_len;
-	dsi->video_config->h_back_porch_pixels = jzfb1_videomode.right_margin;
+	dsi->video_config->h_back_porch_pixels = jzfb1_videomode.left_margin;
 	dsi->video_config->h_total_pixels = jzfb1_videomode.xres + jzfb1_videomode.hsync_len + jzfb1_videomode.left_margin + jzfb1_videomode.right_margin;
 
 	dsi->video_config->v_active_lines = jzfb1_videomode.yres;
 	dsi->video_config->v_polarity =  jzfb1_videomode.sync & FB_SYNC_VERT_HIGH_ACT;
 	dsi->video_config->v_sync_lines = jzfb1_videomode.vsync_len;
-	dsi->video_config->v_back_porch_lines = jzfb1_videomode.lower_margin;
+	dsi->video_config->v_back_porch_lines = jzfb1_videomode.upper_margin;
 	dsi->video_config->v_total_lines = jzfb1_videomode.yres + jzfb1_videomode.upper_margin + jzfb1_videomode.lower_margin + jzfb1_videomode.vsync_len;
 
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);
@@ -274,8 +274,7 @@ void jz_dsi_init(struct dsi_device *dsi)
 	mipi_dsih_write_word(dsi, R_DSI_HOST_EDPI_CMD_SIZE, 0x6);
 
 	/*
-	 * jz_dsi_phy_cfg:
-	 * PLL programming, config the output freq to DEFAULT_BYTE_CLOCK: 90MHZ
+	 * jz_dsi_phy_cfg: PLL programming
 	 * */
 	jz_dsi_phy_cfg(dsi);
 
@@ -287,7 +286,9 @@ void jz_dsi_init(struct dsi_device *dsi)
 	}
 	/*checkout phy clk lock and  clklane, datalane stopstate  */
 	while ((mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_STATUS) & st_mask) !=
-	       st_mask && retry--);
+	       st_mask && retry) {
+		retry--;
+	}
 	if (!retry) {
 		printf("jz mipi dsi init failed\n");
 		return -1;

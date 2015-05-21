@@ -369,6 +369,10 @@ static int mmc_erase(struct cloner *cloner)
 	}
 
 	mmc_init(mmc);
+	if(get_mmc_csd_perm_w_protect()){
+		printf("ERROR: MMC Init error ,can not be erase !!!!!!!!!\n");
+		return -EPERM;
+	}
 
 	if (mmc_getwp(mmc) == 1) {
 		printf("Error: card is write protected!\n");

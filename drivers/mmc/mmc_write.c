@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#include <errno.h>
 #include <config.h>
 #include <common.h>
 #include <part.h>
@@ -72,6 +72,9 @@ unsigned long mmc_berase(int dev_num, lbaint_t start, lbaint_t blkcnt)
 
 	if (!mmc)
 		return -1;
+
+	if(get_mmc_csd_perm_w_protect())
+		return -EPERM;
 
 	if ((start % mmc->erase_grp_size) || (blkcnt % mmc->erase_grp_size))
 		printf("\n\nCaution! Your devices Erase group is 0x%x\n"
@@ -162,6 +165,10 @@ ulong mmc_bwrite(int dev_num, lbaint_t start, lbaint_t blkcnt, const void *src)
 	struct mmc *mmc = find_mmc_device(dev_num);
 	if (!mmc)
 		return 0;
+
+	if(get_mmc_csd_perm_w_protect())
+		return -EPERM;
+
 
 	if (mmc_set_blocklen(mmc, mmc->write_bl_len))
 		return 0;

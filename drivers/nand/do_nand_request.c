@@ -259,7 +259,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 			 **/
 			nand_basic_info *ndinfo = &ndparams.ndbaseinfo;
 			int pagesize_flag;
-#ifdef CONFIG_JZ4775
+#if defined(CONFIG_JZ4775) || defined(CONFIG_M150)
 			struct parm_buf {
 				void *bw_buf;
 				void *tp_buf;
@@ -324,7 +324,7 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 				return -1;
 			}
 #ifndef CONFIG_NAND_NFI  // no define nfi
-#ifdef CONFIG_JZ4775
+#if defined(CONFIG_JZ4775) || defined(CONFIG_M150)
 			memset(parm_buf.bw_buf, (ndinfo->buswidth == 16) ? 0xAA : 0x55, 64);
 #endif
 			memset(parm_buf.tp_buf, (REBUILD_GET_NAND_TYPE(ndinfo->options) == NAND_TYPE_TOGGLE) ? 0xAA : 0x55, 64);
@@ -375,6 +375,9 @@ unsigned int do_nand_request(unsigned int startaddr, void *data_buf, unsigned in
 		spl_align_sectorcount = ((REBUILD_SPL_SIZE + g_handle.pagesize - 1) / g_handle.pagesize * g_handle.pagesize) / 512;
 		NandManger_ptIoctrl(pHandle, NANDMANAGER_SET_XBOOT_OFFSET, spl_align_sectorcount * 512);
 	}
+
+	if(pt_index == 0 && startaddr != 0)
+		g_handle.sectorid += (1 * 1024 + g_handle.pagesize - 1) / g_handle.pagesize * g_handle.pagesize / 512;
 
 	while(totalbytes){
 		if(totalbytes >= 256 *512)
