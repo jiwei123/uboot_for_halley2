@@ -131,7 +131,7 @@
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 
 #define CONFIG_LCD_LOGO
-/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_RLE_LCD_LOGO
 /*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 /*#define CONFIG_LOGO_EXTEND*/
