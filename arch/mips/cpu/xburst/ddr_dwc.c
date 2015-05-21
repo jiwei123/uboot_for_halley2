@@ -430,6 +430,10 @@ static void ddr_chip_init(unsigned int mode)
 		val &= ~(1 << 4);
 		ddr_writel(val,DDRP_DSGCR);
 
+		val = ddr_readl(DDRP_DLLGCR);
+		val |= 1 << 23;
+		ddr_writel(val,DDRP_DLLGCR);
+
 	}
 	ddr_writel(pir_val, DDRP_PIR);
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
