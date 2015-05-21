@@ -141,7 +141,7 @@
  * Boot command definitions.
  */
 #ifdef CONFIG_DORADO_V21
-#define CONFIG_BOOTDELAY 0
+#define CONFIG_BOOTDELAY 1
 #else
 #define CONFIG_BOOTDELAY 1
 #endif
@@ -250,6 +250,18 @@
 #define CONFIG_ENV_SECT_SIZE		(4 * 1024)
 #endif
 /* END SPI */
+
+#ifdef CONFIG_COMMAND_SPI
+#define CONFIG_CMD_SF			/* compile commom/cmd_sf.c */
+#define CONFIG_CMD_SPI_BURNER		/* compile commom/cmd_spi_burner.c */
+#define CONFIG_SPI_FLASH		/* compile drivers/mtd/spi/spi_flash.c */
+#define CONFIG_JZ_SPI			/* compile drivers/spi/jz_spi.c */
+#define CONFIG_SPI_WRITE_CHECK		/* nand write check */
+#define CONFIG_JZ_SSI1_PE		/* gpio */
+#define CONFIG_SSI_BASE			SSI1_BASE
+#define CONFIG_SPI_FLASH_INGENIC
+#define CONFIG_SPI_FLASH_INGENIC_NAND
+#endif
 
 /* MMC */
 #define CONFIG_GENERIC_MMC		1

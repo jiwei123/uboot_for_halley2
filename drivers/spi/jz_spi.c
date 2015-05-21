@@ -31,8 +31,16 @@
 #include <asm/arch/spi.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/base.h>
+#include <malloc.h>
+#include "jz_spi.h"
 
-#define SSI_BASE CONFIG_SSI_BASE
+static struct jz_spi_support *gparams;
+
+/* wait time before read status (us) for spi nand */
+//static int t_reset = 500;
+static int t_read  = 120;
+static int t_write = 700;
+static int t_erase = 5000;
 
 static uint32_t jz_spi_readl(unsigned int offset)
 {
@@ -62,6 +70,11 @@ static unsigned int spi_txfifo_full(void )
 static unsigned int spi_get_rxfifo_count(void )
 {
 	return ((jz_spi_readl(SSI_SR) & SSI_SR_RFIFONUM_MASK) >> SSI_SR_RFIFONUM_BIT);
+}
+
+static inline struct jz_spi_slave *to_jz_spi(struct spi_slave *slave)
+{
+	return container_of(slave, struct jz_spi_slave, slave);
 }
 
 #ifdef CONFIG_SOFT_SPI
@@ -148,17 +161,6 @@ void spi_load(unsigned int src_addr, unsigned int count, unsigned int dst_addr)
 	jz_spi_writel(jz_spi_readl(SSI_CR1) & (~SSI_CR1_UNFIN), SSI_CR1);
 }
 
-struct jz_spi_slave {
-	struct spi_slave slave;
-	unsigned int mode;
-	unsigned int max_hz;
-};
-
-static inline struct jz_spi_slave *to_jz_spi(struct spi_slave *slave)
-{
-	return container_of(slave, struct jz_spi_slave, slave);
-}
-
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int mode)
 {
@@ -177,7 +179,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 
 void spi_free_slave(struct spi_slave *slave)
 {
-	struct soft_spi_slave *ss = to_jz_spi(slave);
+	struct jz_spi_slave *ss = to_jz_spi(slave);
 
 	free(ss);
 }
@@ -198,7 +200,7 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 		const void *dout, void *din, unsigned long flags)
 {
 	unsigned int count = bitlen / 8;
-	unsigned char *cmd = dout;
+	unsigned char *cmd = (unsigned char *)dout;
 	unsigned char *addr = din;
 	unsigned int fifo_size = 64;
 
@@ -233,10 +235,78 @@ static void jz_cs_reversal(void )
 	return ;
 }
 
+int jz_read_nand(struct spi_flash *flash, u32 offset, size_t len, void *data)
+{
+	unsigned int page_bak, page, page_num, column, i;
+	unsigned char read_buf, cmd[COMMAND_MAX_LENGTH];
+
+	if(offset % flash->page_size) {
+		printf("offset must 0x%x align !\n", flash->page_size);
+		return -1;
+	}
+
+	if(len % flash->page_size) {
+		printf("len must 0x%x align !\n", flash->page_size);
+		return -1;
+	}
+
+	column = 0;
+	page_bak = offset / flash->page_size;
+	page_num = len / flash->page_size;
+
+	for(i = 0; i < page_num; i++) {
+		if(page_bak > gparams->page_num) {
+			printf("page : %x\n", page_bak);
+			printf("page_num : %x\n", gparams->page_num);
+			printf("space is full !\n");
+			break;
+		}
+
+		page = gparams->page_list[page_bak];
+
+		jz_cs_reversal();
+		cmd[0] = 0x13;
+		cmd[1] = (page >> 16) & 0xff;
+		cmd[2] = (page >> 8) & 0xff;
+		cmd[3] = page & 0xff;
+		spi_send_cmd(cmd, 4);
+		udelay(t_read);
+
+		jz_cs_reversal();
+		cmd[0] = 0x0f;
+		cmd[1] = 0xc0;
+		spi_send_cmd(cmd, 2);
+
+		spi_recv_cmd(&read_buf, 1);
+		while(read_buf & 0x1)
+			spi_recv_cmd(&read_buf, 1);
+
+		if((read_buf & 0x30) == 0x20) {
+			printf("read error !!!\n");
+			printf("please reset !!!\n");
+			return -1;
+		}
+
+		jz_cs_reversal();
+		cmd[0] = 0x03;
+		cmd[1] = (column >> 8) & 0xf;
+		cmd[1] |= 0x40;
+		cmd[2] = column & 0xff;
+		cmd[3] = 0x0;
+		spi_send_cmd(cmd, 4);
+		spi_recv_cmd(data, flash->page_size);
+		data += flash->page_size;
+
+		page_bak++;
+	}
+
+	return 0;
+}
+
 int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 {
 	unsigned char cmd[5];
-	unsigned long remain_len, read_len;
+	unsigned long read_len;
 
 	cmd[0] = CMD_FAST_READ;
 	cmd[1] = offset >> 16;
@@ -261,6 +331,7 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 	unsigned char cmd[6], tmp;
 	int chunk_len, actual, i;
 	unsigned long byte_addr, page_size;
+	unsigned char *send_buf = (unsigned char *)buf;
 
 	page_size = flash->page_size;
 
@@ -287,9 +358,9 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 
 		for(i = 0; i < chunk_len; i += 100) {
 			if((chunk_len - i) < 100)
-				spi_send_cmd((buf + actual + i), (chunk_len - i));
+				spi_send_cmd((send_buf + actual + i), (chunk_len - i));
 			else
-				spi_send_cmd((buf + actual + i), 100);
+				spi_send_cmd((send_buf + actual + i), 100);
 
 		}
 
@@ -302,7 +373,172 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 
 		offset += chunk_len;
 	}
+	return 0;
+}
 
+int jz_erase_nand(struct spi_flash *flash, u32 offset, size_t len)
+{
+	unsigned int block_bak, block, block_num, i;
+	unsigned char cmd[COMMAND_MAX_LENGTH], read_buf;
+
+	if(offset % flash->sector_size) {
+		printf("offset must 0x%x align !\n", flash->sector_size);
+		return -1;
+	}
+
+	if(len % flash->sector_size) {
+		printf("len must 0x%x align !\n", flash->sector_size);
+		return -1;
+	}
+
+	block_bak = offset / flash->page_size;
+	block_num = len / flash->sector_size;
+
+	for(i = 0; i < block_num; i++) {
+		if(block_bak > gparams->page_num) {
+			printf("space is full !\n");
+			break;
+		}
+
+		block = gparams->page_list[block_bak];
+		jz_cs_reversal();
+		cmd[0] = 0x06;
+		spi_send_cmd(cmd, 1);
+
+		jz_cs_reversal();
+		cmd[0] = 0xd8;
+		cmd[1] = (block >> 16) & 0xff;
+		cmd[2] = (block >> 8) & 0xff;
+		cmd[3] = block & 0xc0;
+		spi_send_cmd(cmd, 4);
+		udelay(t_erase);
+
+		jz_cs_reversal();
+		cmd[0] = 0x0f;
+		cmd[1] = 0xc0;
+		spi_send_cmd(cmd, 2);
+		spi_recv_cmd(&read_buf, 1);
+		while(read_buf & 0x1)
+			spi_recv_cmd(&read_buf, 1);
+
+		if(read_buf & 0x4) {
+			printf("erase fail !!!\n");
+			printf("please reset !!!\n");
+			return -1;
+		}
+
+		block_bak += (flash->sector_size / flash->page_size);
+	}
+
+	return 0;
+}
+
+int jz_write_nand(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
+{
+	unsigned char *send_buf = (unsigned char *)buf;
+	unsigned char read_buf, cmd[COMMAND_MAX_LENGTH];
+	unsigned int page_bak, page, page_num, column, i, read_num;
+#ifdef CONFIG_SPI_WRITE_CHECK
+	int error_count = 0;
+#endif
+
+	if(offset % flash->page_size) {
+		printf("offset must 0x%x align !\n", flash->page_size);
+		return -1;
+	}
+
+	if(len % flash->page_size) {
+		printf("len must 0x%x align !\n", flash->page_size);
+		return -1;
+	}
+rewrite:
+	column = 0;
+	page_bak = offset / flash->page_size;
+	page_num = len / flash->page_size;
+
+	for(i = 0; i < page_num; i++) {
+		if(page_bak > gparams->page_num) {
+			printf("page : %x\n", page_bak);
+			printf("page_num : %x\n", gparams->page_num);
+			printf("space is full !\n");
+			break;
+		}
+
+		page = gparams->page_list[page_bak];
+
+		jz_cs_reversal();
+		cmd[0] = 0x02;
+		cmd[1] = (column >> 8) & 0xf;
+		cmd[2] = column & 0xff;
+		spi_send_cmd(cmd, 3);
+
+		read_num = flash->page_size;
+		while(read_num) {
+			if(read_num > FIFI_THRESHOLD) {
+				spi_send_cmd(send_buf, FIFI_THRESHOLD);
+				send_buf += FIFI_THRESHOLD;
+				read_num -= FIFI_THRESHOLD;
+			} else {
+				spi_send_cmd(send_buf, read_num);
+				read_num = 0;
+			}
+		}
+
+		jz_cs_reversal();
+		cmd[0] = 0x06;
+		spi_send_cmd(cmd, 1);
+
+		jz_cs_reversal();
+		cmd[0] = 0x10;
+		cmd[1] = (page >> 16) & 0xff;
+		cmd[2] = (page >> 8) & 0xff;
+		cmd[3] = page & 0xff;
+		spi_send_cmd(cmd, 4);
+		udelay(t_write);
+
+		jz_cs_reversal();
+		cmd[0] = 0x0f;
+		cmd[1] = 0xc0;
+		spi_send_cmd(cmd, 2);
+
+		spi_recv_cmd(&read_buf, 1);
+		while(read_buf & 0x1)
+			spi_recv_cmd(&read_buf, 1);
+
+		if(read_buf & 0x8) {
+			printf("write fail !!!\n");
+			printf("please reset !!!\n");
+			return -1;
+		}
+
+		page_bak++;
+	}
+
+#ifdef CONFIG_SPI_WRITE_CHECK
+	printf("write check !\n");
+
+	int j;
+	unsigned char *check_buf = (unsigned char *)0x80000000;
+
+	send_buf = (unsigned char *)buf;
+
+	if(error_count > SPI_WRITE_CHECK_TIMES) {
+		printf("write error more than %d! times\n", SPI_WRITE_CHECK_TIMES);
+		return -1;
+	}
+
+	for(i = 0; i < len; i += flash->page_size) {
+		jz_read_nand(flash, offset, flash->page_size, check_buf);
+		for(j = 0; j < flash->page_size; j++) {
+			if(strcmp(send_buf[j], check_buf[j])) {
+				printf("write error : %x!\n", i);
+				error_count++;
+				jz_erase_nand(flash, offset, ((len + flash->sector_size - 1)/flash->sector_size) * flash->sector_size);
+				goto rewrite;
+			}
+		}
+	}
+#endif
 	return 0;
 }
 
@@ -367,33 +603,216 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 	return 0;
 }
 #ifdef CONFIG_SPI_FLASH_INGENIC
-#define SIZEOF_NAME	32
+static void jz_spi_nand_init(void )
+{
+	unsigned char cmd[COMMAND_MAX_LENGTH];
+	unsigned char read_cmd[COMMAND_MAX_LENGTH];
 
-struct jz_spi_support {
-	u8 id;
-	char name[SIZEOF_NAME];
-	int page_size;
-	int sector_size;
-	int block_size;
-	int size;
-};
+	/* disable write protect */
+	jz_cs_reversal();
+	cmd[0] = 0x1f;
+	cmd[1] = 0xa0;
+	cmd[2] = 0x0;
+	spi_send_cmd(cmd, 3);
 
-static struct jz_spi_support jz_spi_support_table[] = {
-	{
-		.id = 0xc2,
-		.name = "MX25L12835F",
-		.page_size = 256,
-		.sector_size = 4 * 1024,
-		.size = 16 * 1024 * 1024,
-	},
-	{
-		.id = 0xc8,
-		.name = "GD25LQ64C",
-		.page_size = 256,
-		.sector_size = 4 * 1024,
-		.size = 8 * 1024 * 1024,
+	/* enable ECC */
+	jz_cs_reversal();
+	cmd[0] = 0x0f;
+	cmd[1] = 0xb0;
+	cmd[2] = 0x10;
+	spi_send_cmd(cmd, 2);
+
+	/* check */
+	jz_cs_reversal();
+	cmd[0] = 0x0f;
+	cmd[1] = 0xa0;
+	spi_send_cmd(cmd, 2);
+	spi_recv_cmd(read_cmd, 1);
+	if(read_cmd[0] != 0x0)
+		printf("read status 0xa0 : %x\n", read_cmd[0]);
+
+	jz_cs_reversal();
+	cmd[0] = 0x0f;
+	cmd[1] = 0xb0;
+	spi_send_cmd(cmd, 2);
+	spi_recv_cmd(read_cmd, 1);
+	if(read_cmd[0] != 0x10)
+		printf("read status 0xb0 : %x\n", read_cmd[0]);
+
+}
+
+static void jz_spi_nand_scan_bad_block(struct jz_spi_support *params)
+{
+	int page, block;
+	int page_size = params->page_size;
+	int block_size = params->block_size;
+	int size = params->size;
+	unsigned char cmd[COMMAND_MAX_LENGTH], read_buf;
+
+	params->page_list = calloc(size / page_size, sizeof(unsigned int));
+	if(params->page_list == NULL) {
+		printf("calloc error !\n");
+		return ;
 	}
-};
+
+	for(block = 0; block < (size / page_size); block += (block_size / page_size)) {
+		/* erase */
+		jz_cs_reversal();
+		cmd[0] = 0x06;
+		spi_send_cmd(cmd, 1);
+
+		jz_cs_reversal();
+		cmd[0] = 0xd8;
+		cmd[1] = (block >> 16) & 0xff;
+		cmd[2] = (block >> 8) & 0xff;
+		cmd[3] = block & 0xc0;
+		spi_send_cmd(cmd, 4);
+		udelay(t_erase);
+
+		jz_cs_reversal();
+		cmd[0] = 0x0f;
+		cmd[1] = 0xc0;
+		spi_send_cmd(cmd, 2);
+		spi_recv_cmd(&read_buf, 1);
+		while(read_buf & 0x1)
+			spi_recv_cmd(&read_buf, 1);
+
+		/* can not erase */
+		if(read_buf & 0x4) {
+			printf("erase bad block id : %d\n", (block / 0x40));
+			continue;
+		}
+#if 0
+		/* write */
+		int send_len;
+		int column = 0;
+		unsigned char write_buf = 0x5a;
+		for(page = 0; page < (block_size / page_size); page++) {
+			jz_cs_reversal();
+			cmd[0] = 0x02;
+			cmd[1] = (column >> 8) & 0xf;
+			cmd[2] = column & 0xff;
+			spi_send_cmd(cmd, 3);
+
+			for(send_len = 0; send_len < page_size; send_len++)
+				spi_send_cmd(&write_buf, 1);
+
+			jz_cs_reversal();
+			cmd[0] = 0x06;
+			spi_send_cmd(cmd, 1);
+
+			jz_cs_reversal();
+			cmd[0] = 0x10;
+			cmd[1] = ((page + block) >> 16) & 0xff;
+			cmd[2] = ((page + block) >> 8) & 0xff;
+			cmd[3] = (page + block) & 0xff;
+			spi_send_cmd(cmd, 4);
+			udelay(t_write);
+
+			jz_cs_reversal();
+			cmd[0] = 0x0f;
+			cmd[1] = 0xc0;
+			spi_send_cmd(cmd, 2);
+
+			spi_recv_cmd(&read_buf, 1);
+			while(read_buf & 0x1)
+				spi_recv_cmd(&read_buf, 1);
+
+			/* can not write */
+			if(read_buf & 0x8) {
+				printf("write bad block id : %d\n", (block / 0x40));
+				break;
+			}
+		}
+
+		if(page < (block_size / page_size)) {
+			printf("write bad block \n");
+			continue ;
+		}
+
+		/* read */
+		for(page = 0; page < (block_size / page_size); page++) {
+			jz_cs_reversal();
+			cmd[0] = 0x13;
+			cmd[1] = ((page + block) >> 16) & 0xff;
+			cmd[2] = ((page + block) >> 8) & 0xff;
+			cmd[3] = (page + block) & 0xff;
+			spi_send_cmd(cmd, 4);
+			udelay(t_read);
+
+			jz_cs_reversal();
+			cmd[0] = 0x0f;
+			cmd[1] = 0xc0;
+			spi_send_cmd(cmd, 2);
+
+			spi_recv_cmd(&read_buf, 1);
+			while(read_buf & 0x1)
+				spi_recv_cmd(&read_buf, 1);
+
+			/* can not correct */
+			if((read_buf & 0x30) == 0x20) {
+				printf("read bad block : %d\n", (block / 0x40));
+				break;
+			}
+		}
+
+		if(page < (block_size / page_size)) {
+			printf("read bad block\n");
+			continue ;
+		}
+#endif
+		for(page = 0; page < (block_size / page_size); page++) {
+			params->page_list[params->page_num] = (block + page);
+			params->page_num = params->page_num + 1;
+		}
+
+	}
+
+	printf("spi nand space : 0x%x\n", params->page_num * params->page_size);
+}
+
+struct spi_flash *spi_flash_probe_ingenic_nand(struct spi_slave *spi, u8 *idcode)
+{
+	int i;
+	struct spi_flash *flash;
+	struct jz_spi_support *params;
+
+	for (i = 0; i < ARRAY_SIZE(jz_spi_nand_support_table); i++) {
+		params = &jz_spi_nand_support_table[i];
+		if ( (params->id_manufactory == idcode[0]) && (params->id_device == idcode[1]) )
+			break;
+	}
+
+	if (i == ARRAY_SIZE(jz_spi_nand_support_table)) {
+			printf("ingenic: Unsupported ID %04x\n", idcode[0]);
+			return NULL;
+	}
+
+	flash = spi_flash_alloc_base(spi, params->name);
+	if (!flash) {
+		printf("ingenic: Failed to allocate memory\n");
+		return NULL;
+	}
+
+	flash->erase = jz_erase_nand;
+	flash->write = jz_write_nand;
+	flash->read  = jz_read_nand;
+
+	flash->page_size = params->page_size;
+	flash->sector_size = params->block_size;
+	flash->size = params->size;
+
+	params->page_num = 0;
+	params->page_list = NULL;
+
+	jz_spi_nand_init();
+
+	jz_spi_nand_scan_bad_block(params);
+
+	gparams = params;
+
+	return flash;
+}
 
 struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 {
@@ -403,7 +822,7 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 
 	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
 		params = &jz_spi_support_table[i];
-		if (params->id == idcode[0])
+		if (params->id_manufactory == idcode[0])
 			break;
 	}
 
@@ -428,6 +847,7 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 		printf("ingenic: Failed to allocate memory\n");
 		return NULL;
 	}
+
 	flash->erase = jz_erase;
 	flash->write = jz_write;
 	flash->read  = jz_read;
@@ -439,6 +859,7 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 	return flash;
 }
 #endif
+
 #ifdef CONFIG_SPL_SPI_SUPPORT
 void spl_spi_load_image(void)
 {

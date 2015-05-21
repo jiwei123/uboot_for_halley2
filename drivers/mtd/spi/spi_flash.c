@@ -458,9 +458,14 @@ static const struct {
 } flashes[] = {
 	/* Keep it sorted by define name */
 #ifdef CONFIG_SPI_FLASH_INGENIC
+#ifdef CONFIG_SPI_FLASH_INGENIC_NAND
+	{ 0, 0xc8, spi_flash_probe_ingenic_nand, },
+#endif
 	{ 0, 0xe0, spi_flash_probe_ingenic, },
 	{ 0, 0xc2, spi_flash_probe_ingenic, },
+#ifndef CONFIG_SPI_FLASH_INGENIC_NAND
 	{ 0, 0xc8, spi_flash_probe_ingenic, },
+#endif
 #endif
 #ifdef CONFIG_SPI_FLASH_ATMEL
 	{ 0, 0x1f, spi_flash_probe_atmel, },
@@ -521,11 +526,20 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		goto err_claim_bus;
 	}
 
+#ifndef CONFIG_SPI_FLASH_INGENIC_NAND
 	/* Read the ID codes */
 	ret = spi_flash_cmd(spi, CMD_READ_ID, idcode, sizeof(idcode));
 	if (ret)
 		goto err_read_id;
-
+#endif
+#ifdef CONFIG_SPI_FLASH_INGENIC_NAND
+	int cmd[2];
+	cmd[0] = CMD_READ_ID;
+	cmd[1] = 0;
+	ret = spi_flash_cmd_read(spi, &cmd, 2, idcode, sizeof(idcode));
+	if (ret)
+		goto err_read_id;
+#endif
 #ifdef DEBUG
 	printf("SF: Got idcodes\n");
 	print_buffer(0, idcode, 1, sizeof(idcode), 0);
