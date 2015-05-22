@@ -67,7 +67,11 @@ struct cgu cgu_clk_sel[CGU_CNT] = {
 	[MSC1] = {0, CPM_MSC1CDR, 0, 0, {-1, -1, -1, -1}, 29, 28, 27},
 	[MSC2] = {0, CPM_MSC2CDR, 0, 0, {-1, -1, -1, -1}, 29, 28, 27},
 	[UHC] = {1, CPM_UHCCDR, 30, OTG, {APLL, MPLL, OTG, -1}, 29, 28, 27},
+#ifdef CONFIG_BURNER
+	[SSI] = {1, CPM_SSICDR, 30, EXCLK, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
+#else
 	[SSI] = {1, CPM_SSICDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
+#endif
 	[CIM] = {1, CPM_CIMCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 30, 29, 28},
 	[PCM] = {1, CPM_PCMCDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 28, 27, 26},
 	[GPU] = {1, CPM_GPUCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
@@ -87,6 +91,10 @@ void clk_prepare(void)
 
 #ifdef CONFIG_BURNER
 		if (id == OTG)
+			continue;
+#endif
+#ifdef CONFIG_BURNER
+		if (id == SSI)
 			continue;
 #endif
 		if (id != OTG) {
