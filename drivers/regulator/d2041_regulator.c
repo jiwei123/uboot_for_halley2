@@ -202,7 +202,7 @@ static int d2041_set_bits(unsigned char reg, unsigned char mask)
 	unsigned char data;
 	int err;
 
-	err = d2041_i2c_read(reg, 1, &data);
+	err = d2041_i2c_read(reg, &data, 1);
 	if (err < 0) {
 		goto out;
 	}
@@ -475,10 +475,11 @@ int d2041_regulator_init(void)
 	}
 	for (i = 0; i < ARRAY_SIZE(d2041_regulator); i++) {
 		ret = regulator_register(&d2041_regulator[i], NULL);
-		if(ret)
+		if(ret) {
 			printf("%s regulator_register error\n",
 					d2041_regulator[i].name);
-		return ret;
+			return ret;
+		}
 	}
 
 	return 0;
