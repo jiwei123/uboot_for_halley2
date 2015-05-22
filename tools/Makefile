@@ -144,15 +144,18 @@ LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_DATA_H)
 
 # Generic logo
 ifeq ($(LOGO_BMP),)
-LOGO_BMP= logos/ingenic.bmp
 
 # Use board logo and fallback to vendor
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).bmp),)
+LOGO_BMP ?= $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).bmp
+endif
 ifneq ($(wildcard logos/$(BOARD).bmp),)
-LOGO_BMP= logos/$(BOARD).bmp
+LOGO_BMP ?= logos/$(BOARD).bmp
 else
 ifneq ($(wildcard logos/$(VENDOR).bmp),)
-LOGO_BMP= logos/$(VENDOR).bmp
+LOGO_BMP ?= logos/$(VENDOR).bmp
 endif
+LOGO_BMP ?= logos/ingenic.bmp
 endif
 
 endif # !LOGO_BMP
