@@ -252,6 +252,7 @@ void gpio_init(void)
 		g = &gpio_func[i];
 		gpio_set_func(g->port, g->func, g->pins);
 	}
+	g = &uart_gpio_func[CONFIG_SYS_UART_INDEX];
 #else
 	n = gd->arch.gi->nr_gpio_func;
 
@@ -259,8 +260,8 @@ void gpio_init(void)
 		g = &gd->arch.gi->gpio[i];
 		gpio_set_func(g->port, g->func, g->pins);
 	}
-#endif
 	g = &uart_gpio_func[gd->arch.gi->uart_idx];
+#endif
 	gpio_set_func(g->port, g->func, g->pins);
 
 #ifndef CONFIG_SPL_BUILD
