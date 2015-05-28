@@ -84,7 +84,7 @@
 #ifdef CONFIG_FORNAX_V20
 #define BOOTARGS_COMMON "console=ttyS3,115200n8 mem=256M@0x0 mem=256M@0x30000000"
 #else
-#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=64M@0x0"
 #endif
 
 #ifdef CONFIG_BOOT_ANDROID
