@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014 Ingenic Electronics
+ * Copyright (C) 2015 Ingenic Electronics
  *
- * Orise OTM3201A Driver (driver's data part)
+ * ARS-Y1300A Driver (driver's data part)
  *
  * Author: MaoLei.Wang <maolei.wang@ingenic.com>
  *
@@ -27,11 +27,11 @@
 
 #include <jz_lcd/jz_lcd_v1_2.h>
 #include <jz_lcd/jz_dsim.h>
-#include <jz_lcd/orise_otm3201a.h>
+#include <jz_lcd/ars_nt35350.h>
 
-vidinfo_t panel_info = { 320, 320, LCD_BPP, };
+vidinfo_t panel_info = { 360, 360, LCD_BPP, };
 
-struct orise_otm3201a_platform_data orise_otm3201a_pdata =
+struct ars_nt35350_platform_data ars_nt35350_pdata =
 {
 #if defined(CONFIG_CW004)
 	.gpio_rest = GPIO_PC(23),
@@ -39,39 +39,24 @@ struct orise_otm3201a_platform_data orise_otm3201a_pdata =
 #elif defined(CONFIG_IWOP)
 	.gpio_rest = GPIO_PC(19),
 	.pwm_lcd_brightness = GPIO_PC(23),
+#elif defined(CONFIG_ACRAB)
+	.gpio_rest = GPIO_PC(16),
+	.pwm_lcd_brightness = GPIO_PC(17),
 #endif
 };
 
-/**
-#define LCD_XSIZE_TFT    (320)
-#define LCD_YSIZE_TFT    (320)
-#define LCD_VBPD         (10)
-#define LCD_VFPD         (2)
-#define LCD_VSPW         (4)
-#define LCD_HBPD         (42)
-#define LCD_HFPD         (26)
-#define LCD_HSPW         (14)
-data above LCD_xxx comes from FAE XiaoMing.Zhang(zhangxiaoming@focaltech-systems.com)
-* .pixclock comes from DataSheet(DATA SHEET_OTM3201A_V03_Truly.pdf)
-* .left_margin = LCD_HFPD
-* .right_margin= LCD_HBPD
-* .upper_margin= LCD_VFPD
-* .lower_margin= LCD_VBPD
-* .hsync_len = LCD_HSPW
-* .vsync_len = LCD_VSPW
-*/
 struct fb_videomode jzfb1_videomode = {
-	.name = "orise_otm3201a-lcd",
+	.name = "ars_nt35350-lcd",
 	.refresh = 60,
-	.xres = 320,
-	.yres = 320,
-	.pixclock = KHZ2PICOS(5310), //PCLK Frequency: 5.31MHz
-	.left_margin = 42, // HBP
-	.right_margin = 26, // HFP
-	.upper_margin = 10, // VBP
-	.lower_margin = 2, // VFP
-	.hsync_len = 10, // HSA
-	.vsync_len = 2, // VSA
+	.xres = 360,
+	.yres = 360,
+	.pixclock = KHZ2PICOS(7776),
+	.left_margin = 0,
+	.right_margin = 0,
+	.upper_margin = 0,
+	.lower_margin = 0,
+	.hsync_len = 0,
+	.vsync_len = 0,
 	.sync = ~FB_SYNC_HOR_HIGH_ACT & ~FB_SYNC_VERT_HIGH_ACT,
 	.vmode = FB_VMODE_NONINTERLACED,
 	.flag = 0,
@@ -103,10 +88,17 @@ struct dsi_device jz_dsi = {
 struct jzfb_config_info jzfb1_init_data = {
 	.modes = &jzfb1_videomode,
 
-	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
+	.lcd_type = LCD_TYPE_SLCD,
 	.bpp = 24,
 
-	.pixclk_falling_edge = 0,
-	.date_enable_active_low = 0,
+	.smart_config.smart_type = SMART_LCD_TYPE_PARALLEL,
+	.smart_config.clkply_active_rising = 0,
+	.smart_config.rsply_cmd_high    = 0,
+	.smart_config.csply_active_high = 0,
+	.smart_config.bus_width = 8,
+	.dither_enable = 1,
+	.dither.dither_red   = 1,	/* 6bit */
+	.dither.dither_green = 1,	/* 6bit */
+	.dither.dither_blue  = 1,	/* 6bit */
 };
 

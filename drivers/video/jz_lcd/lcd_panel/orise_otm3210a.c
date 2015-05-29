@@ -82,33 +82,33 @@ void panel_power_on(void)
 	mdelay(10);
 	gpio_direction_output(orise_otm3201a_pdata.gpio_rest, 1);
 	mdelay(50);
-	printf("rise_otm3201a_pdata panel display on\n");
+	printf("orise_otm3201a_pdata panel display on\n");
 
 	return;
 }
 
-void orise_otm3210a_sleep_in(struct dsi_device *dsi) /* enter sleep */
+void orise_otm3201a_sleep_in(struct dsi_device *dsi) /* enter sleep */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x10, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void orise_otm3210a_sleep_out(struct dsi_device *dsi) /* exit sleep */
+void orise_otm3201a_sleep_out(struct dsi_device *dsi) /* exit sleep */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x11, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void orise_otm3210a_display_on(struct dsi_device *dsi) /* display on */
+void orise_otm3201a_display_on(struct dsi_device *dsi) /* display on */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x29, 0x00};
 
 	write_command(dsi, data_to_send);
 }
 
-void orise_otm3210a_display_off(struct dsi_device *dsi) /* display off */
+void orise_otm3201a_display_off(struct dsi_device *dsi) /* display off */
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x28, 0x00};
 
@@ -118,7 +118,7 @@ void orise_otm3210a_display_off(struct dsi_device *dsi) /* display off */
 /*
  * display inversion on
  */
-void orise_otm3210a_display_inversion_on(struct dsi_device *dsi)
+void orise_otm3201a_display_inversion_on(struct dsi_device *dsi)
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x21, 0x00};
 
@@ -128,7 +128,7 @@ void orise_otm3210a_display_inversion_on(struct dsi_device *dsi)
 /*
  * display inversion off
  */
-void orise_otm3210a_display_inversion_off(struct dsi_device *dsi)
+void orise_otm3201a_display_inversion_off(struct dsi_device *dsi)
 {
 	struct dsi_cmd_packet data_to_send = {0x05, 0x20, 0x00};
 
@@ -216,9 +216,9 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 
 	printf("init Orise OTM3201A okay...\n");
 
-	orise_otm3210a_sleep_out(dsi);
+	orise_otm3201a_sleep_out(dsi);
 	mdelay(120);
 
-	orise_otm3210a_display_on(dsi);
+	orise_otm3201a_display_on(dsi);
 	mdelay(120);
 }
