@@ -95,6 +95,42 @@ void spi_cs_deactivate(struct spi_slave *slave)
 }
 #endif
 
+static int mem_compare(const void *buf0, const void *buf1, int len) {
+	int i, errflag = 0, len1, len2;
+	char *buf0_t2, *buf1_t2;
+	int *buf0_t1 = (int *)buf0;
+	int *buf1_t1 = (int *)buf1;
+
+	len1 = len / sizeof(int);
+	for (i = 0; i < len1; i++) {
+		if (*buf0_t1++ != *buf1_t1++) {
+			errflag |= 1;
+			printf("ERROR: %08lx: %08lx | %08lx\n", i, *(buf1_t1 - 1), *(buf0_t1 - 1));
+		}
+		/*
+		  if (i && !(i % 4)) {
+		  printf("%s%08lx: %08lx %08lx %08lx %08lx | %08lx %08lx %08lx %08lx\n",
+		  errflag ? "[ERROR]" : "[OK]", i - 4,
+		  *(buf1_t1 - 4), *(buf1_t1 - 3), *(buf1_t1 - 2), *(buf1_t1 - 1),
+		  *(buf0_t1 - 4), *(buf0_t1 - 3), *(buf0_t1 - 2), *(buf0_t1 - 1));
+		  }
+		*/
+	}
+
+	len2 = len % sizeof(int);
+	if (len2) {
+		buf0_t2 = (char *)buf0_t1;
+		buf1_t2 = (char *)buf1_t1;
+		for (i = 0; i < len2; i++) {
+			if (*buf0_t2++ != *buf1_t2++) {
+				errflag |= 1;
+			}
+		}
+	}
+
+	return errflag;
+}
+
 void spi_init(void )
 {
 #if DEBUG
@@ -113,7 +149,7 @@ void spi_init(void )
 	clk_set_rate(SSI, ssi_rate);
 #endif
 	jz_spi_writel(~SSI_CR0_SSIE & jz_spi_readl(SSI_CR0), SSI_CR0);
-	jz_spi_writel(0, SSI_GR);
+	jz_spi_writel(11, SSI_GR);
 	jz_spi_writel(SSI_CR0_EACLRUN | SSI_CR0_RFLUSH | SSI_CR0_TFLUSH, SSI_CR0);
 	jz_spi_writel(SSI_FRMHL_CE0_LOW_CE1_LOW | SSI_GPCMD | SSI_GPCHL_HIGH | SSI_CR1_TFVCK_3 | SSI_CR1_TCKFI_3 | SSI_CR1_FLEN_8BIT | SSI_CR1_PHA | SSI_CR1_POL, SSI_CR1);
 	jz_spi_writel(SSI_CR0_SSIE | jz_spi_readl(SSI_CR0), SSI_CR0);
@@ -381,13 +417,15 @@ int jz_erase_nand(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned int block_bak, block, block_num, i;
 	unsigned char cmd[COMMAND_MAX_LENGTH], read_buf;
 
+	printf("jz_erase_nand: flash->sector_size = [%d], offset = [%d], len = [%d]\n", flash->sector_size, offset, len);
+
 	if(offset % flash->sector_size) {
 		printf("offset must 0x%x align !\n", flash->sector_size);
 		return -1;
 	}
 
 	if(len % flash->sector_size) {
-		printf("len must 0x%x align !\n", flash->sector_size);
+		printf("len must 0x%x align, len = [%d] !\n", flash->sector_size, len);
 		return -1;
 	}
 
@@ -472,7 +510,7 @@ rewrite:
 		cmd[2] = column & 0xff;
 		spi_send_cmd(cmd, 3);
 
-		read_num = flash->page_size;
+		read_num = flash->page_size + 64;
 		while(read_num) {
 			if(read_num > FIFI_THRESHOLD) {
 				spi_send_cmd(send_buf, FIFI_THRESHOLD);
@@ -527,6 +565,7 @@ rewrite:
 		return -1;
 	}
 
+#if 0
 	for(i = 0; i < len; i += flash->page_size) {
 		jz_read_nand(flash, offset, flash->page_size, check_buf);
 		for(j = 0; j < flash->page_size; j++) {
@@ -538,6 +577,19 @@ rewrite:
 			}
 		}
 	}
+#else
+	for(i = 0; i < page_num; i++) {
+		memset(check_buf, 0xff, flash->page_size);
+		jz_read_nand(flash, offset + i * flash->page_size, flash->page_size, check_buf);
+		printf("write check: check page [%d] ...\n", i);
+		if (mem_compare((send_buf + i * flash->page_size), check_buf, flash->page_size)) {
+			printf("check error : page [%d]!\n", i);
+			error_count++;
+			jz_erase_nand(flash, offset, ((len + flash->sector_size - 1)/flash->sector_size) * flash->sector_size);
+			goto rewrite;
+		}
+	}
+#endif
 #endif
 	return 0;
 }
