@@ -34,6 +34,9 @@
 #define CONFIG_M200		/* M200 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 #define CONFIG_SPL_DDR_SOFT_TRAINING
+
+#define EMC_LOW_SDRAM_SPACE_SIZE (250 * 0x100000)
+
 /*#define CONFIG_26M*/
 
 #if defined(CONFIG_IWOP)
@@ -87,7 +90,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=255M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=250M@0x0 mem=256M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
