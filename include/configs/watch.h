@@ -463,6 +463,12 @@
  */
 #ifdef CONFIG_GPT_CREATOR
 #define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/partitions.tab"
+
+#ifdef CONFIG_MMC4GP2
+#undef CONFIG_GPT_TABLE_FILE
+#define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/mmc4gp2.tab"
+#endif
+
 #else
 /* USE MBR + zero-GPT-table instead if no gpt table defined*/
 #define CONFIG_MBR_P0_OFF	64mb
