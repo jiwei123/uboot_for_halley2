@@ -333,7 +333,7 @@
  * GPT configuration
  */
 #ifdef CONFIG_GPT_CREATOR
-#define CONFIG_GPT_TABLE_PATH   "$(TOPDIR)/board/$(BOARDDIR)"
+#define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/partitions.tab"
 #else
 /**
  * MBR configuration

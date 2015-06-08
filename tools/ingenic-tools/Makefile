@@ -65,10 +65,10 @@ $(obj)gpt_creator:	$(SRCTREE)/lib/crc32.c gpt_creator.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
-ifdef CONFIG_GPT_TABLE_PATH
+ifdef CONFIG_GPT_TABLE_FILE
 $(obj)mbr-gpt.bin:	$(obj)gpt_creator
 	$(OBJTREE)/tools/ingenic-tools/gpt_creator		\
-	$(CONFIG_GPT_TABLE_PATH)/partitions.tab mbr-of-gpt.bin gpt.bin
+	$(CONFIG_GPT_TABLE_FILE) mbr-of-gpt.bin gpt.bin
 	cat mbr-of-gpt.bin gpt.bin > $@
 	dd if=/dev/zero of=file.bin bs=512 count=33
 	cat $@ file.bin > file2.bin

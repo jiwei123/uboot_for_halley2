@@ -462,7 +462,7 @@
  * GPT configuration
  */
 #ifdef CONFIG_GPT_CREATOR
-#define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
+#define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/partitions.tab"
 #else
 /* USE MBR + zero-GPT-table instead if no gpt table defined*/
 #define CONFIG_MBR_P0_OFF	64mb
