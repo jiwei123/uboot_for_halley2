@@ -120,18 +120,6 @@ struct spi_args {
 	uint32_t rate;
 };
 
-struct spi_erase_range{
-	uint32_t blocksize;
-	uint32_t blockcount;
-};
-
-struct jz_spi_support{
-	uint8_t id;
-	char name[32];
-	int page_size;
-	int sector_size;
-	int size;
-};
 
 struct arguments {
 	int efuse_gpio;
@@ -149,9 +137,7 @@ struct arguments {
 	struct mmc_erase_range mmc_erase_range[MMC_ERASE_CNT_MAX];
 
 	struct spi_args spi_args;
-	uint32_t spi_erase;
-	struct jz_spi_support jz_spi_support_table;
-	struct spi_erase_range spi_erase_range;
+	uint32_t spi_erase_block_siz;
 
 	int transfer_data_chk;
 	int write_back_chk;
