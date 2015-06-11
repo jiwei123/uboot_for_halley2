@@ -426,49 +426,6 @@ static int mmc_erase(struct cloner *cloner)
 	return 0;
 }
 
-static int spi_erase(struct cloner *cloner)
-{
-	unsigned int bus = CONFIG_SF_DEFAULT_BUS;
-	unsigned int cs = CONFIG_SF_DEFAULT_CS;
-	unsigned int speed = CONFIG_SF_DEFAULT_SPEED;
-	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
-	int blk_cnt = cloner->args->spi_erase_range.blockcount;
-	int blk_size = cloner->args->spi_erase_range.blocksize;
-	int curr_device = 0;
-	uint32_t erase_cnt = 0;
-	struct spi_flash *flash;
-	int timeout = 30000;
-	int offset = 0;
-	int i;
-	int ret;
-#ifdef CONFIG_JZ_SPI
-	spi_init();
-#endif
-#ifdef CONFIG_INGENIC_SOFT_SPI
-	spi_init_jz(&spi);
-#endif
-
-	if(flash == NULL){
-		flash = spi_flash_probe(bus, cs, spi.rate, mode);
-		if (!flash) {
-			printf("Failed to initialize SPI flash at %u:%u\n", bus, cs);
-			return 1;
-		}
-	}
-
-	for (i = 0;i < blk_cnt; i++) {
-		ret = spi_flash_erase(flash, offset, blk_size);
-		printf("SF: %zu bytes @ %#x Erased: %s\n", blk_size, (u32)offset,
-				ret ? "ERROR" : "OK");
-		offset += blk_size;
-	}
-	printf("spi erase ok\n");
-	return 0;
-}
-
-
-
-
 int cloner_init(struct cloner *cloner)
 {
 	if(cloner->args->use_nand_mgr) {
@@ -486,22 +443,8 @@ int cloner_init(struct cloner *cloner)
 		}
 	}
 
-	if (cloner->args->use_spi) {
-		if (cloner->args->spi_erase == SPI_ERASE_PART) {
-			spi_erase(cloner);
-		}
-	}
-
 	if(cloner->args->use_spi){
-		printf("cloner->args->spi_args.clk:%d\n",cloner->args->spi_args.clk);
-		printf("cloner->args->spi_args.data_in:%d\n",cloner->args->spi_args.data_in);
-		printf("cloner->args->spi_args.data_out:%d\n",cloner->args->spi_args.data_out);
-		printf("cloner->args->spi_args.enable:%d\n",cloner->args->spi_args.enable);
-
-		printf("cloner->args->count:%d\n",cloner->args->spi_erase_range.blockcount);
-		printf("cloner->args->size:%d\n",cloner->args->spi_erase_range.blocksize);
-		printf("cloner->args->jz_spi_support_table.size:%d\n",cloner->args->jz_spi_support_table.size);
-		printf("name:%s\n",cloner->args->jz_spi_support_table.name);
+		printf("cloner->args->spi_args.rate:%d\n",cloner->args->spi_args.rate);
 	}
 
 
@@ -594,6 +537,7 @@ int efuse_program(struct cloner *cloner)
 	return r;
 }
 
+extern unsigned int ssi_rate;
 int spi_program(struct cloner *cloner)
 {
 	unsigned int bus = CONFIG_SF_DEFAULT_BUS;
@@ -602,8 +546,7 @@ int spi_program(struct cloner *cloner)
 	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
 	u32 offset = cloner->cmd->write.partation + cloner->cmd->write.offset;
 	u32 length = cloner->cmd->write.length;
-	int blk_cnt = cloner->args->spi_erase_range.blockcount;
-	int blk_size = cloner->args->spi_erase_range.blocksize;
+	int blk_size = cloner->args->spi_erase_block_siz;
 	void *addr = (void *)cloner->write_req->buf;
 	struct spi_args *spi_arg = &cloner->args->spi_args;
 	unsigned int ret;
@@ -613,8 +556,8 @@ int spi_program(struct cloner *cloner)
 	spi.clk   = spi_arg->clk;
 	spi.data_in  = spi_arg->data_in;
 	spi.data_out  = spi_arg->data_out;
-	spi.rate  = spi_arg->rate * 1000000;
-
+	spi.rate  = spi_arg->rate ;
+	ssi_rate = spi.rate;
 
 #ifdef CONFIG_JZ_SPI
 	spi_init();
@@ -644,14 +587,25 @@ int spi_program(struct cloner *cloner)
 		printf("the length = %x, is no enough %x\n",length,blk_size);
 		len = (length/blk_size)*blk_size + blk_size;
 	}
-	if (cloner->args->spi_erase == SPI_NO_ERASE) {
-		ret = spi_flash_erase(flash, offset, len);
-		printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
-				ret ? "ERROR" : "OK");
-	}
+
+	ret = spi_flash_erase(flash, offset, len);
+	printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
+			ret ? "ERROR" : "OK");
 	ret = spi_flash_write(flash, offset, len, addr);
 	printf("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
 			ret ? "ERROR" : "OK");
+
+
+	if (cloner->args->write_back_chk) {
+		spi_flash_read(flash, offset,len, addr);
+
+		uint32_t tmp_crc = local_crc32(0xffffffff,addr,cloner->cmd->write.length);
+		debug_cond(BURNNER_DEBUG,"%d blocks check: %s\n",len,(cloner->cmd->write.crc == tmp_crc) ? "OK" : "ERROR");
+		if (cloner->cmd->write.crc != tmp_crc) {
+			printf("src_crc32 = %08x , dst_crc32 = %08x\n",cloner->cmd->write.crc,tmp_crc);
+			return -EIO;
+		}
+	}
 
 #if debug
 	int buf_debug[8*1024*1024];

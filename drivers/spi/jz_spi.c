@@ -35,6 +35,7 @@
 #include "jz_spi.h"
 
 static struct jz_spi_support *gparams;
+unsigned int ssi_rate = 0;
 
 /* wait time before read status (us) for spi nand */
 //static int t_reset = 500;
@@ -145,11 +146,16 @@ void spi_init(void )
 #endif
 
 #ifndef CONFIG_BURNER
-	unsigned int ssi_rate = 70000000;
-	clk_set_rate(SSI, ssi_rate);
+	ssi_rate = 48000000;
+    clk_set_rate(SSI, ssi_rate);
+#else
+	if(ssi_rate !=0 )
+		clk_set_rate(SSI, ssi_rate);
+	else
+		printf("this will be an error that the ssi rate is 0\n");
 #endif
 	jz_spi_writel(~SSI_CR0_SSIE & jz_spi_readl(SSI_CR0), SSI_CR0);
-	jz_spi_writel(11, SSI_GR);
+	jz_spi_writel(0, SSI_GR);
 	jz_spi_writel(SSI_CR0_EACLRUN | SSI_CR0_RFLUSH | SSI_CR0_TFLUSH, SSI_CR0);
 	jz_spi_writel(SSI_FRMHL_CE0_LOW_CE1_LOW | SSI_GPCMD | SSI_GPCHL_HIGH | SSI_CR1_TFVCK_3 | SSI_CR1_TCKFI_3 | SSI_CR1_FLEN_8BIT | SSI_CR1_PHA | SSI_CR1_POL, SSI_CR1);
 	jz_spi_writel(SSI_CR0_SSIE | jz_spi_readl(SSI_CR0), SSI_CR0);
@@ -599,11 +605,14 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned long erase_size;
 	unsigned char cmd[6], buf;
 
-#ifdef CONFIG_BURNER
-	erase_size = len;
-#else
-	erase_size = flash->sector_size;
-#endif
+
+	if(len <= 0x1000)
+		erase_size = 0x1000;
+	else if(len <= 0x8000)
+		erase_size = 0x8000;
+	else
+		erase_size = 0x10000;
+
 	if (offset % erase_size || len % erase_size) {
 		printf("Erase offset/length not multiple of erase size\n");
 		return -1;
@@ -633,7 +642,7 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 		cmd[3] = offset >> 8;
 		cmd[4] = offset >> 0;
 
-		printf("erase %x %x %x %x %x %x %x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], offset);
+	//	printf("erase %x %x %x %x %x %x %x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], offset);
 
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[0], 1);
@@ -880,11 +889,11 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 
 	if (i == ARRAY_SIZE(jz_spi_support_table)) {
 #ifdef CONFIG_BURNER
-		if (idcode[0] != 0){
-			printf("unsupport ID is %04x if the id not be 0x00,the flash is ok for burner\n",idcode[0]);
+		if ((idcode[0] != 0)&&(idcode[0] != 0xff)){
+			printf("unsupport ID is %04x if the id not be 0x00,and be 0xff,the flash is ok for burner\n",idcode[0]);
 			params = &jz_spi_support_table[1];
 		}else{
-			printf("ingenic: Unsupported ID %04x\n", idcode[0]);
+			printf("ingenic: Unsupported ID %04x,please check the hardware\n", idcode[0]);
 			return NULL;
 
 		}
