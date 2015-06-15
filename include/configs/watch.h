@@ -22,8 +22,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __CONFIG_DORAOD_H__
-#define __CONFIG_DORAOD_H__
+#ifndef __CONFIG_WATCH_H__
+#define __CONFIG_WATCH_H__
 
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
@@ -47,7 +47,7 @@
 #else
 #define CONFIG_SYS_APLL_FREQ        984000000   /*If APLL not use mast be set 0*/
 #define CONFIG_SYS_CPU_FREQ         984000000   /*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MEM_FREQ         150000000   /*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MEM_FREQ         200000000   /*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ        600000000   /*If MPLL not use mast be set 0*/
 #endif
 
@@ -502,26 +502,31 @@
  */
 #if defined(CONFIG_ACRAB)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
+#define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
 #elif defined(CONFIG_AW808) || defined(CONFIG_X3) || defined(CONFIG_IN901)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(1)
 #define CONFIG_GPIO_PRE_TEST		GPIO_PE(10)
-#else
-#define CONFIG_GPIO_USB_DETECT		GPIO_PE(10)
-#endif
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
+#elif defined(CONFIG_S2134E)
+#define CONFIG_GPIO_USB_DETECT		GPIO_PE(10)
+#define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
+#else
+#undef CONFIG_GPIO_USB_DETECT
+#undef CONFIG_GPIO_USB_DETECT_ENLEVEL
+#endif
 
 /* Pretest keys. */
 #if  defined(CONFIG_X3) || defined(CONFIG_AW808)
 #define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* pretest key */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	1
 #else
-#define CONFIG_GPIO_RECOVERY		GPIO_PD(19)      	/* SW7 */
-#define CONFIG_GPIO_RECOVERY_ENLEVEL	0
+#define CONFIG_GPIO_RECOVERY		(-1)
+#define CONFIG_GPIO_RECOVERY_ENLEVEL	 0
 #endif
 
 /* Wrong keys. */
-#define CONFIG_GPIO_FASTBOOT		GPIO_PG(30)      	/* SW2 */
-#define CONFIG_GPIO_FASTBOOT_ENLEVEL	0
+#define CONFIG_GPIO_FASTBOOT		(-1)
+#define CONFIG_GPIO_FASTBOOT_ENLEVEL	 0
 
 /*
 #define CONFIG_GPIO_MENU		CONFIG_GPIO_FASTBOOT
@@ -540,7 +545,7 @@
 #define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
 #define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
 
-/*#define CONFIG_GPIO_DC_DETECT           GPIO_PB(1)
+/*#define CONFIG_GPIO_DC_DETECT         GPIO_PB(1)
 #define CONFIG_GPIO_DC_DETECT_ENLEVEL   0
 */
 /* TEST
@@ -559,7 +564,7 @@
 
 /* ***************************GPIO VIBRATOR ***************************** */
 #if defined(CONFIG_VIBRATE_GPIO)
-#define	VIBRATOR_EN		GPIO_PE(2)
+#define	VIBRATOR_EN	GPIO_PE(2)
 #define	ACTIVE_LEVEL	0
 #endif
 /* ***************************GPIO VIBRATOR ***************************** */
@@ -574,4 +579,4 @@
 #endif
 /* ***************************DRV2605 VIBRATOR END ********************** */
 
-#endif /* __CONFIG_DORAOD_H__ */
+#endif /* __CONFIG_WATCH_H__ */

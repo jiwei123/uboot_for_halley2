@@ -68,8 +68,13 @@ static int get_key_level(unsigned pin)
 	return v;
 }
 
-static int get_key_status(unsigned int pin, int en_level)
+static int get_key_status(int pin, int en_level)
 {
+       if(pin < 0) {
+                printf("There is no GPIO configured for RECOVERY/FASTBOOT/USB_DETECT.\n");
+                return 0;
+	 }
+
 	gpio_direction_input(pin);
 	gpio_disable_pull(pin);
 
