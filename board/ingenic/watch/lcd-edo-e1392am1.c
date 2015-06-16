@@ -41,6 +41,12 @@
 #define LCD_VDD_1V8   "RICOH619_LDO4"
 #define LCD_VCI_2V8   "RICOH619_LDO6"
 #define BUCK5_3_0V    "RICOH619_DC5"
+#elif defined(CONFIG_X3)
+#define GPIO_LCD_BLK_EN GPIO_PC(23)
+#define MIPI_RST_N     GPIO_PC(19)
+#define LCD_VDD_1V8   "RICOH619_LDO4"
+#define LCD_VCI_2V8   "RICOH619_LDO6"
+#define BUCK5_3_0V    "RICOH619_DC5"
 #else
 #define GPIO_LCD_BLK_EN -1
 #define MIPI_RST_N     -1
@@ -81,7 +87,7 @@ void board_set_lcd_power_on(void)
 struct edo_e1392am1_platform_data edo_e1392am1_pdata =
 {
 	.gpio_rest = MIPI_RST_N,
-#if defined(CONFIG_ACRAB)
+#if defined(CONFIG_ACRAB) || defined(CONFIG_X3)
 	.gpio_lcd_bl = GPIO_LCD_BLK_EN,
 #endif
 };
