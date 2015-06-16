@@ -60,6 +60,7 @@ extern int ricoh61x_regulator_init(void);
 
 int board_early_init_f(void)
 {
+	gpio_enable_pull(3 * 32 + 26);
 	return 0;
 }
 
