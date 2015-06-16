@@ -218,6 +218,13 @@ static unsigned int set_bch_rate(int clk, unsigned long rate)
 }
 #endif
 
+#ifndef CONFIG_SPL_BUILD
+static unsigned int set_ssi_rate(int clk, unsigned long rate)
+{
+	return 0;
+}
+#endif
+
 void clk_set_rate(int clk, unsigned long rate)
 {
 #ifndef CONFIG_SPL_BUILD
@@ -230,6 +237,8 @@ void clk_set_rate(int clk, unsigned long rate)
 	case BCH:
 		set_bch_rate(clk, rate);
 		return;
+	case SSI:
+		set_ssi_rate(clk, rate);
 	default:
 		break;
 	}

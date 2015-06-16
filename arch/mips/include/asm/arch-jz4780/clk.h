@@ -39,6 +39,7 @@ enum {
 	MSC0,
 	MSC1,
 	MSC2,
+	SSI,
 };
 
 struct cgu {
