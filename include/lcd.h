@@ -286,6 +286,14 @@ void	lcd_clear(void);
 void	lcd_clear_black(void);
 int	lcd_display_bitmap(ulong bmp_image, int x, int y);
 
+
+/**
+ * Get framebuffer base of the LCD
+ *
+ * @return framebuffer base of the LCD
+ */
+void* lcd_get_fb_base(void);
+
 /**
  * Get the width of the LCD in pixels
  *

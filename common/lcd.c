@@ -660,7 +660,7 @@ do_color_bar(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	color2 = simple_strtoul(argv[3], NULL, 16);
 	delta = 0x14; //default value if without argv[4]
 	if (argc == 5) {
-		delta = simple_strtoul(argv[4], NULL, 16);
+		delta = simple_strtoul(argv[4], NULL, 10);
 	}
 	lcd_color_bar(HV, color1, color2, delta);
 
@@ -673,6 +673,80 @@ U_BOOT_CMD(
 	"<H|V> <color1> <color2> <spacing>\n"
 	"         -color_bar H/V 0x00ff0000 0x0000ff00 0x14"
 );
+
+#define abs_del(a, b) ((a > b) ? (a - b) : (b - a))
+
+int is_in_a_round_area(unsigned long long xres, unsigned long long yres, unsigned long long r, unsigned long long x, unsigned long long y) {
+	unsigned long long center_x, center_y;
+
+	center_x = xres * 10 / 2;
+	center_y = xres * 10 / 2;
+
+	x *= 10;
+	y *= 10;
+	r *= 10;
+
+	return (abs_del(x, center_x) * abs_del(x, center_x)
+			+ abs_del(y, center_y) * abs_del(y, center_y))
+		<= (r * r);
+}
+
+unsigned long long points_of_a_round_area(unsigned long long r) {
+	return ((r * r * 314159) + 50000) / 100000;
+}
+
+void fill_a_round_fb(unsigned int r_big, unsigned int r_little,
+                     unsigned int percent, unsigned int color1, unsigned int color2) {
+	unsigned int *fb_base = lcd_get_fb_base();
+	unsigned int xres = lcd_get_pixel_width();
+	unsigned int yres = lcd_get_pixel_height();
+	unsigned int i, j;
+	unsigned int points = (points_of_a_round_area(r_big) * percent) / 100;
+
+	for (j = 0; j < yres; ++j) {
+		for (i = 0; i < xres; ++i) {
+			if (points != 0 && is_in_a_round_area(xres, yres, r_little, i, j)) {
+				*(fb_base + j * xres + i) = color1;
+				points--;
+			} else {
+				*(fb_base + j * xres + i) = color2;
+			}
+		}
+	}
+}
+
+static int do_fill_round_fb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	unsigned int percent;
+	unsigned int color1;
+	unsigned int color2;
+
+	if(argc != 4) {
+		printf("your parameter is wrong\n");
+		return -1;
+	}
+
+	color1 = simple_strtoul(argv[1], NULL, 16);
+	color2 = simple_strtoul(argv[2], NULL, 16);
+	percent = simple_strtoul(argv[3], NULL, 10);
+
+	fill_a_round_fb(lcd_get_pixel_width() / 2,
+                   (lcd_get_pixel_width() / 2) - 2,
+					percent, color1, color2);
+	lcd_sync();
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	fill_round_fb,	10,	1,	do_fill_round_fb,
+	"fill a round fb",
+	"fill_round_fb color0 color1 percent"
+	"eg, fill_round_fb 0xffffff 0x00 80\n"
+	"if your percent is bigger than 95%,"
+	"i suggest your modify this CMD, or use CMD color_bar"
+);
+
 /*----------------------------------------------------------------------*/
 static int lcd_init(void *lcdbase)
 {
@@ -1409,6 +1483,10 @@ void lcd_position_cursor(unsigned col, unsigned row)
 {
 	console_col = min(col, CONSOLE_COLS - 1);
 	console_row = min(row, CONSOLE_ROWS - 1);
+}
+
+void* lcd_get_fb_base(void) {
+	return lcd_base;
 }
 
 int lcd_get_pixel_width(void)

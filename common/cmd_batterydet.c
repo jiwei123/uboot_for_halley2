@@ -33,6 +33,7 @@
 #include <lcd.h>
 #include <rle_charge_logo.h>
 #include <malloc.h>
+#include <regulator.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
@@ -859,3 +860,78 @@ static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 
 U_BOOT_CMD(batterydet, 4, 1, do_battery_detect,
 	   "battery and show charge logo", "[<battery_min> <battery_max>, <battery_scale>]");
+
+static int do_idle(cmd_tbl_t * cmdtp, int flag, int argc,
+			     char *const argv[])
+{
+	int ret = 0;
+
+	jz_pm_do_idle();
+
+	return ret;
+}
+
+U_BOOT_CMD(idle, 4, 1, do_idle,
+		   "idle: cpu will going to idle mode",
+	   "idle: cpu will going to idle mode");
+
+
+static int do_shutdown(cmd_tbl_t * cmdtp, int flag, int argc,
+			     char *const argv[])
+{
+	int ret = 0;
+
+	jz_pm_do_hibernate();
+
+	return ret;
+}
+
+U_BOOT_CMD(shutdown, 4, 1, do_shutdown,
+		   "idle: cpu will going to shutdown mode",
+	   "idle: cpu will going to shutdown mode");
+
+
+static int do_regulator(cmd_tbl_t * cmdtp, int flag, int argc,
+			     char *const argv[])
+{
+	int ret = 0;
+	int cmd = 0;
+	struct regulator *reg;
+
+	if (argc != 3) {
+		printf ("invalid args!\n");
+		return 0;
+	}
+
+	if (!strcmp(argv[1], "enable")) {
+		cmd = 1;
+	} else if (!strcmp(argv[1], "disable")) {
+		cmd = 0;
+	} else {
+		printf ("invalid cmd: %s!\n", argv[1]);
+		return 0;
+	}
+
+	reg = regulator_get(argv[2]);
+	if (reg == NULL) {
+		printf ("invalid regulator: %s!\n", argv[2]);
+		return 0;
+	}
+
+	switch(cmd) {
+	case 0:
+		regulator_disable(reg);
+		break;
+	case 1:
+		regulator_enable(reg);
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+U_BOOT_CMD(regulator, 4, 1, do_regulator,
+		   "idle: cpu will going to idle mode",
+	   "idle: cpu will going to idle mode");

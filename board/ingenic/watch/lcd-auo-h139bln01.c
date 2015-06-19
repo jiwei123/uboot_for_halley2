@@ -36,6 +36,7 @@
 #define MIPI_RST_N     GPIO_PC(16)
 #define LCD_VDD_1V8   "RICOH619_LDO9"
 #define LCD_VCI_2V8   "RICOH619_LDO10"
+#define BUCK5_3V      "RICOH619_DC5"
 #elif CONFIG_AW808
 #define GPIO_LCD_BLK_EN -1
 #define MIPI_RST_N     GPIO_PC(19)
