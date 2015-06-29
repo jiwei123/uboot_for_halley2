@@ -70,16 +70,17 @@ void board_set_lcd_power_on(void)
 	lcd_vci_2v8 = regulator_get(LCD_VCI_2V8);
 	if (lcd_vci_2v8 == NULL)
 		return;
-
+#if defined(CONFIG_IN901) || defined(CONFIG_X3)
 	buck5_3_0v = regulator_get(BUCK5_3_0V);
 	if (buck5_3_0v == NULL)
 		return;
 
+	regulator_set_voltage(buck5_3_0v, 3000000, 3000000);
+	regulator_enable(buck5_3_0v);
+#endif
 	regulator_set_voltage(lcd_vddio_1v8, 1800000, 1800000);
 	regulator_set_voltage(lcd_vci_2v8, 2800000, 2800000);
-	regulator_set_voltage(buck5_3_0v, 3000000, 3000000);
 
-	regulator_enable(buck5_3_0v);
 	regulator_enable(lcd_vddio_1v8);
 	regulator_enable(lcd_vci_2v8);
 }
@@ -126,6 +127,7 @@ struct dsi_config jz_dsi_config={
 	.max_bta_cycles = 4095,
 	.color_mode_polarity = 1,
 	.shut_down_polarity  = 1,
+	.auto_clklane_ctrl = 0,
 };
 
 struct dsi_device jz_dsi = {

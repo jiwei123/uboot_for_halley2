@@ -59,6 +59,75 @@ void jz_dsih_dphy_shutdown(struct dsi_device *dsi, int powerup)
 	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_RSTZ, powerup, 0, 1);
 }
 
+void jz_dsih_dphy_ulpm_enter(struct dsi_device *dsi)
+{
+	/* PHY_STATUS[6:1] == 6'h00 */
+	if (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 1, 6) == 0x0) {
+		printf("MIPI D-PHY is already in ULPM state now\n");
+		return;
+	}
+	/* PHY_RSTZ[3:0] = 4'hF */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_RSTZ, 0xF, 0, 4);
+	/* PHY_ULPS_CTRL[3:0] = 4'h0 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_ULPS_CTRL, 0x0, 0, 4);
+	/* PHY_TX_TRIGGERS[3:0] = 4'h0 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_TX_TRIGGERS, 0x0, 0, 4);
+	/* PHY_STATUS[6:4] == 3'h3 */
+	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 4, 3) != 0x3)
+		;
+	/* PHY_ULPS_CTRL [3:0] = 4'h5 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_ULPS_CTRL, 0x5, 0, 4);
+	/* LPCLK_CTRL[1:0] = 2'h2 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_LPCLK_CTRL, 0x2, 0, 2);
+	/* PHY_STATUS[6:0] == 7'h1 */
+	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 7) != 0x1)
+		;
+	/* PHY_RSTZ[3] = 1'b0 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_RSTZ, 0x0, 3, 1);
+	/* PHY_STATUS [0] == 1'b0 */
+	while(mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 1) != 0x0)
+		;
+	printf("%s ...\n", __func__);
+}
+
+void jz_dsih_dphy_ulpm_exit(struct dsi_device *dsi)
+{
+	/* PHY_STATUS[6:1] == 6'h00 */
+	if (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 1, 6) != 0x0) {
+		printf("MIPI D-PHY is not in ULPM state now\n");
+		return;
+	}
+	/* PHY_STATUS[0] == 1'b1 */
+	if (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 1) == 0x1)
+		goto step5;
+
+	/* PHY_RSTZ [3] = 1'b1 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_RSTZ, 0x1, 3, 1);
+	/* PHY_STATUS[0] == 1'b1 */
+	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 1) != 0x1)
+		;
+
+step5:
+	/* PHY_ULPS_CTRL[3:0] = 4'hF */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_ULPS_CTRL, 0xF, 0, 4);
+	/* PHY_STATUS [5] == 1'b1 && PHY_STATUS [3] == 1'b1 */
+	while(mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 5, 1) != 0x1 &&
+          mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 3, 1) != 0x1)
+		;
+	/* Wait for 1 ms */
+	mdelay(1);
+	/* PHY_ULPS_CTRL [3:0] = 4'h0 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_ULPS_CTRL, 0x0, 0, 4);
+	/* LPCLK_CTRL[1:0] = 2'h1 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_LPCLK_CTRL, 0x1, 0, 2);
+	/* PHY_STATUS [6:4] == 3'h3 && PHY_STATUS [1:0] == 2'h1 */
+	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 4, 3) != 0x3 &&
+           mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 2) != 0x1)
+		;
+
+	printf("%s ...\n", __func__);
+}
+
 void jz_dsih_hal_power(struct dsi_device *dsi, int on)
 {
 	mipi_dsih_write_part(dsi, R_DSI_HOST_PWR_UP, on, 0, 1);
@@ -74,7 +143,7 @@ int jz_dsi_init_config(struct dsi_device *dsi)
 	debug("jz_dsi_init_config\n");
 	mipi_dsih_hal_dpi_color_mode_pol(dsi, !dsi_config->color_mode_polarity);
 	mipi_dsih_hal_dpi_shut_down_pol(dsi, !dsi_config->shut_down_polarity);
-
+	mipi_dsih_dphy_enable_auto_clk(dsi, dsi_config->auto_clklane_ctrl);
 	err = mipi_dsih_phy_hs2lp_config(dsi, dsi_config->max_hs_to_lp_cycles);
 	err |= mipi_dsih_phy_lp2hs_config(dsi, dsi_config->max_lp_to_hs_cycles);
 	err |= mipi_dsih_phy_bta_time(dsi, dsi_config->max_bta_cycles);

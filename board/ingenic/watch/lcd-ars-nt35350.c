@@ -78,6 +78,7 @@ struct dsi_config jz_dsi_config={
 	.max_bta_cycles = 4095,
 	.color_mode_polarity = 1,
 	.shut_down_polarity = 1,
+	.auto_clklane_ctrl = 0,
 };
 
 struct dsi_device jz_dsi = {
