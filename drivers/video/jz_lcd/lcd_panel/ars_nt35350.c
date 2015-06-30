@@ -49,8 +49,10 @@ void board_set_lcd_power_on(void)
 	regulator_set_voltage(lcd_regulator_9, 1800000, 1800000);
 	regulator_set_voltage(lcd_regulator_10, 2800000, 2800000);
 
-	regulator_enable(lcd_regulator_10);
 	regulator_enable(lcd_regulator_9);
+	mdelay(1);
+	regulator_enable(lcd_regulator_10);
+
 	printf("[%d] %s %d\n",get_timer(0) ,__FILE__, __LINE__);
 	return;
 }
@@ -216,6 +218,7 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 		{0x39, 0x02, 0x00, {0x32, 0x00}},
 		{0x39, 0x02, 0x00, {0x33, 0x00}},
 		{0x39, 0x02, 0x00, {0x34, 0x00}},
+		{0x39, 0x02, 0x00, {0x35, 0x00}},
 		{0x39, 0x02, 0x00, {0x36, 0x00}},
 		{0x39, 0x02, 0x00, {0x37, 0x00}},
 		{0x39, 0x02, 0x00, {0x38, 0x80}},

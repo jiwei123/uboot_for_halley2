@@ -529,6 +529,21 @@ void lcd_color_bar(enum lcd_color_bar_direction HV, unsigned int color1,
 	unsigned int i, j, k, position;
 
 	color = lcd_base;
+	if (delta > panel_info.vl_row / 2 || delta > panel_info.vl_col / 2) {
+		printf("0x%x is larger than half of %s", delta, HV == COLOR_BAR_VERTICAL ? "Width" : "Height");
+		printf("(0x%x)\n", delta, HV == COLOR_BAR_VERTICAL ? panel_info.vl_row / 2 : panel_info.vl_col / 2);
+		return;
+	}
+
+	if (delta == 0) {
+		for (i = 0; i < panel_info.vl_row; i++) {
+			for(j = 0; j < panel_info.vl_col; j++) {
+				color[i * panel_info.vl_row + j] = color2;
+			}
+		}
+		return;
+	}
+
 	for (i = 0; i < panel_info.vl_row; i += delta) {
 		for(j = 0; j < panel_info.vl_col; j++) {
 			/* even index bar show color1, odd show color2 */
@@ -660,7 +675,7 @@ do_color_bar(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	color2 = simple_strtoul(argv[3], NULL, 16);
 	delta = 0x14; //default value if without argv[4]
 	if (argc == 5) {
-		delta = simple_strtoul(argv[4], NULL, 10);
+		delta = simple_strtoul(argv[4], NULL, 16);
 	}
 	lcd_color_bar(HV, color1, color2, delta);
 
