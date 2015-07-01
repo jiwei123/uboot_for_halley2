@@ -77,11 +77,6 @@
  */
 
 /**
- * newton2 displayer problem
- */
-#define CONFIG_AUO_X163_V1
-
-/**
  * Boot arguments definitions.
  */
 #define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=255M@0x0 mem=256M@0x30000000"

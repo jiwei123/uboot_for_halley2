@@ -286,8 +286,9 @@ void jz_dsi_init(struct dsi_device *dsi)
 	}
 	/*checkout phy clk lock and  clklane, datalane stopstate  */
 	while ((mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_STATUS) & st_mask) !=
-	       st_mask && retry) {
-		retry--;
+	       st_mask && retry--) {
+		//printf("---------------- %s %d ------ retry = %d \n",__func__,__LINE__,retry);
+		//retry--;
 	}
 	if (!retry) {
 		printf("jz mipi dsi init failed\n");
