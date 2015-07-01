@@ -170,48 +170,39 @@
 
 #ifdef  CONFIG_VIDEO_X163
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	350 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef  CONFIG_VIDEO_BYD_9177AA
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK       150
 #endif
 
 #ifdef  CONFIG_VIDEO_SAMSUNG
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK       150
 #endif
 
 #ifdef CONFIG_VIDEO_ORISE_OTM3201A
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	432 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #define CONFIG_LCD_FORMAT_X8B8G8R8
 #endif
 
 #ifdef CONFIG_VIDEO_BOE_TFT320320
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	432 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_VIDEO_H160_TFT320320
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	432 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_VIDEO_EDO_E1392AM1
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_VIDEO_AUO_H139BLN01
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	250 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_VIDEO_ARS_NT35350
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DEFAULT_BYTE_CLOCK	432 /* NOTE: CONFIG_DEFAULT_BYTE_CLOCK should move to lcd panel para in the future. */
 #endif
 
 #ifdef  CONFIG_VIDEO_BM347WV_F_8991FTGF

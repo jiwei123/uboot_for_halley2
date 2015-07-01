@@ -6,7 +6,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
-
+//#define DEBUG
 #include <asm/io.h>
 #include <config.h>
 #include <serial.h>
@@ -245,7 +245,6 @@ void jz_dsi_init(struct dsi_device *dsi)
 	dsi->address = dsi->dsi_phy->address = DSI_BASE;
 	dsi->dsi_phy->bsp_pre_config = set_base_dir_tx;
 	dsi->dsi_phy->reference_freq = REFERENCE_FREQ;
-	dsi->video_config->byte_clock = DEFAULT_BYTE_CLOCK / 8,	/* KHz  */
 	dsi->video_config->video_mode = VIDEO_BURST_WITH_SYNC_PULSES,
 	dsi->video_config->pixel_clock = PICOS2KHZ(jzfb1_videomode.pixclock); // dpi_clock
 	dsi->video_config->h_polarity = jzfb1_videomode.sync & FB_SYNC_HOR_HIGH_ACT;
@@ -259,7 +258,9 @@ void jz_dsi_init(struct dsi_device *dsi)
 	dsi->video_config->v_sync_lines = jzfb1_videomode.vsync_len;
 	dsi->video_config->v_back_porch_lines = jzfb1_videomode.lower_margin;
 	dsi->video_config->v_total_lines = jzfb1_videomode.yres + jzfb1_videomode.upper_margin + jzfb1_videomode.lower_margin + jzfb1_videomode.vsync_len;
-
+	dsi->video_config->byte_clock = dsi->video_config->h_total_pixels * dsi->video_config->v_total_lines * jzfb1_videomode.refresh * jzfb1_init_data.bpp / dsi->video_config->no_of_lanes / 8 / 1000 ;
+	dsi->video_config->byte_clock = (dsi->video_config->byte_clock * 3) >> 1; /* DATALANE_BPS is set 1.5 times than real needed in order to avoid lcd tearing */
+	debug("dsi->video_config->byte_clock = %d\n", dsi->video_config->byte_clock);
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);
 	*(volatile unsigned int *)0xb0000020 &= ~(1<<26); //open gate for clk
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);

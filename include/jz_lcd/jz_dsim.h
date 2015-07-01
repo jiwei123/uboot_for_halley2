@@ -10,7 +10,6 @@
 //#include <linux/fb.h>
 
 #define DSI_BASE (0xb3014000)
-#define DEFAULT_BYTE_CLOCK	(CONFIG_DEFAULT_BYTE_CLOCK * 1000)
 
 #define REFERENCE_FREQ (24000)  //24MHZ, ext
 #define DPHY_DIV_UPPER_LIMIT    (40000)
