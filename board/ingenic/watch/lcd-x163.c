@@ -37,6 +37,11 @@ static struct lcd_power_regulator lcd_power_regulator[] = {
     LCD_REGULATOR_REG("RICOH619_LDO1",  3400000, 0),
     LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
     LCD_REGULATOR_REG("RICOH619_LDO6",  2800000, 0),
+#elif defined(CONFIG_X3)
+    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO1",  3400000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO6",  2800000, 0),
 #else
     LCD_REGULATOR_REG("RICOH619_LDO9",  1800000, 0),
     LCD_REGULATOR_REG("RICOH619_LDO10", 3300000, 0),
@@ -47,13 +52,12 @@ static struct lcd_power_regulator lcd_power_regulator[] = {
 
 #if defined(CONFIG_ACRAB)
 #define GPIO_LCD_BLK_EN GPIO_PC(9)
+#define MIPI_RST_N GPIO_PC(16)
 #elif defined(CONFIG_AW808)
 #define GPIO_LCD_BLK_EN GPIO_PC(23)
-#endif
-
-#if defined(CONFIG_ACRAB)
-#define MIPI_RST_N GPIO_PC(16)
-#else
+#define MIPI_RST_N GPIO_PC(19)
+#elif defined(CONFIG_X3)
+#define GPIO_LCD_BLK_EN GPIO_PC(23)
 #define MIPI_RST_N GPIO_PC(19)
 #endif
 
@@ -92,7 +96,7 @@ void board_set_lcd_power_on(void)
 
 struct auo_x163_platform_data auo_x163_pdata = {
     .gpio_rst = MIPI_RST_N,
-#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808) ||defined(CONFIG_X3))
 	.gpio_lcd_bl = GPIO_LCD_BLK_EN,
 #endif
 };
