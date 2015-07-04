@@ -236,16 +236,16 @@ void set_base_dir_tx(struct dsi_device *dsi, void *param)
 
 void jz_dsi_init(struct dsi_device *dsi)
 {
-	int retry = 5;
+	int retry = 5000;
 	int st_mask = 0;
 	unsigned int tmp = 0;
 	debug("entry jz_dsi_init()\n");
 
 	dsi->state = NOT_INITIALIZED;
 	dsi->address = dsi->dsi_phy->address = DSI_BASE;
+	dsi->max_bps =  dsi->max_bps ? dsi->max_bps : 950;
 	dsi->dsi_phy->bsp_pre_config = set_base_dir_tx;
 	dsi->dsi_phy->reference_freq = REFERENCE_FREQ;
-	dsi->video_config->byte_clock = DATALANE_BYTECLOCK_KHZ,	/* KHz  */
 	dsi->video_config->video_mode = VIDEO_BURST_WITH_SYNC_PULSES,
 	dsi->video_config->pixel_clock = PICOS2KHZ(jzfb1_videomode.pixclock); // dpi_clock
 	dsi->video_config->h_polarity = jzfb1_videomode.sync & FB_SYNC_HOR_HIGH_ACT;
@@ -259,6 +259,21 @@ void jz_dsi_init(struct dsi_device *dsi)
 	dsi->video_config->v_sync_lines = jzfb1_videomode.vsync_len;
 	dsi->video_config->v_back_porch_lines = jzfb1_videomode.upper_margin;
 	dsi->video_config->v_total_lines = jzfb1_videomode.yres + jzfb1_videomode.upper_margin + jzfb1_videomode.lower_margin + jzfb1_videomode.vsync_len;
+	dsi->video_config->byte_clock = dsi->video_config->h_total_pixels * dsi->video_config->v_total_lines * jzfb1_videomode.refresh / 1000 * dsi->bpp_info / dsi->video_config->no_of_lanes / 8;
+	dsi->video_config->byte_clock = dsi->video_config->byte_clock + dsi->video_config->byte_clock / 2;
+	debug("dsi->video_config->h_total_pixels = %d,\
+			dsi->video_config->v_total_lines = %d,\
+			jzfb1_videomode.refresh = %d,\
+			dsi->bpp_info = %d,\
+			dsi->video_config->no_of_lanes = %d\n",\
+			dsi->video_config->h_total_pixels, \
+			dsi->video_config->v_total_lines, \
+			jzfb1_videomode.refresh, \
+			dsi->bpp_info, \
+			dsi->video_config->no_of_lanes);
+	if(dsi->video_config->byte_clock * 8 > dsi->max_bps * 1000){
+		dsi->video_config->byte_clock = dsi->max_bps * 1000 / 8;
+	}
 
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);
 	*(volatile unsigned int *)0xb0000020 &= ~(1<<26); //open gate for clk
@@ -286,9 +301,9 @@ void jz_dsi_init(struct dsi_device *dsi)
 	}
 	/*checkout phy clk lock and  clklane, datalane stopstate  */
 	while ((mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_STATUS) & st_mask) !=
-	       st_mask && retry--) {
+	       st_mask && retry) {
 		//printf("---------------- %s %d ------ retry = %d \n",__func__,__LINE__,retry);
-		//retry--;
+		retry--;
 	}
 	if (!retry) {
 		printf("jz mipi dsi init failed\n");

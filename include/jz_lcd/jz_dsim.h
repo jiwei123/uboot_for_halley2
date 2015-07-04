@@ -137,6 +137,8 @@ struct dsi_device {
 
 	unsigned int state;
 	unsigned int data_lane;
+	unsigned int bpp_info;
+	unsigned int max_bps;
 
 };
 

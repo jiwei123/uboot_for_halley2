@@ -155,7 +155,6 @@
 
 #ifdef  CONFIG_VIDEO_X163
 #define CONFIG_JZ_MIPI_DSI
-#define CONFIG_DATALANE_BPS_MHZ   320 /* NOTE: CONFIG_DATALANE_BPS_MHZ should move to lcd panel para in the future. */
 #endif
 
 #ifdef CONFIG_RLE_LCD_LOGO

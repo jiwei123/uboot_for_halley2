@@ -48,6 +48,7 @@ struct video_config jz_dsi_video_config={
 struct dsi_device jz_dsi = {
 	.dsi_config = &jz_dsi_config,
 	.video_config = &jz_dsi_video_config,
+	.max_bps = 650,  // 650 Mbps
 };
 
 struct jzfb_config_info jzfb1_init_data = {
