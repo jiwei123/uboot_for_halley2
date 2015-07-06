@@ -236,7 +236,7 @@ void set_base_dir_tx(struct dsi_device *dsi, void *param)
 
 void jz_dsi_init(struct dsi_device *dsi)
 {
-	int retry = 5000;
+	int retry = 500;
 	int st_mask = 0;
 	unsigned int tmp = 0;
 	debug("entry jz_dsi_init()\n");
@@ -303,6 +303,7 @@ void jz_dsi_init(struct dsi_device *dsi)
 	while ((mipi_dsih_read_word(dsi, R_DSI_HOST_PHY_STATUS) & st_mask) !=
 	       st_mask && retry) {
 		//printf("---------------- %s %d ------ retry = %d \n",__func__,__LINE__,retry);
+		udelay(1);
 		retry--;
 	}
 	if (!retry) {
