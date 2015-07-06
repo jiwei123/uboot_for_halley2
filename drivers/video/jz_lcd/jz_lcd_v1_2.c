@@ -1279,6 +1279,47 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 	return 0;
 }
 
+static void refresh_pixclock_auto_adapt(struct jzfb_config_info *info)
+{
+	struct fb_videomode *mode;
+	uint16_t hds, vds;
+	uint16_t hde, vde;
+	uint16_t ht, vt;
+	unsigned long rate;
+
+	if (info == NULL) {
+		debug("invalid argument: struct jzfb_config_info *info == NULL.\n");
+		return ;
+	}
+	mode = info->modes;
+	if (mode == NULL) {
+		debug("%s error: get video mode failed.\n", __func__);
+		return ;
+	}
+
+	hds = mode->hsync_len + mode->left_margin;
+	hde = hds + mode->xres;
+	ht = hde + mode->right_margin;
+
+	vds = mode->vsync_len + mode->upper_margin;
+	vde = vds + mode->yres;
+	vt = vde + mode->lower_margin;
+
+	if (mode->refresh) {
+		if (info->lcd_type == LCD_TYPE_8BIT_SERIAL) {
+			rate = mode->refresh * (vt + 2 * mode->xres) * ht;
+		} else {
+			rate = mode->refresh * ht * vt;
+		}
+		mode->pixclock = KHZ2PICOS(rate / 1000);
+	} else if (mode->pixclock) {
+		rate = PICOS2KHZ(mode->pixclock) * 1000;
+		mode->refresh = rate / vt / ht;
+	} else {
+		printf("%s error: lcd important config info is absenced.\n", __func__);
+	}
+}
+
 void lcd_ctrl_init(void *lcd_base)
 {
 	unsigned long pixel_clock_rate;
@@ -1290,7 +1331,8 @@ void lcd_ctrl_init(void *lcd_base)
 #endif
 
 	lcd_set_flush_dcache(1);
-	pixel_clock_rate = PICOS2KHZ(jzfb1_init_data.modes->pixclock);
+	refresh_pixclock_auto_adapt(&lcd_config_info);
+	pixel_clock_rate = PICOS2KHZ(lcd_config_info.modes->pixclock);
 
 	/* smart lcd WR freq = (lcd pixel clock)/2 */
 	if (lcd_config_info.lcd_type == LCD_TYPE_SLCD) {

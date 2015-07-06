@@ -371,6 +371,11 @@ void jz_dsih_dphy_configure(struct dsi_device *dsi,
 		/* this solution is not favourable as jitter would be maximum */
 		loop_divider = output_freq / DPHY_DIV_LOWER_LIMIT;
 		input_divider = phy->reference_freq / DPHY_DIV_LOWER_LIMIT;
+		/*make sure M is not overflow.M is mask 9bits(0 <= m <= 511)*/
+		if (loop_divider > 511) {
+			loop_divider = output_freq / (DPHY_DIV_LOWER_LIMIT * 2);
+			input_divider = phy->reference_freq / (DPHY_DIV_LOWER_LIMIT * 2);
+		}
 	} else {		/* variable was incremented before exiting the loop */
 		/*
 		 * input_divider is 6 now,
