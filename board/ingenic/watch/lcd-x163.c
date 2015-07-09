@@ -59,6 +59,8 @@ static struct lcd_power_regulator lcd_power_regulator[] = {
 #elif defined(CONFIG_X3)
 #define GPIO_LCD_BLK_EN GPIO_PC(23)
 #define MIPI_RST_N GPIO_PC(19)
+#elif defined(CONFIG_NEWTON2)
+#define MIPI_RST_N GPIO_PC(19)
 #endif
 
 static int inline lcd_power_regulator_init(const char *id, int voltage, int delay)
