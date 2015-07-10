@@ -52,7 +52,13 @@ COBJS-$(CONFIG_TEGRA_MMC) += tegra_mmc.o
 COBJS-$(CONFIG_DWMMC) += dw_mmc.o
 COBJS-$(CONFIG_EXYNOS_DWMMC) += exynos_dw_mmc.o
 COBJS-$(CONFIG_ZYNQ_SDHCI) += zynq_sdhci.o
+ifndef CONFIG_SPL_BUILD
 COBJS-$(CONFIG_JZ_MMC) += jz_mmc.o
+else
+ifdef (CONFIG_SPL_MMC_SUPPORT)
+COBJS-$(CONFIG_JZ_MMC) += jz_mmc.o
+endif
+endif
 ifndef CONFIG_SPL_BUILD
 COBJS-$(CONFIG_GENERIC_MMC) += mmc_write.o
 endif

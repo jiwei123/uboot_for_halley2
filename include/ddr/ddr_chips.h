@@ -5,6 +5,11 @@
 #include "./chips/MDDR_W94AD6KB-HX51.h"
 #endif
 
+#ifdef CONFIG_MDDR_H5MS5122DFR_J3M
+#include "./chips/MDDR_H5MS5122DFR_J3M.h"
+#endif
+
+
 #ifdef CONFIG_DDR3_H5TQ1G83DFR_H9C
 #include "./chips/DDR3_H5TQ1G83DFR_H9C.h"
 #endif

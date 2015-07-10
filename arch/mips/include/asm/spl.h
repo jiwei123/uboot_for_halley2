@@ -13,6 +13,8 @@
 #define BOOT_DEVICE_SPI 4
 #define BOOT_DEVICE_NOR 5
 #define BOOT_DEVICE_RAM 6
+#define BOOT_DEVICE_SFC_NOR  7
+#define BOOT_DEVICE_SFC_NAND 8
 
 extern char __bss_start[];
 extern ulong __bss_end;
@@ -33,6 +35,12 @@ static inline u32 spl_boot_device(void)
 #endif
 #ifdef CONFIG_SPL_NOR_SUPPORT
 	return BOOT_DEVICE_NOR;
+#endif
+#ifdef CONFIG_SPL_SFC_NOR
+	return BOOT_DEVICE_SFC_NOR;
+#endif
+#ifdef CONFIG_SPL_SFC_NAND
+	return BOOT_DEVICE_SFC_NAND;
 #endif
 }
 

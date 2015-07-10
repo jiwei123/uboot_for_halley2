@@ -37,8 +37,9 @@
 #include "jz_gpio/m200_gpio.c"
 #elif defined (CONFIG_M150)
 #include "jz_gpio/m150_gpio.c"
+#elif defined (CONFIG_X1000)
+#include "jz_gpio/x1000_gpio.c"
 #endif
-
 DECLARE_GLOBAL_DATA_PTR;
 
 static inline is_gpio_from_chip(int gpio_num)

@@ -177,6 +177,7 @@ COBJS-$(CONFIG_CMD_SPI) += cmd_spi.o
 else
 COBJS-$(CONFIG_CMD_SPI) += cmd_nor_spi.o
 endif
+COBJS-$(CONFIG_CMD_SFC_NOR) += cmd_nor_sfc.o
 COBJS-$(CONFIG_CMD_SPIBOOTLDR) += cmd_spibootldr.o
 COBJS-$(CONFIG_CMD_STRINGS) += cmd_strings.o
 COBJS-$(CONFIG_CMD_TERMINAL) += cmd_terminal.o
