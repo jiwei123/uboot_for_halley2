@@ -35,11 +35,11 @@ static char clk_name[][10] = {
 	[OTG] = {"otg"},
 	[I2S] = {"i2s"},
 	[LCD] = {"lcd"},
-	[SFC] = {"ssi"},
+	[SFC] = {"sfc"},
 	[CIM] = {"cim"},
 	[PCM] = {"pcm"},
 	[DDR] = {"ddr"},
-	[MSC] = {"msc"},
+	[MSC0] = {"msc0"},
 	[MSC1] = {"msc1"},
 };
 
@@ -50,17 +50,17 @@ static char * cgu_name(int clk) {
 
 struct cgu cgu_clk_sel[CGU_CNT] = {
 	[DDR] = {1, CPM_DDRCDR, 30, CONFIG_DDR_SEL_PLL, {0, APLL, MPLL, -1}, 29, 28, 27},
-	[MACPHY] = {1, CPM_MACCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
-	[MSC0] = {1, CPM_MSC0CDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[MACPHY] = {1, CPM_MACCDR, 31, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[MSC0] = {1, CPM_MSC0CDR, 31, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
 #ifndef CONFIG_BURNER
 	[OTG] = {1, CPM_USBCDR, 30, EXCLK, {EXCLK, EXCLK, APLL, MPLL}, 29, 28, 27},
 #endif
 	[I2S] = {1, CPM_I2SCDR, 30, EXCLK, {APLL, MPLL, EXCLK, -1}, 29, 0, 0},
-	[LCD] = {1, CPM_LPCDR,  31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 28, 27, 26},
+	[LCD] = {1, CPM_LPCDR,  31, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 28, 27, 26},
 	[MSC1] = {0, CPM_MSC1CDR, 0, 0, {-1, -1, -1, -1}, 29, 28, 27},
-	[SFC] = {1, CPM_SSICDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
-	[CIM] = {1, CPM_CIMCDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
-	[PCM] = {1, CPM_PCMCDR, 30, CONFIG_CPU_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 29, 0, 0},
+	[SFC] = {1, CPM_SSICDR, 31, CONFIG_DDR_SEL_PLL, {APLL, MPLL, EXCLK, -1}, 29, 28, 27},
+	[CIM] = {1, CPM_CIMCDR, 31, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[PCM] = {1, CPM_PCMCDR, 30, EXCLK, {APLL, EXCLK, MPLL, -1}, 29, 0, 0},
 };
 
 void clk_prepare(void)
@@ -82,7 +82,7 @@ void clk_prepare(void)
 		if (id != OTG) {
 			regval = readl(reg);
 			/*set div max*/
-			regval |= 0xff | (1 << cgu->ce);
+			regval |= 0xfe | (1 << cgu->ce);
 			while (readl(reg) & (1 << cgu->busy));
 			writel(regval, reg);
 		}
@@ -250,208 +250,49 @@ unsigned int clk_get_rate(int clk)
 	return 0;
 }
 
-static unsigned int set_msc_rate(int clk, unsigned long rate)
+void clk_set_rate(int clk_id, unsigned long rate)
 {
-	unsigned int msccdr  = 0;
-	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
-	unsigned int xcdr_addr = 0;
-	unsigned int pll_rate = 0;
-	unsigned int cdr = 0;
-
-	switch (clk) {
-	case MSC0:
-		xcdr_addr = CPM_MSC0CDR;
-		break;
-	case MSC1:
-		xcdr_addr = CPM_MSC1CDR;
-		break;
-	default:
-		return 0;
-	}
-
-	switch (msc0cdr >> 31) {
-	case 0:
-		pll_rate = pll_get_rate(APLL);
-		break;
-	case 1:
-		pll_rate = pll_get_rate(MPLL);
-		break;
-	default:
-		return 0;
-	}
-
-	msccdr = cpm_inl(xcdr_addr);
-	msccdr &= ~(0x3 << 27 | 0xff);
-	cdr = (((pll_rate + rate - 1)/rate)/2 - 1)& 0xff;
-	msccdr |= (cdr | (1 << 29));
-	cpm_outl(msccdr , xcdr_addr);
-	while (cpm_inl(xcdr_addr) & (1 << 28));
-
-	debug("CPM_MSC%dCDR(%x) = %x\n",(clk - MSC0), xcdr_addr, cpm_inl(xcdr_addr));
-	return 0;
-}
-
-static unsigned int set_ddr_rate(int clk, unsigned long rate)
-{
-	unsigned int ddrcdr = cpm_inl(CPM_DDRCDR);
+	unsigned int cdr, src_id;
 	unsigned int pll_rate;
-	unsigned int cdr;
+	struct cgu *cgu = NULL;
+	unsigned regval = 0, reg = 0;
 
-	switch (ddrcdr >> 30) {
-	case 1:
-		pll_rate = pll_get_rate(APLL);
-		break;
-	case 2:
-		pll_rate = pll_get_rate(MPLL);
-		break;
-	case 0:
-		printf("ddr clk is stop\n");
-	default:
-		return 0;
-	}
-	cdr = ((pll_rate + rate - 1)/rate - 1) & 0xf;
-	ddrcdr &= ~(0xf | 0x3f << 24);
-	ddrcdr |= (cdr | (1 << 29));
-	cpm_outl(ddrcdr , CPM_DDRCDR);
-	while (cpm_inl(CPM_DDRCDR) & (1 << 28));
-	debug("CPM_DDRCDR(%x) = %x\n",CPM_DDRCDR, cpm_inl(CPM_DDRCDR));
-	return 0;
-}
-#ifndef CONFIG_SPL_BUILD
-static unsigned int set_lcd_rate(int clk, unsigned long rate)
-{
-	unsigned int lcdcdr = cpm_inl(CPM_LPCDR);
-	unsigned int pll_rate;
-	unsigned int cdr;
-
-	switch (lcdcdr >> 31) {
-	case 0:
-		pll_rate = pll_get_rate(APLL);
-		break;
-	case 1:
-		pll_rate = pll_get_rate(MPLL);
-		break;
+	if(clk_id >= CGU_CNT) {
+		printf("set clk id error\n");
+		return;
 	}
 
-	cdr = ((pll_rate + rate - 1)/rate - 1 )& 0xff;
-	lcdcdr &= ~(0xff | (0x3 << 26));
-	lcdcdr |= (cdr | (1 << 28));
-	cpm_outl(lcdcdr , CPM_LPCDR);
-	while (cpm_inl(CPM_LPCDR) & (1 << 27));
-	debug("CPM_LPCDR(%x) = %x\n",CPM_LPCDR, cpm_inl(CPM_LPCDR));
-	return 0;
-}
+	cgu = &(cgu_clk_sel[clk_id]);
+	regval = cpm_inl(cgu->off);
+	pll_rate = pll_get_rate(cgu->sel_src);
 
-static unsigned int set_macphy_rate(int clk, unsigned long rate)
-{
-	unsigned int cdr;
-	unsigned int pll_rate;
-	unsigned int mphyc, maccdr = cpm_inl(CPM_MACCDR);
-
-	switch (maccdr >> 31) {
-	case 0:
-		pll_rate = pll_get_rate(APLL);
-		break;
-	case 1:
-		pll_rate = pll_get_rate(MPLL);
-		break;
-	default:
-		printf("set_macphy_rate is error !\n");
+	if(!pll_rate) {
+		printf("clk id %d: get pll error\n", clk_id);
+		return;
 	}
 
-	cdr = ((pll_rate + rate - 1)/rate - 1 )& 0xff;
-	maccdr &= ~(3 << 27 | 0xff);
-	maccdr |= ((1 << 29) | cdr);
-	cpm_outl(maccdr, CPM_MACCDR);
-#ifndef CONFIG_FPGA
-	while (cpm_inl(CPM_MACCDR) & (1 << 28))
+	if(clk_id == MSC0 || clk_id == MSC1)
+		cdr = (((pll_rate + rate - 1)/rate)/2 - 1)& 0xff;
+	else
+		cdr = ((pll_rate + rate - 1)/rate - 1 ) & 0xff;
+	debug("pll_rate = %d, rate = %d, cdr = %d\n",pll_rate,rate,cdr);
+	if(clk_id == DDR)
+		regval &= ~(0xf | 0x3f << 24);
+	else
+		regval &= ~(3 << cgu->stop | 0xff);
+	regval |= ((1 << cgu->ce) | cdr);
+	cpm_outl(regval, cgu->off);
+	while (cpm_inl(cgu->off) & (1 << cgu->busy))
 		;
+#ifdef DUMP_CGU_SELECT
+	printf("%s(0x%x) :0x%x\n",clk_name[clk_id] ,reg,  cpm_inl(cgu->off));
 #endif
-#if (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RMII)
-	mphyc = cpm_inl(CPM_MPHYCR);
-	mphyc &= ~0x7;
-	mphyc |= 0x4;
-	cpm_outl(mphyc, CPM_MPHYCR);
-#elif (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RGMII)
-	mphyc = cpm_inl(CPM_MPHYCR);
-	cpm_mphyc |= 0x1<<31;
-	cpm_mphyc &= ~0x7;
-	cpm_mphyc |= 0x1;
-	cpm_outl(mphyc, CPM_MPHYCR);
-#endif //CONFIG_NET_GMAC_PHY_MODE
-
-	debug("CPM_SSICDR(%x) = %x\n",CPM_SSICDR, cpm_inl(CPM_SSICDR));
-	return 0;
+	return;
 }
-#endif
-static unsigned int set_ssi_rate(int clk, unsigned long rate)
-{
-	unsigned int cdr;
-	unsigned int pll_rate;
-	unsigned int ssicdr = cpm_inl(CPM_SSICDR);
-
-//	switch (ssicdr >> 30) {
-//	case 0:
-//		pll_rate = pll_get_rate(APLL);
-//		break;
-//	case 1:
-		pll_rate = pll_get_rate(MPLL);
-//		printf("111");
-//		break;
-//	case 2:
-//		pll_rate = CONFIG_SYS_EXTAL;
-//		break;
-//	default:
-//		printf("set_ssi_rate is error !\n");
-//	}
-
-	cdr = ((pll_rate + rate - 1)/rate - 1 )& 0xff;
-	printf("pll_rate = %d, rate = %d, cdr = %d\n",pll_rate,rate,cdr);
-	ssicdr &= ~(3 << 27 | 0xff);
-	ssicdr |= ((1 << 29) | cdr);
-	cpm_outl(ssicdr, CPM_SSICDR);
-	while (cpm_inl(CPM_SSICDR) & (1 << 28))
-		;
-	printf("CPM_SSICDR(%x) = %x\n",CPM_SSICDR, cpm_inl(CPM_SSICDR));
-	return 0;
-}
-
-void clk_set_rate(int clk, unsigned long rate)
-{
-	switch (clk) {
-	case DDR:
-		set_ddr_rate(clk, rate);
-		return;
-#if defined(CONFIG_JZ_SFC) || defined(CONFIG_JZ_SPI)
-	case SFC:
-		set_ssi_rate(clk, rate);
-		return;
-#endif
-#ifndef CONFIG_SPL_BUILD
-	case LCD:
-		set_lcd_rate(clk, rate);
-		return;
-	case MACPHY:
-		set_macphy_rate(clk, rate);
-		return;
-#endif
-#ifdef CONFIG_JZ_MMC
-	case MSC0:
-	case MSC1:
-		set_msc_rate(clk, rate);
-		return;
-#endif
-	default:
-		break;
-	}
-
-	debug("%s: clk%d is not supported\n", __func__, clk);
-}
-
 void clk_init(void)
 {
 	unsigned int reg_clkgr = cpm_inl(CPM_CLKGR);
-	unsigned int gate = 0
+	unsigned int gate = CPM_CLKGR_DDR
 #ifdef CONFIG_JZ_MMC_MSC0
 		| CPM_CLKGR_MSC0
 #endif
@@ -468,11 +309,11 @@ void clk_init(void)
 		| CPM_CLKGR_SSI
 #endif
 #ifdef CONFIG_NET_MAC
-		| CPM_CLKGR_GMAC
+		| CPM_CLKGR_MAC
 #endif
 		;
 
-	reg_clkgr &= 0;// ~gate;
+	reg_clkgr &=  ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR);
 	cgu_clks_set(cgu_clk_sel, ARRAY_SIZE(cgu_clk_sel));
 }
