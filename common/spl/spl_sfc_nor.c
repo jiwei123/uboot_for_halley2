@@ -183,11 +183,8 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	jz_sfc_writel(0,SFC_TRIG);
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 
-
-	printf("3\n");
 	sfc_init();
 
-	printf("4\n");
 	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), words_of_spl);
 	if (ret) {
 		printf("sfc read error\n");
@@ -203,10 +200,8 @@ void spl_sfc_nor_load_image(void)
 
 	/*the sfc clk is 1/2 ssi clk */
 	clk_set_rate(SSI,70000000);
-	printf("1\n");
 	spl_parse_image_header(header);
 
-	printf("2\n");
 	sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
 
 	return ;

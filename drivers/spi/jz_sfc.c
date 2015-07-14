@@ -776,7 +776,7 @@ void sfc_set_quad_mode(unsigned int data)
 	unsigned char cmd[5];
 	unsigned int buf = 0;
 	unsigned int tmp = 0;
-	int i = 5;
+	int i = 10;
 
 	cmd[0] = CMD_WREN;
 	cmd[1] = CMD_WRSR_1;
@@ -799,7 +799,6 @@ void sfc_set_quad_mode(unsigned int data)
 	sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
 	sfc_read_data(&buf, 1);
 	while(!(buf & CMD_SR_QEP)&&((i--) > 0)) {
-		printf("set quad mode error the buf,the nor flash may be little than 16M = %x\n",buf);
 		sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
 		sfc_read_data(&buf, 1);
 	}
@@ -830,7 +829,6 @@ void sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	sfc_set_quad_mode(0x2);
 #endif
 
-	jz_sfc_writel(0,SFC_TRIG);
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 
 	jz_read(&flash,src_addr,count,dst_addr);
