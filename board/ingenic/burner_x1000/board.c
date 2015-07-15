@@ -26,7 +26,6 @@
 #include <netdev.h>
 #include <asm/gpio.h>
 #include <asm/arch/cpm.h>
-#include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 #include <asm/jz_uart.h>
 #include <asm/arch/clk.h>
