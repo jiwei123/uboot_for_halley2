@@ -86,3 +86,35 @@ static struct jz_gpio_func_def gpio_func[] = {
 	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 1 << 3, },
 #endif
 };
+
+static struct jz_gpio_func_def gpio_internal_pull[] = {
+#if defined(CONFIG_JZ_MMC_MSC0_INTERNAL_PULL)
+#if defined(CONFIG_JZ_MMC_MSC0_PA_4BIT)
+    { .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00f80000},
+#endif
+#if defined(CONFIG_JZ_MMC_MSC0_PA_8BIT)
+    { .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00f800f0},
+#endif
+#if defined(CONFIG_JZ_MMC_MSC0_PE)
+    { .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 0x20f00000},
+#endif
+#endif
+
+#if defined(CONFIG_JZ_MMC_MSC1_INTERNAL_PULL)
+#if defined(CONFIG_JZ_MMC_MSC1_PD)
+    { .port = GPIO_PORT_D, .func = GPIO_FUNC_0, .pins = 0x02f00000},
+#endif
+#if defined(CONFIG_JZ_MMC_MSC1_PE)
+    { .port = GPIO_PORT_E, .func = GPIO_FUNC_2, .pins = 0x20f00000},
+#endif
+#endif
+
+#if defined(CONFIG_JZ_MMC_MSC2_INTERNAL_PULL)
+#if defined(CONFIG_JZ_MMC_MSC2_PB)
+    { .port = GPIO_PORT_B, .func = GPIO_FUNC_0, .pins = 0xe0300000},
+#endif
+#if defined(CONFIG_JZ_MMC_MSC2_PE)
+    { .port = GPIO_PORT_E, .func = GPIO_FUNC_2, .pins = 0x20f00000},
+#endif
+#endif
+};

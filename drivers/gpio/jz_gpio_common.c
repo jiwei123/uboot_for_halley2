@@ -56,6 +56,19 @@ void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 	writel(func & 0x10? 0 : pins, base + PXPES);
 }
 
+int gpio_ctrl_pull(enum gpio_port port, int enable_pull,unsigned long pins)
+{
+    unsigned int base = GPIO_BASE + 0x100 * port;
+
+    if (enable_pull)
+        writel(pins, base + PXPEC);
+    else
+        writel(pins, base + PXPES);
+
+    return 0;
+}
+
+
 int gpio_request(unsigned gpio, const char *label)
 {
 	printf("%s lable = %s gpio = %d\n",__func__,label,gpio);
@@ -225,6 +238,13 @@ void gpio_init(void)
 		g = &gpio_func[i];
 		gpio_set_func(g->port, g->func, g->pins);
 	}
+
+    /*enable internal pull*/
+	n = ARRAY_SIZE(gpio_internal_pull);
+    for (i = 0; i < n; i++) {
+        g = &gpio_internal_pull[i];
+        gpio_ctrl_pull(g->port, 1, g->pins);
+    }
 #else
 	n = gd->arch.gi->nr_gpio_func;
 
