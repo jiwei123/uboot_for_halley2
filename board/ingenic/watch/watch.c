@@ -54,6 +54,18 @@ extern void boot_mode_select(void);
 extern int ricoh61x_regulator_init(void);
 #endif
 
+#ifdef CONFIG_MMC
+extern int mmc_backup_save(void);
+extern int mmc_backup_restore(void);
+#endif
+
+void image_backup_restore(void)
+{
+#ifdef CONFIG_MMC
+     //mmc_backup_save();
+     //mmc_backup_restore();
+#endif
+}
 int board_early_init_f(void)
 {
 	return 0;
@@ -144,6 +156,7 @@ int misc_init_r(void)
 #if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
 	battery_init_gpio();
 #endif
+	image_backup_restore();
 	return 0;
 }
 

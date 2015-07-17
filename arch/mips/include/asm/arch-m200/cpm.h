@@ -210,6 +210,7 @@
 #define VIBRATION_SIGNATURE     (0x6a6a)        /* means "VIBR" */
 #define RECOVERY_SIGNATURE_SEC  0x800           /* means "RECY" */
 #define FASTBOOT_SIGNATURE      (0x0666)        /* means "FASTBOOT" */
+#define SAVE_SIGNATURE          (0x5aa5a55a)    /* means "SAVE_BACKUP" */
 
 #define cpm_get_scrpad()        readl(CPM_BASE + CPM_CPSPR)
 #define cpm_set_scrpad(data)                    \

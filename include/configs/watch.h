@@ -307,6 +307,7 @@
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
+#define CONFIG_MD5          /* MD5 */
 /*#define CONFIG_CMD_I2C*/
 
 /* Console configure */

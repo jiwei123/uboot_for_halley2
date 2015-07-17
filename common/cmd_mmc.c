@@ -24,6 +24,9 @@
 #include <common.h>
 #include <command.h>
 #include <mmc.h>
+#include <malloc.h>
+#include <asm/arch/cpm.h>
+#include <u-boot/md5.h>
 
 static int curr_device = -1;
 #ifndef CONFIG_GENERIC_MMC
@@ -440,4 +443,205 @@ U_BOOT_CMD(
 	" - change sizes of boot and RPMB partions of specified device\n"
 #endif
 	);
+
+/* mmc_backup_save() :
+ * copy image from src_addr to dst_addr,
+ * src_addr: source      address unit is blk(512Byte) uboot partition
+ * dst_addr: destination address unit is blk(512Byte) reserved partition
+ * blk:      the number of block                      uboot+boot.img blocks
+ *                 ------blk*512Byte-----4Byte---16Byte-----492Byte---
+ * dst_addr image: |    image file    |  flag  |  Hash  |    NULL   |
+ *                 ---------------------------------------------------
+ * */
+
+int mmc_backup_save(void)
+{
+    unsigned long src_blk = 0;
+    unsigned long dst_blk = 44 * 1024 * 1024 / 512;
+    unsigned long cnt_blk = 12 * 1024 * 1024 / 512;
+
+    struct mmc *mmc;
+    unsigned int ret;
+    unsigned int flag;
+    u8 output[16];
+    void *tmp_buff;
+
+    if (curr_device < 0) {
+        if (get_mmc_num() > 0)
+            curr_device = 0;
+        else {
+            puts("No MMC device available\n");
+            return 1;
+        }
+    }
+
+    mmc = find_mmc_device(curr_device);
+    if (!mmc) {
+        printf("no mmc device at slot %x\n", curr_device);
+        return 1;
+    }
+
+
+    mmc_init(mmc);
+    if (mmc_getwp(mmc) == 1) {
+        printf("Error: card is write protected!\n");
+        return 1;
+    }
+
+    tmp_buff = malloc(cnt_blk * 512);
+    if (!tmp_buff) {
+        printf("Cannot allocate memory\n");
+        return 1;
+    }
+
+    ret = mmc->block_dev.block_read(curr_device, dst_blk+cnt_blk, 1, tmp_buff);
+    if (ret > 0) {
+        flag = ((unsigned int *)tmp_buff)[0];
+        if (flag != SAVE_SIGNATURE) {
+            printf("\nMMC Save: dev # %d, src_blk # %ld, dst_blk # %ld ,count %ld ... \n",
+                        curr_device, src_blk, dst_blk, cnt_blk);
+            ret = mmc->block_dev.block_read(curr_device, src_blk, cnt_blk, tmp_buff);
+            /* flush cache after read */
+            flush_cache((ulong)tmp_buff, cnt_blk * 512); /* FIXME */
+            if (ret <= 0) {
+                printf("mmc_backup_save read Error!\n");
+                free(tmp_buff);
+                return 1;
+            }
+
+            ret = mmc->block_dev.block_write(curr_device, dst_blk, cnt_blk, tmp_buff);
+            if (ret <= 0) {
+                printf("mmc_backup_save write Error!\n");
+                free(tmp_buff);
+                return 1;
+            }
+            printf("MMC Save: %ld Blocks Write OK\n", ret);
+            /* Write Flag and Hash */
+            md5_wd((unsigned char *) tmp_buff, cnt_blk * 512, output, CHUNKSZ_MD5);
+            flag = SAVE_SIGNATURE;
+            memset(tmp_buff,0, 512);
+            memcpy(tmp_buff,&flag, 4);
+            memcpy(&tmp_buff[4],output, 16);
+            ret = mmc->block_dev.block_write(curr_device, dst_blk+cnt_blk, 1, tmp_buff);
+            if (ret <= 0) {
+                printf("mmc_backup_save write Flag Hash Error!\n");
+                free(tmp_buff);
+                return 1;
+            }
+        } else {
+            printf("Image Already Backup.\n");
+            free(tmp_buff);
+            return 0;
+        }
+    } else {
+        printf("%d blocks Read Flag Hash: ERROR\n",  ret);
+        free(tmp_buff);
+        return 1;
+    }
+    printf("MMC Save: %ld Blocks Flag Hash Write OK\n", ret);
+    free(tmp_buff);
+    return 0;
+}
+
+/* mmc_backup_restore() :
+ * copy image from src_addr to dst_addr,
+ * src_addr: source      address unit is blk(512Byte)  reserved partition
+ * dst_addr: destination address unit is blk(512Byte)  uboot partition
+ * blk:      the number of block                       uboot+boot.img blocks
+ *
+ *                 ------blk*512Byte-----4Byte---16Byte-----492Byte---
+ * src_addr image: |    image file    |  flag  |  Hash  |    NULL   |
+ *                 ---------------------------------------------------
+ * */
+
+int mmc_backup_restore(void)
+{
+    unsigned long dst_blk = 0;
+    unsigned long src_blk = 44 * 1024 * 1024 / 512;
+    unsigned long cnt_blk = 12 * 1024 * 1024 / 512;
+
+    struct mmc *mmc;
+    unsigned int ret;
+    unsigned int flag;
+    u8 output[16];
+    u8 read_hash[16];
+    void *tmp_buff;
+    unsigned char * buff;
+
+    if (curr_device < 0) {
+        if (get_mmc_num() > 0)
+            curr_device = 0;
+        else {
+            puts("No MMC device available\n");
+            //return 1;
+        }
+    }
+
+    mmc = find_mmc_device(curr_device);
+    if (!mmc) {
+        printf("no mmc device at slot %x\n", curr_device);
+        return 1;
+    }
+
+    mmc_init(mmc);
+    if (mmc_getwp(mmc) == 1) {
+        printf("Error: card is write protected!\n");
+        return 1;
+    }
+
+    tmp_buff = malloc(cnt_blk * 512);
+    if (!tmp_buff) {
+        printf("Cannot allocate memory\n");
+        return 1;
+    }
+
+    ret = mmc->block_dev.block_read(curr_device, src_blk+cnt_blk, 1, tmp_buff);
+    buff = (unsigned char *)tmp_buff;
+    memcpy(read_hash, &buff[4], 16);
+    if (ret > 0) {
+        flag = ((unsigned int *)tmp_buff)[0];
+        if (flag == SAVE_SIGNATURE) {
+            printf("\nMMC Restore: dev # %d, src_blk # %ld, dst_blk # %ld ,count %ld ... \n",
+                        curr_device, src_blk, dst_blk, cnt_blk);
+            ret = mmc->block_dev.block_read(curr_device, src_blk, cnt_blk, tmp_buff);
+            /* flush cache after read */
+            flush_cache((ulong)tmp_buff, cnt_blk * 512); /* FIXME */
+            if (ret <= 0) {
+                printf("mmc_backup_restore read Error!\n");
+                free(tmp_buff);
+                return 1;
+            }
+
+            /* comparison Hash */
+            md5_wd((unsigned char *) tmp_buff, cnt_blk * 512, output, CHUNKSZ_MD5);
+            ret = memcmp(read_hash, output, 16);
+            if (ret != 0) {
+                printf("mmc_backup_restore comparison Hash not equal Error!\n");
+                free(tmp_buff);
+                return 1;
+            }
+
+            ret = mmc->block_dev.block_write(curr_device, dst_blk, cnt_blk, tmp_buff);
+            if (ret <= 0) {
+                printf("mmc_backup_restore write Error!\n");
+                free(tmp_buff);
+                return 1;
+            }
+
+        } else {
+            printf("Have not Backup image.\n");
+            free(tmp_buff);
+            return 1;
+        }
+
+    } else {
+        printf("mmc_backup_restore %d blocks read Flag Hash: ERROR\n",  ret);
+        free(tmp_buff);
+        return 1;
+    }
+    printf("MMC Restore: %ld Blocks Write OK\n", ret);
+    free(tmp_buff);
+    return 0;
+}
+
 #endif /* !CONFIG_GENERIC_MMC */
