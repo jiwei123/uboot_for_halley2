@@ -60,10 +60,8 @@ static unsigned int get_pllreg_value(int freq)
 	unsigned int mnod = 0;
 	int nf = 1, nr = 0, no = 1;
 	int bs = 0;
-#if 0
+#if 1
 	unsigned int nrok = 0;
-	unsigned int mnod = 0;
-	int nf = 1, nr = 0, no = 1;
 	int fvco = 0;
 	int fin = gd->arch.gi->extal/1000000;
 	int fout = freq/1000000;

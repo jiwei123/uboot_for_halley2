@@ -53,29 +53,6 @@ extern void pll_init(void);
 extern void sdram_init(void);
 extern void validate_cache(void);
 
-
-void gpio_debug()
-{
-	int i = 0;
-	gpio_direction_output(GPIO_PB(1), 1);
-	gpio_direction_output(GPIO_PC(16), 1);
-	gpio_direction_output(GPIO_PC(17), 1);
-	gpio_direction_output(GPIO_PC(18), 1);
-	gpio_direction_output(GPIO_PC(19), 1);
-	gpio_direction_output(GPIO_PC(20), 1);
-
-	for(i = 0; i < 1000; i++)
-		__asm__ volatile("nop");
-
-	gpio_direction_output(GPIO_PB(1), 0);
-	gpio_direction_output(GPIO_PC(16), 0);
-	gpio_direction_output(GPIO_PC(17), 0);
-	gpio_direction_output(GPIO_PC(18), 0);
-	gpio_direction_output(GPIO_PC(19), 0);
-	gpio_direction_output(GPIO_PC(20), 0);
-}
-
-
 void board_init_f(ulong dummy)
 {
 	/* Set global data pointer */
@@ -122,9 +99,6 @@ void board_init_f(ulong dummy)
 	debug("CLK init\n");
 	clk_init();
 
-#if 0
-	gpio_debug();
-#endif
 	debug("SDRAM init\n");
 	sdram_init();
 
