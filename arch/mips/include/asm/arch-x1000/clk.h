@@ -26,8 +26,9 @@
 
 enum clk_id {
 	DDR,
-	MACPHY,
 	I2S,
+	PCM,
+	MACPHY,
 	LCD,
 	MSC,
 	MSC0 = MSC,
@@ -36,7 +37,6 @@ enum clk_id {
 	SFC,
 	SSI = SFC,
 	CIM,
-	PCM,
 	CGU_CNT,
 	CPU = CGU_CNT,
 	H2CLK,
