@@ -202,13 +202,17 @@ int sd_found(void)
 		return -1;
 	}
 
+	if((resp[4] & 0x60 ) == 0x40)
+		highcap = 1;
+	else
+		highcap =0;
+
 	resp = mmc_cmd(2, 0, 0x2, MSC_CMDAT_RESPONSE_R2);
 	resp = mmc_cmd(3, 0, 0x6, MSC_CMDAT_RESPONSE_R6);
 	cardaddr = (resp[4] << 8) | resp[3];
 	rca = cardaddr << 16;
 
 	resp = mmc_cmd(9, rca, 0x2, MSC_CMDAT_RESPONSE_R2);
-	highcap = (resp[14] & 0xc0) >> 6;
 
 #ifndef CONFIG_FPGA
 	msc_writel(MSC_CLKRT, MSC_CLKRT_CLK_RATE_DIV_1);

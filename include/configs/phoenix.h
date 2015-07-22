@@ -88,8 +88,8 @@
 #if defined(CONFIG_SPL_NOR_SUPPORT) || defined(CONFIG_SPL_SFC_SUPPORT)
 	#if defined(CONFIG_SPL_SFC_SUPPORT)
 		#if defined(CONFIG_SPL_SFC_NOR)
-		/*	#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"*/
-			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=192.168.4.254:192.168.4.1:192.168.4.1:255.255.255.0 rootdelay=2 nfsroot=192.168.4.13:/home/fpga/kyhe/rootfs rw"
+			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+			/* #define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=192.168.4.254:192.168.4.1:192.168.4.1:255.255.255.0 rootdelay=2 nfsroot=192.168.4.13:/home/fpga/kyhe/rootfs rw" */
 			/* #define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw" */
 			#define CONFIG_BOOTCOMMAND "sfcnor read 0x30000 0x800000 0x80800000 ;bootm 0x80800000"
 		#else  /* CONFIG_SPL_SFC_NAND */
@@ -184,9 +184,10 @@
 #ifdef CONFIG_JZ_MMC_MSC0
 #define CONFIG_JZ_MMC_SPLMSC 0
 #define CONFIG_JZ_MMC_MSC0_PA_4BIT 1
+/* #define CONFIG_JZ_MMC_MSC0_PA_8BIT 1 */
 /* #define CONFIG_MSC_DATA_WIDTH_8BIT */
-/*#define CONFIG_MSC_DATA_WIDTH_4BIT*/
-#define CONFIG_MSC_DATA_WIDTH_1BIT
+#define CONFIG_MSC_DATA_WIDTH_4BIT
+/* #define CONFIG_MSC_DATA_WIDTH_1BIT */
 #endif
 
 #ifdef CONFIG_JZ_MMC_MSC1
