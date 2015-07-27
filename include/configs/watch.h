@@ -245,7 +245,7 @@
 
 /* I2C */
 #define CONFIG_MUTIPLE_I2C_BUS 	   /* mutiple i2c bus enable */
-#define CONFIG_SOFT_I2C
+/*#define CONFIG_SOFT_I2C*/
 #define CONFIG_SYS_I2C_SPEED		50     /* the function is not implemented */
 #define CONFIG_SYS_I2C_SLAVE		0x00   /* the function is not implemented */
 
@@ -270,6 +270,12 @@
 #endif
 #endif
 
+
+/* I2C */
+#define CONFIG_INGENIC_SOFT_I2C
+
+#define CONFIG_RICOH61X_I2C_SCL GPIO_PE(31)
+#define CONFIG_RICOH61X_I2C_SDA GPIO_PE(30)
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
 #define CONFIG_PMU_RICOH6x
 

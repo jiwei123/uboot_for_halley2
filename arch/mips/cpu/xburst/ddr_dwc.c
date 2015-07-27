@@ -59,6 +59,7 @@ extern void send_MR0(int a);
 	/* DDR3, */
 	/* LPDDR, */
 	/* LPDDR2, */
+	/* DDR2,  */
 	/* VARIABLE, */
 
 #define DDR_TYPE_MODE(x)     (((x) >> 1) & 0xf)
@@ -318,6 +319,9 @@ static void ddr_phy_param_init(unsigned int mode)
 		ddr_writel(DDRP_MR2_VALUE, DDRP_MR2);
 
 		break;
+	case DDR2:
+		ddr_writel(DDRP_MR1_VALUE, DDRP_MR1);
+		break;
 	}
 
 #ifdef CONFIG_SYS_DDR_CHIP_ODT
@@ -385,6 +389,8 @@ static void ddr_phy_param_init(unsigned int mode)
 	case LPDDR2:
 		ddr_writel(0x910, DDRP_DXCCR);
 		break;
+	case DDR2:
+		break;
 	}
 	while (!(ddr_readl(DDRP_PGSR) == (DDRP_PGSR_IDONE
 					| DDRP_PGSR_DLDONE
@@ -415,6 +421,9 @@ static void ddr_chip_init(unsigned int mode)
 		break;
 	case LPDDR:
 		pir_val |= DDRP_PIR_DRAMINT;
+		break;
+	case DDR2:
+		pir_val |= DDRP_PIR_DRAMINT | DDRP_PIR_DRAMINT;
 		break;
 	}
 #else
@@ -463,6 +472,9 @@ static int ddr_training_hardware(unsigned int mode)
 		break;
 	case LPDDR:
 		pir_val |= DDRP_PIR_QSTRN | DDRP_PIR_DLLLOCK;
+		break;
+	case DDR2:
+		pir_val |= DDRP_PIR_QSTRN;
 		break;
 	}
 	if(IS_BYPASS_MODE(mode))
@@ -616,6 +628,7 @@ static void ddr_impedance_matching(void)
 	 * 	30.4ohm		0x9
 	 * 	28.6ohm		0x18
 	 */
+	unsigned int i;
 	i = ddr_readl(DDRP_ZQXCR0(0)) & ~0x3ff;
 	i |= DDRP_ZQXCR_ZDEN
 		| ((CONFIG_DDR_PHY_IMPED_PULLUP & 0x1f) << DDRP_ZQXCR_PULLUP_IMPED_BIT)
@@ -655,6 +668,10 @@ void sdram_init(void)
 #endif
 #ifdef CONFIG_DDR_TYPE_LPDDR2
 	type = LPDDR2;
+#endif
+
+#ifdef CONFIG_DDR_TYPE_DDR2
+	type = DDR2;
 #endif
 
 #ifndef CONFIG_DDR_HOST_CC

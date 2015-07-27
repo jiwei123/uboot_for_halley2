@@ -40,6 +40,7 @@
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
+static int mmc_csd_perm_w_protect = 0;
 
 int __weak board_mmc_getwp(struct mmc *mmc)
 {
@@ -296,7 +297,7 @@ static int mmc_go_idle(struct mmc *mmc)
 	if (err)
 		return err;
 
-	udelay(10000);
+	udelay(2000);
 
 	return 0;
 }
@@ -792,7 +793,19 @@ void mmc_set_bus_width(struct mmc *mmc, uint width)
 
 	mmc_set_ios(mmc);
 }
-
+int get_mmc_csd_perm_w_protect()
+{
+	return mmc_csd_perm_w_protect;
+}
+static void mmc_is_wp(unsigned int csd_response4)
+{
+	if(csd_response4 & MMC_CSD_PERM_WRITE_PROTECT){
+		mmc_csd_perm_w_protect = 1;
+		printf("ERROR: the mmc is Permanent write protection !!!!!!!!!!!!!!\n");
+	}
+	else
+		mmc_csd_perm_w_protect = 0;
+}
 static int mmc_startup(struct mmc *mmc)
 {
 	int err, i;
@@ -859,6 +872,8 @@ static int mmc_startup(struct mmc *mmc)
 
 	if (err)
 		return err;
+
+	mmc_is_wp(cmd.response[3]);
 
 	mmc->csd[0] = cmd.response[0];
 	mmc->csd[1] = cmd.response[1];
