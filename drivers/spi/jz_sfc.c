@@ -505,6 +505,7 @@ void sfc_send_cmd(unsigned char *cmd,unsigned int len,unsigned char *addr ,unsig
 		sfc.sfc_mode = 0;
 	}
 	sfc_set_transfer(&sfc,dir);
+	jz_sfc_writel(1 << 2,SFC_TRIG);
 	jz_sfc_writel(START,SFC_TRIG);
 
 	/*this must judge the end status*/
@@ -663,10 +664,14 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 		erase_size = 0x1000;
 	}
 
-	if (offset % erase_size || len % erase_size) {
-		printf("Erase offset/length not multiple of erase size\n");
-		return -1;
+	if(len % erase_size != 0){
+		len = len - (len % erase_size) + erase_size;
 	}
+//
+//	if (len % erase_size) {
+//		printf("Erase offset/length not multiple of erase size\n");
+//		return -1;
+//	}
 
 	cmd[0] = CMD_WREN;
 
@@ -858,6 +863,7 @@ void sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_ad
 	sfc_set_quad_mode(0x2);
 #endif
 
+	jz_sfc_writel(1 << 2,SFC_TRIG);
 	jz_write(&flash,src_addr,count,dst_addr);
 	if (ret) {
 		printf("sfc write error\n");
@@ -885,6 +891,7 @@ void sfc_nor_erase(unsigned int src_addr, unsigned int count)
 #ifdef CONFIG_SPI_QUAD
 	sfc_set_quad_mode(0);
 #endif
+	jz_sfc_writel(1 << 2,SFC_TRIG);
 	jz_erase(&flash,src_addr,count);
 	if (ret) {
 		printf("sfc erase error\n");
