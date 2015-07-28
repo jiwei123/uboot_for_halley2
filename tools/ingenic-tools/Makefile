@@ -30,6 +30,7 @@ MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
 GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin
 SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
 SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
+AUDIO-$(CONFIG_AUDIO_CAL_DIV) += audio.h
 #IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
 #BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
 LOGO-$(CONFIG_RLE_LCD_LOGO) = $(RLE_BOOT_LOGO_H)
@@ -41,7 +42,7 @@ ifndef CONFIG_BATTERYDET_LED
 RLE_CHARGE_LOGO_H = $(OBJTREE)/include/rle_charge_logo.h
 endif
 
-TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y) $(SPL-y) $(LOGO-y) $(CHARGE_LOGO-y) #$(IMG2RLE-y) $(BIN2ARRAY-y)
+TOOLS	= $(DDR-y) $(MBR-y) $(GPT-y) $(SPI-y) $(SPL-y) $(LOGO-y) $(CHARGE_LOGO-y) $(AUDIO-y) #$(IMG2RLE-y) $(BIN2ARRAY-y)
 TOOLS	:= $(addprefix $(obj),$(TOOLS))
 
 all:	$(obj).depend $(TOOLS)
@@ -52,6 +53,9 @@ $(obj)ddr_params_creator:	ddr_params_creator.c $(SRCTREE)/include/configs/$(BOAR
 
 $(obj)ddr_reg_values.h:	$(obj)ddr_params_creator
 	$(OBJTREE)/tools/ingenic-tools/ddr_params_creator > $(OBJTREE)/include/generated/$@
+
+$(obj)audio.h: $(obj)audio.py
+	$(OBJTREE)/tools/ingenic-tools/audio.py $(CONFIG_AUDIO_APLL) $(CONFIG_AUDIO_MPLL) > $(OBJTREE)/include/generated/$@
 
 $(obj)mbr_creator:	mbr_creator.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^

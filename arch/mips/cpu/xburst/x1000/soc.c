@@ -31,7 +31,7 @@
 #include <asm/arch/cpm.h>
 #include <spl.h>
 #include <regulator.h>
-
+#include <generated/audio.h>
 #ifdef CONFIG_SPL_BUILD
 
 /* Pointer to as well as the global data structure for SPL */
@@ -109,6 +109,9 @@ void board_init_f(ulong dummy)
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);
+
+	memcpy((void*)0xf4000000,audio_div_apll,256);
+	memcpy((void*)0xf4000000+256,audio_div_mpll,256);
 
 	debug("board_init_r\n");
 	board_init_r(NULL, 0);
