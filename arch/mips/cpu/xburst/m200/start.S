@@ -32,6 +32,7 @@
 	.set noreorder
 	.globl _start
 	.text
+
 _start:
 #ifdef CONFIG_SPL_MMC_SUPPORT
 	/* magic value ("MSPL") */
@@ -76,29 +77,14 @@ _start:
 	ori	v0, v0, 2
 	mtc0	v0, CP0_CONFIG, 7
 	nop
-
-	/*
-	 * $12 sel 2 core_ctrl register.
-         * it's value isn't stable after reset it.
-	 */
+#if 1
 	mfc0	v0, $12, 2
 	nop
-	li      v1, ~0xfc000000
-	and     v0,v0,v1
-	li      v1,0x80000000
-	or      v0,v0,v1
-#if 1
 	li	v1, 0x7fffffff
 	and	v0, v0, v1
-
-//	li      v1, 0x20000000
-//	or      v0,v0,v1
-#endif
-
 	mtc0	v0, $12, 2
 	nop
-
-
+#endif
 	/*
 	 * CU0=UM=EXL=IE=0, BEV=ERL=1, IP2~7=1
 	 */
