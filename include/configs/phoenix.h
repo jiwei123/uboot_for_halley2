@@ -32,7 +32,6 @@
 #define CONFIG_CPU_XBURST
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_X1000
-#define CONFIG_DDR_AUTO_SELF_REFRESH
 
 #define CONFIG_SYS_APLL_FREQ		1008000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
