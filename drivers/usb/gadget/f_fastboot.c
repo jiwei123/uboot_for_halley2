@@ -840,10 +840,10 @@ static int handle_cmd_flash(struct fastboot_dev *fastboot)
 	unsigned char *pname;
 	memset(pname, 0 , 128);
 	for(i = 0; i < PARTITION_NUM ; i ++){
-		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 6,(strlen(partition_info[i].pname)-2))){
+		if(!strcmp(partition_info[i].pname + 2 , boot_buf + 6)){
 			strcpy(pname,partition_info[i].pname);
 			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
-			cnt = (fastboot->data_length + MMC_BYTE_PER_BLOCK - 1) / MMC_BYTE_PER_BLOCK;
+			cnt = partition_info[i].size / MMC_BYTE_PER_BLOCK;
 			goto do_flash;
 			break;
 		}
@@ -906,10 +906,10 @@ static int handle_cmd_erase(struct fastboot_dev *fastboot)
 	unsigned char *pname;
 	memset(pname, 0 , 128);
 	for(i = 0; i < PARTITION_NUM ; i ++){
-		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 6,(strlen(partition_info[i].pname)-2))){
+		if(!strcmp(partition_info[i].pname + 2 , boot_buf + 6)){
 			strcpy(pname,partition_info[i].pname);
 			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
-			cnt = (partition_info[i].size + MMC_BYTE_PER_BLOCK - 1) / MMC_BYTE_PER_BLOCK;
+			cnt = partition_info[i].size / MMC_BYTE_PER_BLOCK;
 			goto do_erase;
 			break;
 		}
@@ -1096,7 +1096,7 @@ static void handle_fastboot_cmd_complete(struct usb_ep *ep,
 		goto cmd_finish;
 	}
 
-	if ((strcmp(req->buf, "reboot-bootloader")) && !strncmp(req->buf, "reboot",6)) {
+	if (!strcmp(req->buf, "reboot")) {
 		explain_cmd_reboot(fastboot);
 		goto cmd_finish;
 	}

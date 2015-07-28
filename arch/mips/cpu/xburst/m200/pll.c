@@ -108,7 +108,6 @@ static unsigned int get_pllreg_value(int freq)
 static void pll_set(int pll,int freq)
 {
 	unsigned int regvalue = get_pllreg_value(freq);
-	cpm_cpxpcr_t cppcr;
 
 	if (regvalue == -EINVAL)
 		return;
@@ -122,14 +121,7 @@ static void pll_set(int pll,int freq)
 			break;
 		case MPLL:
 			/* Init MPLL */
-			cppcr.d32 = regvalue;
-			if(freq <= 800000000) {
-				cppcr.b.PLLM *= 2;
-				cppcr.b.PLLOD1 *= 2;
-			} else {
-
-			}
-			cpm_outl(cppcr.d32 | (0x1 << 0), CPM_CPMPCR);
+			cpm_outl(regvalue | (0x1 << 0), CPM_CPMPCR);
 			while(!(cpm_inl(CPM_CPMPCR) & (0x1 << 3)))
 				;
 			debug("CPM_CPMPCR %x\n", cpm_inl(CPM_CPMPCR));
@@ -203,9 +195,9 @@ static void final_fill_div(int cpll, int ddrpll)
 	/*PCLK 75M ~ 150M*/
 	switch (Periph_pll_freq/100000000) {
 	case 10 ... 12:
-		pll_cfg.pdiv = 8;
-		pll_cfg.h0div = 4;
-		pll_cfg.h2div = 4;
+		pll_cfg.pdiv = 10;
+		pll_cfg.h0div = 5;
+		pll_cfg.h2div = 5;
 		break;
 	case 7 ... 9:
 		pll_cfg.pdiv = 8;

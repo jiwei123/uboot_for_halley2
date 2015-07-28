@@ -226,45 +226,6 @@ static int test_ddr(unsigned int addr_start, unsigned int addr_end,
 	}
 	return 0;
 }
-static int dm_ddr_test()
-{
-	unsigned int i;
-	unsigned int addr_start, offset, size;
-	unsigned char src;
-
-	offset = 0x100000;
-	size   = 0x40000;
-
-	addr_start = KSEG1 + offset;
-	printf("addr_start = %x\n",addr_start);
-
-	for (i = addr_start ; i <= addr_start + size; i++) {
-		*(volatile unsigned char *)i = 0xaa;
-	}
-	for (i = addr_start; i <= addr_start + size; i++) {
-		src = *(volatile unsigned char *)i;
-		if (src != 0xaa) {
-			debug("Error: ADDR:%x wanted value is 0x%x \n",i, 0xaa);
-			debug("But the real value is 0x%x \n", src);
-			debug("dm_ddr_test failed \n");
-			return 1;
-		}
-	}
-
-	for (i = addr_start ; i <= addr_start + size; i++) {
-		*(volatile unsigned char *)i = (unsigned char)i;
-	}
-	for (i = addr_start; i <= addr_start + size; i++) {
-		src = *(volatile unsigned char *)i;
-		if (src != (unsigned char)i) {
-			debug("Error: ADDR:%x wanted value is 0x%x \n",i, (unsigned char)i);
-			debug("But the real value is 0x%x \n", src);
-			debug("dm_ddr_test failed \n");
-			return 1;
-		}
-	}
-	return 0;
-}
 
 #define START_UNCACHE_ADDR	0x0
 #define START_CACHE_ADDR	0x00100000
@@ -699,7 +660,6 @@ void ddr_basic_tests(void)
 #else
 	ddr_test(1, 0, 1);
 #endif
-	dm_ddr_test();
 #endif
 	/* The dataline test must run before all test */
 #ifdef CONFIG_DDR_TEST_DATALINE

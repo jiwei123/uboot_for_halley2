@@ -88,7 +88,7 @@ void board_init_f(ulong dummy)
 	pll_init();
 
 #ifdef CONFIG_26M
-	 *((volatile unsigned int *)(0xb0000050)) = (0x1<<31) | (0x1<<29) | 38;
+	*((volatile unsigned int *)(0xb0000050)) = (0x1<<31) | (0x1<<29) | 38;
 #endif
 
 	debug("CLK init\n");

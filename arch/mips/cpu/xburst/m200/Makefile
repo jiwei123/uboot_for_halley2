@@ -27,7 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).o
 
 SOBJS-y	=
-COBJS-y	= soc.o
+COBJS-y	= $(SOC).o
 ifndef CONFIG_FPGA
 COBJS-y += pll.o
 COBJS-y += clk.o
