@@ -121,6 +121,13 @@
 	#endif
 #endif
 
+#ifdef CONFIG_SPL_OS_BOOT
+#define CONFIG_SPL_OS_OFFSET        (1*1024*1024) /* spi offset of xImage being loaded */
+#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+#define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
+#define CONFIG_BOOTCOMMAND          "bootx sfc 0x80f00000 0x100000"
+#endif
+
 #define PARTITION_NUM 10
 
 /**

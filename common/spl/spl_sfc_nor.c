@@ -180,11 +180,6 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 		words_of_spl = count / 4 + 1;
 	}
 
-	jz_sfc_writel(0,SFC_TRIG);
-	jz_sfc_writel(1 << 2,SFC_TRIG);
-
-	sfc_init();
-
 	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), words_of_spl);
 	if (ret) {
 		printf("sfc read error\n");
@@ -196,20 +191,35 @@ void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
 	int i = 0;
+#ifdef CONFIG_SPL_OS_BOOT
+	char nv_buf[4*8];
+	int count = 32;
+	unsigned int src_addr;
+#endif
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
 	/*the sfc clk is 1/2 ssi clk */
 	clk_set_rate(SSI,70000000);
-	spl_parse_image_header(header);
 
-	sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+	jz_sfc_writel(0,SFC_TRIG);
+	jz_sfc_writel(1 << 2,SFC_TRIG);
 
+	sfc_init();
+#ifdef CONFIG_SPL_OS_BOOT
+	src_addr = 256*1024;
+	sfc_nor_load(src_addr, count, (unsigned int)nv_buf);
+	for(i = 0; i < 16; i += 4)
+		printf("buf[] = %x\n", *(unsigned int *)(nv_buf + i));
+	if(0 && nv_buf[0]) {
+		sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+		spl_parse_image_header(header);
+		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
+	} else
+#endif
+	  {
+		  spl_parse_image_header(header);
+		  sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+	  }
 	return ;
 
 }
-
-
-
-
-
-

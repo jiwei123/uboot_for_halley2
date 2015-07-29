@@ -27,6 +27,7 @@
 #include <spl.h>
 #include <image.h>
 #include <linux/compiler.h>
+#include <boot_img.h>
 
 /* Pointer to as well as the global data structure for SPL */
 DECLARE_GLOBAL_DATA_PTR;
@@ -62,11 +63,17 @@ int __weak cleanup_before_linux (void)
 void __noreturn jump_to_image_linux(void *arg)
 {
 	debug("Entering kernel arg pointer: 0x%p\n", arg);
-	typedef void (*image_entry_arg_t)(int, int, void *)
+	static u32 *param_addr = NULL;
+	typedef void (*image_entry_arg_t)(int, char **, void *)
 		__attribute__ ((noreturn));
 	image_entry_arg_t image_entry =
 		(image_entry_arg_t) spl_image.entry_point;
+
 	cleanup_before_linux();
-	image_entry(0, CONFIG_MACH_TYPE, arg);
+	param_addr = (u32 *)CONFIG_PARAM_BASE;
+	param_addr[0] = 0;
+	param_addr[1] = arg;
+	flush_cache_all();
+	image_entry(2, (char **)param_addr, NULL);
 }
 #endif
