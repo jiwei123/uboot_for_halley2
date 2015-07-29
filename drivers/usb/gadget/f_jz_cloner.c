@@ -63,6 +63,7 @@ struct spi spi;
 #define VR_UPDATE_CFG		0x14
 #define VR_SYNC_TIME		0x15
 #define VR_REBOOT		0x16
+#define VR_POWEROFF		0x17	/*reboot and poweroff*/
 
 #define MMC_ERASE_ALL	1
 #define MMC_ERASE_PART	2
@@ -700,6 +701,8 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 #ifdef CONFIG_FPGA
 extern int do_udc_reset(void);
 #endif
+
+extern void burner_set_reset_tag(void);
 void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 {
 	struct cloner *cloner = req->context;
@@ -751,6 +754,10 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 			do_udc_reset();
 			mdelay(10000);
 #endif
+			do_reset(NULL,0,0,NULL);
+			break;
+		case VR_POWEROFF:
+			burner_set_reset_tag();
 			do_reset(NULL,0,0,NULL);
 			break;
 	}

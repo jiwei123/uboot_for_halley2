@@ -331,7 +331,6 @@ int jz_pm_do_hibernate(void)
 		printf
 			("We should not come here, please check the jz4760rtc.h!!!\n");
 	};
-
 	/* We can't get here */
 	return 0;
 }
@@ -498,12 +497,13 @@ static void battery_init_gpio(void)
 #endif
 }
 
+
 static int charge_detect(void)
 {
 	int ret = 0;
 	int i;
 
-	if (readl(CPM_BASE + CPM_RSR) & CPM_RSR_WR)
+	if ((readl(CPM_BASE + CPM_RSR) & CPM_RSR_WR))
 		return ret;
 #ifndef CONFIG_BATTERY_INIT_GPIO
 	/* IF default battery_init_gpio function is not suitable for actual board,
@@ -868,16 +868,23 @@ static int  voltage_argument_init(int argc, char *const argv[])
 	}
 	return 0;
 }
+int __is_burner_reset(void)
+{
+	return 0;
+}
+int is_burner_reset(void) __attribute__((weak, alias("__is_burner_reset")));
 
 extern unsigned char rle_default_logo_addr [ 59824 ];
 static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	int ret = 0;
+
+	if (is_burner_reset())
+		jz_pm_do_hibernate();
 	ret = voltage_argument_init(argc, argv);
-	if(ret != 0){
+	if(ret != 0)
 		return ret;
-	}
 	battery_detect();
 	return ret;
 }

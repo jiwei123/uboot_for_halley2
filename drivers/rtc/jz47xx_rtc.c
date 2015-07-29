@@ -117,10 +117,28 @@ int rtc_read_time(void)
 	to_tm(tmp, tm);
 	printf("Set DATE: %4d-%02d-%02d (wday=%d)  TIME: %2d:%02d:%02d\n",
 	      tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_wday,
-	      tm->tm_hour, tm->tm_min, tm->tm_sec);	
+	      tm->tm_hour, tm->tm_min, tm->tm_sec);
 	return 0;
 }
 
+
+void burner_set_reset_tag(void)
+{
+	do {
+		jzrtc_writel(RTC_HSPR, 0XA55A);
+	} while (jzrtc_readl(RTC_HSPR) != 0xA55A);
+}
+
+int is_burner_reset(void)
+{
+	if (jzrtc_readl(RTC_HSPR) == 0xA55A) {
+		do {
+			jzrtc_writel(RTC_HSPR, 0X0000);
+		}while (jzrtc_readl(RTC_HSPR) != 0x0000);
+		return 1;
+	}
+	return 0;
+}
 
 int rtc_set(struct rtc_time *tmp)
 {
