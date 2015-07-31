@@ -31,6 +31,10 @@
 #include <asm/arch/mmc.h>
 #include <asm/arch/clk.h>
 
+#ifdef CONFIG_PMU_SM5007
+#include <power/sm5007_api.h>
+#endif
+
 struct cgu_clk_src cgu_clk_src[] = {
 	{VPU, MPLL},
 	{OTG, EXCLK},
@@ -53,6 +57,7 @@ extern void boot_mode_select(void);
 #ifdef CONFIG_PMU_RICOH6x
 extern int ricoh61x_regulator_init(void);
 #endif
+
 
 #ifdef CONFIG_MMC
 extern int mmc_backup_save(void);
@@ -78,6 +83,9 @@ int regulator_init(void)
 
 #ifdef CONFIG_PMU_RICOH6x
 	ret = ricoh61x_regulator_init();
+#endif
+#ifdef CONFIG_PMU_SM5007
+	ret = sm5007_regulator_init();
 #endif
 	return ret;
 }

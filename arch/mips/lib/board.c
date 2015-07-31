@@ -38,6 +38,10 @@
 #include <miiphy.h>
 #endif
 
+#ifdef CONFIG_PMU_SM5007
+#include <power/sm5007_api.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 ulong monitor_flash_len;
@@ -368,6 +372,10 @@ extern void board_usb_init(void);
 #endif
 #ifdef CONFIG_PMU_RICOH6x
 	ricoh619_battery_init();
+#endif
+#ifdef CONFIG_PMU_SM5007
+	sm5007_charger_probe();
+	sm5007_fg_probe();
 #endif
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init();

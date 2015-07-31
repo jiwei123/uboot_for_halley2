@@ -35,6 +35,10 @@
 #include <malloc.h>
 #include <regulator.h>
 
+#ifdef CONFIG_PMU_SM5007
+#include <power/sm5007_api.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
 #define RLE_LOGO_BASE_ADDR  (0x00000000)	//need to fixed!
@@ -302,6 +306,10 @@ static int jz_pm_do_hibernate(void)
 	ricoh619_power_off();
 #endif
 
+#ifdef CONFIG_PMU_SM5007
+	printf("SM5007  The battery voltage is too low, will power down\n");
+	sm5007_shutdown();
+#endif
 	mdelay(100);
 	printf("We should not come here, please check the PMU config!!!\n");
 
@@ -545,7 +553,7 @@ static int poweron_key_pressed_status(int charge_logo_first_show)
 static int battery_is_low(void)
 {
 
-#ifdef CONFIG_PMU_RICOH6x
+#if defined(CONFIG_PMU_RICOH6x)
 	int capa = 0, vsys = 0, first = 0;
 	first = detection_first_poweron();
 	if(first){
@@ -569,6 +577,15 @@ static int battery_is_low(void)
 		else
 			return 0;
 
+	}
+#elif defined(CONFIG_PMU_SM5007)
+	int capa = 0, vbat = 0;
+	capa = fg_get_soc();
+	vbat = fg_get_vbat();
+	if(capa < 10) {
+		return 1;
+	}else {
+		return 0;
 	}
 #else
 	unsigned int voltage = 0;
@@ -751,7 +768,7 @@ static void show_charging_logo(void)
 		}
 		// During the charge process ,User extract the USB cable ,Enter hibernate mode
 		if (!(__usb_detected() || __dc_detected())) {
-			debug("charge is stop\n");
+			printf("Charge is stop, do not Power on System, so shutdown!\n");
 //			show_charge_logo_rle(rle_num_base);
 //			wait_lcd_refresh_finish();
 			jz_pm_do_hibernate();
@@ -808,6 +825,9 @@ static void battery_detect(void)
 {
 	if (charge_detect()) {
 		show_charging_logo();
+#ifdef CONFIG_PMU_SM5007
+		sm5007_enable_chgen(1);
+#endif
 	} else if(battery_is_low()){
 		show_battery_low_logo();
 		printf("The battery voltage is too low. Please charge\n");

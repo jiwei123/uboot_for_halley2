@@ -75,8 +75,10 @@
 #define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
 #ifdef  CONFIG_SOLAR
+#define CONFIG_PMU_SM5007
 #define CONFIG_MCP_H9TU32A4GDMCLR_KGM_LPDDR2
 #else
+#define CONFIG_PMU_RICOH6x
 #define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 #endif
 /*#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2*/
@@ -271,7 +273,6 @@
 #endif
 
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
-#define CONFIG_PMU_RICOH6x
 
 
 #define CONFIG_REGULATOR
