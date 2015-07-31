@@ -36,7 +36,7 @@ extern void flush_cache_all(void);
 
 
 /*boot.img has been in memory already. just call init_boot_linux() and jump to kernel.*/
-void bootx_jump_kernel(unsigned long mem_address)
+static void bootx_jump_kernel(unsigned long mem_address)
 {
 	static u32 *param_addr = NULL;
 	typedef void (*image_entry_arg_t)(int, char **, void *)
@@ -56,12 +56,13 @@ void bootx_jump_kernel(unsigned long mem_address)
 }
 
 /* boot the android system form the memory directly.*/
-int mem_bootx(unsigned int mem_address)
+static int mem_bootx(unsigned int mem_address)
 {
 	printf("Enter mem_boot routine ...\n");
 	bootx_jump_kernel(mem_address);
 	return 0;
 }
+#ifdef CONFIG_JZ_SFC
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
 	struct image_header *header;
@@ -82,6 +83,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 
 	bootx_jump_kernel(mem_address);
 }
+#endif
 static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long mem_address,sfc_addr, size;
@@ -99,7 +101,9 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		mem_address = simple_strtoul(argv[1], NULL, 16);
 		sfc_addr = simple_strtoul(argv[2], NULL, 16);
 		printf("SFC boot start\n");
+#ifdef CONFIG_JZ_SFC
 		sfc_boot(mem_address, sfc_addr);
+#endif
 		printf("SFC boot error\n");
 		return 0;
 	} else {
