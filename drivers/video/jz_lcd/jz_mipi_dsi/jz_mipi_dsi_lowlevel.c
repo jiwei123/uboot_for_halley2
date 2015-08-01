@@ -13,22 +13,51 @@
 #include "jz_mipi_dsih_hal.h"
 
 struct freq_ranges ranges[] = {
-	{90, 0x00, 0x01}, {100, 0x10, 0x01}, {110, 0x20, 0x01},
-	{125, 0x01, 0x01}, {140, 0x11, 0x01}, {150, 0x21, 0x01},
-	{160, 0x02, 0x01}, {180, 0x12, 0x03}, {200, 0x22, 0x03},
-	{210, 0x03, 0x03}, {240, 0x13, 0x03}, {250, 0x23, 0x03},
-	{270, 0x04, 0x07}, {300, 0x14, 0x07}, {330, 0x24, 0x07},
-	{360, 0x15, 0x07}, {400, 0x25, 0x07}, {450, 0x06, 0x07},
-	{500, 0x16, 0x07}, {550, 0x07, 0x0f}, {600, 0x17, 0x0f},
-	{650, 0x08, 0x0f}, {700, 0x18, 0x0f}, {750, 0x09, 0x0f},
-	{800, 0x19, 0x0f}, {850, 0x0A, 0x0f}, {900, 0x1A, 0x0f},
-	{950, 0x2A, 0x0f}, {1000, 0x3A, 0x0f}
+	{90, 0x00, 0x01}, /* 80-90  */
+	{100, 0x10, 0x01},/* 90-100 */
+	{110, 0x20, 0x01},/* 100-110 */
+	{125, 0x01, 0x01},/* 110-125 */
+
+	{140, 0x11, 0x01},/* 125-140 */
+	{150, 0x21, 0x01},/* 140-150 */
+	{160, 0x02, 0x01},/* 150-160 */
+	{180, 0x12, 0x03},/* 160-180 */
+
+	{200, 0x22, 0x03},/* 180-200 */
+	{210, 0x03, 0x03},/* 200-210 */
+	{240, 0x13, 0x03},/* 210-240 */
+	{250, 0x23, 0x03},/* 240-250 */
+
+	{270, 0x04, 0x07},/* 250-270 */
+	{300, 0x14, 0x07},/* 270-300 */
+	{330, 0x24, 0x07},/* 300-330 */
+	{360, 0x15, 0x07},/* 330-360 */
+
+	{400, 0x25, 0x07},/* 360-400 */
+	{450, 0x06, 0x07},/* 400-450 */
+	{500, 0x16, 0x07},/* 450-500 */
+	{550, 0x07, 0x0f},/* 500-550 */
+	{600, 0x17, 0x0f},/* 550-600 */
+
+	{650, 0x08, 0x0f},/* 600-650 */
+	{700, 0x18, 0x0f},/* 650-700 */
+	{750, 0x09, 0x0f},/* 700-750 */
+	{800, 0x19, 0x0f},/* 750-800 */
+
+	{850, 0x0A, 0x0f},/* 800-850 */
+	{900, 0x1A, 0x0f},/* 850-900 */
+	{950, 0x2A, 0x0f},/* 900-950 */
+	{1000, 0x3A, 0x0f}/* 950-1000 */
 };
 
 struct loop_band loop_bandwidth[] = {
-	{32, 0x06, 0x10}, {64, 0x06, 0x10}, {128, 0x0C, 0x08},
-	{256, 0x04, 0x04}, {512, 0x00, 0x01}, {768, 0x01, 0x01},
-	{1000, 0x02, 0x01}
+	{32, 0x06, 0x10}, /* 12 - 32 */
+	{64, 0x06, 0x10}, /* 33 - 64 */
+	{128, 0x0C, 0x08},/* 65 - 128 */
+	{256, 0x04, 0x04}, /* 129 - 256 */
+	{512, 0x00, 0x01}, /* 257 - 512 */
+	{768, 0x01, 0x01}, /* 513 - 768 */
+	{1000, 0x02, 0x01} /* 769 - 1000 */
 };
 
 void jz_dsih_dphy_reset(struct dsi_device *dsi, int reset)
@@ -73,7 +102,8 @@ void jz_dsih_dphy_ulpm_enter(struct dsi_device *dsi)
 	/* PHY_TX_TRIGGERS[3:0] = 4'h0 */
 	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_TX_TRIGGERS, 0x0, 0, 4);
 	/* PHY_STATUS[6:4] == 3'h3 */
-	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 4, 3) != 0x3)
+	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 4, 3) != 0x3 ||
+	       mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 2) != 0x1)
 		;
 	/* PHY_ULPS_CTRL [3:0] = 4'h5 */
 	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_ULPS_CTRL, 0x5, 0, 4);
@@ -111,7 +141,7 @@ step5:
 	/* PHY_ULPS_CTRL[3:0] = 4'hF */
 	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_ULPS_CTRL, 0xF, 0, 4);
 	/* PHY_STATUS [5] == 1'b1 && PHY_STATUS [3] == 1'b1 */
-	while(mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 5, 1) != 0x1 &&
+	while(mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 5, 1) != 0x1 ||
           mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 3, 1) != 0x1)
 		;
 	/* Wait for 1 ms */
@@ -121,10 +151,11 @@ step5:
 	/* LPCLK_CTRL[1:0] = 2'h1 */
 	mipi_dsih_write_part(dsi, R_DSI_HOST_LPCLK_CTRL, 0x1, 0, 2);
 	/* PHY_STATUS [6:4] == 3'h3 && PHY_STATUS [1:0] == 2'h1 */
-	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 4, 3) != 0x3 &&
+	while (mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 4, 3) != 0x3 ||
            mipi_dsih_read_part(dsi, R_DSI_HOST_PHY_STATUS, 0, 2) != 0x1)
 		;
-
+	/* PHY_RSTZ [3] = 1'b0 */
+	mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_RSTZ, 0x0, 3, 1);
 	printf("%s ...\n", __func__);
 }
 
