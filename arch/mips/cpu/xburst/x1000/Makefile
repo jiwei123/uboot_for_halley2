@@ -40,7 +40,10 @@ endif
 
 COBJS-y += clk.o
 COBJS-y += ddr_set_dll.o
+COBJS-$(CONFIG_BURNER) += burn_ddr.o
+ifndef CONFIG_BURNER
 COBJS-y += ../ddr_dwc.o
+endif
 COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
 COBJS-$(CONFIG_SPL_DDR_SOFT_TRAINING) += ../ddr_dqs_training.o
 COBJS-$(CONFIG_DDR_FORCE_SOFT_TRAINING) += ../ddr_dqs_training.o

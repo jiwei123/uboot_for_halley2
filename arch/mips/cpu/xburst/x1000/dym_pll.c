@@ -43,68 +43,68 @@ DECLARE_GLOBAL_DATA_PTR;
 	 | (((h - 1) & 0xf) << 4)          \
 	 | (((i - 1) & 0xf) << 0))
 
-#ifndef CONFIG_BURNER
-static unsigned int nfro(unsigned int _fin, unsigned int _fout)
-{
-	unsigned int nrok = 0;
-	unsigned int mnod = 0;
-	int nf = 1, nr = 0, no = 1;
-	int fvco = 0, bs = 0;
-	int fin = _fin/1000000;
-	int fout = _fout/1000000;
-
-	if ((fin < 10) || (fin > 50) || (fout < 36))
-		goto err;
-
-	do {
-		nrok++;
-		nf = (fout * nrok)/fin;
-		if ((nf > 128)) goto err;
-
-		if (fin * nf != fout * nrok)
-			continue;
-
-		if (nrok <= 64) {
-			no = 0;
-			nr = nrok;
-			fvco = fout * 1;
-		} else if (nrok <= 128 && nf%2 == 0) {
-			if (nf%2) goto err;
-			no = 1;
-			nr = nrok/2;
-			fvco = fout * 2;
-		} else if (nrok <= 256 && nf%4 == 0) {
-			if (nf%4) goto err;
-			no = 2;
-			nr = nrok/4;
-			fvco = fout * 4;
-		} else if (nrok <= 512 && nf%8 == 0) {
-			no = 3;
-			nr = nrok/8;
-			fvco = fout * 8;
-		} else {
-			goto err;
-		}
-
-		debug("fvco = %d\n", fvco);
-		if (fout >= 63 && fvco >= 500) {
-			bs = 1;
-			break;
-		} else if (fout >= 36 && fvco >= 300 && fvco <= 600) {
-			bs = 0;
-			break;
-		}
-	} while (1);
-
-	mnod = (bs << 31) | ((nf - 1) << 24) | ((nr - 1) << 18) | (no << 16);
-
-	return mnod;
-err:
-	printf("no adjust parameter to the fout:%dM fin: %d\n", fout, fin);
-	while(1);
-	return 0;
-}
-#else /* nCONFIG_BURNER */
+//#ifndef CONFIG_BURNER
+//static unsigned int nfro(unsigned int _fin, unsigned int _fout)
+//{
+//	unsigned int nrok = 0;
+//	unsigned int mnod = 0;
+//	int nf = 1, nr = 0, no = 1;
+//	int fvco = 0, bs = 0;
+//	int fin = _fin/1000000;
+//	int fout = _fout/1000000;
+//
+//	if ((fin < 10) || (fin > 50) || (fout < 36))
+//		goto err;
+//
+//	do {
+//		nrok++;
+//		nf = (fout * nrok)/fin;
+//		if ((nf > 128)) goto err;
+//
+//		if (fin * nf != fout * nrok)
+//			continue;
+//
+//		if (nrok <= 64) {
+//			no = 0;
+//			nr = nrok;
+//			fvco = fout * 1;
+//		} else if (nrok <= 128 && nf%2 == 0) {
+//			if (nf%2) goto err;
+//			no = 1;
+//			nr = nrok/2;
+//			fvco = fout * 2;
+//		} else if (nrok <= 256 && nf%4 == 0) {
+//			if (nf%4) goto err;
+//			no = 2;
+//			nr = nrok/4;
+//			fvco = fout * 4;
+//		} else if (nrok <= 512 && nf%8 == 0) {
+//			no = 3;
+//			nr = nrok/8;
+//			fvco = fout * 8;
+//		} else {
+//			goto err;
+//		}
+//
+//		debug("fvco = %d\n", fvco);
+//		if (fout >= 63 && fvco >= 500) {
+//			bs = 1;
+//			break;
+//		} else if (fout >= 36 && fvco >= 300 && fvco <= 600) {
+//			bs = 0;
+//			break;
+//		}
+//	} while (1);
+//
+//	mnod = (bs << 31) | ((nf - 1) << 24) | ((nr - 1) << 18) | (no << 16);
+//
+//	return mnod;
+//err:
+//	printf("no adjust parameter to the fout:%dM fin: %d\n", fout, fin);
+//	while(1);
+//	return 0;
+//}
+//#else /* nCONFIG_BURNER */
 static unsigned int nfro(unsigned int fin, unsigned int fout)
 {
 	unsigned int nf = 0;
@@ -114,7 +114,7 @@ static unsigned int nfro(unsigned int fin, unsigned int fout)
 	mnod = (1 << 31) | ((nf - 1) << 24);
 	return mnod;
 }
-#endif /* CONFIG_BURNER */
+//#endif /* CONFIG_BURNER */
 
 extern int set_spl_cgu_array(unsigned reg, unsigned sel, unsigned div);
 
@@ -193,6 +193,8 @@ void pll_init(void)
 	} else {
 		cpm_outl(pll_value | (1 << 7), CPM_CPMPCR);
 		while(!(cpm_inl(CPM_CPMPCR) & 1));
+		sel_a = 0x2;
+		sel = 0x1;
 	}
 
 	if(gd->arch.gi->cpufreq > 1000000000) {
@@ -204,10 +206,7 @@ void pll_init(void)
 	} else {
 		cpccr = CPCCR_CFG(sel_a,sel,sel,sel, 4,2,tmp,2,1) | (7 << 20);
 	}
-
-	tmp = (cpm_inl(CPM_CPCCR) & (0xff << 24))
-		| (cpccr & ~(0xff << 24))
-		| (7 << 20);
+	tmp = (cpm_inl(CPM_CPCCR) & (0xff << 24)) | (cpccr & ~(0xff << 24)) | (7 << 20);
 	cpm_outl(tmp, CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
 
@@ -220,5 +219,5 @@ void pll_init(void)
 	printf("ddrdiv:%d\n", gd->arch.gi->ddr_div);
 	printf("cpapcr %x\n", cpm_inl(CPM_CPAPCR));
 	printf("cpmpcr %x\n", cpm_inl(CPM_CPMPCR));
-	printf("cpccr:%x\n", cpccr);
+	printf("cpccr:%x\n", cpm_inl(CPM_CPCCR));
 }
