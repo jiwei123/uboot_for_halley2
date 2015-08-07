@@ -180,6 +180,8 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 		words_of_spl = count / 4 + 1;
 	}
 
+	jz_sfc_writel(1 << 2,SFC_TRIG);
+
 	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), words_of_spl);
 	if (ret) {
 		printf("sfc read error\n");
@@ -187,14 +189,40 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 
 	return ;
 }
+#define NV_AREA_START (288 * 1024)
+static void nv_map_area(unsigned int *base_addr)
+{
+	unsigned int buf[3][2];
+	unsigned int tmp_buf[4];
+	unsigned int nv_num = 0, nv_count = 0;
+	unsigned int addr, i;
+
+	for(i = 0; i < 3; i++) {
+		addr = NV_AREA_START + i * 32 * 1024;
+		sfc_nor_load(addr, 4, buf[i]);
+		if(buf[i][0] == 0x5a5a5a5a) {
+			sfc_nor_load(addr + 1 *1024,  16, tmp_buf);
+			addr += 32 * 1024 - 8;
+			sfc_nor_load(addr, 8, buf[i]);
+			if(buf[i][1] == 0xa5a5a5a5) {
+				if(nv_count < buf[i][0]) {
+					nv_count = buf[i][0];
+					nv_num = i;
+				}
+			}
+		}
+	}
+	*base_addr = NV_AREA_START + nv_num * 32 * 1024 + 1024;
+}
+
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
-	int i = 0;
+
 #ifdef CONFIG_SPL_OS_BOOT
-	char nv_buf[4*8];
-	int count = 32;
-	unsigned int src_addr;
+	unsigned nv_buf[4];
+	int count = 16;
+	unsigned int src_addr, updata_flag;
 #endif
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
@@ -206,20 +234,19 @@ void spl_sfc_nor_load_image(void)
 
 	sfc_init();
 #ifdef CONFIG_SPL_OS_BOOT
-	src_addr = 256*1024;
-	sfc_nor_load(src_addr, count, (unsigned int)nv_buf);
-	for(i = 0; i < 16; i += 4)
-		printf("buf[] = %x\n", *(unsigned int *)(nv_buf + i));
-	if(0 && nv_buf[0]) {
+	nv_map_area((unsigned int)&src_addr);
+	sfc_nor_load(src_addr, count, nv_buf);
+	updata_flag = nv_buf[3];
+	if((updata_flag & 0x3) != 0x3) {
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
 		spl_parse_image_header(header);
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
 	} else
 #endif
-	  {
-		  spl_parse_image_header(header);
-		  sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
-	  }
+	{
+		spl_parse_image_header(header);
+		sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+	}
 	return ;
 
 }

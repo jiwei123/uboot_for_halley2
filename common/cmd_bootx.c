@@ -48,7 +48,7 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	printf("Prepare kernel parameters ...\n");
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
-	param_addr[1] = CONFIG_BOOTARGS;
+	param_addr[1] = CONFIG_BOOTX_BOOTARGS;
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
 
