@@ -114,11 +114,45 @@ int misc_init_r(void)
 	return 0;
 }
 
+#ifdef CONFIG_JZ_NAND
+#ifdef CONFIG_SYS_NAND_SELF_INIT
+extern void mtd_nand_probe(void);
+void board_nand_init(void)
+{
+        mtd_nand_probe();
+	return 0;
+}
+#else
+extern int mtd_nand_init(struct nand_chip *nand);
+int board_nand_init(struct nand_chip *nand)
+{
+	mtd_nand_init(nand);
+	return 0;
+}
+#endif
+#else
 int board_nand_init(struct nand_chip *nand)
 {
 	return 0;
 }
 
+#endif
+
+#ifndef CONFIG_JZ_NAND
+#ifdef CONFIG_SPL_NAND_SUPPORT
+void nand_init(void)
+{
+}
+int nand_spl_load_image(uint32_t offs, unsigned int size, void *dst)
+{
+     return 0;
+}
+
+void nand_deselect(void)
+{
+}
+#endif
+#endif
 
 #ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
@@ -134,20 +168,6 @@ int board_eth_init(bd_t *bis)
 }
 
 
-#ifdef CONFIG_SPL_NAND_SUPPORT
-void nand_init(void)
-{
-}
-
-int nand_spl_load_image(uint32_t offs, unsigned int size, void *dst)
-{
-	return 0;
-}
-
-void nand_deselect(void)
-{
-}
-#endif
 
 #ifdef CONFIG_SPL_NOR_SUPPORT
 int spl_start_uboot(void)

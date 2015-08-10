@@ -463,7 +463,7 @@ void clk_init(void)
 #ifdef CONFIG_JZ_LCD_V12
 		| CPM_CLKGR_LCD
 #endif
-#ifdef CONFIG_NAND_NFI
+#if defined(CONFIG_NAND_NFI)
 		|CPM_CLKGR_PDMA
 		|CPM_CLKGR_BCH
 #endif
@@ -473,6 +473,13 @@ void clk_init(void)
 
 #ifdef CONFIG_JZ_SSI1_PE
 		| CPM_CLKGR_SSI1
+#endif
+#ifdef CONFIG_MTD_NAND_JZ_NFI
+		|CPM_CLKGR_PDMA
+		|CPM_CLKGR_BCH
+#endif
+#ifdef CONFIG_MTD_NAND_JZ_BCH
+		| CPM_CLKGR_BCH
 #endif
 		;
 

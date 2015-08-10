@@ -23,6 +23,8 @@
 #ifndef __NAND_H__
 #define __NAND_H__
 
+#include <ingenic_nand_mgr/nand_param.h>
+
 /* NEMC registers */
 #define NEMC_SMCR1  0x014
 #define NEMC_SMCR2  0x018
@@ -31,7 +33,7 @@
 #define NEMC_SMCR5  0x024
 #define NEMC_SMCR6  0x028
 #define NEMC_NFCSR  0x050
-#define NEMC_PNCR   0x100
+#define NFI_PNCR   0x100
 
 /* NEMC NAND Flash Control & Status Register (NFCSR) */
 #define NEMC_NFCSR_FCEn(n) (1 << (((n - 1) * 2) + 1))
@@ -93,7 +95,5 @@
 #define BCH_BHINT_UNCOR       (1 << 1)
 #define BCH_BHINT_ERR         (1 << 0)
 
-extern int jz4780_nand_init(struct nand_chip *nand);
-extern void jz4780_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip);
-
+extern void jz_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip);
 #endif /* __NAND_H__ */

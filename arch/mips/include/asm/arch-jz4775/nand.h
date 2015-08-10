@@ -23,6 +23,8 @@
 #ifndef __NAND_H__
 #define __NAND_H__
 
+#include <ingenic_nand_mgr/nand_param.h>
+
 /* NEMC registers */
 #define NEMC_SMCR1  0x014
 #define NEMC_SMCR2  0x018
@@ -41,6 +43,22 @@
 #define NEMC_PNCR_PNRST (1 << 1)
 #define NEMC_PNCR_PNEN  (1 << 0)
 
+/*NEMC Static Memory Control Register(SMCR)*/
+#define NEMC_SMCR_SMT_BIT   0
+#define NEMC_SMCR_BL_BIT    1
+#define NEMC_SMCR_BW_BIT    6   /* bus width, 0: 8-bit 1: 16-bit */
+#define NEMC_SMCR_TAS_BIT   8
+#define NEMC_SMCR_TAH_BIT   12
+#define NEMC_SMCR_TBP_BIT   16
+#define NEMC_SMCR_TAW_BIT   20
+#define NEMC_SMCR_STRV_BIT  24
+
+#define NEMC_SMCR_TAS_MASK  0xf
+#define NEMC_SMCR_TAH_MASK  0xf
+#define NEMC_SMCR_TBP_MASK  0xf
+#define NEMC_SMCR_TAW_MASK  0xf
+#define NEMC_SMCR_STRV_MASK 0x3f
+
 /* BCH registers */
 #define BCH_BHCR    0x000
 #define BCH_BHCSR   0x004
@@ -55,6 +73,7 @@
 #define BCH_BHERR63 0x180
 #define BCH_BHINT   0x184
 #define BCH_BHINTE  0x190
+#define BCH_BHINTC   0x18C
 
 /* BCH Control Register (BHCR) */
 #define BCH_BHCR_TAG_SHIFT  16
@@ -93,7 +112,6 @@
 #define BCH_BHINT_UNCOR       (1 << 1)
 #define BCH_BHINT_ERR         (1 << 0)
 
-extern int jz4780_nand_init(struct nand_chip *nand);
-extern void jz4780_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip);
+extern void jz_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip);
 
 #endif /* __NAND_H__ */

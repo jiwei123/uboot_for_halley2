@@ -77,10 +77,27 @@ int misc_init_r(void)
 	return 0;
 }
 
+#ifdef CONFIG_JZ_NAND
+#ifdef CONFIG_SYS_NAND_SELF_INIT
+extern void mtd_nand_probe(void);
+void board_nand_init(void)
+{
+	mtd_nand_probe();
+}
+#else
+extern int mtd_nand_init(struct nand_chip *nand);
+int board_nand_init(struct nand_chip *nand)
+{
+	mtd_nand_init(nand);
+	return 0;
+}
+#endif
+#else
 int board_nand_init(struct nand_chip *nand)
 {
 	return 0;
 }
+#endif
 
 
 #ifdef CONFIG_MMC

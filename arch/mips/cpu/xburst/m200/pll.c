@@ -295,7 +295,6 @@ void pll_test(int pll)
 
 int pll_init(void)
 {
-	printf("%s:%d\n",__func__,__LINE__);
 	freq_correcting();
 	pll_set(APLL,pll_cfg.apll_freq);
 	pll_set(MPLL,pll_cfg.mpll_freq);
