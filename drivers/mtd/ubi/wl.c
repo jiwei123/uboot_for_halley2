@@ -602,6 +602,7 @@ static int sync_erase(struct ubi_device *ubi, struct ubi_wl_entry *e, int tortur
 	if (!ec_hdr)
 		return -ENOMEM;
 #ifdef CONFIG_BURNER
+	/*burner will erase the flash first, so we need not erase again here*/
 	err = 1;
 	if (e->ec != 0) {
 		err = ubi_io_sync_erase(ubi, e->pnum, torture);

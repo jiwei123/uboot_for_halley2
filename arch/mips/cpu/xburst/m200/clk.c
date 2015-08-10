@@ -476,7 +476,7 @@ void clk_init(void)
 #endif
 #ifdef CONFIG_MTD_NAND_JZ_NFI
 		|CPM_CLKGR_PDMA
-		|CPM_CLKGR_BCH
+		|CPM_CLKGR_NFI
 #endif
 #ifdef CONFIG_MTD_NAND_JZ_BCH
 		| CPM_CLKGR_BCH
