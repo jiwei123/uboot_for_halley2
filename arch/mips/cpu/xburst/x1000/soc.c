@@ -31,7 +31,9 @@
 #include <asm/arch/cpm.h>
 #include <spl.h>
 #include <regulator.h>
+#ifdef CONFIG_AUDIO_CAL_DIV
 #include <generated/audio.h>
+#endif
 #ifdef CONFIG_SPL_BUILD
 
 /* Pointer to as well as the global data structure for SPL */
