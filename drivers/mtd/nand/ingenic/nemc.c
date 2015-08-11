@@ -30,13 +30,6 @@
 
 #include "jz_nand.h"
 
-#define OFFSET_DATA 0x00000000
-#define OFFSET_CMD  0x00400000
-#define OFFSET_ADDR 0x00800000
-
-#define NEMC_DATA_BASE 0xBB000000
-#define SMCR1	0xb3410014
-
 void jz_nand_enable_pn(int enable, bool force)
 {
 	uint32_t reg = readl(NEMC_BASE + NEMC_PNCR);
