@@ -108,7 +108,6 @@
 #define CONFIG_JZ_MMC		1
 #define CONFIG_JZ_MMC_MSC0	1
 
-
 /* PMU */
 #define CONFIG_PMU_ACT8600
 
@@ -120,7 +119,6 @@
  */
 #define CONFIG_CMD_BOOTD	/* bootd			*/
 #define CONFIG_CMD_CONSOLE	/* coninfo			*/
-#define CONFIG_CMD_DHCP 	/* DHCP support			*/
 #define CONFIG_CMD_ECHO		/* echo arguments		*/
 #define CONFIG_CMD_EXT4 	/* ext4 support			*/
 #define CONFIG_CMD_FAT		/* FAT support			*/
@@ -129,8 +127,6 @@
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support		*/
-#define CONFIG_CMD_NET		/* networking support		*/
-#define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
@@ -213,14 +209,28 @@
 #define CONFIG_SPL_MAX_SIZE		(32768 - 0x1000)
 #define CONFIG_SPL_SERIAL_SUPPORT
 
+/*NAND*/
+#define CONFIG_MTD_NAND_JZ_NFI
+#define CONFIG_MTD_NAND_JZ_BCH
+#define	CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_SELF_INIT
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
+#define MTDIDS_DEFAULT                  "nand0=nand"
+#define MTDPARTS_DEFAULT                "mtdparts=nand:2m(uboot),-(system)"
+#define CONFIG_SYS_NAND_BASE	0xbb000000
+#define CONFIG_SYS_NAND_ECCSIZE         1024
 /**
  * Burner
  */
 #ifdef CONFIG_CMD_BURN
+#define CONFIG_USB_GADGET_DUALSPEED
 #define CONFIG_BURNER
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_JZ_BURNER_GADGET
-#define CONFIG_USB_GADGET_DUALSPEED
 #define	CONFIG_JZ_VERDOR_BURN_FUNCTION
 #define CONFIG_USB_JZ_DWC2_UDC_V1_1
 #define CONFIG_USB_SELF_POLLING

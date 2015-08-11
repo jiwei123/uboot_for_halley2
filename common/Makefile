@@ -67,6 +67,7 @@ COBJS-$(CONFIG_ENV_IS_IN_SFC) += env_sfc.o
 COBJS-$(CONFIG_ENV_IS_IN_FAT) += env_fat.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND) += env_nand.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND_ZM) += env_nand_zm.o
+COBJS-$(CONFIG_ENV_IS_IN_NAND_JZMTD) += env_nand_jzmtd.o
 COBJS-$(CONFIG_ENV_IS_IN_NVRAM) += env_nvram.o
 COBJS-$(CONFIG_ENV_IS_IN_ONENAND) += env_onenand.o
 COBJS-$(CONFIG_ENV_IS_IN_SPI_FLASH) += env_sf.o
@@ -161,6 +162,7 @@ ifdef CONFIG_PCI
 COBJS-$(CONFIG_CMD_PCI) += cmd_pci.o
 endif
 COBJS-y += cmd_pcmcia.o
+COBJS-$(CONFIG_BURNER) += cmd_writespl.o
 COBJS-$(CONFIG_CMD_PORTIO) += cmd_portio.o
 COBJS-$(CONFIG_CMD_PXE) += cmd_pxe.o
 COBJS-$(CONFIG_CMD_READ) += cmd_read.o

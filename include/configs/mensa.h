@@ -78,8 +78,10 @@
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
-  #else
+  #elif defined(CONFIG_JZ_NAND_MGR)
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"
+  #else
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=2 root=ubi0:ndsystem rootfstype=ubifs rw"
   #endif
 #endif
 
@@ -88,7 +90,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY  3
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
@@ -97,7 +99,7 @@
     #define CONFIG_RECOVERY_BOOT "boota mmc 0 0x80f00000 24576"
   #else
     /*#define CONFIG_BOOTCOMMAND "boota nand 0 0x80f00000 6144"*/
-		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000" 
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80f00000;boota mem 0x80f00000"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
   #endif
@@ -106,13 +108,14 @@
     #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
   #else
 	#ifdef CONFIG_JZ_NAND_MGR
-		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm" 
+		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm"
                                                             /*order ops pt offset len dst */
 		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
 	#else
     #define CONFIG_BOOTCOMMAND						\
-	"mtdparts default; ubi part system; ubifsmount ubi:boot; "	\
-	"ubifsload 0x80f00000 vmlinux.ub; bootm 0x80f00000"
+	"mtdparts default; nand read.skip 0x80f00000 0x800000 0x400000; bootm 0x80f00000"
+	/*"mtdparts default; ubi part root; ubifsmount ubi:ndsystem;" \
+	"ubifsload 0x80f00000 uImage; bootm 0x80f00000"*/
 	#endif /* endif config_jz_nand_MGR*/
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
@@ -278,14 +281,12 @@
 #endif /* endif CONFIG_ENV_IS_IN_MMC */
 
 #ifdef CONFIG_JZ_NAND_MGR
-
 /* environment  */
 #define CONFIG_ENV_IS_IN_NAND_ZM
 #define CMDLINE_PARTITION	"ndcmdline"
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_ENV_OFFSET		0
 
-/**/
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_SIMPLE
@@ -295,14 +296,93 @@
 #define CONFIG_NAND_LOADER
 #define CFG_NAND_BW8    1
 #define CONFIG_NAND_CS  1
-
-/**/
 #define CONFIG_SPL_TEXT_BASE		0xf4000800
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
-
 /* the NAND SPL is small enough to enable serial */
 #define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	(128* CONFIG_SYS_NAND_PAGE_SIZE)
+#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_NAND_U_BOOT_DST
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	(512 * 1024)
 #endif /* endif CONFIG_JZ_NAND_MGR */
+
+#ifdef CONFIG_JZ_NAND
+#define CONFIG_MTD_NAND_AUTO_PARAMS
+#define CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SPL_NAND_SIMPLE
+#define CONFIG_NAND_LOADER
+#define CFG_NAND_BW8    1
+#define CONFIG_NAND_CS  1
+#define CONFIG_MTD_NAND_JZ_NEMC         1
+#define CONFIG_MTD_NAND_JZ_BCH          1
+#define CONFIG_SYS_MAX_NAND_DEVICE      1
+#define CONFIG_SYS_NAND_BASE            0xbb000000
+#define CONFIG_SYS_NAND_ECCSIZE         1024
+#define CONFIG_SYS_NAND_HW_ECC_OOBFIRST
+#define CONFIG_SPL_TEXT_BASE		0xf4000800
+#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SYS_NAND_U_BOOT_DST      CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_START    CONFIG_SYS_NAND_U_BOOT_DST
+#define CONFIG_SYS_NAND_U_BOOT_SIZE     (512 * 1024)
+#define CONFIG_ENV_IS_IN_NAND_JZMTD
+#define CONFIG_ENV_SIZE			(32 << 10)
+#define CONFIG_SPL_PAD_TO		16384
+#define MTDIDS_DEFAULT                  "nand0=nand"
+#define MTDPARTS_DEFAULT                "mtdparts=nand:24m(boot),-(root)"
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_NAND_LOCK_UNLOCK
+#define CONFIG_CMD_UBIFS
+/*#define CONFIG_MTD_UBI_DEBUG_MSG
+#define CONFIG_MTD_UBI_DEBUG_MSG_IO
+#define CONFIG_MTD_UBI_DEBUG_MSG_BLD*/
+#ifdef CONFIG_MTD_NAND_AUTO_PARAMS
+#define CONFIG_SYS_NAND_SELF_INIT
+#define CONFIG_SYS_SPL_NAND_FLAG_ADDR   0xf4000800
+#define CONFIG_BOARD_TCSM_BASE		0xb3422000
+#else
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_NAND_MICRON_MT29F32G08CBACA
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE    1
+#define CONFIG_SYS_NAND_PAGE_SIZE	4096
+#define CONFIG_SYS_NAND_BLOCK_SIZE      (1024 << 10)
+#define CONFIG_SYS_NAND_PAGE_COUNT      (CONFIG_SYS_NAND_BLOCK_SIZE / CONFIG_SYS_NAND_PAGE_SIZE)
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS   0
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	(128* CONFIG_SYS_NAND_PAGE_SIZE * 8)
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	(512 * 1024)
+#define CONFIG_SYS_NAND_ECCSTRENGTH	24
+#define CONFIG_SYS_NAND_ECCBYTES	(CONFIG_SYS_NAND_ECCSTRENGTH * 14 / 8)
+#define CONFIG_SYS_NAND_OOBSIZE		224
+#define CONFIG_SYS_NAND_ECCPOS { \
+56 , 57 , 58 , 59 , 60 , 61 , 62 , 63 , \
+64 , 65 , 66 , 67 , 68 , 69 , 70 , 71 , \
+72 , 73 , 74 , 75 , 76 , 77 , 78 , 79 , \
+80 , 81 , 82 , 83 , 84 , 85 , 86 , 87 , \
+88 , 89 , 90 , 91 , 92 , 93 , 94 , 95 , \
+96 , 97 , 98 , 99 , 100, 101, 102, 103, \
+104, 105, 106, 107, 108, 109, 110, 111, \
+112, 113, 114, 115, 116, 117, 118, 119, \
+120, 121, 122, 123, 124, 125, 126, 127, \
+128, 129, 130, 131, 132, 133, 134, 135, \
+136, 137, 138, 139, 140, 141, 142, 143, \
+144, 145, 146, 147, 148, 149, 150, 151, \
+152, 153, 154, 155, 156, 157, 158, 159, \
+160, 161, 162, 163, 164, 165, 166, 167, \
+168, 169, 170, 171, 172, 173, 174, 175, \
+176, 177, 178, 179, 180, 181, 182, 183, \
+184, 185, 186, 187, 188, 189, 190, 191, \
+192, 193, 194, 195, 196, 197, 198, 199, \
+200, 201, 202, 203, 204, 205, 206, 207, \
+208, 209, 210, 211, 212, 213, 214, 215, \
+216, 217, 218, 219, 220, 221, 222, 223}
+#endif
+#endif /*CONFIG_JZ_NAND*/
 
 /**
  * SPL configuration
@@ -319,10 +399,6 @@
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
-#define CONFIG_SYS_NAND_U_BOOT_OFFS	(CONFIG_SYS_NAND_BLOCK_SIZE * 2)
-#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_NAND_U_BOOT_DST
-#define CONFIG_SYS_NAND_U_BOOT_SIZE	(512 * 1024)
 
 #define CONFIG_SPL_BOARD_INIT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
@@ -413,4 +489,3 @@
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
 #endif /* __CONFIG_MENSA_H__ */
-

@@ -204,6 +204,21 @@
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x1000)
 #define CONFIG_SPL_SERIAL_SUPPORT
 
+/*#define CONFIG_MTD_DEBUG*/
+/*#define CONFIG_MTD_DEBUG_VERBOSE	MTD_DEBUG_LEVEL3*/
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_MTD_NAND_JZ_NEMC
+#define CONFIG_MTD_NAND_JZ_BCH
+#define CONFIG_SYS_NAND_SELF_INIT
+#define CONFIG_CMD_NAND
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
+#define MTDIDS_DEFAULT                  "nand0=nand"
+#define MTDPARTS_DEFAULT                "mtdparts=nand:2m(uboot),-(system)"
+#define CONFIG_SYS_NAND_BASE		0xbb000000
+#define CONFIG_SYS_NAND_ECCSIZE         1024
 /**
  * Burner
  */

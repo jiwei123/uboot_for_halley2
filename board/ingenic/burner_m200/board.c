@@ -66,11 +66,17 @@ int misc_init_r(void)
 {
 	return 0;
 }
-
+#ifdef CONFIG_SYS_NAND_SELF_INIT
+void board_nand_init(void)
+{
+	return 0;
+}
+#else
 int board_nand_init(struct nand_chip *nand)
 {
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)

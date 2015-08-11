@@ -190,6 +190,8 @@ unsigned int clk_get_rate(int clk)
 		return get_ddr_rate();
 	case CPU:
 		return get_cclk_rate();
+#endif
+#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_JZ_NAND)
 	case H2CLK:
 		return cpm_get_h2clk();
 #endif
@@ -204,7 +206,8 @@ unsigned int clk_get_rate(int clk)
 	return 0;
 }
 
-#ifndef CONFIG_SPL_BUILD
+
+#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_JZ_NAND)
 static unsigned int set_bch_rate(int clk, unsigned long rate)
 {
 	unsigned int pll_rate = pll_get_rate(APLL);
@@ -286,25 +289,26 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 
 void clk_set_rate(int clk, unsigned long rate)
 {
-#ifndef CONFIG_SPL_BUILD
+#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_JZ_NAND)
 	switch (clk) {
+	case BCH:
+		set_bch_rate(clk, rate);
+		return;
+#ifndef CONFIG_SPL_BUILD
 	case MSC0:
 	case MSC1:
 	case MSC2:
 		set_msc_rate(clk, rate);
-		return;
-	case BCH:
-		set_bch_rate(clk, rate);
 		return;
 	case SSI:
 		set_ssi_rate(clk, rate);
 		/*use config set in burn*/
 		return;
 	default:
+		printf("%s: clk%d is not supported\n", __func__, clk);
 		break;
+#endif
 	}
-
-	printf("%s: clk%d is not supported\n", __func__, clk);
 #endif
 }
 
@@ -329,6 +333,9 @@ void clk_init(void)
 #endif
 		| CPM_CLKGR_PDMA
 		| CPM_CLKGR_BCH
+#ifdef CONFIG_MTD_NAND_JZ_NEMC
+		| CPM_CLKGR_NEMC
+#endif
 		;
 
 	reg_clkgr &= ~gate;
