@@ -25,13 +25,7 @@
 #include <asm/arch/clk.h>
 #include <linux/mtd/nand.h>
 #include "jz_nand.h"
-#include "nfi.h"
 
-#define OFFSET_DATA 0x00000000
-#define OFFSET_CMD  0x00400000
-#define OFFSET_ADDR 0x00800000
-
-#define COMMON_NAND 0
 extern unsigned int clk_get_rate(int clk);
 static void nand_nfi_setup_nand_param(nand_timing_param  *param, int buswidth)
 {

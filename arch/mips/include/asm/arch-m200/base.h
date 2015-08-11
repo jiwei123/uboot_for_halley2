@@ -56,6 +56,7 @@
 
 /* AHB2 BUS Devices Base */
 #define HARB2_BASE	0xb3400000
+#define NFI_BASE	0xB3410000
 #define NEMC_BASE	0xb3410000
 #define PDMA_BASE	0xb3420000
 #define MSC0_BASE	0xb3450000
@@ -70,7 +71,6 @@
 #define TSSI1_BASE	0xb34f0000
 #define OTG_BASE	0xb3500000
 #define EFUSE_BASE	0xb3540000
-
 
 #define	OST_BASE	0xb2000000
 #define	HDMI_BASE	0xb0180000
