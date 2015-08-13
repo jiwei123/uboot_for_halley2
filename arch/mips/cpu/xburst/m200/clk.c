@@ -460,7 +460,7 @@ void clk_init(void)
 #ifdef CONFIG_JZ_MMC_MSC2
 		| CPM_CLKGR_MSC2
 #endif
-#ifdef CONFIG_JZ_LCD_V12
+#if  defined(CONFIG_JZ_LCD_V12) || defined (CONFIG_JZ_EPD)
 		| CPM_CLKGR_LCD
 #endif
 #if defined(CONFIG_NAND_NFI)
@@ -485,6 +485,15 @@ void clk_init(void)
 
 	reg_clkgr &= ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR);
+	
+reg_clkgr = cpm_inl(CPM_CLKGR1);
+	gate = 0
+#ifdef CONFIG_JZ_EPD
+		| CPM_CLKGR_EPD
+#endif
+		;
+	reg_clkgr &= ~gate;
+	cpm_outl(reg_clkgr,CPM_CLKGR1);
 	cgu_clks_set(cgu_clk_sel, ARRAY_SIZE(cgu_clk_sel));
 }
 
