@@ -537,7 +537,7 @@ static int ddr_training_software(unsigned int mode)
 	}
 	return result;
 }
-static int lpddr_retrain_bypass(void)
+static int lpddr_retrain_bypass(unsigned int mode)
 {
 	unsigned int result = 0;
 	int timeout = 10000;
@@ -564,6 +564,12 @@ static int lpddr_retrain_bypass(void)
 		   DDRP_PIR);
 	ddr_writel(0x1, DDRP_ACDLLCR);
 #endif /* CONFIG_DDR_PHY_ODT */
+
+	if(IS_BYPASS_MODE(mode)) {
+		ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
+				DDRP_PIR);
+		ddr_writel(0x1, DDRP_ACDLLCR);
+	}
 
 	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
 					 | DDRP_PGSR_DLDONE
@@ -597,7 +603,7 @@ static void ddr_training(unsigned int mode)
 #endif // CONFIG_SPL_DDR_SOFT_TRAINING
 	}
 	if(DDR_TYPE_MODE(mode) == LPDDR)
-		training_state = lpddr_retrain_bypass();
+		training_state = lpddr_retrain_bypass(mode);
 	if(training_state)
 		hang();
 }
@@ -685,10 +691,9 @@ void sdram_init(void)
 #else
 	rate = gd->arch.gi->ddrfreq;
 #endif
-#ifdef CONFIG_M200
-	if(rate <= 150000000)
+	if((rate <= 200000000) && (type != DDR3))
 		bypass = 1;
-#endif
+
 	reset_controller();
 
 #ifdef CONFIG_DDR_AUTO_SELF_REFRESH
