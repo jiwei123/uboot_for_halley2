@@ -72,6 +72,8 @@ static struct jz_gpio_func_def gpio_func[] = {
 	 { .port = GPIO_PORT_C, .func = GPIO_OUTPUT0, .pins = 0x0fffffff, }
 #elif defined(CONFIG_SLCD_FUNCTION)
 	{ .port = GPIO_PORT_C, .func = GPIO_FUNC_0, .pins = 0x000c30fc, },
+#elif defined(CONFIG_JZ47xx_EPD)
+	{ .port = GPIO_PORT_C, .func = GPIO_FUNC_0, .pins = 0x0fffffff, },
 #else
 	{ .port = GPIO_PORT_C, .func = GPIO_FUNC_0, .pins = 0x0fffffff, },
 #endif

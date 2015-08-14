@@ -45,7 +45,7 @@ struct cgu spl_cgu_clksel[] = {
 #ifdef CONFIG_JZ_NAND_MGR
 	{CPM_BCHCDR, 1, 30, 29, 28, CGU_BCH_DIV},
 #endif
-#ifdef CONFIG_VIDEO_JZ4775
+#if defined(CONFIG_VIDEO_JZ4775) || defined(CONFIG_JZ47xx_EPD)
 	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
 #endif
 	{CPM_I2SCDR, 2, 30, 0, 0, 0},
@@ -326,6 +326,11 @@ void clk_init(void)
 		| CPM_CLKGR_MSC2
 #endif
 #ifdef CONFIG_VIDEO_JZ4775
+		| CPM_CLKGR_LCD
+#endif
+#ifdef CONFIG_JZ47xx_EPD
+		| CPM_CLKGR_EPDC
+		| CPM_CLKGR_EPDE
 		| CPM_CLKGR_LCD
 #endif
 #ifdef CONFIG_NET_JZ4775
