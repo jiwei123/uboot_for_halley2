@@ -35,9 +35,9 @@ void reset_dll(void)
  * 	DDR CLK GATE(CPM_DRCG 0xB00000D0), BIT6 must set to 1 (or 0x40).
  * 	If clear BIT6, chip memory will not stable, gpu hang occur.
  */
-	writel(0x3 | (1 << 6) , CPM_DRCG);
+	writel(0x53 | (1 << 6) , CPM_DRCG);
 	mdelay(5);
-	writel(0x1 | (1 << 6), CPM_DRCG);
+	writel(0x51 | (1 << 6), CPM_DRCG);
 	mdelay(5);
 }
 #endif
