@@ -114,6 +114,18 @@ int misc_init_r(void)
 #if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
 	battery_init_gpio();
 #endif
+#ifdef CONFIG_TESTARGS
+	if(gpio_get_value(GPIO_PA(3)) == 0) //HOME key is PA03, press HOME key for more than 2 seconds to enter rootfs for factory test
+	{
+		int second = 2;
+		while(second > 0 && gpio_get_value(GPIO_PA(3)) == 0) {
+			mdelay(1000);
+			second --;
+		}
+		if(second == 0)
+			setenv("bootargs", CONFIG_TESTARGS);
+	}
+#endif
 	return 0;
 }
 
