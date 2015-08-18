@@ -162,7 +162,9 @@ ifdef CONFIG_PCI
 COBJS-$(CONFIG_CMD_PCI) += cmd_pci.o
 endif
 COBJS-y += cmd_pcmcia.o
+ifdef CONFIG_MTD_NAND_JZ
 COBJS-$(CONFIG_BURNER) += cmd_writespl.o
+endif
 COBJS-$(CONFIG_CMD_PORTIO) += cmd_portio.o
 COBJS-$(CONFIG_CMD_PXE) += cmd_pxe.o
 COBJS-$(CONFIG_CMD_READ) += cmd_read.o

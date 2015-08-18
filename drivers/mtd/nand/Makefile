@@ -37,7 +37,7 @@ endif
 
 COBJS-$(CONFIG_SPL_NAND_AM33XX_BCH) += am335x_spl_bch.o
 COBJS-$(CONFIG_SPL_NAND_DOCG4) += docg4_spl.o
-ifdef CONFIG_MTD_NAND_AUTO_PARAMS
+ifdef CONFIG_MTD_NAND_JZ_AUTO_PARAMS
 COBJS-$(CONFIG_SPL_NAND_SIMPLE) += ingenic/nand_spl_simple.o
 else
 COBJS-$(CONFIG_SPL_NAND_SIMPLE) += nand_spl_simple.o
@@ -60,12 +60,15 @@ COBJS-y += nand_base.o
 endif # not spl
 
 ifdef NORMAL_DRIVERS
-COBJS-y	+= ingenic/bch.o
+
+ifdef CONFIG_MTD_NAND_JZ
+COBJS-$(CONFIG_MTD_NAND_JZ_BCH)	+= ingenic/bch.o
 COBJS-$(CONFIG_MTD_NAND_JZ_NEMC) += ingenic/nemc.o
 COBJS-$(CONFIG_MTD_NAND_JZ_NFI) += ingenic/nfi.o
 COBJS-y += ingenic/nand_driver.o
-COBJS-$(CONFIG_MTD_NAND_AUTO_PARAMS) += ingenic/nand_auto_driver.o
+COBJS-$(CONFIG_MTD_NAND_JZ_AUTO_PARAMS) += ingenic/nand_auto_driver.o
 COBJS-$(CONFIG_BURNER)	+= ingenic/nand_burn_driver.o
+endif
 COBJS-$(CONFIG_NAND_ECC_BCH) += nand_bch.o
 COBJS-$(CONFIG_NAND_ATMEL) += atmel_nand.o
 COBJS-$(CONFIG_DRIVER_NAND_BFIN) += bfin_nand.o

@@ -161,7 +161,7 @@ retry:
 			 * -EUCLEAN is reported if there was a bit-flip which
 			 * was corrected, so this is harmless.
 			 */
-			ubi_msg("fixable bit-flip detected at PEB %d", pnum);
+			//ubi_msg("fixable bit-flip detected at PEB %d", pnum);
 			ubi_assert(len == read);
 			return UBI_IO_BITFLIPS;
 		}

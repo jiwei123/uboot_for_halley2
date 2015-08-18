@@ -25,25 +25,20 @@
 #include <errno.h>
 #include <common.h>
 #include <malloc.h>
-#include <mmc.h>
 #include <rtc.h>
 #include <part.h>
 #include <spi.h>
 #include <spi_flash.h>
-#include <efuse.h>
 #include <ingenic_soft_i2c.h>
 #include <ingenic_soft_spi.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
-#include <linux/mtd/nand.h>
-#include <linux/mtd/mtd.h>
-#include <nand.h>
-#include <ingenic_nand_mgr/nand_param.h>
 #include "cloner.h"
 #include "cloner_nand.c"
-
+#include "cloner_mmc.c"
+#include "cloner_efuse.c"
 
 int i2c_program(struct cloner *cloner)
 {
@@ -60,202 +55,6 @@ int i2c_program(struct cloner *cloner)
 		i2c_write(&i2c,i2c_arg->device,reg,1,&value,1);
 	}
 	return 0;
-}
-
-#define MMC_BYTE_PER_BLOCK 512
-extern int get_mmc_csd_perm_w_protect(void);
-extern ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt);
-static int mmc_erase(struct cloner *cloner)
-{
-	int curr_device = 0;
-	struct mmc *mmc = find_mmc_device(0);
-	uint32_t blk, blk_end, blk_cnt;
-	uint32_t erase_cnt = 0;
-	int timeout = 30000;
-	int i;
-	int ret;
-
-	if (!mmc) {
-		printf("no mmc device at slot %x\n", curr_device);
-		return -ENODEV;
-	}
-
-	mmc_init(mmc);
-	if(get_mmc_csd_perm_w_protect()){
-		printf("ERROR: MMC Init error ,can not be erase !!!!!!!!!\n");
-		return -EPERM;
-	}
-
-	if (mmc_getwp(mmc) == 1) {
-		printf("Error: card is write protected!\n");
-		return -EPERM;
-	}
-	if (cloner->args->mmc_erase == MMC_ERASE_ALL) {
-		blk = 0;
-		blk_cnt = mmc->capacity / MMC_BYTE_PER_BLOCK;
-
-		printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
-				curr_device, blk, blk_cnt);
-
-		ret = mmc_erase_t(mmc, blk, blk_cnt);
-		if (ret) {
-			printf("mmc erase error\n");
-			return ret;
-		}
-		ret = mmc_send_status(mmc, timeout);
-		if(ret){
-			printf("mmc erase error\n");
-			return ret;
-		}
-
-		printf("mmc all erase ok, blocks %d\n", blk_cnt);
-		return 0;
-	} else if (cloner->args->mmc_erase != MMC_ERASE_PART) {
-		return -EINVAL;
-	}
-
-	/*mmc part erase */
-	erase_cnt = (cloner->args->mmc_erase_range_count >MMC_ERASE_CNT_MAX) ?
-		MMC_ERASE_CNT_MAX : cloner->args->mmc_erase_range_count;
-
-	for (i = 0; erase_cnt > 0; i++, erase_cnt--) {
-		blk = cloner->args->mmc_erase_range[i].start / MMC_BYTE_PER_BLOCK;
-		blk_end = cloner->args->mmc_erase_range[i].end / MMC_BYTE_PER_BLOCK;
-		blk_cnt = blk_end - blk + 1;
-
-		printf("MMC erase: dev # %d, start block # 0x%x, count 0x%x ... \n",
-				curr_device, blk, blk_cnt);
-
-		if ((blk % mmc->erase_grp_size) || (blk_cnt % mmc->erase_grp_size)) {
-			printf("\n\nCaution! Your devices Erase group is 0x%x\n"
-					"The erase block range would be change to "
-					"0x" LBAF "~0x" LBAF "\n\n",
-					mmc->erase_grp_size, (unsigned long)(blk & ~(mmc->erase_grp_size - 1)),
-					(unsigned long)((blk + blk_cnt + mmc->erase_grp_size)
-					 & ~(mmc->erase_grp_size - 1)) - 1);
-		}
-
-		ret = mmc_erase_t(mmc, blk, blk_cnt);
-		if (ret) {
-			printf("mmc erase error\n");
-			return ret;
-		}
-		ret = mmc_send_status(mmc, timeout);
-		if(ret){
-			printf("mmc erase error\n");
-			return ret;
-		}
-
-		printf("mmc part erase, part %d ok\n", i);
-	}
-	printf("mmc erase ok\n");
-	return 0;
-}
-
-extern int mtd_nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_params,
-		int nr_nand_args, int eraseall, void ** title_fill, int *size);
-int cloner_init(struct cloner *cloner)
-{
-	if(cloner->args->use_nand_mgr) {
-#ifdef CONFIG_JZ_NAND_MGR
-		nand_probe_burner(&(cloner->args->PartInfo),
-				&(cloner->args->nand_params[0]),
-				cloner->args->nr_nand_args,
-				cloner->args->nand_erase,cloner->args->offsets,cloner->args->nand_erase_count);
-#endif	/*CONFIG_JZ_NAND_MGR*/
-	}
-
-	if(cloner->args->use_nand_mtd) {
-#ifdef CONFIG_CMD_UBI
-		mtd_nand_probe_burner(&cloner->args->MTDPartInfo,
-				&cloner->args->nand_params,
-				cloner->args->nr_nand_args,
-				cloner->args->nand_erase,
-				&cloner->spl_title,
-				&cloner->spl_title_sz);
-#endif	/*CONFIG_CMD_UBI*/
-	}
-
-	if (cloner->args->use_mmc) {
-		if (cloner->args->mmc_erase) {
-			mmc_erase(cloner);
-		}
-	}
-
-	if(cloner->args->use_spi){
-		printf("cloner->args->spi_args.rate:%d\n",cloner->args->spi_args.rate);
-	}
-	return 0;
-}
-
-int mmc_program(struct cloner *cloner,int mmc_index)
-{
-#define MMC_BYTE_PER_BLOCK 512
-	int curr_device = 0;
-	struct mmc *mmc = find_mmc_device(mmc_index);
-	u32 blk = (cloner->cmd->write.partation + cloner->cmd->write.offset)/MMC_BYTE_PER_BLOCK;
-	u32 cnt = (cloner->cmd->write.length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
-	void *addr = (void *)cloner->write_req->buf;
-	u32 n;
-
-	if (!mmc) {
-		printf("no mmc device at slot %x\n", curr_device);
-		return -ENODEV;
-	}
-
-	//debug_cond(BURNNER_DEBUG,"\nMMC write: dev # %d, block # %d, count %d ... ",
-	printf("MMC write: dev # %d, block # %d, count %d ... ",
-			curr_device, blk, cnt);
-
-	mmc_init(mmc);
-
-	if (mmc_getwp(mmc) == 1) {
-		printf("Error: card is write protected!\n");
-		return -EPERM;
-	}
-
-	n = mmc->block_dev.block_write(curr_device, blk,
-			cnt, addr);
-	//debug_cond(BURNNER_DEBUG,"%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
-	printf("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
-
-	if (n != cnt)
-		return -EIO;
-
-	if (cloner->args->write_back_chk) {
-		mmc->block_dev.block_read(curr_device, blk,
-				cnt, addr);
-		debug_cond(BURNNER_DEBUG,"%d blocks read: %s\n",n, (n == cnt) ? "OK" : "ERROR");
-		if (n != cnt)
-			return -EIO;
-
-		uint32_t tmp_crc = local_crc32(0xffffffff,addr,cloner->cmd->write.length);
-		debug_cond(BURNNER_DEBUG,"%d blocks check: %s\n",n,(cloner->cmd->write.crc == tmp_crc) ? "OK" : "ERROR");
-		if (cloner->cmd->write.crc != tmp_crc) {
-			printf("src_crc32 = %08x , dst_crc32 = %08x\n",cloner->cmd->write.crc,tmp_crc);
-			return -EIO;
-		}
-	}
-	return 0;
-}
-
-int efuse_program(struct cloner *cloner)
-{
-	static int enabled = 0;
-	if(!enabled) {
-		efuse_init(cloner->args->efuse_gpio);
-		enabled = 1;
-	}
-	u32 partation = cloner->cmd->write.partation;
-	u32 length = cloner->cmd->write.length;
-	void *addr = (void *)cloner->write_req->buf;
-	u32 r = 0;
-
-	if (!!(r = efuse_write(addr, length, partation))) {
-		printf("efuse write error\n");
-		return r;
-	}
-	return r;
 }
 
 extern unsigned int ssi_rate;
@@ -286,7 +85,6 @@ int spi_program(struct cloner *cloner)
 #ifdef CONFIG_INGENIC_SOFT_SPI
 	spi_init_jz(&spi);
 #endif
-
 
 	if(flash == NULL){
 		flash = spi_flash_probe(bus, cs, spi.rate, mode);
@@ -343,8 +141,106 @@ int spi_program(struct cloner *cloner)
 	return 0;
 }
 
-void handle_read(struct usb_ep *ep,struct usb_request *req)
+int cloner_init(struct cloner *cloner)
 {
+#ifdef CONFIG_JZ_NAND_MGR
+	if(cloner->args->use_nand_mgr) {
+		nand_probe_burner(&(cloner->args->PartInfo),
+				&(cloner->args->nand_params[0]),
+				cloner->args->nr_nand_args,
+				cloner->args->nand_erase,cloner->args->offsets,cloner->args->nand_erase_count);
+	}
+#endif	/*CONFIG_JZ_NAND_MGR*/
+#ifdef CONFIG_MTD_NAND_JZ
+	if(cloner->args->use_nand_mtd) {
+		mtd_nand_probe_burner(&cloner->args->MTDPartInfo,
+				&cloner->args->nand_params,
+				cloner->args->nr_nand_args,
+				cloner->args->nand_erase,
+				&cloner->spl_title,
+				&cloner->spl_title_sz);
+	}
+#endif	/*CONFIG_JZ_NAND_MGR*/
+#ifdef CONFIG_JZ_MMC
+	if (cloner->args->use_mmc) {
+		if (cloner->args->mmc_erase) {
+			mmc_erase(cloner);
+		}
+	}
+#endif	/*CONFIG_JZ_MMC*/
+
+	if(cloner->args->use_spi){
+		printf("cloner->args->spi_args.rate:%d\n",cloner->args->spi_args.rate);
+	}
+	return 0;
+}
+
+void *realloc_buf(struct cloner *cloner, size_t realloc_size)
+{
+	if (unlikely(cloner->buf_size < realloc_size)) {
+		cloner->buf_size = realloc_size;
+		cloner->buf = realloc(cloner->buf,cloner->buf_size);
+		cloner->write_req->buf = cloner->read_req->buf = cloner->buf;
+	}
+	return cloner->buf;
+}
+
+void handle_read(struct cloner *cloner)
+{
+	int ret;
+#define OPS(x,y) ((x<<16)|(y&0xffff))
+	switch(cloner->cmd->read.ops) {
+#ifdef CONFIG_JZ_MMC
+	case OPS(MMC,0):
+	case OPS(MMC,1):
+	case OPS(MMC,2):
+		realloc_buf(cloner, ((cloner->cmd->read.length + 0x200) & (~(0x200 - 1))));
+		ret = mmc_read_x((cloner->cmd->read.ops & 0xffff),
+				cloner->read_req->buf,
+				cloner->cmd->read.partation + cloner->cmd->read.offset,
+				cloner->cmd->read.length);
+		break;
+#endif
+	}
+
+	if (!ret) /*err return*/
+		cloner->ack = ret;
+	else	/*ok crc retrun*/
+		cloner->ack = local_crc32(0xffffffff, cloner->read_req->buf, cloner->cmd->read.length);
+
+	/*always transfer data*/
+	cloner->read_req->length = cloner->cmd->read.length;
+	usb_ep_queue(cloner->ep_in, cloner->read_req, 0);
+#undef OPS
+}
+
+void handle_read_complete(struct usb_ep *ep,struct usb_request *req)
+{
+}
+
+int handle_check(struct cloner *cloner)
+{
+	unsigned int buf[128];
+	int ret = 0, check_buf = 0;
+#define OPS(x,y) ((x<<16)|(y&0xffff))
+	switch(cloner->cmd->read.ops) {
+#ifdef CONFIG_JZ_MMC
+	case OPS(MMC,0):
+	case OPS(MMC,1):
+	case OPS(MMC,2):
+		ret = mmc_read_x((cloner->cmd->check.ops & 0xffff), buf,
+				cloner->cmd->check.partation + cloner->cmd->check.offset,
+				512);
+		check_buf = buf[0];
+		break;
+#endif
+	}
+
+	if (!ret && check_buf == cloner->cmd->check.check)
+		return 0;
+	else
+		return -EINVAL;
+#undef OPS
 }
 
 void handle_write(struct usb_ep *ep,struct usb_request *req)
@@ -383,25 +279,36 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 		case OPS(I2C,RAW):
 			cloner->ack = i2c_program(cloner);
 			break;
+#ifdef CONFIG_JZ_NAND_MGR
 		case OPS(NAND,IMAGE):
 			cloner->ack = nand_program(cloner);
 			break;
+#endif
+#ifdef CONFIG_MTD_NAND_JZ
 		case OPS(NAND, MTD_RAW):
 			cloner->ack = nand_mtd_raw_program(cloner);
 			break;
 		case OPS(NAND, MTD_UBI):
 			cloner->ack = nand_mtd_ubi_program(cloner);
 			break;
+#endif
+#ifdef CONFIG_JZ_MMC
 		case OPS(MMC,0):
 		case OPS(MMC,1):
 		case OPS(MMC,2):
 			cloner->ack = mmc_program(cloner,cloner->cmd->write.ops & 0xffff);
 			break;
-		case OPS(MEMORY,RAW):
-			cloner->ack = 0;
-			break;
+#endif
+#ifdef CONFIG_CMD_EFUSE
 		case OPS(EFUSE,RAW):
 			cloner->ack = efuse_program(cloner);
+			break;
+#endif
+		case OPS(SPI,RAW):
+			cloner->ack = spi_program(cloner);
+			break;
+		case OPS(MEMORY,RAW):
+			cloner->ack = 0;
 			break;
 		case OPS(REGISTER,RAW):
 			{
@@ -414,9 +321,6 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 					cloner->ack = -ENODEV;
 				}
 			}
-			break;
-		case OPS(SPI,RAW):
-			cloner->ack = spi_program(cloner);
 			break;
 		default:
 			printf("ops %08x not support yet.\n",cloner->cmd->write.ops);
@@ -452,10 +356,7 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 			usb_ep_queue(cloner->ep_out, cloner->args_req, 0);
 			break;
 		case VR_WRITE:
-			if(cloner->buf_size < cmd->write.length) {
-				cloner->buf_size = cmd->write.length;
-				cloner->write_req->buf = realloc(cloner->write_req->buf,cloner->buf_size);
-			}
+			realloc_buf(cloner, cmd->write.length);
 			cloner->write_req->length = cmd->write.length;
 			usb_ep_queue(cloner->ep_out, cloner->write_req, 0);
 			break;
@@ -466,10 +367,15 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 				cloner->inited = 1;
 				cloner->ack = 0;
 			}
+			break;
 		case VR_READ:
+			handle_read(cloner);
 			break;
 		case VR_SYNC_TIME:
 			cloner->ack = rtc_set(&cloner->cmd->rtc);
+			break;
+		case VR_CHECK:
+			cloner->ack = handle_check(cloner);
 			break;
 		case VR_GET_ACK:
 		case VR_GET_CPU_INFO:
@@ -577,8 +483,9 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->read_req = usb_ep_alloc_request(cloner->ep_in,0);
 
 	cloner->buf_size = 1024*1024;
+	cloner->buf = malloc(1024*1024);
 	cloner->write_req->complete = handle_write;
-	cloner->write_req->buf = malloc(1024*1024);
+	cloner->write_req->buf = cloner->buf;
 	cloner->write_req->length = 1024*1024;
 	cloner->write_req->context = cloner;
 
@@ -587,8 +494,8 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->args_req->length = ARGS_LEN;
 	cloner->args_req->context = cloner;
 
-	cloner->read_req->complete = handle_read;
-	cloner->read_req->buf = malloc(1024*1024);
+	cloner->read_req->complete = handle_read_complete;
+	cloner->read_req->buf = cloner->buf;
 	cloner->read_req->length = 1024*1024;
 	cloner->read_req->context = cloner;
 
@@ -610,7 +517,7 @@ int f_cloner_set_alt(struct usb_function *f,
 	status += usb_ep_enable(cloner->ep_out,epout_desc);
 
 	if (status < 0) {
-		printf("usb enable ep in failed\n");
+		printf("usb enable ep failed\n");
 		goto failed;
 	}
 
@@ -683,4 +590,3 @@ int jz_cloner_add(struct usb_configuration *c)
 
 	return cloner_function_bind_config(c);
 }
-

@@ -31,6 +31,8 @@
 #define SPL_BLOCKSIZE 256
 #define SPL_ECCSIZE 112
 
+extern void jz_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip);
+
 static void calculate_bch64(uint8_t *data, uint8_t *ecc)
 {
 	uint32_t reg;

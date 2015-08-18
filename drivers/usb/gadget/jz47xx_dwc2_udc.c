@@ -133,15 +133,15 @@ void dwc2_otg_flush_rx_fifo(void)
 {
 	printf("dwc flush rx fifo\n");
 	pr_warn_start();
-	udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
+	udc_set_reg(0, DCTL_SET_GONAK,OTG_DCTL);
 	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
 		handle_rxfifo_nempty(the_controller, 1);
 		udelay(1);
 	};
-	udc_write_reg(RSTCTL_RXFIFO_FLUSH, GRST_CTL);
+	udc_set_reg(0, RSTCTL_RXFIFO_FLUSH, GRST_CTL);
         while (udc_read_reg(GRST_CTL) & RSTCTL_RXFIFO_FLUSH);
 	mdelay(8);
-	udc_write_reg(DCTL_CLR_GONAK,OTG_DCTL);
+	udc_set_reg(0,DCTL_CLR_GONAK,OTG_DCTL);
 	pr_warn_end();
 }
 
@@ -274,7 +274,7 @@ static void dwc2_giveback_urb(struct dwc2_ep *dep,
 
 static void __dwc2_set_globle_out_nak(int epnum) {
 	int timeout = 10000;
-	udc_write_reg(DCTL_SET_GONAK,OTG_DCTL);
+	udc_set_reg(0, DCTL_SET_GONAK,OTG_DCTL);
 	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)&& timeout--) {
 		handle_rxfifo_nempty(the_controller, 1);
 		udelay(1);
@@ -284,7 +284,7 @@ static void __dwc2_set_globle_out_nak(int epnum) {
 }
 
 static void __dwc2_clear_globle_out_nak(int epnum) {
-	udc_write_reg(DCTL_CLR_GONAK,OTG_DCTL);
+	udc_set_reg(0, DCTL_CLR_GONAK, OTG_DCTL);
 }
 
 static void __dwc2_disable_out_endpoint(int epnum) {
@@ -333,7 +333,7 @@ static void __dwc2_set_in_nak(int epnum)
 {
 	int  timeout = 5000;
 
-	udc_write_reg(DEPCTL_SNAK,DIEP_CTL(epnum));
+	udc_set_reg(0, DEPCTL_SNAK, DIEP_CTL(epnum));
 	do
 	{
 		udelay(1);

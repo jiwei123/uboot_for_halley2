@@ -30,7 +30,7 @@
 #include <asm/arch/nand.h>
 #include "jz_nand.h"
 
-#if defined(CONFIG_MTD_NAND_JZ_PN) || (defined(CONFIG_MTD_NAND_AUTO_PARAMS) && defined(CONFIG_SPL_BUILD)) || defined(CONFIG_BURNER)
+#if defined(CONFIG_MTD_NAND_JZ_PN) || (defined(CONFIG_MTD_NAND_JZ_AUTO_PARAMS) && defined(CONFIG_SPL_BUILD)) || defined(CONFIG_BURNER)
 static struct jz_nand_priv nand_privs[1];
 void jz_nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int len)
 {
@@ -81,7 +81,7 @@ static void jz_nand_write_buf(struct mtd_info *mtd, const uint8_t *buf, int len)
 		nand_write_buf(mtd, buf, len);
 		priv->pn_bytes = MAX(0, priv->pn_bytes - len);
 	}
-	jz_nand_enable_pn(!!priv->pn_bytes, false);
+	jz_nand_enable_pn(0, false);
 }
 
 void jz_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip)
@@ -92,9 +92,9 @@ void jz_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip)
 	priv->pn_size = size;
 	priv->pn_skip = skip;
 }
-#endif	/* CONFIG_MTD_NAND_JZ_PN || (CONFIG_MTD_NAND_AUTO_PARAMS && CONFIG_SPL_BUILD) || defined(CONFIG_BURNER)*/
+#endif	/* CONFIG_MTD_NAND_JZ_PN || (CONFIG_MTD_NAND_JZ_AUTO_PARAMS && CONFIG_SPL_BUILD) || defined(CONFIG_BURNER)*/
 
-#if defined(CONFIG_MTD_NAND_AUTO_PARAMS) || defined(CONFIG_BURNER)
+#if defined(CONFIG_MTD_NAND_JZ_AUTO_PARAMS) || defined(CONFIG_BURNER)
 static void* zalloc(size_t size) {
 	void *p = 0;
 
@@ -194,7 +194,7 @@ int mtd_nand_auto_init(nand_flash_param* nand_param)
 	nand_register(0);
 	return ret;
 }
-#else	 /* CONFIG_MTD_NAND_AUTO_PARAMS */
+#else	 /* CONFIG_MTD_NAND_JZ_AUTO_PARAMS */
 #include "chips.h"
 #ifndef CONFIG_SPL_BUILD
 #define ECCBYTES_ONE_PAGE ((CONFIG_SYS_NAND_PAGE_SIZE/CONFIG_SYS_NAND_ECCSIZE)*CONFIG_SYS_NAND_ECCBYTES)
@@ -269,4 +269,4 @@ int mtd_nand_init(struct nand_chip *nand_chip)
 	return jz_nand_init(nand_chip, NULL, buswidth);
 #endif
 }
-#endif /* !CONFIG_MTD_NAND_AUTO_PARAMS */
+#endif /* !CONFIG_MTD_NAND_JZ_AUTO_PARAMS */

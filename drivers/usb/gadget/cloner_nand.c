@@ -1,17 +1,10 @@
-
-//#define DEBUG
 #include <linux/mtd/nand.h>
 #include <linux/mtd/mtd.h>
 #include <nand.h>
 #include <ingenic_nand_mgr/nand_param.h>
 #include "cloner.h"
 
-//#define run_command(x,y) 0
-extern char *get_expart_name(int offset);
-extern char *get_part_name(int offset);
-extern int set_current_part(char *name);
-extern int need_change_part(char *name);
-
+#ifdef CONFIG_JZ_NAND_MGR
 int nand_program(struct cloner *cloner)
 {
 	u32 startaddr = cloner->cmd->write.partation + (cloner->cmd->write.offset);
@@ -23,6 +16,16 @@ int nand_program(struct cloner *cloner)
 
 	return 0;
 }
+#endif
+
+#ifdef CONFIG_MTD_NAND_JZ
+extern char *get_expart_name(int offset);
+extern char *get_part_name(int offset);
+extern int set_current_part(char *name);
+extern int need_change_part(char *name);
+
+extern int mtd_nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_params,
+		int nr_nand_args, int eraseall, void ** title_fill, int *size);
 
 int nand_mtd_ubi_program(struct cloner *cloner)
 {
@@ -161,3 +164,4 @@ out:
 	printf("...error\n");
 	return ret;
 }
+#endif
