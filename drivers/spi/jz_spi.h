@@ -29,6 +29,16 @@
 #define FIFI_THRESHOLD			64
 #define SPI_WRITE_CHECK_TIMES		50
 
+struct spi_quad_mode {
+	u8 dummy_byte;
+	u8 RDSR_CMD;
+	u8 WRSR_CMD;
+	unsigned int RDSR_DATE;//the data is write the spi status register for QE bit
+	unsigned int WRSR_DATE;//this bit should be the flash QUAD mode enable
+	u8 cmd_read;
+	u8 sfc_mode;
+};
+
 struct jz_spi_support {
 	u8 id_manufactory;
 	u8 id_device;
@@ -39,6 +49,7 @@ struct jz_spi_support {
 	int size;
 	int page_num;
 	unsigned int *page_list;
+	struct spi_quad_mode quad_mode;
 };
 
 struct jz_spi_slave {
@@ -81,6 +92,15 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 16 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.cmd_read = CMD_QUAD_READ,
+			.sfc_mode = TRAN_SPI_QUAD,
+		},
 	},
 	{
 		.id_manufactory = 0xc8,
@@ -88,7 +108,33 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 8 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,// the data is write the spi status register for QE bit
+			.WRSR_DATE = 0x2,// this bit should be the flash QUAD mode enable
+			.cmd_read = CMD_QUAD_READ,
+			.sfc_mode = TRAN_SPI_QUAD,
+		},
+	},
+	{
+		.id_manufactory = 0x9d,
+		.name = "IS25LP128",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.size = 16 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 6,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.WRSR_DATE = 0x40,//his bit should be the flash QUAD mode enable
+			.cmd_read = CMD_QUAD_IO_FAST_READ,
+			.sfc_mode = TRAN_SPI_IO_QUAD,
+		},
 	}
+
 };
 
 #endif /* __JZ_SPI_H__ */
