@@ -57,6 +57,7 @@
 #define CMD_FAST_READ 	0x0B	/* Read Data at high speed */
 #define CMD_DUAL_READ   0x3b    /* Read Data at QUAD fast speed*/
 #define CMD_QUAD_READ   0x6b    /* Read Data at QUAD fast speed*/
+#define CMD_QUAD_IO_FAST_READ   0xeb    /* Read Data at QUAD IO fast speed*/
 #define CMD_PP 		0x02	/* Page Program(write data) */
 #define CMD_QPP 	0x32	/* QUAD Page Program(write data) */
 #define CMD_SE 		0xD8	/* Sector Erase */
