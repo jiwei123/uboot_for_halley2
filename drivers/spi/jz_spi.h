@@ -29,7 +29,7 @@
 #define FIFI_THRESHOLD			64
 #define SPI_WRITE_CHECK_TIMES		50
 
-#ifdef CONFIG_X1000
+#ifdef CONFIG_SPI_QUAD
 struct spi_quad_mode {
 	u8 dummy_byte;
 	u8 RDSR_CMD;
@@ -51,7 +51,7 @@ struct jz_spi_support {
 	int size;
 	int page_num;
 	unsigned int *page_list;
-#ifdef CONFIG_X1000
+#ifdef CONFIG_SPI_QUAD
 	struct spi_quad_mode quad_mode;
 #endif
 };
@@ -96,7 +96,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 16 * 1024 * 1024,
-#ifdef CONFIG_X1000
+#ifdef CONFIG_SPI_QUAD
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR_1,
@@ -114,7 +114,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 8 * 1024 * 1024,
-#ifdef CONFIG_X1000
+#ifdef CONFIG_SPI_QUAD
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR_1,
@@ -126,7 +126,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		},
 #endif
 	},
-#ifdef CONFIG_X1000
+#ifdef CONFIG_SPI_QUAD
 	{
 		.id_manufactory = 0x9d,
 		.name = "IS25LP128",
