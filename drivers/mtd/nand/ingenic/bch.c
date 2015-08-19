@@ -16,9 +16,9 @@ struct bch_params {
 static void bch_init(struct bch_params *param, int encode)
 {
 	uint32_t reg;
+
 	/* clear & completion & error interrupts */
-	reg = BCH_BHINT_ENCF | BCH_BHINT_DECF |
-		BCH_BHINT_ERR | BCH_BHINT_UNCOR;
+	reg = readl(BCH_BASE + BCH_BHINT);
 	writel(reg, BCH_BASE + BCH_BHINT);
 
 	/* setup BCH count register */
@@ -29,14 +29,23 @@ static void bch_init(struct bch_params *param, int encode)
 	/* setup BCH control register */
 	reg = BCH_BHCR_BCHE | BCH_BHCR_INIT;
 	reg |= param->strength << BCH_BHCR_BSEL_SHIFT;
-	if (encode) reg |= BCH_BHCR_ENCE;
+	if (encode)
+		reg |= BCH_BHCR_ENCE;
 	writel(reg, BCH_BASE + BCH_BHCR);
+}
+static void bch_disable(void)
+{
+	uint32_t reg;
+	reg = readl(BCH_BASE + BCH_BHINT);
+	writel(reg, BCH_BASE + BCH_BHINT);
+	writel(BCH_BHCR_BCHE, BCH_BASE + BCH_BHCCR);
 }
 
 #ifndef CONFIG_SPL_BUILD
 static void bch_caculate(struct bch_params *param, const u_char *dat, u_char * ecc_code)
 {
 	int i;
+	uint32_t status;
 
 	bch_init(param, 1);
 
@@ -45,18 +54,17 @@ static void bch_caculate(struct bch_params *param, const u_char *dat, u_char * e
 		writeb(dat[i], BCH_BASE + BCH_BHDR);
 
 	/* wait for completion */
-	while (!(readl(BCH_BASE + BCH_BHINT) & BCH_BHINT_ENCF));
-
-	/* clear interrupts */
-	writel(readl(BCH_BASE + BCH_BHINT), BCH_BASE + BCH_BHINT);
+	do {
+		status = readl(BCH_BASE + BCH_BHINT);
+	} while (!(status & BCH_BHINT_ENCF));
+	writel(status, BCH_BASE + BCH_BHINT);
 
 	/* read back parity data */
 	for (i = 0; i < param->bytes; i++)
 		ecc_code[i] = readb(BCH_BASE + BCH_BHPAR0 + i);
 
 	/* disable BCH */
-	writel(BCH_BHCR_BCHE, BCH_BASE + BCH_BHCCR);
-
+	bch_disable();
 }
 #endif
 
@@ -64,7 +72,7 @@ static int bch_correct(struct bch_params *param, u_char *dat, u_char *read_ecc)
 {
 	uint32_t status;
 	int i, ret = -EBADMSG;
-	
+
 	bch_init(param, 0);
 
 	/* write data */
@@ -74,19 +82,16 @@ static int bch_correct(struct bch_params *param, u_char *dat, u_char *read_ecc)
 	/* write ECC */
 	for (i = 0; i < param->bytes; i++)
 		writeb(read_ecc[i], BCH_BASE + BCH_BHDR);
-	
+
 	/* wait for completion */
 	do {
-		udelay(1);
 		status = readl(BCH_BASE + BCH_BHINT);
 	} while (!(status & BCH_BHINT_DECF));
-
-	/* clear interrupts ??????*/
 	writel(status, BCH_BASE + BCH_BHINT);
 
 	/* check status */
 	if (status & BCH_BHINT_UNCOR) {
-		printf("uncorrectable ECC error\n");
+		printf("uncorrectable ecc error\n");
 		goto out;
 	}
 
@@ -105,7 +110,7 @@ static int bch_correct(struct bch_params *param, u_char *dat, u_char *read_ecc)
 	}
 out:
 	/* disable BCH */
-	writel(BCH_BHCR_BCHE, BCH_BASE + BCH_BHCCR);
+	bch_disable();
 	return ret;
 }
 

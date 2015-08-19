@@ -29,6 +29,7 @@
 #define FIFI_THRESHOLD			64
 #define SPI_WRITE_CHECK_TIMES		50
 
+#ifdef CONFIG_X1000
 struct spi_quad_mode {
 	u8 dummy_byte;
 	u8 RDSR_CMD;
@@ -38,6 +39,7 @@ struct spi_quad_mode {
 	u8 cmd_read;
 	u8 sfc_mode;
 };
+#endif
 
 struct jz_spi_support {
 	u8 id_manufactory;
@@ -49,7 +51,9 @@ struct jz_spi_support {
 	int size;
 	int page_num;
 	unsigned int *page_list;
+#ifdef CONFIG_X1000
 	struct spi_quad_mode quad_mode;
+#endif
 };
 
 struct jz_spi_slave {
@@ -92,6 +96,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 16 * 1024 * 1024,
+#ifdef CONFIG_X1000
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR_1,
@@ -101,6 +106,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.cmd_read = CMD_QUAD_READ,
 			.sfc_mode = TRAN_SPI_QUAD,
 		},
+#endif
 	},
 	{
 		.id_manufactory = 0xc8,
@@ -108,6 +114,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 8 * 1024 * 1024,
+#ifdef CONFIG_X1000
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR_1,
@@ -117,7 +124,9 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.cmd_read = CMD_QUAD_READ,
 			.sfc_mode = TRAN_SPI_QUAD,
 		},
+#endif
 	},
+#ifdef CONFIG_X1000
 	{
 		.id_manufactory = 0x9d,
 		.name = "IS25LP128",
@@ -134,7 +143,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.sfc_mode = TRAN_SPI_IO_QUAD,
 		},
 	}
-
+#endif
 };
 
 #endif /* __JZ_SPI_H__ */

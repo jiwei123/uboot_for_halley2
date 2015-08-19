@@ -41,6 +41,7 @@ struct spi spi;
 #define VR_SYNC_TIME		0x15
 #define VR_REBOOT		0x16
 #define VR_POWEROFF		0x17	/*reboot and poweroff*/
+#define VR_CHECK		0x18
 
 #define MMC_ERASE_ALL	1
 #define MMC_ERASE_PART	2
@@ -152,6 +153,13 @@ union cmd {
 		uint32_t length;
 	}read;
 
+	struct check {
+		uint64_t partation;
+		uint32_t ops;
+		uint32_t offset;
+		uint32_t check;
+	} check;
+
 	struct rtc_time rtc;
 };
 
@@ -170,6 +178,8 @@ struct cloner {
 
 	union cmd *cmd;
 	int cmd_type;
+	void *buf;
+	uint32_t buf_size;
 	int ack;
 	struct arguments *args;
 	int inited;
@@ -179,7 +189,6 @@ struct cloner {
 	void* spl_title;
 	int spl_title_sz;
 	int full_size_remainder;
-	uint32_t buf_size;
 	uint32_t last_offset;
 	uint32_t last_offset_avail;
 };

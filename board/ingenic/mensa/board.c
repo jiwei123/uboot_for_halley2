@@ -77,7 +77,7 @@ int misc_init_r(void)
 	return 0;
 }
 
-#ifdef CONFIG_JZ_NAND
+#ifdef CONFIG_MTD_NAND_JZ
 #ifdef CONFIG_SYS_NAND_SELF_INIT
 extern void mtd_nand_probe(void);
 void board_nand_init(void)
