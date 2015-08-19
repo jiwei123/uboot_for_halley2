@@ -37,7 +37,9 @@
 #include "jz_spi.h"
 
 static struct jz_spi_support *gparams;
+#ifdef CONFIG_SPI_QUAD
 struct spi_quad_mode *quad_mode = NULL;
+#endif
 /* wait time before read status (us) for spi nand */
 //static int t_reset = 500;
 int mode = 0;
@@ -769,6 +771,7 @@ struct spi_flash *sfc_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 	return flash;
 }
 
+#ifdef CONFIG_SPI_QUAD
 void sfc_set_quad_mode()
 {
 	/* the paraterms is
@@ -814,6 +817,7 @@ void sfc_set_quad_mode()
 		printf("the quad_mode is NULL,the nor flash id we not support\n");
 	}
 }
+#endif
 
 void sfc_nor_RDID(unsigned char *idcode)
 {
