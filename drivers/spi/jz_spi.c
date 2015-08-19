@@ -23,6 +23,7 @@
 #include <config.h>
 #include <common.h>
 #include <spi.h>
+#include <spl.h>
 #include <spi_flash.h>
 #include <malloc.h>
 #include <asm/gpio.h>
@@ -921,15 +922,57 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 }
 #endif
 
+#define NV_AREA_START (288 * 1024)
+static void nv_map_area(unsigned int *base_addr)
+{
+        unsigned int buf[3][2];
+        unsigned int tmp_buf[4];
+        unsigned int nv_num = 0, nv_count = 0;
+        unsigned int addr, i;
+
+        for(i = 0; i < 3; i++) {
+                addr = NV_AREA_START + i * 32 * 1024;
+                spi_load(addr, 4, buf[i]);
+                if(buf[i][0] == 0x5a5a5a5a) {
+                        spi_load(addr + 1 *1024,  16, tmp_buf);
+                        addr += 32 * 1024 - 8;
+                        spi_load(addr, 8, buf[i]);
+                        if(buf[i][1] == 0xa5a5a5a5) {
+                                if(nv_count < buf[i][0]) {
+                                        nv_count = buf[i][0];
+                                        nv_num = i;
+                                }
+                        }
+                }
+        }
+        *base_addr = NV_AREA_START + nv_num * 32 * 1024 + 1024;
+}
+
 #ifdef CONFIG_SPL_SPI_SUPPORT
 void spl_spi_load_image(void)
 {
 	struct image_header *header;
 
+#ifdef CONFIG_SPL_OS_BOOT
+        unsigned nv_buf[4];
+        int count = 16;
+        unsigned int src_addr, updata_flag;
+#endif
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
+#ifdef CONFIG_SPL_OS_BOOT
+        nv_map_area((unsigned int)&src_addr);
+        spi_load(src_addr, count, nv_buf);
+        updata_flag = nv_buf[3];
+        if((updata_flag & 0x3) != 0x3) {
+                spi_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+                spl_parse_image_header(header);
+                spi_load(CONFIG_SPL_OS_OFFSET, spl_image.size + 64, spl_image.load_addr);
+        } else
+#endif
+	{
+		spl_parse_image_header(header);
 
-	spl_parse_image_header(header);
-
-	spi_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN, CONFIG_SYS_TEXT_BASE);
+		spi_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN, CONFIG_SYS_TEXT_BASE);
+	}
 }
 #endif

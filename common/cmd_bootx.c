@@ -48,7 +48,7 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	printf("Prepare kernel parameters ...\n");
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
-	param_addr[1] = CONFIG_BOOTARGS;
+	param_addr[1] = CONFIG_BOOTX_BOOTARGS;
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
 
@@ -62,6 +62,30 @@ static int mem_bootx(unsigned int mem_address)
 	bootx_jump_kernel(mem_address);
 	return 0;
 }
+
+#ifdef CONFIG_JZ_SPI
+static void spi_boot(unsigned int mem_address,unsigned int spi_addr)
+{
+	struct image_header *header;
+	unsigned int header_size;
+	unsigned int entry_point, load_addr, size;
+
+	printf("Enter SPI_boot routine ...\n");
+	header_size = sizeof(struct image_header);
+	spi_load(spi_addr, header_size, CONFIG_SYS_TEXT_BASE);
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
+
+	entry_point = image_get_load(header);
+	/* Load including the header */
+	load_addr = entry_point - header_size;
+	size = image_get_data_size(header) + header_size;
+
+	spi_load(spi_addr, size, load_addr);
+
+	bootx_jump_kernel(mem_address);
+}
+#endif
+
 #ifdef CONFIG_JZ_SFC
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
@@ -105,6 +129,15 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		sfc_boot(mem_address, sfc_addr);
 #endif
 		printf("SFC boot error\n");
+		return 0;
+	} else if (!strcmp("spi",argv[0])) {
+		mem_address = simple_strtoul(argv[1], NULL, 16);
+		sfc_addr = simple_strtoul(argv[2], NULL, 16);
+		printf("SPI boot start\n");
+#ifdef CONFIG_JZ_SPI
+		spi_boot(mem_address, sfc_addr);
+#endif
+		printf("SPI boot error\n");
 		return 0;
 	} else {
 		printf("%s boot unsupport\n", argv[0]);

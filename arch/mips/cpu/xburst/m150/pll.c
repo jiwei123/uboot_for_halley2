@@ -47,7 +47,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DIV_H2			4
 #endif
 #ifdef CONFIG_SYS_MEM_DIV
-#define DIV_H0			CONFIG_SYS_MEM_DIV
+#define DIV_H0			4
 #else
 #define DIV_H0			gd->arch.gi->ddr_div
 #endif
@@ -81,6 +81,7 @@ unsigned int get_pllreg_value(int pll)
 		pll_out = gd->arch.gi->cpufreq / 1000000;
 		if (pll_out > 600) {
 			cpapcr.b.BS = 1;
+			cpapcr.b.PLLOD = 1;
 		} else if ((pll_out > 155) && (pll_out <= 300)) {
 			cpapcr.b.PLLOD = 1;
 		} else if (pll_out > 76) {
@@ -91,8 +92,7 @@ unsigned int get_pllreg_value(int pll)
 		cpapcr.b.PLLN = 0;
 		cpapcr.b.PLLM = (gd->arch.gi->cpufreq / gd->arch.gi->extal)
 			* (cpapcr.b.PLLN + 1)
-			* (1 << cpapcr.b.PLLOD)
-			- 1;
+			* (1 << cpapcr.b.PLLOD);
 		ret = cpapcr.d32;
 	case MPLL:
 		/* MPLL is not used */
