@@ -114,7 +114,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 5
+#define CONFIG_BOOTDELAY 0
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
