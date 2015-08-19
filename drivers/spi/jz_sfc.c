@@ -37,7 +37,7 @@
 #include "jz_spi.h"
 
 static struct jz_spi_support *gparams;
-
+struct spi_quad_mode *quad_mode = NULL;
 /* wait time before read status (us) for spi nand */
 //static int t_reset = 500;
 int mode = 0;
@@ -529,8 +529,8 @@ int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 
 
 #if defined (CONFIG_SPI_QUAD)
-	cmd[0]  = CMD_QUAD_READ;
-	mode = TRAN_SPI_QUAD;
+	cmd[0]  = quad_mode->cmd_read;
+	mode = quad_mode->sfc_mode;
 #elif defined (CONFIG_SPI_DUAL)
 	cmd[0]  = CMD_DUAL_READ;
 	mode = TRAN_SPI_DUAL;
@@ -554,7 +554,7 @@ int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 		 * */
 
 #if defined(CONFIG_SPI_DUAL) || defined(CONFIG_SPI_QUAD)
-	sfc_send_cmd(&cmd[0],read_len,&cmd[1],3,8,1,0);
+	sfc_send_cmd(&cmd[0],read_len,&cmd[1],3,quad_mode->dummy_byte,1,0);
 #else
 	sfc_send_cmd(&cmd[0],read_len,&cmd[1],3,0,1,0);
 #endif
@@ -769,8 +769,7 @@ struct spi_flash *sfc_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 	return flash;
 }
 
-
-void sfc_set_quad_mode(unsigned int data)
+void sfc_set_quad_mode()
 {
 	/* the paraterms is
 	 * cmd , len, addr,addr_len
@@ -783,32 +782,87 @@ void sfc_set_quad_mode(unsigned int data)
 	unsigned int tmp = 0;
 	int i = 10;
 
-	cmd[0] = CMD_WREN;
-	cmd[1] = CMD_WRSR_1;
-	cmd[2] = CMD_RDSR_1;
-	cmd[3] = CMD_RDSR;
+	if(quad_mode != NULL){
+		cmd[0] = CMD_WREN;
+		cmd[1] = quad_mode->WRSR_CMD;
+		cmd[2] = quad_mode->RDSR_CMD;
+		cmd[3] = CMD_RDSR;
 
-	sfc_send_cmd(&cmd[0],0,0,0,0,0,1);
+		sfc_send_cmd(&cmd[0],0,0,0,0,0,1);
 
-	sfc_send_cmd(&cmd[1],1,0,0,0,1,1);
-	sfc_write_data(&data,1);
+		sfc_send_cmd(&cmd[1],1,0,0,0,1,1);
+		sfc_write_data(&quad_mode->WRSR_DATE,1);
 
-	sfc_send_cmd(&cmd[3],1,0,0,0,1,0);
-	sfc_read_data(&tmp, 1);
-
-	while(tmp & CMD_SR_WIP) {
 		sfc_send_cmd(&cmd[3],1,0,0,0,1,0);
 		sfc_read_data(&tmp, 1);
-	}
 
-	sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
-	sfc_read_data(&buf, 1);
-	while(!(buf & CMD_SR_QEP)&&((i--) > 0)) {
+		while(tmp & CMD_SR_WIP) {
+			sfc_send_cmd(&cmd[3],1,0,0,0,1,0);
+			sfc_read_data(&tmp, 1);
+		}
+
 		sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
 		sfc_read_data(&buf, 1);
+		while(!(buf & quad_mode->RDSR_DATE)&&((i--) > 0)) {
+			sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
+			sfc_read_data(&buf, 1);
+		}
+
+		printf("set quad mode is enable.the buf = %x\n",buf);
+	}else{
+
+		printf("the quad_mode is NULL,the nor flash id we not support\n");
+	}
+}
+
+void sfc_nor_RDID(unsigned char *idcode)
+{
+	/* the paraterms is
+	 * cmd , len, addr,addr_len
+	 * dummy_byte, daten
+	 * dir
+	 *
+	 * */
+	unsigned char cmd[1];
+	unsigned char chip_id[4];
+	cmd[0] = CMD_RDID;
+	sfc_send_cmd(&cmd[0],3,0,0,0,1,0);
+	sfc_read_data(chip_id, 1);
+	*idcode = chip_id[0];
+}
+
+int sfc_nor_init()
+{
+	unsigned char idcode;
+	struct jz_spi_support *params;
+	int i = 0;
+	sfc_nor_RDID(&idcode);
+
+	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
+		params = &jz_spi_support_table[i];
+		if (params->id_manufactory == idcode){
+			printf("the id code = %x, the flash name is %s\n",idcode,params->name);
+#ifdef CONFIG_SPI_QUAD
+			quad_mode = &jz_spi_support_table[i].quad_mode;
+#endif
+			break;
+		}
 	}
 
-	printf("set quad mode is enable.the buf = %x\n",buf);
+	if (i == ARRAY_SIZE(jz_spi_support_table)) {
+		if ((idcode != 0)&&(idcode != 0xff)){
+			printf("the id code = %x, the flash name is %s\n",idcode,params->name);
+			printf("unsupport ID is %04x if the id not be 0x00,the flash is ok for burner\n");
+#ifdef CONFIG_SPI_QUAD
+			quad_mode = &jz_spi_support_table[1].quad_mode;
+#endif
+		}else{
+			printf("ingenic: Unsupported ID %04x\n", idcode);
+			return -1;
+
+		}
+	}
+	return 0;
 
 }
 
@@ -819,7 +873,7 @@ void sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	unsigned char *data;
 	unsigned int temp;
 //	int sfc_mode = 0;
-	int ret = 0;
+	int ret = 0,err = 0;
 	unsigned int spl_len = 0,words_of_spl;
 	int addr_len = 3;
 	struct spi_flash flash;
@@ -831,7 +885,14 @@ void sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_add
 //	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), words_of_spl);
 
 #ifdef CONFIG_SPI_QUAD
-	sfc_set_quad_mode(0x2);
+	if(quad_mode == NULL){
+		err = sfc_nor_init();
+		if(err < 0){
+			printf("the sfc quad mode err,check your soft code\n");
+			return;
+		}
+	}
+	sfc_set_quad_mode();
 #endif
 
 	jz_sfc_writel(1 << 2,SFC_TRIG);
@@ -843,12 +904,13 @@ void sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_add
 
 	return ;
 }
+
 void sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_addr,unsigned int erase_en)
 {
 
 	int i,j;
 	unsigned char *data;
-	int ret = 0;
+	int ret = 0,err = 0;
 	struct spi_flash flash;
 
 	flash.page_size = 256;
@@ -860,7 +922,14 @@ void sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_ad
 		printf("sfc erase ok\n");
 	}
 #ifdef CONFIG_SPI_QUAD
-	sfc_set_quad_mode(0x2);
+	if(quad_mode == NULL){
+		err = sfc_nor_init();
+		if(err < 0){
+			printf("the sfc quad mode err,check your soft code\n");
+			return;
+		}
+	}
+	sfc_set_quad_mode();
 #endif
 
 	jz_sfc_writel(1 << 2,SFC_TRIG);
@@ -880,6 +949,7 @@ void sfc_nor_erase(unsigned int src_addr, unsigned int count)
 	unsigned int temp;
 	int sfc_mode = 0;
 	int ret = 0;
+	int err = 0;
 	unsigned int spl_len = 0,words_of_spl;
 	int addr_len = 3;
 	struct spi_flash flash;
@@ -889,7 +959,14 @@ void sfc_nor_erase(unsigned int src_addr, unsigned int count)
 	flash.size = 16*1024*1024;
 
 #ifdef CONFIG_SPI_QUAD
-	sfc_set_quad_mode(0);
+	if(quad_mode == NULL){
+		err = sfc_nor_init();
+		if(err < 0){
+			printf("the sfc quad mode err,check your soft code\n");
+			return;
+		}
+	}
+	sfc_set_quad_mode();
 #endif
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 	jz_erase(&flash,src_addr,count);
