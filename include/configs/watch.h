@@ -76,6 +76,7 @@
 #define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
 #ifdef  CONFIG_SOLAR
 #define CONFIG_PMU_SM5007
+#define CONFIG_CMD_PMU
 #define CONFIG_MCP_H9TU32A4GDMCLR_KGM_LPDDR2
 #else
 #define CONFIG_PMU_RICOH6x
@@ -113,7 +114,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 0
+#define CONFIG_BOOTDELAY 5
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT

@@ -29,18 +29,27 @@
 
 static LIST_HEAD(regulator_map_list);
 
-/* Internal regulator request function */
-static struct regulator *_regulator_get(const char *id, int exclusive)
+
+/* Internal regulator request function
+ * id: name of regulator
+ * ignore_case: 0: case sensitive 1: mixed case
+ *  */
+static struct regulator *_regulator_get(const char *id, int ignore_case)
 {
 	struct regulator *map;
-
+	int (* str_cmp_function)(const char *s1, const char *s2) = NULL;
 	if (id == NULL) {
 		printf("get() with no identifier\n");
 		return ERR_PTR(-EINVAL);
 	}
 
+	if(ignore_case){
+		str_cmp_function = strcasecmp;
+	}else{
+		str_cmp_function = strcmp;
+	}
 	list_for_each_entry(map, &regulator_map_list, list) {
-		if (strcmp(map->name, id) == 0) {
+		if (str_cmp_function(map->name, id) == 0) {
 			return map;
 		}
 	}
@@ -62,7 +71,7 @@ static struct regulator *_regulator_get(const char *id, int exclusive)
  */
 struct regulator *regulator_get(const char *id)
 {
-	return _regulator_get(id, 0);
+	return _regulator_get(id, 1);
 }
 
 /**
@@ -103,6 +112,42 @@ int regulator_register(struct regulator *regulator, void *driver_data)
 	list_add(&regulator->list, &regulator_map_list);
 
 	return 0;
+}
+
+/**
+ * regulator_reg_read - read an reg from pmu chip
+ * @regulator: regulator source
+ * @reg: register address you want to read
+ * @data: data address point to storage
+ * Returns negative if the regulator read failed, zero if it hasn't, else a
+ * negative errno code.
+ */
+int regulator_reg_read(struct regulator *regulator, const unsigned char reg, unsigned char * const data){
+	if (regulator == NULL)
+		return -EINVAL;
+
+	if (!regulator->ops->read)
+		return -EPERM;
+
+	return regulator->ops->read(reg, data);
+}
+
+/**
+ * regulator_reg_read - write an reg to pmu chip
+ * @regulator: regulator source
+ * @reg: register address you want to write
+ * @data: data you want to write
+ * Returns negative if the regulator write failed, zero if it hasn't, else a
+ * negative errno code.
+ */
+int regulator_reg_write(struct regulator *regulator, const unsigned char reg, const unsigned char data){
+	if (regulator == NULL)
+		return -EINVAL;
+
+	if (!regulator->ops->write)
+		return -EPERM;
+
+	return regulator->ops->write(reg, data);
 }
 
 /**
@@ -282,6 +327,15 @@ int regulator_get_current_limit(struct regulator *regulator)
 }
 
 /**
+ * get_simple_regulator - get a regulator instance
+ * used in cmd_pmu, for pmu register read & write
+ * @regulator: regulator source
+ */
+struct regulator *get_simple_regulator(void){
+	return list_entry(regulator_map_list.next, struct regulator, list);
+}
+
+/**
  * do_powerinfo - show regulator output voltage and status
  * @regulator: regulator source
  */
@@ -289,14 +343,26 @@ static int do_powerinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 {
 	struct regulator *map;
 
-	printf("name\t status\t voltage(uV)\n");
-
+	printf("%-20s %-9s %-15s %-15s %-15s %-15s\n",
+			"name", "status", "voltage(mV)", "min(mV)", "max(mV)");
 	list_for_each_entry(map, &regulator_map_list, list) {
-		printf("%s\t %d\t %d\n", map->name, regulator_is_enabled(map),
-				regulator_get_voltage(map));
+		printf("%-20s %-9s %-15d %-15d %-15d\n",
+				map->name,
+				(regulator_is_enabled(map)?"on" : "off"),
+				regulator_get_voltage(map)/1000,
+				map->min_uV/1000,
+				map->max_uV/1000);
 	}
-
 	return 0;
+}
+
+/*
+ * Used to display all regulator information.
+ * used by pmu cmd
+ *
+ * */
+int show_all_regulator_info(void){
+	return do_powerinfo(NULL, 0, 0, NULL);
 }
 
 U_BOOT_CMD(

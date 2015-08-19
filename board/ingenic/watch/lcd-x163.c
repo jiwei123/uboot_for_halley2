@@ -32,7 +32,7 @@ struct lcd_power_regulator {
 
 static struct lcd_power_regulator lcd_power_regulator[] = {
 #ifdef CONFIG_PMU_RICOH6x
-#if defined(CONFIG_AW808) || defined(CONFIG_SOLAR)
+#if defined(CONFIG_AW808)
     LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 0),
     LCD_REGULATOR_REG("RICOH619_LDO1",  3400000, 0),
     LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
@@ -47,13 +47,19 @@ static struct lcd_power_regulator lcd_power_regulator[] = {
     LCD_REGULATOR_REG("RICOH619_LDO10", 3300000, 0),
 #endif
 #elif defined CONFIG_PMU_D2041
+#elif defined CONFIG_PMU_SM5007
+#if defined(CONFIG_SOLAR)
+    LCD_REGULATOR_REG("SM5007_BUCK4", 3300000, 0),
+    LCD_REGULATOR_REG("SM5007_LDO2",  1800000, 0),
+    LCD_REGULATOR_REG("SM5007_LDO4",  2800000, 0),
+#endif
 #endif
 };
 
 #if defined(CONFIG_ACRAB)
 #define GPIO_LCD_BLK_EN GPIO_PC(9)
 #define MIPI_RST_N GPIO_PC(16)
-#elif defined(CONFIG_AW808) || defined(CONFIG_SOLAR)
+#elif defined(CONFIG_AW808)
 #define GPIO_LCD_BLK_EN GPIO_PC(23)
 #define MIPI_RST_N GPIO_PC(19)
 #elif defined(CONFIG_X3)
@@ -61,6 +67,9 @@ static struct lcd_power_regulator lcd_power_regulator[] = {
 #define MIPI_RST_N GPIO_PC(19)
 #elif defined(CONFIG_NEWTON2)
 #define MIPI_RST_N GPIO_PC(19)
+#elif defined(CONFIG_SOLAR)
+#define GPIO_LCD_BLK_EN GPIO_PD(0)
+#define MIPI_RST_N GPIO_PD(3)
 #endif
 
 static int inline lcd_power_regulator_init(const char *id, int voltage, int delay)

@@ -217,6 +217,7 @@ COBJS-$(CONFIG_CMD_GPT) += cmd_gpt.o
 COBJS-$(CONFIG_CMD_BURN) += cmd_burn.o
 COBJS-$(CONFIG_CMD_EFUSE) += cmd_efuse.o
 COBJS-$(CONFIG_CMD_BATTERYDET) += cmd_batterydet.o
+COBJS-$(CONFIG_CMD_PMU) += cmd_pmu.o
 endif
 
 ifdef CONFIG_SPL_BUILD

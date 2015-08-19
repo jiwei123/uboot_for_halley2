@@ -66,9 +66,13 @@ struct regulator_ops {
 	int (*enable) (struct regulator *);
 	int (*disable) (struct regulator *);
 	int (*is_enabled) (struct regulator *);
+	int (*read) (const unsigned char reg, unsigned char * const data);
+	int (*write) (const unsigned char reg,const unsigned char data);
 };
 
 /* regulator output control and status */
+int regulator_reg_write(struct regulator *regulator, const unsigned char reg, const unsigned char data);
+int regulator_reg_read(struct regulator *regulator, const unsigned char reg, unsigned char * const data);
 int regulator_enable(struct regulator *regulator);
 int regulator_disable(struct regulator *regulator);
 int regulator_is_enabled(struct regulator *regulator);
@@ -84,8 +88,11 @@ int regulator_set_current_limit(struct regulator *regulator,
 			       int min_uA, int max_uA);
 int regulator_get_current_limit(struct regulator *regulator);
 
+int show_all_regulator_info(void);
+struct regulator *get_simple_regulator(void);
+
 enum regulator_outnum { REGULATOR_CORE = 1, REGULATOR_MEM, REGULATOR_IO };
 int spl_regulator_set_voltage(enum regulator_outnum outnum, int vol_mv);
-int spl_regulator_init();
+int spl_regulator_init(void);
 
 #endif
