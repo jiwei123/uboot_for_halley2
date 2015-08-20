@@ -7,8 +7,10 @@ partition:
 	#name     =  start,   size, fstype
 	xboot     =     0m,     3m,
 	boot      =     3m,     8m, EMPTY
-	system    =    12m,    64m, LINUX_FS
-        data      =    80m,  3552m, LINUX_FS
+	test      =     12m,    20m, LINUX_FS
+	system    =    32m,    256m, LINUX_FS
+	data      =    288m,   32m, LINUX_FS
+	misc      =    320m,   3310m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY
 # emcp: H9TP32A4GDCCPR
