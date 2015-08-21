@@ -25,12 +25,12 @@
 #define DDR_tRC 	(DDR_tRAS + DDR_tRP) /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRRD 	MAX(2, 10 * 1000) /* ACTIVE bank A to ACTIVE bank B command period. */
 #define DDR_tWR 	MAX(3, 15 * 1000) /* WRITE Recovery Time defined by register MR of DDR2 memory , ns*/
-#define DDR_tWTR 	MAX(2, 7500)  /* WRITE to READ command delay. */
+#define DDR_tWTR 	MAX(2, 10000)  /* WRITE to READ command delay. */
 /*
  * LPDDR2 controller timing2 register
 */
 //#define DDR_tRFC 	210 /* ns,  AUTO-REFRESH command period. */
-#define DDR_tRFC 	130 /* ns,  AUTO-REFRESH command period. */
+#define DDR_tRFC 	210 /* ns,  AUTO-REFRESH command period. */
 #define DDR_tMINSR 	57  /* Minimum Self-Refresh / Deep-Power-Down , tCK, no */
 #define DDR_tXP 	MAX(2, 7500)   /* EXIT-POWER-DOWN to next valid command period. ns */
 #define DDR_tMRD 	5	/* unit: tCK Load-Mode-Register to next valid command period, tck, tMRW */
@@ -42,12 +42,12 @@
 #define DDR_tXS 	DDR_tXSRD	/* LPDDR2 : Exit self-refresh to next valid command , ns , tXSR */
 
 #define DDR_tDQSCK    	3	/* LPDDR2 only: DQS output access from ck_t/ck_c, 2.5ns */
-#define DDR_tDQSCKMAX 	6	/* LPDDR2 only: MAX DQS output access from ck_t/ck_c, 5.5ns */
+#define DDR_tDQSCKMAX 	10	/* LPDDR2 only: MAX DQS output access from ck_t/ck_c, 5.5ns */
 
 #define DDR_BL	 	8	/* LPDDR2 Burst length: 3 - 8 burst, 2 - 4 burst , 4 - 16 burst*/
 //#define DDR_tAL  	0	/* Additive Latency, tCK*/
-#define DDR_tRL  	MATCH(CONFIG_SYS_MEM_FREQ,0)/*8*/	/* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
-#define DDR_tWL		MATCH(CONFIG_SYS_MEM_FREQ,1)/*4*/	/* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
+#define DDR_tRL		MATCH(CONFIG_SYS_MEM_FREQ,0)/*8*/       /* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
+#define DDR_tWL		MATCH(CONFIG_SYS_MEM_FREQ,1)/*4*/       /* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
 //#define DDR_tRL  	3	/* LPDDR2: Read Latency  - 3 4 5 6 7 8 , tck*/
 //#define DDR_tWL		1	/* LPDDR2: Write Latency - 1 2 2 3 4 4 , tck*/
 #define DDR_tCCD 	2	/* CAS# to CAS# command delay , tCK*/
