@@ -95,7 +95,7 @@
 #endif
 
 #ifdef CONFIG_SPL_OS_BOOT
-#define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of xImage being loaded */
+#define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of zImage being loaded */
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
 #define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock4 rw"
