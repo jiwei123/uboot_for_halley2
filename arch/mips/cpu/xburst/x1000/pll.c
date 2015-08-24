@@ -251,13 +251,13 @@ static void final_fill_div(int cpll, int ddrpll)
 		pll_cfg.h2div = 4;
 		break;
 	case 7 ... 9:
-		pll_cfg.l2div = 3;
+		pll_cfg.l2div = 2;
 		pll_cfg.pdiv = 8;
 		pll_cfg.h0div = 4;
 		pll_cfg.h2div = 4;
 		break;
 	case 6:
-		pll_cfg.l2div = 3;
+		pll_cfg.l2div = 2;
 		pll_cfg.pdiv = 6;
 		pll_cfg.h0div = 3;
 		pll_cfg.h2div = 3;
