@@ -372,7 +372,7 @@ void jz_dsih_dphy_configure(struct dsi_device *dsi,
 	int flag = 0;
 	struct dsi_phy *phy;
 	phy = dsi->dsi_phy;
-	debug("entry function :%s\n", __func__);
+	debug("entry function :%s output_freq = %d\n", __func__, output_freq);
 	if (output_freq < MIN_OUTPUT_FREQ) {
 		return ERR_DSI_PHY_FREQ_OUT_OF_BOUND;
 	}

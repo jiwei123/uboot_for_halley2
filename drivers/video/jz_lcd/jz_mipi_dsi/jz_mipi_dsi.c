@@ -259,12 +259,14 @@ void jz_dsi_init(struct dsi_device *dsi)
 	dsi->video_config->v_back_porch_lines = jzfb1_videomode.lower_margin;
 	dsi->video_config->v_total_lines = jzfb1_videomode.yres + jzfb1_videomode.upper_margin + jzfb1_videomode.lower_margin + jzfb1_videomode.vsync_len;
 	dsi->video_config->byte_clock = dsi->video_config->h_total_pixels * dsi->video_config->v_total_lines * jzfb1_videomode.refresh * jzfb1_init_data.bpp / dsi->video_config->no_of_lanes / 8 / 1000 ;
-	dsi->video_config->byte_clock = (dsi->video_config->byte_clock * 3) >> 1; /* DATALANE_BPS is set 1.5 times than real needed in order to avoid lcd tearing */
-	debug("dsi->video_config->byte_clock = %d\n", dsi->video_config->byte_clock);
-	if (dsi->video_config->byte_clock * 8 > dsi->dsi_config->max_bps * 1000) {
-		dsi->video_config->byte_clock = dsi->dsi_config->max_bps / 1000;
-		debug("warning: DATALANE_BPS is over lcd max_bps allowed ,auto set it lcd max_bps\n");
+
+	/* if the auto compulated byte_clock is lower then minimal byte_clock(always split screen), 
+	 * we use the minimal configuration
+	 */
+	if (dsi->video_config->byte_clock * 8 < dsi->dsi_config->min_mbps * 1000) {
+		dsi->video_config->byte_clock = dsi->dsi_config->min_mbps * 1000 / 8;
 	}
+
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);
 	*(volatile unsigned int *)0xb0000020 &= ~(1<<26); //open gate for clk
 	debug("GATE0: 0x10000020 = %x\n", *(volatile unsigned int *)0xb0000020);

@@ -60,7 +60,7 @@ struct dsi_config {
 	unsigned char max_hs_to_lp_cycles;
 	unsigned char max_lp_to_hs_cycles;
 	unsigned short max_bta_cycles;
-	unsigned int max_bps;
+	unsigned int min_mbps;
 	int color_mode_polarity;
 	int shut_down_polarity;
 	int auto_clklane_ctrl;

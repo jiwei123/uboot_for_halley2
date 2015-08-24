@@ -46,7 +46,7 @@ struct dsi_config jz_dsi_config={
     .max_hs_to_lp_cycles = 100,
     .max_lp_to_hs_cycles = 40,
     .max_bta_cycles = 4095,
-    .max_bps = 500, /* 500Mbps */
+    .min_mbps = 500, /* 500Mbps */
     .color_mode_polarity = 1,
     .shut_down_polarity = 1,
 };
