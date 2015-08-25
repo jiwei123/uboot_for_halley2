@@ -78,6 +78,12 @@ struct SM5007_regulator {
     struct device *dev;
 };
 
+//#define sm5007_debug(fmt, args...)    \
+//    do {                              \
+//        printf(fmt, ##args);          \
+//    } while (0)
+#define sm5007_debug(fmt, args...)
+
 void *sm5007_rdev_get_drvdata(struct regulator *rdev) {
     return rdev->reg_data;
 }
@@ -252,10 +258,61 @@ static int SM5007_set_voltage(struct regulator *rdev, int min_uV, int max_uV) {
     return __SM5007_set_voltage(SM5007_PMU_ADDR, ri, min_uV, max_uV);
 }
 
-static struct regulator_ops SM5007_ops = { .set_voltage = SM5007_set_voltage,
+
+/*
+ * BUCK1 BUCK4 vo = 1.8V+Dec[bit 5:0] * 50mV
+ *
+ * */
+static int __SM5007_get_voltage(struct SM5007_regulator *ri)
+{
+	uint8_t  read_val;
+	int vout_val;
+	uint8_t vsel;
+	int ret = 0;
+
+    switch (ri->id)
+    {
+        case SM5007_ID_BUCK1 ... SM5007_ID_BUCK1_DVS:
+        case SM5007_ID_BUCK4:
+            ret = sm5007_read(SM5007_PMU_ADDR, ri->vout_reg, &read_val);
+            if (ret < 0)
+                printf("Error read the voltage register\n");
+            vsel = ((read_val & ri->vout_mask) >> ri->vout_shift);
+            vout_val = ri->min_uV + (vsel * ri->step_uV);
+            break;
+        case SM5007_ID_LDO1 ... SM5007_ID_LDO2:
+        case SM5007_ID_LDO7 ... SM5007_ID_LDO9:
+            ret = sm5007_read(SM5007_PMU_ADDR, ri->vout_reg, &read_val);
+            if (ret < 0)
+                printf("Error read the voltage register\n");
+            vsel = ((read_val & ri->vout_mask) >> ri->vout_shift);
+            vout_val = sm5703_ldo_output_list[vsel];
+            break;
+        case SM5007_ID_BUCK2 ... SM5007_ID_BUCK3:
+        case SM5007_ID_LDO3 ... SM5007_ID_LDO6:
+		case SM5007_ID_PS1 ... SM5007_ID_PS5:
+            vout_val = ri->min_uV;
+            break;
+        default:
+            break;
+    }
+	return vout_val;
+}
+
+static int SM5007_get_voltage(struct regulator *rdev) {
+    struct SM5007_regulator *ri =
+            (struct SM5007_regulator *) sm5007_rdev_get_drvdata(rdev);
+
+    return __SM5007_get_voltage(ri);
+}
+
+static struct regulator_ops SM5007_ops = {
+        .set_voltage = SM5007_set_voltage,
+        .get_voltage = SM5007_get_voltage,
         .enable = SM5007_reg_enable, .disable = SM5007_reg_disable,
         .is_enabled = SM5007_reg_is_enabled,
-	.read = SM5007_reg_read, .write = SM5007_reg_write };
+	.read = SM5007_reg_read, .write = SM5007_reg_write
+};
 
 #define sm5007_rails(_name) "SM5007_"#_name
 
