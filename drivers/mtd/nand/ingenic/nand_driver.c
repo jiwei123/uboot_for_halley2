@@ -128,6 +128,11 @@ static int jz_nand_auto_init_ecc(struct mtd_info *mtd, struct nand_chip* nand_ch
 	for (i = 0; i < nand_ecclayout->eccbytes; i++) {
 		nand_ecclayout->eccpos[i] = nand_ecclayout->oobavail + 2 + i;
 	}
+#ifdef CONFIG_MTD_NAND_BITFLIP_THRESHOLD
+	mtd->bitflip_threshold = CONFIG_MTD_NAND_BITFLIP_THRESHOLD;
+#else
+	mtd->bitflip_threshold = nand_chip->ecc.strength / 3;
+#endif
 	return 0;
 }
 
@@ -244,6 +249,11 @@ int mtd_nand_init(struct nand_chip *nand_chip)
 	nand_chip->ecc.size		= CONFIG_SYS_NAND_ECCSIZE;
 	nand_chip->ecc.bytes		= CONFIG_SYS_NAND_ECCBYTES;
 	nand_chip->ecc.strength		= CONFIG_SYS_NAND_ECCSTRENGTH;
+#ifdef CONFIG_MTD_NAND_BITFLIP_THRESHOLD
+	mtd->bitflip_threshold = CONFIG_MTD_NAND_BITFLIP_THRESHOLD;
+#else
+	mtd->bitflip_threshold = nand_chip->ecc.strength / 3;
+#endif
 
 #ifndef CONFIG_SPL_BUILD
 	nand_chip->ecc.layout		= &nand_ecclayout;
