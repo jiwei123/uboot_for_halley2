@@ -45,16 +45,24 @@ struct pll_cfg {
 #define SEL_H0CLK	((CONFIG_DDR_SEL_PLL == APLL) ? 0x1 : 0x2)
 #define SEL_H2CLK	SEL_H0CLK
 
+#ifndef CONFIG_SYS_CPCCR_SEL
 #define CPCCR_CFG	\
-	(((SEL_SRC& 3) << 30)                \
-	 | ((SEL_CPLL & 3) << 28)                \
+	(((SEL_SRC& 3) << 30)					   \
+	 | ((SEL_CPLL & 3) << 28)				   \
 	 | ((SEL_H0CLK & 3) << 26)                 \
 	 | ((SEL_H2CLK & 3) << 24)                 \
-	 | (((pll_cfg.pdiv- 1) & 0xf) << 16)       \
-	 | (((pll_cfg.h2div - 1) & 0xf) << 12)         \
-	 | (((pll_cfg.h0div - 1) & 0xf) << 8)          \
-	 | (((pll_cfg.l2div - 1) & 0xf) << 4)          \
+	 | (((pll_cfg.pdiv- 1) & 0xf) << 16)	   \
+	 | (((pll_cfg.h2div - 1) & 0xf) << 12)	   \
+	 | (((pll_cfg.h0div - 1) & 0xf) << 8)	   \
+	 | (((pll_cfg.l2div - 1) & 0xf) << 4)	   \
 	 | (((pll_cfg.cdiv - 1) & 0xf) << 0))
+#else
+/**
+ * Board CPCCR configure.
+ * CONFIG_SYS_CPCCR_SEL should be define in [board].h
+ */
+#define CPCCR_CFG CONFIG_SYS_CPCCR_SEL
+#endif
 
 static unsigned int get_pllreg_value(int freq)
 {

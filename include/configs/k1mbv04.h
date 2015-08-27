@@ -35,12 +35,24 @@
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 
-#define CONFIG_SYS_APLL_FREQ		912000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		792000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		912000000
-#define CONFIG_SYS_MEM_FREQ		150000000
+#define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
+#define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_MPLL_FREQ / 4)
+
+#define CPCCR	\
+	((1 << 30)                \
+	 | (1 << 28)                \
+	 | (2 << 26)                 \
+	 | (2 << 24)                 \
+	 | ((5 - 1) << 16)       \
+	 | ((5 - 1) << 12)         \
+	 | ((4 - 1) << 8)          \
+	 | ((3 - 1) << 4)          \
+	 | ((1 - 1) << 0))
+#define CONFIG_SYS_CPCCR_SEL CPCCR
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
