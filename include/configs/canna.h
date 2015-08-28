@@ -161,11 +161,11 @@
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_UNZIP        /* unzip from memory to memory  */
 #define CONFIG_CMD_DHCP
-#define CONFIG_CMD_NET      /* networking support*/
+/* #define CONFIG_CMD_NET */     /* networking support*/
 #define CONFIG_CMD_PING
 
 /* DEBUG ETHERNET */
-
+#if 0
 #define CONFIG_SERVERIP     192.168.4.13
 #define CONFIG_IPADDR       192.168.4.90
 #define CONFIG_GATEWAYIP    192.168.4.1
@@ -185,7 +185,7 @@
 #define CONFIG_NET_GMAC
 #define CONFIG_GPIO_DM9161_RESET   GPIO_PB(25)
 #define CONFIG_GPIO_DM9161_RESET_ENLEVEL   0
-
+#endif
 
 /* MMC */
 #define CONFIG_CMD_MMC
