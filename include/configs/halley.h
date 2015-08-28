@@ -190,7 +190,7 @@
 #define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 #endif
 
-#define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(16 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
 #define CONFIG_SYS_SDRAM_BASE		0x80000000 /* cached (KSEG0) address */
