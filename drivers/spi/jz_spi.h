@@ -23,7 +23,9 @@
 #ifndef __JZ_SPI_H__
 #define __JZ_SPI_H__
 
+#ifdef CONFIG_JZ_SFC
 #include <asm/arch/sfc.h>
+#endif
 #define SSI_BASE CONFIG_SSI_BASE
 #define COMMAND_MAX_LENGTH		8
 #define SIZEOF_NAME			32
@@ -100,7 +102,9 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
 			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
 			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
 			.sfc_mode = TRAN_SPI_QUAD,
+#endif
 		},
 	},
 	{
@@ -116,7 +120,9 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.RDSR_DATE = 0x2,// the data is write the spi status register for QE bit
 			.WRSR_DATE = 0x2,// this bit should be the flash QUAD mode enable
 			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
 			.sfc_mode = TRAN_SPI_QUAD,
+#endif
 		},
 	},
 	{
@@ -132,7 +138,9 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
 			.WRSR_DATE = 0x40,//his bit should be the flash QUAD mode enable
 			.cmd_read = CMD_QUAD_IO_FAST_READ,
+#ifdef CONFIG_JZ_SFC
 			.sfc_mode = TRAN_SPI_IO_QUAD,
+#endif
 		},
 	}
 };
