@@ -179,6 +179,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		break;
 #endif
 #if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
+	case BOOT_DEVICE_MMC0:
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
 	case BOOT_DEVICE_MMC2_2:

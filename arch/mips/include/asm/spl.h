@@ -15,6 +15,7 @@
 #define BOOT_DEVICE_RAM 6
 #define BOOT_DEVICE_SFC_NOR  7
 #define BOOT_DEVICE_SFC_NAND 8
+#define BOOT_DEVICE_MMC0 9
 
 extern char __bss_start[];
 extern ulong __bss_end;
@@ -29,6 +30,9 @@ static inline u32 spl_boot_device(void)
 #endif
 #ifdef CONFIG_SPL_MMC_SUPPORT
 	return BOOT_DEVICE_MMC1;
+#endif
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
+	return BOOT_DEVICE_MMC0;
 #endif
 #ifdef CONFIG_SPL_SPI_SUPPORT
 	return BOOT_DEVICE_SPI;

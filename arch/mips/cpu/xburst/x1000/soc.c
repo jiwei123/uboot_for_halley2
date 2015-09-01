@@ -79,9 +79,6 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 
-	debug("Timer init\n");
-	timer_init();
-
 #ifndef CONFIG_FPGA
 #ifdef CONFIG_SPL_CORE_VOLTAGE
 	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);

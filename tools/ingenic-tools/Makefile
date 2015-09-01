@@ -61,6 +61,7 @@ $(obj)mbr_creator:	mbr_creator.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
+ifndef CONFIG_LARGE_MBR
 $(obj)mbr.bin:	$(obj)mbr_creator
 	$(OBJTREE)/tools/ingenic-tools/mbr_creator	\
 		p0off=$(CONFIG_MBR_P0_OFF),p0end=$(CONFIG_MBR_P0_END),p0type=$(CONFIG_MBR_P0_TYPE) \
@@ -68,6 +69,19 @@ $(obj)mbr.bin:	$(obj)mbr_creator
 		p2off=$(CONFIG_MBR_P2_OFF),p2end=$(CONFIG_MBR_P2_END),p2type=$(CONFIG_MBR_P2_TYPE) \
 		p3off=$(CONFIG_MBR_P3_OFF),p3end=$(CONFIG_MBR_P3_END),p3type=$(CONFIG_MBR_P3_TYPE) \
 		-o $@ > /dev/zero
+else
+$(obj)mbr.bin:  $(obj)mbr_creator
+	$(OBJTREE)/tools/ingenic-tools/mbr_creator      \
+		p0off=$(CONFIG_MBR_P0_OFF),p0end=$(CONFIG_MBR_P0_END),p0type=$(CONFIG_MBR_P0_TYPE) \
+		p1off=$(CONFIG_MBR_P1_OFF),p1end=$(CONFIG_MBR_P1_END),p1type=$(CONFIG_MBR_P1_TYPE) \
+		p2off=$(CONFIG_MBR_P2_OFF),p2end=$(CONFIG_MBR_P2_END),p2type=$(CONFIG_MBR_P2_TYPE) \
+		p3off=$(CONFIG_MBR_P3_OFF),p3end=$(CONFIG_MBR_P3_END),p3type=$(CONFIG_MBR_P3_TYPE) \
+		-o $@ > /dev/zero
+		dd if=/dev/zero of=file1 bs=512 count=33
+		cat mbr.bin file1 > file2
+		mv file2 mbr.bin
+		rm file* -rf
+endif
 
 $(obj)gpt_creator:	$(SRCTREE)/lib/crc32.c gpt_creator.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
