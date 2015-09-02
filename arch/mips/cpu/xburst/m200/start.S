@@ -85,11 +85,21 @@ _start:
 	mtc0	v0, $12, 2
 	nop
 #endif
+
+#ifndef CONFIG_BURNER
 	/*
 	 * CU0=UM=EXL=IE=0, BEV=ERL=1, IP2~7=1
 	 */
 	li	t0, 0x0040FC04
 	mtc0	t0, CP0_STATUS
+#else
+	/*
+	 * CU0=UM=EXL=IE=ERL=0, BEV=1, IP2~7=1
+	 */
+	li	t0, 0x0040FC00
+	mtc0	t0, CP0_STATUS
+
+#endif
 
 	/* CAUSE register */
 	/* IV=1, use the specical interrupt vector (0x200) */

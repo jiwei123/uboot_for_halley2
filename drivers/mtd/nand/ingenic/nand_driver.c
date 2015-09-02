@@ -81,7 +81,7 @@ static void jz_nand_write_buf(struct mtd_info *mtd, const uint8_t *buf, int len)
 		nand_write_buf(mtd, buf, len);
 		priv->pn_bytes = MAX(0, priv->pn_bytes - len);
 	}
-	jz_nand_enable_pn(0, false);
+	jz_nand_enable_pn(!!priv->pn_bytes, false);
 }
 
 void jz_nand_set_pn(nand_info_t *nand, int bytes, int size, int skip)
