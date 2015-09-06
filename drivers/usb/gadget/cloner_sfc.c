@@ -3,6 +3,7 @@
 #ifdef CONFIG_JZ_SFC
 extern unsigned int sfc_rate;
 extern unsigned int sfc_quad_mode;
+extern int sfc_is_init;
 
 int sfc_erase(struct cloner *cloner)
 {
@@ -10,13 +11,19 @@ int sfc_erase(struct cloner *cloner)
 	unsigned int cs = CONFIG_SF_DEFAULT_CS;
 	unsigned int speed = CONFIG_SF_DEFAULT_SPEED;
 	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
+	int err = 0;
 	struct spi_args *spi_arg = &cloner->args->spi_args;
 	sfc_quad_mode = spi_arg->sfc_quad_mode;
 	spi.rate  = spi_arg->rate;
 	sfc_rate = spi.rate;
 
-
-	sfc_init();
+	if(sfc_is_init == 0){
+		err = sfc_init();
+		if(err < 0){
+			printf("!!!!!!!!!!!!!!!!!%d,%s,the sfc init failed\n",__LINE__,__func__);
+			return -1;
+		}
+	}
 	jz_sfc_chip_erase();
 	printf("sfc chip erase ok\n");
 
@@ -33,7 +40,7 @@ int sfc_program(struct cloner *cloner)
 	void *addr = (void *)cloner->write_req->buf;
 	struct spi_args *spi_arg = &cloner->args->spi_args;
 	unsigned int ret;
-	int len = 0;
+	int len = 0,err = 0;
 	struct spi_flash *flash;
 	spi.enable = spi_arg->enable;
 	spi.clk   = spi_arg->clk;
@@ -43,7 +50,14 @@ int sfc_program(struct cloner *cloner)
 	spi.rate  = spi_arg->rate ;
 	sfc_rate = spi.rate;
 
-	sfc_init();
+	if(sfc_is_init == 0){
+		printf("in sfc init\n");
+		err = sfc_init();
+		if(err < 0){
+			printf("%d,%s,!!!!!!!!!!!!!!!!!!!!!the sfc init failed\n",__LINE__,__func__);
+			return -1;
+		}
+	}
 
 	printf("the offset = %x\n",offset);
 	printf("the length = %x\n",length);
