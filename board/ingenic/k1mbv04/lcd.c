@@ -25,7 +25,7 @@
 #include <jz_lcd/jz_lcd_v1_2.h>
 #ifdef CONFIG_PMU_RICOH6x
 #define CONFIG_LCD_REGULATOR	"RICOH619_LDO9"
-#define CONFIG_LCD_REGULATOR	"RICOH619_DC4"
+/*#define CONFIG_LCD_REGULATOR	"RICOH619_DC4"*/
 #elif defined CONFIG_PMU_D2041
 #define CONFIG_LCD_REGULATOR	""
 #endif

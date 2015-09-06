@@ -590,6 +590,12 @@ static int lcd_init(void *lcdbase)
 #endif
 	lcd_is_enabled = 1;
 
+#ifdef DEFAULT_BACKLIGHT_LEVEL
+	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
+#else
+	lcd_set_backlight_level(80);
+#endif
+
 	return 0;
 }
 

@@ -938,6 +938,18 @@ void lcd_enable(void)
 		ctrl &= ~LCDC_CTRL_DIS;
 		reg_write(LCDC_CTRL, ctrl);
 		serial_puts("dump_lcdc_registers\n");
+
+		int frame_num = 10;
+		while(frame_num--) {
+			int count = 100000;
+			unsigned state;
+			while(!(reg_read(LCDC_STATE) & LCDC_STATE_EOF) && count--) {
+				udelay(10);
+			}
+			state = reg_read(LCDC_STATE);
+			state &= ~LCDC_STATE_EOF;
+			reg_write(LCDC_STATE, state);
+		}
 	}
 	lcd_enable_state = 1;
 #ifdef DEBUG
@@ -1354,13 +1366,13 @@ void lcd_ctrl_init(void *lcd_base)
 #ifdef CONFIG_JZ_MIPI_DSI
 	panel_display_on(dsi);
 #endif
-
+/*
 #ifdef DEFAULT_BACKLIGHT_LEVEL
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);
 #endif
-
+*/
 	return;
 }
 
