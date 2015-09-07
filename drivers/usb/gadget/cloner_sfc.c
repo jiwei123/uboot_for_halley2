@@ -15,7 +15,7 @@ int sfc_erase(struct cloner *cloner)
 	struct spi_args *spi_arg = &cloner->args->spi_args;
 	sfc_quad_mode = spi_arg->sfc_quad_mode;
 	spi.rate  = spi_arg->rate;
-	sfc_rate = spi.rate;
+	sfc_rate = spi_arg->sfc_rate;
 
 	if(sfc_is_init == 0){
 		err = sfc_init();
@@ -48,7 +48,7 @@ int sfc_program(struct cloner *cloner)
 	spi.data_out  = spi_arg->data_out;
 	sfc_quad_mode = spi_arg->sfc_quad_mode;
 	spi.rate  = spi_arg->rate ;
-	sfc_rate = spi.rate;
+	sfc_rate = spi_arg->sfc_rate;
 
 	if(sfc_is_init == 0){
 		printf("in sfc init\n");
