@@ -520,7 +520,7 @@
 #define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* pretest key */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	1
 #else
-#define CONFIG_GPIO_RECOVERY		(-1)
+#define CONFIG_GPIO_RECOVERY		GPIO_PC(22)
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	 0
 #endif
 
