@@ -222,6 +222,7 @@ char *get_expart_name(int offset) {
 			}
 		} else {
 			expart_info = part_info[i].expart_info;
+			ex_moffset = (offset/1024/1024) - part_info[i].offset;
 			break;
 		}
 	}
