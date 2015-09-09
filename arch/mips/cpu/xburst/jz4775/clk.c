@@ -191,7 +191,7 @@ unsigned int clk_get_rate(int clk)
 	case CPU:
 		return get_cclk_rate();
 #endif
-#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_MTD_NAND_JZ)
+#if !defined(CONFIG_SPL_BUILD) || (defined(CONFIG_MTD_NAND_JZ) && !defined(CONFIG_BURNER))
 	case H2CLK:
 		return cpm_get_h2clk();
 #endif
@@ -202,12 +202,11 @@ unsigned int clk_get_rate(int clk)
 	case MSC2:
 		return get_msc_rate(CPM_MSC2CDR);
 	}
-
 	return 0;
 }
 
 
-#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_MTD_NAND_JZ)
+#if !defined(CONFIG_SPL_BUILD) || (defined(CONFIG_MTD_NAND_JZ) && !defined(CONFIG_BURNER))
 static unsigned int set_bch_rate(int clk, unsigned long rate)
 {
 	unsigned int pll_rate = pll_get_rate(APLL);
@@ -289,7 +288,7 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 
 void clk_set_rate(int clk, unsigned long rate)
 {
-#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_MTD_NAND_JZ)
+#if !defined(CONFIG_SPL_BUILD) || (defined(CONFIG_MTD_NAND_JZ) && !defined(CONFIG_BURNER))
 	switch (clk) {
 	case BCH:
 		set_bch_rate(clk, rate);
