@@ -159,13 +159,13 @@ struct ricoh619_battery_platform_data pdata = {
 	.type[0] = {
 		.ch_vfchg 	= 0x03,	/* VFCHG	= 0 - 4 (4.05v, 4.10v, 4.15v, 4.20v, 4.35v) */
 		.ch_vrchg 	= 0x04,	/* VRCHG	= 0 - 4 (3.85v, 3.90v, 3.95v, 4.00v, 4.10v) */
-		.ch_vbatovset 	= 0x0,	/* VBATOVSET	= 0 or 1 (0 : 4.38v(up)/3.95v(down) 1: 4.53v(up)/4.10v(down)) */
+		.ch_vbatovset 	= 0x1,	/* VBATOVSET	= 0 or 1 (0 : 4.38v(up)/3.95v(down) 1: 4.53v(up)/4.10v(down)) */
 		.ch_ichg 	= 0x09,	/* ICHG		= 0 - 0x1D (100mA - 3000mA) */
-		.ch_ilim_adp 	= 0x0e,	/* ILIM_ADP	= 0 - 0x1D (100mA - 3000mA) */
-		.ch_ilim_usb 	= 0x0e,	/* ILIM_USB	= 0 - 0x1D (100mA - 3000mA) */
+		.ch_ilim_adp 	= 0x1D,	/* ILIM_ADP	= 0 - 0x1D (100mA - 3000mA) */
+		.ch_ilim_usb 	= 0x1D,	/* ILIM_USB	= 0 - 0x1D (100mA - 3000mA) */
 		.ch_icchg 	= 0x00,	/* ICCHG	= 0 - 3 (50mA 100mA 150mA 200mA) */
-		.fg_target_vsys = 3000,	/* This value is the target one to DSOC=0% */
-		.fg_target_ibat = 100, /* This value is the target one to DSOC=0% */
+		.fg_target_vsys = 3500,	/* This value is the target one to DSOC=0% */
+		.fg_target_ibat = 0, /* This value is the target one to DSOC=0% */
 		.fg_poff_vbat 	= 0, 	/* setting value of 0 per Vbat */
 		.fg_rsense_val	= 100,	/* setting value of R Sense */
 		.jt_en 		= 0,	/* JEITA Enable	  = 0 or 1 (1:enable, 0:disable) */
@@ -181,10 +181,10 @@ struct ricoh619_battery_platform_data pdata = {
 
 uint8_t battery_init_para[][32] = {
     {
-  0x0B, 0x20, 0x0B, 0x59, 0x0B, 0x9B, 0x0B, 0xE2,
-  0x0C, 0x07, 0x0C, 0x15, 0x0C, 0x3D, 0x0C, 0x7A,
-  0x0C, 0xBA, 0x0D, 0x04, 0x0D, 0x66, 0x01, 0x2E,
-  0x00, 0x11, 0x0F, 0xC8, 0x05, 0x2C, 0x22, 0x56
+		0x09, 0xEA, 0x0B, 0xAA, 0x0B, 0xEF, 0x0C, 0x0A,
+		0x0C, 0x1B, 0x0C, 0x31, 0x0C, 0x56, 0x0C, 0x92,
+		0x0C, 0xCE, 0x0D, 0x19, 0x0D, 0x72, 0x01, 0x3B,
+		0x01, 0x3B, 0x0F, 0xC8, 0x05, 0x2C, 0x22, 0x56
     }
 };
 

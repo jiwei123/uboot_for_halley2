@@ -552,9 +552,9 @@ static int poweron_key_pressed_status(int charge_logo_first_show)
 
 static int battery_is_low(void)
 {
-
 #if defined(CONFIG_PMU_RICOH6x)
 	int capa = 0, vsys = 0, first = 0;
+	/*
 	first = detection_first_poweron();
 	if(first){
 		capa = ricoh61x_get_capacity();
@@ -566,6 +566,7 @@ static int battery_is_low(void)
 		}
 
 	}else{
+	*/
 		vsys = cmd_measure_vsys_ADC();
 #ifdef LOW_BATTERY_MIN
 		if (vsys <= LOW_BATTERY_MIN)
@@ -577,7 +578,7 @@ static int battery_is_low(void)
 		else
 			return 0;
 
-	}
+//	}
 #elif defined(CONFIG_PMU_SM5007)
 	int capa = 0, vbat = 0;
 	capa = fg_get_soc();
