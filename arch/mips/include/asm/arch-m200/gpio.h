@@ -38,6 +38,7 @@ enum gpio_function {
 	GPIO_FUNC_2     = 0x02,  //0010, GPIO as function 2 / device 2
 	GPIO_FUNC_3     = 0x03,  //0011, GPIO as function 3 / device 3
 	GPIO_INPUT	= 0x06,	 //0110, GPIO as input
+	GPIO_PULL	= 0x10,
 };
 
 enum gpio_port {

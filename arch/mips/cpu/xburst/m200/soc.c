@@ -50,6 +50,48 @@ extern void pll_init(void);
 extern void sdram_init(void);
 extern void validate_cache(void);
 
+#ifdef CONFIG_BURNER
+void mmc_clk_nopull(void)
+{
+	struct jz_gpio_func_def *g;
+	int n, i;
+	n = gd->arch.gi->nr_gpio_func;
+
+	for (i = 0; i < n; i++) {
+		g = &gd->arch.gi->gpio[i];
+		if (g->port == GPIO_PORT_A &&
+				g->func == (GPIO_FUNC_1|GPIO_PULL) &&
+				g->pins && (1 << 18))
+			gpio_set_func(GPIO_PORT_A, GPIO_FUNC_1, (1 << 18));
+
+		else if (g->port == GPIO_PORT_E &&
+				g->func == (GPIO_FUNC_1|GPIO_PULL) &&
+				g->pins && (1 << 28))
+			gpio_set_func(GPIO_PORT_E, GPIO_FUNC_1, (1 << 28));
+
+		else if (g->port == GPIO_PORT_D &&
+				g->func == (GPIO_FUNC_2|GPIO_PULL) &&
+				g->pins && (1 << 24))
+			gpio_set_func(GPIO_PORT_D, GPIO_FUNC_2, (1 << 24));
+
+		else if (g->port == GPIO_PORT_E &&
+				g->func == (GPIO_FUNC_2|GPIO_PULL) &&
+				g->pins && (1 << 28))
+			gpio_set_func(GPIO_PORT_E, GPIO_FUNC_2, (1 << 28));
+
+		else if (g->port == GPIO_PORT_B &&
+				g->func == (GPIO_FUNC_3|GPIO_PULL) &&
+				g->pins && (1 << 28))
+			gpio_set_func(GPIO_PORT_E, GPIO_FUNC_3, (1 << 28));
+
+		else if (g->port == GPIO_PORT_E &&
+				g->func == (GPIO_FUNC_3|GPIO_PULL) &&
+				g->pins && (1 << 28))
+			gpio_set_func(GPIO_PORT_E, GPIO_FUNC_3, (1 << 28));
+	}
+}
+#endif
+
 void board_init_f(ulong dummy)
 {
 	/* Set global data pointer */
@@ -62,6 +104,10 @@ void board_init_f(ulong dummy)
 	gd->arch.gi = (struct global_info *)CONFIG_SPL_GINFO_BASE;
 #endif
 	gpio_init();
+
+#ifdef CONFIG_BURNER
+	mmc_clk_nopull();
+#endif
 
 #ifndef CONFIG_FPGA
 	/* Init uart first */
