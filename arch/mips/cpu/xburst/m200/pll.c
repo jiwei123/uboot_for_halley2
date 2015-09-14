@@ -226,8 +226,8 @@ static void final_fill_div(int cpll, int ddrpll)
 	l2cache_clk = l2cache_clk >= gd->arch.gi->cpufreq ? gd->arch.gi->cpufreq : l2cache_clk;
 
 	printf("l2cache_clk = %d\n",l2cache_clk);
-	pll_cfg.l2div = cpu_pll_freq%l2cache_clk ? cpu_pll_freq/l2cache_clk + 1 :
-		cpu_pll_freq/l2cache_clk;
+
+	pll_cfg.l2div = cpu_pll_freq/l2cache_clk;
 
 	printf("pll_cfg.pdiv = %d, pll_cfg.h2div = %d, pll_cfg.h0div = %d, pll_cfg.cdiv = %d, pll_cfg.l2div = %d\n",
 			pll_cfg.pdiv,pll_cfg.h2div,pll_cfg.h0div,pll_cfg.cdiv,pll_cfg.l2div);
