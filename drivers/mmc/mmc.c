@@ -408,8 +408,26 @@ int mmc_send_op_cond(struct mmc *mmc)
 			return err;
 
 		/* exit if not busy (flag seems to be inverted) */
-		if (mmc->op_cond_response & OCR_BUSY)
+		if (mmc->op_cond_response & OCR_BUSY) {
+			mmc->op_cond_pending = 0;
+			if (mmc_host_is_spi(mmc)) { /* read OCR for spi */
+				cmd.cmdidx = MMC_CMD_SPI_READ_OCR;
+				cmd.resp_type = MMC_RSP_R3;
+				cmd.cmdarg = 0;
+
+				err = mmc_send_cmd(mmc, &cmd, NULL);
+
+				if (err)
+					return err;
+			}
+
+			mmc->version = MMC_VERSION_UNKNOWN;
+			mmc->ocr = cmd.response[0];
+
+			mmc->high_capacity = ((mmc->ocr & OCR_HCS) == OCR_HCS);
+			mmc->rca = 0;
 			return 0;
+		}
 	}
 	return IN_PROGRESS;
 }
