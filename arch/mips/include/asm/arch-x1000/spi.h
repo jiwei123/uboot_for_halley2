@@ -1,3 +1,6 @@
+#ifndef __SPI_H__
+#define __SPI_H__
+
 #include <config.h>
 #include <common.h>
 #include <asm/gpio.h>
@@ -77,3 +80,5 @@
 #define SSI_FRMHL_CE0_HIGH_CE1_HIGH (3 << 30)
 #define SSI_GPCMD           (1 << 25)
 
+
+#endif
