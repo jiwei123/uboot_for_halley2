@@ -531,6 +531,7 @@ struct nand_chip {
 	uint64_t chipsize;
 	int pagemask;
 	int pagebuf;
+	unsigned int pagebuf_bitflips;
 	int subpagesize;
 	uint8_t cellinfo;
 	int badblockpos;
