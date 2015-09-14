@@ -37,13 +37,15 @@ struct spi_quad_mode {
 	u8 RDSR_CMD;
 	u8 WRSR_CMD;
 	unsigned int RDSR_DATE;//the data is write the spi status register for QE bit
+	unsigned int RD_DATE_SIZE;//the data is write the spi status register for QE bit
 	unsigned int WRSR_DATE;//this bit should be the flash QUAD mode enable
+	unsigned int WD_DATE_SIZE;//the data is write the spi status register for QE bit
 	u8 cmd_read;
 	u8 sfc_mode;
 };
 
 struct jz_spi_support {
-	u8 id_manufactory;
+	unsigned int id_manufactory;
 	u8 id_device;
 	char name[SIZEOF_NAME];
 	int page_size;
@@ -90,8 +92,28 @@ static struct jz_spi_support jz_spi_nand_support_table[] = {
 
 static struct jz_spi_support jz_spi_support_table[] = {
 	{
-		.id_manufactory = 0xc2,
+		.id_manufactory = 0x1820c2,
 		.name = "MX25L12835F",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.size = 16 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x40,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.id_manufactory = 0x1840c8,
+		.name = "GD25Q128C",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
 		.size = 16 * 1024 * 1024,
@@ -99,8 +121,10 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR_1,
 			.WRSR_CMD = CMD_WRSR_1,
-			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
-			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.RDSR_DATE = 0x2,// the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,// this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
 			.cmd_read = CMD_QUAD_READ,
 #ifdef CONFIG_JZ_SFC
 			.sfc_mode = TRAN_SPI_QUAD,
@@ -108,17 +132,19 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		},
 	},
 	{
-		.id_manufactory = 0xc8,
-		.name = "GD25LQ64C",
+		.id_manufactory = 0x1860c8,
+		.name = "GD25LQ128C",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
-		.size = 8 * 1024 * 1024,
+		.size = 16 * 1024 * 1024,
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR_1,
-			.WRSR_CMD = CMD_WRSR_1,
+			.WRSR_CMD = CMD_WRSR,
 			.RDSR_DATE = 0x2,// the data is write the spi status register for QE bit
-			.WRSR_DATE = 0x2,// this bit should be the flash QUAD mode enable
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x0200,// this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 2,
 			.cmd_read = CMD_QUAD_READ,
 #ifdef CONFIG_JZ_SFC
 			.sfc_mode = TRAN_SPI_QUAD,
@@ -126,7 +152,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		},
 	},
 	{
-		.id_manufactory = 0x9d,
+		.id_manufactory = 0x18609d,
 		.name = "IS25LP128",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
@@ -136,13 +162,37 @@ static struct jz_spi_support jz_spi_support_table[] = {
 			.RDSR_CMD = CMD_RDSR,
 			.WRSR_CMD = CMD_WRSR,
 			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
 			.WRSR_DATE = 0x40,//his bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
 			.cmd_read = CMD_QUAD_IO_FAST_READ,
 #ifdef CONFIG_JZ_SFC
 			.sfc_mode = TRAN_SPI_IO_QUAD,
 #endif
 		},
-	}
+	},
+	{
+		.id_manufactory = 0x1840ef,
+		.name = "win25Q128fvq",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.size = 16 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 6,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x0200,//his bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_IO_FAST_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_IO_QUAD,
+#endif
+		},
+	},
+
+
 };
 
 #endif /* __JZ_SPI_H__ */
