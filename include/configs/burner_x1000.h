@@ -76,6 +76,7 @@
 
 /* SPI */
 
+#define CONFIG_CMD_SFC_NOR
 #define CONFIG_CMD_SPI
 /*#define CONFIG_INGENIC_SOFT_SPI*/
 #ifdef CONFIG_CMD_SPI
@@ -93,6 +94,12 @@
 #define CONFIG_SPI_FLASH_INGENIC
 #define CONFIG_SPI_FLASH
 #endif
+
+#ifdef CONFIG_CMD_SFC_NOR
+#define CONFIG_JZ_SFC
+/*#define CONFIG_SPI_DUAL*/
+#endif
+
 
 /*#define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF

@@ -72,7 +72,8 @@ enum medium_type {
 	I2C,
 	EFUSE,
 	REGISTER,
-	SPI
+	SPI,
+	SFC
 };
 
 enum data_type {
@@ -101,7 +102,9 @@ struct spi_args {
 	uint32_t data_in;
 	uint32_t data_out;
 	uint32_t enable;
-	uint32_t rate;
+	uint32_t rate;   // the ssi rate
+	uint32_t sfc_rate;// the sfc rate
+	uint32_t sfc_quad_mode;// the sfc rate
 };
 
 
@@ -111,6 +114,7 @@ struct arguments {
 	int use_nand_mtd;
 	int use_mmc;
 	int use_spi;
+	int use_sfc;
 
 	int nand_erase;
 	int nand_erase_count;
@@ -123,6 +127,7 @@ struct arguments {
 
 	struct spi_args spi_args;
 	uint32_t spi_erase_block_siz;
+	uint32_t spi_erase;
 
 	int transfer_data_chk;
 	int write_back_chk;

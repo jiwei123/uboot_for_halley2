@@ -152,8 +152,11 @@ void spi_init(void )
 #else
 	if(ssi_rate !=0 )
 		clk_set_rate(SSI, ssi_rate);
-	else
+	else{
 		printf("this will be an error that the ssi rate is 0\n");
+		ssi_rate = 48000000;
+		clk_set_rate(SSI, ssi_rate);
+	}
 #endif
 	jz_spi_writel(~SSI_CR0_SSIE & jz_spi_readl(SSI_CR0), SSI_CR0);
 	jz_spi_writel(0, SSI_GR);
@@ -664,6 +667,33 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 
 	return 0;
 }
+
+
+int jz_erase_all(struct spi_flash *flash)
+{
+	unsigned char cmd[6], buf;
+
+	cmd[0] = CMD_WREN;
+	cmd[1] = CMD_ERASE_CE;
+	cmd[2] = CMD_RDSR;
+
+	jz_cs_reversal();
+	spi_send_cmd(&cmd[0], 1);
+
+	jz_cs_reversal();
+	spi_send_cmd(&cmd[1], 1);
+
+	jz_cs_reversal();
+	spi_send_cmd(&cmd[2], 1);
+	spi_recv_cmd(&buf, 1);
+	printf("jz chip erase all\n");
+	while(buf & CMD_SR_WIP) {
+		spi_recv_cmd(&buf, 1);
+	}
+
+	return 0;
+}
+
 #ifdef CONFIG_SPI_FLASH_INGENIC
 static void jz_spi_nand_init(void )
 {
