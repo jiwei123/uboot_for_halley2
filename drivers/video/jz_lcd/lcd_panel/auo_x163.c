@@ -26,6 +26,12 @@
 #include <jz_lcd/auo_x163.h>
 #include "../jz_mipi_dsi/jz_mipi_dsih_hal.h"
 
+
+#ifdef CONFIG_TPS65137
+void tps65137_digital_pulse_power_on(int gpio, int low_enable, unsigned int level);
+void tps65137_digital_pulse_power_off(int gpio, int low_enable);
+#endif
+
 vidinfo_t panel_info = { 320, 320, LCD_BPP, };
 
 void auo_x163_regulator_enable(struct dsi_device *dsi)
@@ -137,7 +143,12 @@ void panel_power_on(void)
  */
 void lcd_open_backlight(void)
 {
+#ifdef CONFIG_TPS65137
+	tps65137_digital_pulse_power_on(auo_x163_pdata.gpio_lcd_bl, 0, 19);
+#else
 	gpio_direction_output(auo_x163_pdata.gpio_lcd_bl, 1);
+#endif
+
 	return;
 }
 
@@ -146,7 +157,11 @@ void lcd_open_backlight(void)
  */
 void lcd_close_backlight(void)
 {
+#ifdef CONFIG_TPS65137
+	tps65137_digital_pulse_power_off(auo_x163_pdata.gpio_lcd_bl, 0);
+#else
 	gpio_direction_output(auo_x163_pdata.gpio_lcd_bl, 0);
+#endif
 	return;
 }
 
