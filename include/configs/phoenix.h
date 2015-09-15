@@ -214,6 +214,8 @@
 #endif
 #endif
 
+/*pmu slp pin*/
+#define CONFIG_JZ_PMU_SLP_OUTPUT1
 /**
  * Serial download configuration
  */
