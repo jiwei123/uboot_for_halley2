@@ -12,7 +12,7 @@
 #include <part.h>
 #include "mmc_private.h"
 
-ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt)
+static ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt)
 {
 	struct mmc_cmd cmd;
 	ulong end;
@@ -71,34 +71,36 @@ unsigned long mmc_berase(int dev_num, lbaint_t start, lbaint_t blkcnt)
 	int timeout = 1000;
 
 	if (!mmc)
-		return -1;
+		return 0;
 
-	if(get_mmc_csd_perm_w_protect())
-		return -EPERM;
-
-	if ((start % mmc->erase_grp_size) || (blkcnt % mmc->erase_grp_size))
+	blk = start;
+	blk_r = blkcnt;
+	if ((start % mmc->erase_grp_size) || (blkcnt % mmc->erase_grp_size)){
 		printf("\n\nCaution! Your devices Erase group is 0x%x\n"
-		       "The erase range would be change to "
-		       "0x" LBAF "~0x" LBAF "\n\n",
-		       mmc->erase_grp_size, start & ~(mmc->erase_grp_size - 1),
-		       ((start + blkcnt + mmc->erase_grp_size)
-		       & ~(mmc->erase_grp_size - 1)) - 1);
-
-	while (blk < blkcnt) {
-		blk_r = ((blkcnt - blk) > mmc->erase_grp_size) ?
-			mmc->erase_grp_size : (blkcnt - blk);
-		err = mmc_erase_t(mmc, start + blk, blk_r);
-		if (err)
-			break;
-
-		blk += blk_r;
-
-		/* Waiting for the ready status */
-		if (mmc_send_status(mmc, timeout))
-			return 0;
+				"The erase range would be change to "
+				"0x" LBAF "~0x" LBAF "\n\n",
+				mmc->erase_grp_size, start & ~(mmc->erase_grp_size - 1),
+				((start + blkcnt + mmc->erase_grp_size)
+				 & ~(mmc->erase_grp_size - 1)) - 1);
+		blk = (start & ~(mmc->erase_grp_size - 1));
+		blk_r = ((start + blkcnt + mmc->erase_grp_size) & ~(mmc->erase_grp_size - 1)) - 1;
 	}
 
-	return blk;
+	if(blk_r > mmc->capacity / MMC_MAX_BLOCK_LEN)
+		blk_r = mmc->capacity / MMC_MAX_BLOCK_LEN;
+
+	blk_r = blk_r - blk;
+	err = mmc_erase_t(mmc, blk, blk_r);
+	if (err) {
+		printf("Err: erase mmc error\n");
+		return 0;
+	}
+
+	/* Waiting for the ready status */
+	if (mmc_send_status(mmc, timeout))
+		return 0;
+
+	return blk_r;
 }
 
 static ulong mmc_write_blocks(struct mmc *mmc, lbaint_t start,
@@ -165,10 +167,6 @@ ulong mmc_bwrite(int dev_num, lbaint_t start, lbaint_t blkcnt, const void *src)
 	struct mmc *mmc = find_mmc_device(dev_num);
 	if (!mmc)
 		return 0;
-
-	if(get_mmc_csd_perm_w_protect())
-		return -EPERM;
-
 
 	if (mmc_set_blocklen(mmc, mmc->write_bl_len))
 		return 0;
