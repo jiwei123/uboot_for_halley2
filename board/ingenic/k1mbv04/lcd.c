@@ -24,19 +24,25 @@
 #include <asm/gpio.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
 #ifdef CONFIG_PMU_RICOH6x
-#define CONFIG_LCD_REGULATOR	"RICOH619_LDO9"
-/*#define CONFIG_LCD_REGULATOR	"RICOH619_DC4"*/
+#define CONFIG_LCD_REGULATOR_LDO9	"RICOH619_LDO9"
+#define CONFIG_LCD_REGULATOR_DC4	"RICOH619_DC4"
 #elif defined CONFIG_PMU_D2041
 #define CONFIG_LCD_REGULATOR	""
 #endif
 
 void board_set_lcd_power_on(void)
 {
-	char *id = CONFIG_LCD_REGULATOR;
+	struct regulator *lcd_regulator_dc4 = regulator_get(CONFIG_LCD_REGULATOR_DC4);
+	if(lcd_regulator_dc4) {
+		regulator_set_voltage(lcd_regulator_dc4, 3300000, 3300000);
+		regulator_enable(lcd_regulator_dc4);
+	}
 
-	struct regulator *lcd_regulator = regulator_get(id);
-	regulator_set_voltage(lcd_regulator, 3300000, 3300000);
-	regulator_enable(lcd_regulator);
+	struct regulator *lcd_regulator_ldo9 = regulator_get(CONFIG_LCD_REGULATOR_LDO9);
+	if(lcd_regulator_ldo9) {
+		regulator_set_voltage(lcd_regulator_ldo9, 3300000, 3300000);
+		regulator_enable(lcd_regulator_ldo9);
+	}
 }
 
 struct jzfb_config_info jzfb1_init_data = {
