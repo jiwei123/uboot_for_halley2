@@ -76,7 +76,7 @@ static int get_key_status(int pin, int en_level)
 	 }
 
 	gpio_direction_input(pin);
-	gpio_disable_pull(pin);
+	gpio_enable_pull(pin); /* works OK on PC22 without external pull-up resistor */
 
 	return en_level == get_key_level(pin) ? KEY_PRESS : KEY_UNPRESS;
 }
