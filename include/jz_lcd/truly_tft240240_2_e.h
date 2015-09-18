@@ -32,5 +32,6 @@ struct truly_tft240240_2_e_data {
 };
 
 extern struct truly_tft240240_2_e_data truly_tft240240_2_e_pdata;
+extern void board_set_lcd_240_power_on(void);
 
 #endif /* __TRULY_TFT240240_2_E_H__ */

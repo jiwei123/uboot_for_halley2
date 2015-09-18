@@ -28,6 +28,7 @@ LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	:= board.o
 COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
+COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += lcd-truly-tft240240.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))

@@ -72,6 +72,15 @@
 #define CONFIG_AUDIO_APLL CONFIG_SYS_APLL_FREQ
 #define CONFIG_AUDIO_MPLL CONFIG_SYS_MPLL_FREQ
 
+/*pmu slp pin*/
+#define CONFIG_JZ_PMU_SLP_OUTPUT1
+#define CONFIG_INGENIC_SOFT_I2C
+#define CONFIG_REGULATOR
+#define CONFIG_PMU_RICOH6x
+#define CONFIG_RICOH61X_I2C_SCL	GPIO_PC(26)
+#define CONFIG_RICOH61X_I2C_SDA	GPIO_PC(27)
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+#define CONFIG_VIDEO_TRULY_TFT240240_2_E
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -214,8 +223,6 @@
 #endif
 #endif
 
-/*pmu slp pin*/
-#define CONFIG_JZ_PMU_SLP_OUTPUT1
 /**
  * Serial download configuration
  */
