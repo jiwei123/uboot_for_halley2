@@ -476,6 +476,10 @@ int sfc_init(void )
 	}
 #endif
 
+#ifdef CONFIG_SPI_QUAD
+	sfc_quad_mode = 1;
+#endif
+
 	tmp = jz_sfc_readl(SFC_GLB);
 	tmp &= ~(TRAN_DIR | OP_MODE );
 	tmp |= WP_EN;
