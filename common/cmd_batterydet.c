@@ -554,23 +554,26 @@ static int battery_is_low(void)
 {
 #if defined(CONFIG_PMU_RICOH6x)
 	int capa = 0, vsys = 0, first = 0;
-	/*
-	first = detection_first_poweron();
-	if(first){
-		capa = ricoh61x_get_capacity();
-		if (capa == 1){
-			return 1;
-		}
-		else{
-			return 0;
-		}
 
-	}else{
-	*/
-		vsys = cmd_measure_vsys_ADC();
+	vsys = cmd_measure_vbat_ADC();
+	if (charge_detect()) {
+
+#ifdef LOW_BATTERY_MIN
+		if (vsys <= LOW_BATTERY_MIN + 100000)
+			return 1;
+#else
+		if (vsys <= battery_voltage_min + 100000)
+			return 1;
+#endif
+		else
+			return 0;
+
+	}
+	else {
+
 #ifdef LOW_BATTERY_MIN
 		if (vsys <= LOW_BATTERY_MIN)
-			return 1;
+				return 1;
 #else
 		if (vsys <= battery_voltage_min)
 			return 1;
@@ -578,7 +581,8 @@ static int battery_is_low(void)
 		else
 			return 0;
 
-//	}
+	}
+
 #elif defined(CONFIG_PMU_SM5007)
 	int capa = 0, vbat = 0;
 	capa = fg_get_soc();
@@ -738,6 +742,7 @@ static void show_charging_logo(void)
 	ulong charge_logo_cnt = 0;
 	int charge_logo_first_show = 0;
 	int poweron_key;
+	int bat_is_low = 0;
 
 	/* Shut some modules power down,cdma,gsm e.g. */
 	/* board_powerdown_device(); */
@@ -753,14 +758,15 @@ static void show_charging_logo(void)
 				debug("---key pressed!\n");
 			}
 		}
-
 		poweron_key = poweron_key_pressed_status(charge_logo_first_show);
-		if (poweron_key == LONG_PRESS) {
+		bat_is_low = battery_is_low();
+		if (poweron_key == LONG_PRESS && !bat_is_low) {
 			wait_lcd_refresh_finish();
 			lcd_clear_black();
 			debug("poweron long pressed \n");
 			return;
-		} else if (poweron_key == SHORT_PRESS) {
+		}
+		else if (poweron_key == SHORT_PRESS || (poweron_key == LONG_PRESS && bat_is_low)) {
 			debug("poweron short pressed \n");
 			/* press power on key while in charging flash then go to idle */
 			if (!is_out_from_idle) {
@@ -875,6 +881,9 @@ static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 	if(ret != 0){
 		return ret;
 	}
+
+	ricoh619_limit_current_init();
+
 	battery_detect();
 	return ret;
 }
