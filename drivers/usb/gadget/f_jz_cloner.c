@@ -502,6 +502,7 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->args = malloc(ARGS_LEN);
 	cloner->args->transfer_data_chk = 1;
 	cloner->args->write_back_chk = 1;
+	cloner->skip_spl_size = 0;
 
 	cloner->inited = 0;
 

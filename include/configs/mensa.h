@@ -81,7 +81,7 @@
   #elif defined(CONFIG_JZ_NAND_MGR)
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"
   #else
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=2 root=ubi0:ndsystem rootfstype=ubifs rw"
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 ubi.mtd=2 root=ubi1:ndsystem rootfstype=ubifs rw"
   #endif
 #endif
 
@@ -113,9 +113,9 @@
 		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
 	#else
     #define CONFIG_BOOTCOMMAND						\
-	"mtdparts default; nand read.skip 0x80f00000 0x800000 0x400000; bootm 0x80f00000"
-	/*"mtdparts default; ubi part root; ubifsmount ubi:ndsystem;" \
-	"ubifsload 0x80f00000 uImage; bootm 0x80f00000"*/
+	/*"mtdparts default; nand read.skip 0x80f00000 0x800000 0x400000; bootm 0x80f00000"*/	\
+	"mtdparts default; ubi part kernel; ubifsmount ubi:ndboot;" \
+	"ubifsload 0x80f00000 uImage; bootm 0x80f00000"
 	#endif /* endif config_jz_nand_MGR*/
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
@@ -331,7 +331,7 @@
 #define CONFIG_ENV_SIZE			(32 << 10)
 #define CONFIG_SPL_PAD_TO		16384
 #define MTDIDS_DEFAULT                  "nand0=nand"
-#define MTDPARTS_DEFAULT                "mtdparts=nand:24m(boot),-(root)"
+#define MTDPARTS_DEFAULT                "mtdparts=nand:8M(boot),30M(kernel),-(root)"
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_CMD_NAND
