@@ -189,7 +189,7 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 
 	return ;
 }
-#define NV_AREA_START (224 * 1024)
+#define NV_AREA_START (288 * 1024)
 static void nv_map_area(unsigned int *base_addr)
 {
 	unsigned int buf[3][2];
