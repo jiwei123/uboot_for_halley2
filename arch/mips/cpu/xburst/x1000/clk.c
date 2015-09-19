@@ -299,7 +299,7 @@ void clk_init(void)
 #ifdef CONFIG_JZ_MMC_MSC1
 		| CPM_CLKGR_MSC1
 #endif
-#ifdef CONFIG_JZ_LCD_V12
+#ifdef CONFIG_JZ_LCD_V13
 		| CPM_CLKGR_LCD
 #endif
 #ifdef CONFIG_JZ_SFC

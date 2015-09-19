@@ -169,7 +169,7 @@
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_UNZIP        /* unzip from memory to memory  */
 #define CONFIG_CMD_DHCP
-#define CONFIG_CMD_NET      /* networking support*/
+#define CONFIG_CMD_NET     /* networking support*/
 #define CONFIG_CMD_PING
 
 /* DEBUG ETHERNET */
@@ -194,7 +194,51 @@
 #define CONFIG_GPIO_DM9161_RESET   GPIO_PB(25)
 #define CONFIG_GPIO_DM9161_RESET_ENLEVEL   0
 
+/* LCD */
+#ifndef CONFIG_RVMS
+#define CONFIG_LCD
+#endif
 
+#define CONFIG_GPIO_PWR_WAKE		GPIO_PB(31)
+#define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
+
+#ifdef CONFIG_LCD
+/*#define CONFIG_LCD_FORMAT_X8B8G8R8*/
+#define LCD_BPP             5
+#define CONFIG_GPIO_LCD_PWM     GPIO_PC(25)
+
+#define CONFIG_LCD_LOGO
+/*#define CONFIG_RLE_LCD_LOGO*/
+/*#define CONFIG_LCD_INFO_BELOW_LOGO      //display the console info on lcd panel for debugg*/
+#define CONFIG_SYS_WHITE_ON_BLACK
+#define CONFIG_SYS_PWM_PERIOD       10000 /* Pwm period in ns */
+#define CONFIG_SYS_PWM_CHN      0  /* Pwm channel ok*/
+#define CONFIG_SYS_PWM_FULL     256
+#define CONFIG_SYS_BACKLIGHT_LEVEL  80 /* Backlight brightness is (80 / 256) */
+#define CONFIG_JZ_LCD_V13
+#define SOC_X1000
+#define CONFIG_JZ_PWM
+
+/*#define CONFIG_LCD_GPIO_FUNC0_24BIT*/
+#define CONFIG_LCD_GPIO_FUNC1_SLCD
+#define CONFIG_SYS_CONSOLE_INFO_QUIET
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+/*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
+#define CONFIG_VIDEO_TRULY_TFT240240_2_E
+
+#ifdef CONFIG_RLE_LCD_LOGO
+#define CONFIG_CMD_BATTERYDET       /* detect battery and show charge logo */
+#define CONFIG_CMD_LOGO_RLE /*display the logo using rle command*/
+#endif
+
+#endif /* CONFIG_LCD */
+
+/*CONFIG_PMU*/
+#define CONFIG_REGULATOR
+#define CONFIG_RICOH61X_I2C_SCL GPIO_PC(26)
+#define CONFIG_RICOH61X_I2C_SDA GPIO_PC(27)
+#define CONFIG_SOFT_I2C_READ_REPEATED_START
+/*#define CONFIG_PMU_RICOH6x*/
 /* MMC */
 #define CONFIG_CMD_MMC
 /*#define CONFIG_MMC_TRACE*/

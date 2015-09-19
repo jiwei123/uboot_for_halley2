@@ -80,6 +80,7 @@ COBJS-$(CONFIG_JZ_MIPI_DSI) += jz_lcd/jz_mipi_dsi/jz_mipi_dsi.o jz_lcd/jz_mipi_d
 COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4775_lcd.o
 COBJS-$(CONFIG_VIDEO_JZ4780) += jz_lcd/backlight_pwm.o jz_lcd/jz4780_lcd.o
 COBJS-$(CONFIG_JZ_LCD_V12) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v1_2.o
+COBJS-$(CONFIG_JZ_LCD_V13) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v1_3.o
 COBJS-$(CONFIG_JZ47xx_EPD) += jz4775_epd/jz4775_epd.o
 COBJS-$(CONFIG_JZ_EPD) += jz_epd/jz_epd_v12.o
 

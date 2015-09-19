@@ -22,7 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v1_3.h>
 #include <jz_lcd/truly_tft240240_2_e.h>
 
 //#define CONFIG_SLCD_TRULY_18BIT
@@ -33,7 +33,7 @@ unsigned long truly_cmd_buf[]= {
 };
 
 #ifdef	CONFIG_PMU_RICOH6x
-void board_set_lcd_240_power_on(void)
+void board_set_lcd_power_on(void)
 {
 	char *id = CONFIG_LCD_REGULATOR;
 	struct regulator *lcd_regulator = regulator_get(id);
@@ -201,8 +201,8 @@ struct jzfb_config_info jzfb1_init_data = {
 };
 
 struct truly_tft240240_2_e_data truly_tft240240_2_e_pdata = {
-	.gpio_lcd_rd  = GPIO_PC(17),
-	.gpio_lcd_rst = GPIO_PA(12),
-	.gpio_lcd_cs  = GPIO_PC(14),
-	.gpio_lcd_bl  = GPIO_PC(18),
+	.gpio_lcd_rd  = GPIO_PB(16),
+	.gpio_lcd_rst = GPIO_PD(0),
+	.gpio_lcd_cs  = GPIO_PB(18),
+	.gpio_lcd_bl  = GPIO_PD(1),
 };
