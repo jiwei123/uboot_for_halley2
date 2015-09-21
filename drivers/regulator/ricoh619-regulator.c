@@ -585,7 +585,7 @@ int set_bank_ricoh61x(int bank)
 	return ret;
 }
 
-int ricoh61x_write(u8 reg, uint8_t *val)
+int ricoh61x_write(u8 reg, uint8_t val)
 {
 	int ret = 0;
 
@@ -1014,7 +1014,7 @@ static int ricoh61x_init_battery(struct ricoh61x_battery_info *info)
 
 	jk = 0x11;
 
-	ret = ricoh61x_write(FG_CTRL_REG, &jk);
+	ret = ricoh61x_write(FG_CTRL_REG, jk);
 	if (ret < 0) {
 		printf("error in %d FG_CTRL_REG \n", __LINE__);
 		printf("Error in writing the control register\n");
@@ -1137,6 +1137,34 @@ int cmd_measure_vbatt_FG()
 }
 
 
+void ricoh619_limit_current_init(){
+	uint8_t val = 0, ret = 0;
+
+	ret = ricoh61x_write(REGISET1_REG, 0x1F);
+	if (ret < 0) {
+		printf("Error in writing the limit current setting 1 register\n");
+	}
+
+	ret = ricoh61x_write(REGISET2_REG, 0x1F);
+	if (ret < 0) {
+		printf("Error in writing the limit current setting 2 register\n");
+	}
+
+	/* register: CHGISET_REG (Charge Current Setting)
+	 *
+	 * values (Bit 4~0):
+	 * 	   01h, 02h, 03h ~ 1ch: 100mA, 200mA, 300mA ~ 2900mA (increments of 100mA)
+	 * 	   other setting: 3000mA
+	 */
+
+	ret = ricoh61x_write(CHGISET_REG, 0x03);
+	if (ret < 0) {
+		printf("Error in writing the charge current setting register\n");
+	}
+	mdelay(100);
+}
+
+
 /***/
 
 int cmd_measure_vsys_ADC()
@@ -1144,6 +1172,17 @@ int cmd_measure_vsys_ADC()
 	uint8_t data_l = 0, data_h = 0;
 	int ret;
 	int current_vsys = 1;
+
+	ricoh61x_write(ADCCNT3_REG, 0x00);
+	if (ret < 0) {
+		printf("Error in writing the adc setting 3 register\n");
+	}
+
+	ricoh61x_write(ADCCNT3_REG, 0x1A);
+	if (ret < 0) {
+		printf("Error in writing the adc setting 3 register\n");
+	}
+	mdelay(100);
 
 	ret = ricoh61x_read(VSYSDATAH_REG, &data_h);
 	if (ret < 0) {
@@ -1159,7 +1198,44 @@ int cmd_measure_vsys_ADC()
 	current_vsys = current_vsys * 1000 * 3 * 5 / 2 / 4095;
 	/* return unit should be 1uV */
 	current_vsys = current_vsys * 1000;
+	debug("cmd_measure_vsys_ADC: current_vsys: %d\n", current_vsys);
 	return current_vsys;
+}
+
+int cmd_measure_vbat_ADC()
+{
+	uint8_t data_l = 0, data_h = 0;
+	int ret;
+	int current_vbat = 1;
+
+	ricoh619_limit_current_init();
+	ret = ricoh61x_write(ADCCNT3_REG, 0x00);
+	if (ret < 0) {
+		printf("Error in writing the adc setting 3 register\n");
+	}
+
+	ricoh61x_write(ADCCNT3_REG, 0x19);
+	if (ret < 0) {
+		printf("Error in writing the adc setting 3 register\n");
+	}
+	mdelay(100);
+
+	ret = ricoh61x_read(VBATDATAH_REG, &data_h);
+	if (ret < 0) {
+		printf("Error in reading the control register\n");
+	}
+
+	ret = ricoh61x_read(VBATDATAL_REG, &data_l);
+	if (ret < 0) {
+		printf("Error in reading the control register\n");
+	}
+
+	current_vbat = ((data_h & 0xff) << 4) | (data_l & 0x0f);
+	current_vbat = current_vbat * 1000 * 2 * 5 / 2 / 4095;
+	/* return unit should be 1uV */
+	current_vbat = current_vbat * 1000;
+	debug("cmd_measure_vbat_ADC: current_vbat: %d\n", current_vbat);
+	return current_vbat;
 }
 
 
@@ -1303,7 +1379,7 @@ static int calc_capacity_in_period(struct ricoh61x_battery_info *info,
 
 	/* CC_pause enter */
 	jk = 0x01;
-	err = ricoh61x_write(CC_CTRL_REG, &jk);
+	err = ricoh61x_write(CC_CTRL_REG, jk);
 	if (err < 0)
 		goto out;
 
@@ -1458,13 +1534,13 @@ static int ricoh61x_init_fgsoca(struct ricoh61x_battery_info *info)
 		if (err < 0)
 			printf("Error in read CHGISET_REG%d\n", err);
 		jk = 0;
-		err = ricoh61x_write(CHGISET_REG, &jk);
+		err = ricoh61x_write(CHGISET_REG, jk);
 		if (err < 0)
 			printf("Error in writing CHGISET_REG%d\n", err);
 		/* msleep(1000); */
 		if (!info->entry_factory_mode) {
 			jk = 0x51;
-			err = ricoh61x_write(FG_CTRL_REG, &jk);
+			err = ricoh61x_write(FG_CTRL_REG, jk);
 			if (err < 0)
 				printf("Error in writing the control register\n");
 		}
@@ -1475,7 +1551,7 @@ static int ricoh61x_init_fgsoca(struct ricoh61x_battery_info *info)
 
 		/* msleep(6000); */
 
-		err = ricoh61x_write(CHGISET_REG, &val);
+		err = ricoh61x_write(CHGISET_REG, val);
 		if (err < 0)
 			printf("Error in writing CHGISET_REG%d\n", err);
 	}
