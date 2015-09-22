@@ -64,7 +64,7 @@ int sfc_program(struct cloner *cloner)
 
 	if (length%blk_size == 0){
 		len = length;
-		printf("the length = %x\n",length);
+		printf("the length = %x\n",len);
 	}
 	else{
 		printf("the length = %x, is no enough %x\n",length,blk_size);
