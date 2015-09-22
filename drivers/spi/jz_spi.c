@@ -608,13 +608,13 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned long erase_size;
 	unsigned char cmd[6], buf;
 
-
-	if(len <= 0x1000)
-		erase_size = 0x1000;
-	else if(len <= 0x8000)
-		erase_size = 0x8000;
-	else
+	if((len >= 0x10000)&&((offset % 0x10000) == 0)){
 		erase_size = 0x10000;
+	}else if((len >= 0x8000)&&((offset % 0x8000) == 0)){
+		erase_size = 0x8000;
+	}else{
+		erase_size = 0x1000;
+	}
 
 	if (offset % erase_size || len % erase_size) {
 		printf("Erase offset/length not multiple of erase size\n");
