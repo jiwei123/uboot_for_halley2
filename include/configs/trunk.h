@@ -86,7 +86,7 @@
 		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
 		#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
 	#else
-		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk1p1"
+		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
 		#define CONFIG_BOOTCOMMAND "mmc dev 1;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
 	#endif
 #elif defined(CONFIG_JZ_NAND_MGR)
