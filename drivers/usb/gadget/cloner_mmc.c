@@ -96,7 +96,6 @@ static int mmc_erase(struct cloner *cloner)
 int mmc_program(struct cloner *cloner,int mmc_index)
 {
 #define MMC_BYTE_PER_BLOCK 512
-	int curr_device = 0;
 	struct mmc *mmc = find_mmc_device(mmc_index);
 	u32 blk = (cloner->cmd->write.partation + cloner->cmd->write.offset)/MMC_BYTE_PER_BLOCK;
 	u32 cnt = (cloner->cmd->write.length + MMC_BYTE_PER_BLOCK - 1)/MMC_BYTE_PER_BLOCK;
@@ -104,13 +103,13 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 	u32 n;
 
 	if (!mmc) {
-		printf("no mmc device at slot %x\n", curr_device);
+		printf("no mmc device at slot %x\n", mmc_index);
 		return -ENODEV;
 	}
 
 	//debug_cond(BURNNER_DEBUG,"\nMMC write: dev # %d, block # %d, count %d ... ",
 	printf("MMC write: dev # %d, block # %d, count %d ... ",
-			curr_device, blk, cnt);
+			mmc_index, blk, cnt);
 
 	mmc_init(mmc);
 
@@ -119,7 +118,7 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 		return -EPERM;
 	}
 
-	n = mmc->block_dev.block_write(curr_device, blk,
+	n = mmc->block_dev.block_write(mmc_index, blk,
 			cnt, addr);
 	//debug_cond(BURNNER_DEBUG,"%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
 	printf("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
@@ -128,7 +127,7 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 		return -EIO;
 
 	if (cloner->args->write_back_chk) {
-		mmc->block_dev.block_read(curr_device, blk,
+		mmc->block_dev.block_read(mmc_index, blk,
 				cnt, addr);
 		debug_cond(BURNNER_DEBUG,"%d blocks read: %s\n",n, (n == cnt) ? "OK" : "ERROR");
 		if (n != cnt)

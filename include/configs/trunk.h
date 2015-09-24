@@ -81,7 +81,7 @@
 	#define	 CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.3:/home/rootdir rw"
 	#define CONFIG_BOOTCOMMAND "tftpboot xxx/uImage; bootm"
 	#endif
-#elif defined(CONFIG_SPL_MMC_SUPPORT)
+#elif defined(CONFIG_SPL_JZMMC_SUPPORT)
 	#ifdef CONFIG_JZ_MMC_MSC0
 		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
 		#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
@@ -130,7 +130,7 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_GETTIME
 #define CONFIG_CMD_UNZIP        /* unzip from memory to memory  */
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
 #define CONFIG_CMD_MMC		/* MMC/SD support */
 #endif
 
@@ -176,7 +176,7 @@
 #define CONFIG_SYS_MAXARGS 16
 #define CONFIG_SYS_LONGHELP
 
-#if defined(CONFIG_SPL_MMC_SUPPORT)
+#if defined(CONFIG_SPL_JZMMC_SUPPORT)
 	#if defined(CONFIG_SUPPORT_EMMC_BOOT)
 	#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "-emmc# "
 	#elif	defined(CONFIG_JZ_MMC_MSC0)
@@ -271,7 +271,7 @@
 #define CONFIG_SYS_FDT_BASE		0
 #define CONFIG_SPL_PAD_TO		32768
 #define CONFIG_SPL_MAX_SIZE		(32 * 1024)
-#elif defined(CONFIG_SPL_MMC_SUPPORT)
+#elif defined(CONFIG_SPL_JZMMC_SUPPORT)
 #define CONFIG_SPL_PAD_TO		15872  /* u-boot start addr - mbr size(512) */
 #define CONFIG_SPL_TEXT_BASE		0xf4000a00
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0xa00)

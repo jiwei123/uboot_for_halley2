@@ -32,7 +32,7 @@
 	.globl _start
 	.section .start_section
 _start:
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined CONFIG_SPL_MMC_SUPPORT || defined CONFIG_SPL_JZMMC_SUPPORT
 	/* magic value ("MSPL") */
 	.word 0x4d53504c
 #endif
