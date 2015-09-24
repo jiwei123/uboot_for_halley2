@@ -90,7 +90,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS2,57600n8 mem=32M@0x0 "
+#define BOOTARGS_COMMON "console=ttyS2,57600n8 consoleblank=0 mem=32M@0x0 "
 #if defined(CONFIG_SPL_NOR_SUPPORT) || defined(CONFIG_SPL_SFC_SUPPORT)
 	#if defined(CONFIG_SPL_SFC_SUPPORT)
 		#if defined(CONFIG_SPL_SFC_NOR)
