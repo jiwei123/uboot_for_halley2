@@ -4,8 +4,8 @@
 #ifdef CONFIG_JZ_MMC
 
 #define MMC_BYTE_PER_BLOCK 512
-extern int get_mmc_csd_perm_w_protect(void);
-extern ulong mmc_erase_t(struct mmc *mmc, ulong start, lbaint_t blkcnt);
+
+
 static int mmc_erase(struct cloner *cloner)
 {
 	int curr_device = 0;
@@ -21,9 +21,9 @@ static int mmc_erase(struct cloner *cloner)
 		return -ENODEV;
 	}
 
-	mmc_init(mmc);
-	if(get_mmc_csd_perm_w_protect()){
-		printf("ERROR: MMC Init error ,can not be erase !!!!!!!!!\n");
+	ret = mmc_init(mmc);
+	if (ret) {
+		printf("ERROR: MMC Init error\n");
 		return -EPERM;
 	}
 
@@ -31,6 +31,7 @@ static int mmc_erase(struct cloner *cloner)
 		printf("Error: card is write protected!\n");
 		return -EPERM;
 	}
+
 	if (cloner->args->mmc_erase == MMC_ERASE_ALL) {
 		blk = 0;
 		blk_cnt = mmc->capacity / MMC_BYTE_PER_BLOCK;
@@ -38,15 +39,10 @@ static int mmc_erase(struct cloner *cloner)
 		printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
 				curr_device, blk, blk_cnt);
 
-		ret = mmc_erase_t(mmc, blk, blk_cnt);
-		if (ret) {
-			printf("mmc erase error\n");
-			return ret;
-		}
-		ret = mmc_send_status(mmc, timeout);
-		if(ret){
-			printf("mmc erase error\n");
-			return ret;
+		ret = mmc->block_dev.block_erase(curr_device, blk, blk_cnt);
+		if (!ret) {
+			printf("Error: mmc erase error\n");
+			return -EIO;
 		}
 
 		printf("mmc all erase ok, blocks %d\n", blk_cnt);
@@ -61,33 +57,24 @@ static int mmc_erase(struct cloner *cloner)
 
 	for (i = 0; erase_cnt > 0; i++, erase_cnt--) {
 		blk = cloner->args->mmc_erase_range[i].start / MMC_BYTE_PER_BLOCK;
-		blk_end = cloner->args->mmc_erase_range[i].end / MMC_BYTE_PER_BLOCK;
-		blk_cnt = blk_end - blk + 1;
+		if(cloner->args->mmc_erase_range[i].end == -1){
+			blk_cnt = mmc->capacity / MMC_BYTE_PER_BLOCK - blk ;
+		}else{
+			blk_end = cloner->args->mmc_erase_range[i].end / MMC_BYTE_PER_BLOCK;
+			blk_cnt = blk_end - blk ;
+		}
 
 		printf("MMC erase: dev # %d, start block # 0x%x, count 0x%x ... \n",
 				curr_device, blk, blk_cnt);
 
-		if ((blk % mmc->erase_grp_size) || (blk_cnt % mmc->erase_grp_size)) {
-			printf("\n\nCaution! Your devices Erase group is 0x%x\n"
-					"The erase block range would be change to "
-					"0x" LBAF "~0x" LBAF "\n\n",
-					mmc->erase_grp_size, (unsigned long)(blk & ~(mmc->erase_grp_size - 1)),
-					(unsigned long)((blk + blk_cnt + mmc->erase_grp_size)
-					 & ~(mmc->erase_grp_size - 1)) - 1);
-		}
-
-		ret = mmc_erase_t(mmc, blk, blk_cnt);
-		if (ret) {
-			printf("mmc erase error\n");
-			return ret;
-		}
-		ret = mmc_send_status(mmc, timeout);
-		if(ret){
-			printf("mmc erase error\n");
-			return ret;
+		ret = mmc->block_dev.block_erase(curr_device, blk, blk_cnt);
+		if (!ret) {
+			printf("Error: mmc erase error\n");
+			return -EIO;
 		}
 
 		printf("mmc part erase, part %d ok\n", i);
+
 	}
 	printf("mmc erase ok\n");
 	return 0;
