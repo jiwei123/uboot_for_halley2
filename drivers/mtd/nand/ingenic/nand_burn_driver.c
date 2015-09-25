@@ -385,6 +385,15 @@ int get_nand_pagesize(void) {
 		return -ENODEV;
 }
 
+int get_nand_blocksize(void) {
+	struct mtd_info *mtd = &nand_info[0];
+
+	if (mtd->erasesize)
+		return mtd->erasesize;
+	else
+		return -ENODEV;
+}
+
 void dump_params(void)
 {
 	struct mtd_nand_params *params = (struct mtd_nand_params *)mtd_nand_params;

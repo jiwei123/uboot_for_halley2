@@ -193,6 +193,7 @@ struct cloner {
 	int full_size;
 	void* spl_title;
 	int spl_title_sz;
+	int skip_spl_size;
 	int full_size_remainder;
 	uint32_t last_offset;
 	uint32_t last_offset_avail;

@@ -32,7 +32,6 @@ int nand_mtd_ubi_program(struct cloner *cloner)
 	u32 full_size = cloner->full_size;
 	u32 length = cloner->cmd->write.length;
 	char command[128];
-	char *partation;
 	char *volume;
 	void *databuf = (void *)cloner->write_req->buf;
 	int ret = 0;
@@ -98,65 +97,124 @@ int nand_mtd_ubi_program(struct cloner *cloner)
 
 extern void* get_params_addr(void);
 extern int get_nand_pagesize(void);
+extern int get_nand_blocksize(void);
+
+static bool spl_is_complete_or_no_spl(u32 startaddr, u32 length)
+{
+	/*no spl*/
+	if (startaddr >= CONFIG_SPL_PAD_TO)
+		return true;
+
+	/*spl is complete*/
+	if (startaddr == 0 && length >= CONFIG_SPL_PAD_TO)
+		return true;
+
+	return false;
+}
+
+static int nand_mtd_raw_erase(u32 startaddr, u32 length)
+{
+	int erase_size = get_nand_blocksize();
+	int page_size = get_nand_pagesize();
+	int erase_len = length;
+	u32 erase_addr = startaddr;
+	u32 temp = 0;
+	char command[128];
+	int ret;
+
+	if (erase_size < 0 || page_size < 0)
+		return -1;
+
+	/*has been erased before*/
+	if (temp = (erase_addr%erase_size)) {
+		if ((temp + length) > erase_size) {
+			erase_addr = erase_addr - temp + erase_size;
+			erase_len -= (erase_size - temp);
+		} else
+			return 0;
+	}
+
+	if (!startaddr)
+		erase_len = (erase_len - CONFIG_SPL_PAD_TO) +
+			(page_size * 128 * 8);
+	erase_len += (erase_size - erase_len%erase_size);
+
+	memset(command, 0 , 128);
+	sprintf(command, "nand erase 0x%x 0x%x", erase_addr, erase_len);
+	printf("%s\n", command);
+	ret = run_command(command, 0);
+	if (ret)
+		return ret;
+	return 0;
+}
+
+static int nand_mtd_raw_program_spl(struct cloner *cloner, void *databuf) {
+	int page_size = get_nand_pagesize();
+	void *parambuf = NULL;
+	char command[128];
+	int ret = 0;
+
+	if (page_size < 0) return -1;
+
+	memcpy(databuf, cloner->spl_title, cloner->spl_title_sz);
+	memset(command, 0 , 128);
+	sprintf(command, "writespl 0x%x 0x%x", (unsigned)databuf, 6);
+	printf("%s\n", command);
+	ret = run_command(command, 0);
+	if (ret) return -1;
+
+	parambuf = get_params_addr();
+	memset(command, 0 , 128);
+	sprintf(command, "writespl %p 0x%x 0x%x", parambuf, 6, 2);
+	printf("%s\n", command);
+	ret = run_command(command, 0);
+	if (ret) return -1;;
+
+	cloner->skip_spl_size = page_size * 128 * 8 - CONFIG_SPL_PAD_TO;
+	printf("...ok\n");
+	return 0;
+}
+
 int nand_mtd_raw_program(struct cloner *cloner)
 {
 	u32 length = cloner->cmd->write.length;
 	void *databuf = (void *)cloner->write_req->buf;
 	u32 startaddr = cloner->cmd->write.partation + (cloner->cmd->write.offset);
-	void *parambuf = NULL;
 	char command[128];
 	int ret = 0;
-	int page_size = get_nand_pagesize();
 
-	if (page_size < 0)
-		return -1;
+	if (!spl_is_complete_or_no_spl(startaddr, length))
+		goto out;
 
-	if (startaddr == 0) {
-		if (length < CONFIG_SPL_PAD_TO)
-			return -1;
-	} else if (startaddr < CONFIG_SPL_PAD_TO)
-		return -1;
+	startaddr += cloner->skip_spl_size;
 
 	if (!cloner->args->nand_erase) {
-		int erase_len = length;
-		memset(command, 0 , 128);
-		if (startaddr == 0)
-			erase_len = (erase_len - CONFIG_SPL_PAD_TO + page_size * 128 * 8);
-		sprintf(command, "nand erase 0x%x 0x%x", startaddr, erase_len);
-		printf("%s\n", command);
-		ret = run_command(command, 0);
+		ret = nand_mtd_raw_erase(startaddr, length);
 		if (ret) goto out;
 	}
 
 	if (startaddr == 0) {
-		memcpy(databuf, cloner->spl_title, cloner->spl_title_sz);
-		memset(command, 0 , 128);
-		sprintf(command, "writespl 0x%x 0x%x", (unsigned)databuf, 6);
-		printf("%s\n", command);
-		ret = run_command(command, 0);
-		if (ret)
-			goto out;
-		parambuf = get_params_addr();
-		memset(command, 0 , 128);
-		sprintf(command, "writespl %p 0x%x 0x%x", parambuf, 6, 2);
-		printf("%s\n", command);
-		ret = run_command(command, 0);
-		if (ret)
-			goto out;
-
-		startaddr += (page_size * 128 * 8);
-		databuf += CONFIG_SPL_PAD_TO;
+		ret = nand_mtd_raw_program_spl(cloner, databuf);
+		if (ret) goto out;
 		length -= CONFIG_SPL_PAD_TO;
-		if (ret)
-			goto out;
-		printf("...ok\n");
+		databuf += CONFIG_SPL_PAD_TO;
+		cloner->full_size_remainder -= CONFIG_SPL_PAD_TO;
+		startaddr += cloner->skip_spl_size + CONFIG_SPL_PAD_TO;
 	}
 
-	memset(command, 0 , 128);
-	sprintf(command, "nand write.skip 0x%x 0x%x 0x%x", (unsigned)databuf, startaddr, length);
-	printf("%s\n", command);
-	ret = run_command(command, 0);
-	if (ret) goto out;
+	cloner->full_size_remainder -= length;
+	if (cloner->full_size_remainder <= 0) {
+		cloner->skip_spl_size = 0;
+		cloner->full_size_remainder = 0;
+	}
+
+	if (length) {
+		memset(command, 0 , 128);
+		sprintf(command, "nand write.skip 0x%x 0x%x 0x%x", (unsigned)databuf, startaddr, length);
+		printf("%s\n", command);
+		ret = run_command(command, 0);
+		if (ret) goto out;
+	}
 	cloner->full_size = 0;
 	printf("...ok\n");
 	return 0;
