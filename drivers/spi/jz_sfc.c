@@ -727,13 +727,14 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned int  buf = 0;
 
 
-	if(len >= 0x10000){
+	if((len >= 0x10000)&&((offset % 0x10000) == 0)){
 		erase_size = 0x10000;
-	}else if(len >= 0x8000){
+	}else if((len >= 0x8000)&&((offset % 0x8000) == 0)){
 		erase_size = 0x8000;
 	}else{
 		erase_size = 0x1000;
 	}
+
 
 	if(len % erase_size != 0){
 		len = len - (len % erase_size) + erase_size;
