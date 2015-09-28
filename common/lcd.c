@@ -27,7 +27,7 @@
 /* ** HEADER FILES							*/
 /************************************************************************/
 
-/* #define DEBUG */
+/*#define DEBUG */
 
 #include <config.h>
 #include <common.h>
@@ -236,9 +236,10 @@ void lcd_putc(const char c)
 		return;
 	}
 /*the rest of lcd do not display a line console*/
-if ( BMP_LOGO_HEIGHT > (panel_info.vl_row - 2*VIDEO_FONT_HEIGHT))
+#if defined(CONFIG_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
+	if ( BMP_LOGO_HEIGHT > (panel_info.vl_row - 2*VIDEO_FONT_HEIGHT))
 		return ;
-
+#endif
 	switch (c) {
 	case '\r':
 		console_col = 0;
@@ -558,9 +559,13 @@ U_BOOT_CMD(
 
 static int lcd_init(void *lcdbase)
 {
+#ifdef DEFAULT_BACKLIGHT_LEVEL
+	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
+#else
+	lcd_set_backlight_level(80);
+#endif
 	/* Initialize the lcd controller */
 	debug("[LCD] Initializing LCD frambuffer at %p\n", lcdbase);
-
 	lcd_ctrl_init(lcdbase);
 
 	/*

@@ -30,6 +30,9 @@
 #include <asm/arch-m200/tcu.h>
 #include <asm/arch-m200/lcdc.h>
 #include <asm/arch-m200/gpio.h>
+#include <asm/arch-x1000/tcu.h>
+#include <asm/arch-x1000/lcdc.h>
+#include <asm/arch-x1000/gpio.h>
 #include <regulator.h>
 #include <jz_lcd/truly_tft240240_2_e.h>
 
@@ -42,22 +45,22 @@ void panel_pin_init(void)
 	int ret = 0;
 	ret = gpio_request(truly_tft240240_2_e_pdata.gpio_lcd_cs, "lcd_cs");
 	if(ret){
-		printf("canot request gpio lcd_cs\n");
+		/*printf("canot request gpio lcd_cs\n");*/
 	}
 
 	ret = gpio_request(truly_tft240240_2_e_pdata.gpio_lcd_rd, "lcd_rd");
 	if(ret){
-		printf("canot request gpio lcd_rd\n");
+		/*printf("canot request gpio lcd_rd\n");*/
 	}
 
         ret = gpio_request(truly_tft240240_2_e_pdata.gpio_lcd_rst, "lcd_rst");
 	if(ret){
-		printf("canot request gpio lcd_rst\n");
+		/*printf("canot request gpio lcd_rst\n");*/
 	}
 
 	ret = gpio_request(truly_tft240240_2_e_pdata.gpio_lcd_bl, "lcd_bl");
 	if(ret){
-		printf("canot request gpio lcd_bl\n");
+		/*printf("canot request gpio lcd_bl\n");*/
 	}
 	serial_puts("truly_tft240240_2_e panel display pin init\n");
 }

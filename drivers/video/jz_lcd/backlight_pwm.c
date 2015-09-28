@@ -61,7 +61,11 @@ void lcd_set_backlight_level(int num)
 		++prescaler;
 	}
 	_half =_period * _val / (CONFIG_SYS_PWM_FULL);
+#ifdef SOC_X1000
+	gpio_set_func(GPIO_PORT_C, GPIO_FUNC_0,1 << (CONFIG_GPIO_LCD_PWM % 32));
+#else
 	gpio_set_func(GPIO_PORT_E, GPIO_FUNC_0,1 << (CONFIG_GPIO_LCD_PWM % 32));
+#endif
 	struct pwm pwm_backlight = {CONFIG_SYS_PWM_CHN,prescaler,EXTAL,_period,_half};
 	pwm_init(&pwm_backlight);
 }
@@ -80,7 +84,7 @@ void lcd_init_backlight(int num)
 {
 	unsigned int tmp = (num)/CONVERT_FACTOR + 1;
 	gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
-	gpio_direction_output(CONFIG_GPIO_LCD_PWM),1;
+	gpio_direction_output(CONFIG_GPIO_LCD_PWM,1);
 	udelay(30);
 	send_low_pulse(MAX_BRIGHTNESS_STEP-tmp);
 }
