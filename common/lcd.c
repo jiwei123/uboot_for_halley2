@@ -1242,7 +1242,7 @@ static void *lcd_logo(void)
 #if defined(CONFIG_RLE_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
 	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
 #else
-	bitmap_plot(0, 0);
+	bitmap_plot(0, 85);
 #endif
 	flush_cache_all();
 #ifdef CONFIG_LCD_INFO
