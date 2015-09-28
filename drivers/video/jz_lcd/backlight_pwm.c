@@ -68,7 +68,6 @@ void lcd_set_backlight_level(int num)
 
 void lcd_close_backlight(void)
 {
-        gpio_direction_output(CONFIG_GPIO_LCD_PWM,-1);
         gpio_direction_output(CONFIG_GPIO_LCD_PWM,0);
 }
 
