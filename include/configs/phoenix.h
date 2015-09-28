@@ -96,7 +96,7 @@
 			/* #define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=192.168.4.254:192.168.4.1:192.168.4.1:255.255.255.0 rootdelay=2 nfsroot=192.168.4.13:/home/fpga/kyhe/rootfs rw" */
 			/*#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"*/
 			#define  CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off rootfstype=cramfs root=/dev/mtdblock2 ro init=/linuxrc"
-			#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x800000 0x80800000 ;bootm 0x80800000"
+			#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x300000 0x80800000 ;bootm 0x80800000"
 		#else  /* CONFIG_SPL_SFC_NAND */
 			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
 			#define CONFIG_BOOTCOMMAND "sfcnand read 0x80600000 0x800000 0x500000 ;bootm 0x80600000"
@@ -286,7 +286,7 @@
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 #elif defined(CONFIG_ENV_IS_IN_SFC)
 #define CONFIG_ENV_SIZE			(4 << 10)
-#define CONFIG_ENV_OFFSET		0x2e400 /*write nor flash 185k address*/
+#define CONFIG_ENV_OFFSET		0x3e800 /*write nor flash 250k address*/
 #define CONFIG_CMD_SAVEENV
 #else
 #define CONFIG_ENV_IS_NOWHERE
