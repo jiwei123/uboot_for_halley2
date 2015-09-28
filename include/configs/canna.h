@@ -164,6 +164,11 @@
 /* #define CONFIG_CMD_NET */     /* networking support*/
 #define CONFIG_CMD_PING
 
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_USE_ARCH_MEMSET
+#define CONFIG_USE_ARCH_MEMCPY
+#endif
+
 /* DEBUG ETHERNET */
 #if 0
 #define CONFIG_SERVERIP     192.168.4.13

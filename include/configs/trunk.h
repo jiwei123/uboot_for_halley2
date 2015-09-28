@@ -134,6 +134,11 @@
 #define CONFIG_CMD_MMC		/* MMC/SD support */
 #endif
 
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_USE_ARCH_MEMSET
+#define CONFIG_USE_ARCH_MEMCPY
+#endif
+
 #define CONFIG_LED
 
 /* MMC */
