@@ -4,12 +4,45 @@
 #include <asm/errno.h>
 #include <asm/string.h>
 #include <asm/arch/clk.h>
+#include <asm/arch/base.h>
 
 #define WRITE_FLAG 0
 #define READ_FLAG 1
 #define MEMCPY_FLAG 2
 #define CACHE_FLAG 0
 #define UNCACHE_FLAG 1
+#define REG32(addr) *(volatile unsigned int*)(addr)
+static void ddr_count_start()
+{
+#ifdef CONFIG_X1000
+	unsigned int val;
+	val = REG32(0xb00000d0);
+	val |= (1<<6);
+	REG32(0xb00000d0) = val;
+	printf("ddr_drcg = 0x%x\n", REG32(0xb00000d0));
+#endif
+	REG32((DDRC_BASE + 0xd4)) = 0;
+	REG32((DDRC_BASE + 0xd8)) = 0;
+	REG32((DDRC_BASE + 0xdc)) = 0;
+	REG32((DDRC_BASE + 0xe4)) = 3;
+}
+
+static void ddr_count_stop()
+{
+	unsigned int i,j,k;
+
+	i = 0;
+	j = 0;
+	k = 0;
+
+	REG32((DDRC_BASE + 0xe4)) = 2;
+	i = REG32((DDRC_BASE + 0xd4));
+	j = REG32((DDRC_BASE + 0xd8));
+	k = REG32((DDRC_BASE + 0xdc));
+	printf("total_cycle = %d,valid_cycle = %d\n", i, j);
+	printf("rate      = %%%d\n", j * 100 / i);
+	printf("idle_rate = %%%d\n\n", k * 100 / i);
+}
 
 static void ddr_read(unsigned int *addr, unsigned int size, unsigned int times)
 {
@@ -157,14 +190,14 @@ static int ddr_wr_test(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 
 	start = get_timer(0);
 	printf("current %d us\n",start);
-
+	ddr_count_start();
 	if(wr_flag == WRITE_FLAG)
 		ddr_write(src_addr, size, times);
 	else if(wr_flag == READ_FLAG)
 		ddr_read(src_addr, size, times);
 	else if(wr_flag == MEMCPY_FLAG)
 		ddr_memcpy(src_addr, dst_addr, size, times);
-
+	ddr_count_stop();
 	end = get_timer(0);
 	printf("current %d us\n",end);
 	printf("spend %d us\n",end - start);
