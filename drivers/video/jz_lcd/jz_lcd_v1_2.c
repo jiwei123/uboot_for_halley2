@@ -1330,11 +1330,15 @@ void lcd_ctrl_init(void *lcd_base)
 	lcd_close_backlight();
 	panel_pin_init();
 
+	if (lcd_config_info.lcd_type == LCD_TYPE_SLCD) {
+		lcd_config_info.fmt_order = FORMAT_X8R8G8B8;
+    } else {
 #ifdef CONFIG_LCD_FORMAT_X8B8G8R8
-	lcd_config_info.fmt_order = FORMAT_X8B8G8R8;
+		lcd_config_info.fmt_order = FORMAT_X8B8G8R8;
 #else
-	lcd_config_info.fmt_order = FORMAT_X8R8G8B8;
+		lcd_config_info.fmt_order = FORMAT_X8R8G8B8;
 #endif
+	}
 
 	jz_lcd_init_mem(lcd_base, &lcd_config_info);
 
