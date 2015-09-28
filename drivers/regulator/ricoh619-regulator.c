@@ -272,6 +272,7 @@ static int __ricoh61x_set_voltage( struct ricoh61x_regulator *ri,
 	if (selector)
 		*selector = vsel;
 
+
 	vout_val =  (vsel & ri->vout_mask);
 	ret = ricoh61x_write_reg(ri->vout_reg, &vout_val);
 	if (ret < 0)
@@ -284,8 +285,7 @@ static  int ricoh61x_set_voltage(struct regulator *rdev,
 		int min_uV, int max_uV, unsigned *selector)
 {
 	struct ricoh61x_regulator *ri = rdev_get_drvdata(rdev);
-
-	return __ricoh61x_set_voltage(ri, min_uV, max_uV, selector);
+	return __ricoh61x_set_voltage(ri, min_uV, max_uV, NULL);
 }
 
 void test_richo()
@@ -395,7 +395,7 @@ static struct ricoh61x_regulator ricoh61x_regulator[] = {
 			0x48, 1, 0x4A, 1),
 
 	RICOH61x_REG(LDO3, 0x44, 2, 0x46, 2, 0x4E, 0x7F, 0x5A,
-			900, 3500, 25000, 0x68, ricoh61x_ops, 500,
+			600, 3500, 25000, 0x74, ricoh61x_ops, 500,
 			0x48, 2, 0x4A, 2),
 
 	RICOH61x_REG(LDO4, 0x44, 3, 0x46, 3, 0x4F, 0x7F, 0x5B,
@@ -403,7 +403,7 @@ static struct ricoh61x_regulator ricoh61x_regulator[] = {
 			0x48, 3, 0x4A, 3),
 
 	RICOH61x_REG(LDO5, 0x44, 4, 0x46, 4, 0x50, 0x7F, 0x5C,
-			600, 3500, 25000, 0x74, ricoh61x_ops, 500,
+			900, 3500, 25000, 0x68, ricoh61x_ops, 500,
 			0x48, 4, 0x4A, 4),
 
 	RICOH61x_REG(LDO6, 0x44, 5, 0x46, 5, 0x51, 0x7F, 0x5D,
@@ -435,6 +435,7 @@ static struct ricoh61x_regulator ricoh61x_regulator[] = {
 			900, 3500, 25000, 0x68, ricoh61x_ops, 500,
 			0x00, 0, 0x00, 0),
 };
+
 
 int ricoh61x_regulator_init(void)
 {
