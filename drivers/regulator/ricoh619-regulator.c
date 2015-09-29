@@ -1136,7 +1136,6 @@ int cmd_measure_vbatt_FG()
 	return volup;
 }
 
-
 void ricoh619_limit_current_init(){
 	uint8_t val = 0, ret = 0;
 
@@ -1164,6 +1163,32 @@ void ricoh619_limit_current_init(){
 	mdelay(100);
 }
 
+void ricoh619_limit_current_set_to_50mA(void) {
+	uint8_t val = 0, ret = 0;
+
+	ret = ricoh61x_write(REGISET1_REG, 0x1F);
+	if (ret < 0) {
+		printf("Error in writing the limit current setting 1 register\n");
+	}
+
+	ret = ricoh61x_write(REGISET2_REG, 0x1F);
+	if (ret < 0) {
+		printf("Error in writing the limit current setting 2 register\n");
+	}
+
+	/* register: CHGISET_REG (Charge Current Setting)
+	 *
+	 * values (Bit 4~0):
+	 * 	   01h, 02h, 03h ~ 1ch: 100mA, 200mA, 300mA ~ 2900mA (increments of 100mA)
+	 * 	   other setting: 3000mA
+	 */
+
+	ret = ricoh61x_write(CHGISET_REG, 0x00);
+	if (ret < 0) {
+		printf("Error in writing the charge current setting register\n");
+	}
+	mdelay(200);
+}
 
 /***/
 
@@ -1238,18 +1263,66 @@ int cmd_measure_vbat_ADC()
 	return current_vbat;
 }
 
-
 int detection_first_poweron()
 {
 	uint8_t first_poweron;
 	int ret;
-	 ret = ricoh61x_read(PSWR_REG, &first_poweron);
+	
+	ret = ricoh61x_read(PSWR_REG, &first_poweron);
 	if(first_poweron == 0){
 		return 0;
 	}else{
 		return 1;
 	}
 	
+}
+
+int ricoh619_get_battery_for_kernel(unsigned int *voltage) {
+	uint8_t data_l = 0, data_h = 0;
+	int ret;
+	int current_vbat = 1;
+
+	/* if (detection_first_poweron()) { */
+	/* 	printf ("ricoh619 is not the first on\n"); */
+	/* 	return -1; */
+	/* } */
+
+	/* ricoh619_limit_current_set_to_50mA(); */
+
+	ret = ricoh61x_write(ADCCNT3_REG, 0x00);
+	if (ret < 0) {
+		printf("Error in writing the adc setting 3 register\n");
+		return ret;
+	}
+
+	ricoh61x_write(ADCCNT3_REG, 0x19);
+	if (ret < 0) {
+		printf("Error in writing the adc setting 3 register\n");
+		return ret;
+	}
+	mdelay(200);
+
+	ret = ricoh61x_read(VBATDATAH_REG, &data_h);
+	if (ret < 0) {
+		printf("Error in reading the control register\n");
+		return ret;
+	}
+
+	ret = ricoh61x_read(VBATDATAL_REG, &data_l);
+	if (ret < 0) {
+		printf("Error in reading the control register\n");
+		return ret;
+	}
+
+	current_vbat = ((data_h & 0xff) << 4) | (data_l & 0x0f);
+	current_vbat = current_vbat * 1000 * 2 * 5 / 2 / 4095;
+	/* return unit should be 1uV */
+	current_vbat = current_vbat * 1000;
+	printf ("cmd_measure_vbat_ADC: current_vbat: %d\n", current_vbat);
+
+	*voltage = current_vbat;
+
+	return 0;
 }
 
 /* battery voltage is get from Fuel gauge */

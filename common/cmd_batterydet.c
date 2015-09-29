@@ -430,7 +430,7 @@ static void bat_voltage_filter(unsigned int *voltage)
 	return;
 }
 
-static unsigned int read_battery_voltage(void)
+unsigned int read_battery_voltage(void)
 {
 	unsigned int voltage = 0;
 	int min = 0xffff, max = 0, tmp;
@@ -490,6 +490,18 @@ static int get_viberation_signature(void)
     } else {
         return 0;
     }
+}
+
+int detect_charger_state(void) {
+	int charging = 0;
+	int i;
+
+	for (i = 0; i < 5; i++) {
+		mdelay(10);
+		charging += __charge_detect();
+	}
+
+	return charging;
 }
 
 static int charge_detect(void)

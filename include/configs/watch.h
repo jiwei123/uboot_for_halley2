@@ -119,7 +119,7 @@
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
-	  "cls; batterydet; vibrate; lcd_logo on; boota mmc 0 0x80f00000 6144"
+	  "cls; batterydet; battery_for_kernel; vibrate; lcd_logo on; boota mmc 0 0x80f00000 6144"
     #define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
     #define CONFIG_RECOVERY_BOOT "cls; vibrate; lcd_logo on; boota mmc 0 0x80f00000 24576"
   #else

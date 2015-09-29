@@ -40,6 +40,23 @@
 struct boot_img_hdr bootimginfo;
 struct mmc *mmc;
 
+#ifndef CONFIG_BURNER
+	static u8       cmdline[256] = CONFIG_BOOTARGS;
+#else
+	static u8       cmdline[256] = {0,};
+#endif
+
+int add_cmd_line_arg(char *arg) {
+	if ((strlen(cmdline) + strlen(arg)) >= sizeof(cmdline)) {
+		printf ("cmdline : cmd line is no space for %s\n", arg);
+		return -ENOMEM;
+	}
+
+	strcpy(cmdline + strlen(cmdline), arg);
+
+	return 0;
+}
+
 extern void flush_cache_all(void);
 extern void setup_tlb(void);
 
@@ -97,11 +114,6 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 
 	static u32      *param_addr = 0;
 	static u8       *tmpbuf = 0;
-#ifndef CONFIG_BURNER
-	static u8       cmdline[256] = CONFIG_BOOTARGS;
-#else
-	static u8       cmdline[256] = {0,};
-#endif
 
 	if (data_buf == NULL) {
 		return -EINVAL;
@@ -157,6 +169,11 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 		tmpbuf[i] = cmdline[i];
 
 	printf("cmdline: %s\n",(char *)cmdline);
+
+	if (strlen(cmdline) >= sizeof(cmdline)) {
+		printf ("cmdline: cmdline is out of range!!\n");
+		return -ENOMEM;
+	}
 
 	return 0;
 }
