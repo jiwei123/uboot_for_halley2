@@ -578,7 +578,11 @@
  * GPT configuration
  */
 #ifdef CONFIG_GPT_CREATOR
+#ifdef CONFIG_TIZEN_OS
+#define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)/partitions-tizen"
+#else
 #define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
+#endif	/* CONFIG_TIZEN_OS */
 #else
 /* USE MBR + zero-GPT-table instead if no gpt table defined*/
 #define CONFIG_MBR_P0_OFF	64mb
