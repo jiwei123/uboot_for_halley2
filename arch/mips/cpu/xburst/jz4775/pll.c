@@ -24,6 +24,7 @@
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
+#include <asm/errno.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/clk.h>
 
@@ -70,37 +71,93 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CPCCR_CFG CONFIG_SYS_CPCCR_SEL
 #endif
 
-unsigned int get_pllreg_value(int pll)
+static unsigned int get_pllreg_value(int freq)
 {
-	cpm_cpapcr_t cpapcr;
-	unsigned int pll_out, ret = 0;
+        unsigned int mnod = 0;
+        int nf = 1, nr = 0, no = 1;
+        int bs = 0;
+        unsigned int nrok = 0;
+        int fvco = 0;
+        int fin = gd->arch.gi->extal/1000000;
+        int fout = freq/1000000;
+#ifndef CONFIG_FPGA
+        if ((fin < 10) || (fin > 50) || (fout < 36))
+                goto err;
+#endif
+        do {
+                nrok++;
+                nf = (fout * nrok)/fin;
+                if ((nf > 128)) goto err;
 
-	switch (pll) {
-	case APLL:
-		cpapcr.d32 = 0;
-		pll_out = gd->arch.gi->cpufreq / 1000000;
-		if (pll_out > 600) {
-			cpapcr.b.BS = 1;
-		} else if ((pll_out > 155) && (pll_out <= 300)) {
-			cpapcr.b.PLLOD = 1;
-		} else if (pll_out > 76) {
-			cpapcr.b.PLLOD = 2;
-		} else if (pll_out > 47) {
-			cpapcr.b.PLLOD = 3;
-		}
-		cpapcr.b.PLLN = 0;
-		cpapcr.b.PLLM = (gd->arch.gi->cpufreq / gd->arch.gi->extal)
-			* (cpapcr.b.PLLN + 1)
-			* (1 << cpapcr.b.PLLOD)
-			- 1;
-		ret = cpapcr.d32;
-	case MPLL:
-		/* MPLL is not used */
-	default:
-		break;
-	}
+                if (fin * nf != fout * nrok)
+                        continue;
 
-	return ret;
+                if (nrok <= 64) {
+                        no = 0;
+                        nr = nrok;
+                        fvco = fout * 1;
+                } else if (nrok <= 128 && nf%2 == 0) {
+                        if (nf%2) goto err;
+                        no = 1;
+                        nr = nrok/2;
+                        fvco = fout * 2;
+                } else if (nrok <= 256 && nf%4 == 0) {
+                        if (nf%4) goto err;
+                        no = 2;
+                        nr = nrok/4;
+                        fvco = fout * 4;
+                } else if (nrok <= 512 && nf%8 == 0) {
+                        no = 3;
+                        nr = nrok/8;
+                        fvco = fout * 8;
+                } else {
+                        goto err;
+                }
+#ifndef CONFIG_FPGA
+                debug("fvco = %d\n", fvco);
+                if (fout >= 63 && fvco >= 500) {
+                        bs = 1;
+                        break;
+                } else if (fout >= 36 && fvco >= 300 && fvco <= 600) {
+                        bs = 0;
+                        break;
+                }
+#else
+                bs = 0;
+                break;
+#endif
+        } while (1);
+
+        mnod = (bs << 31) | ((nf - 1) << 24) | ((nr - 1) << 18) | (no << 16);
+
+        return mnod;
+err:
+        printf("no adjust parameter to the fout:%dM fin: %d\n", fout, fin);
+        return -EINVAL;
+}
+
+static void pll_set(int pll,int freq)
+{
+        unsigned int regvalue = get_pllreg_value(freq);
+
+        if (regvalue == -EINVAL)
+                return;
+        switch (pll) {
+                case APLL:
+                        /* Init APLL */
+                        cpm_outl(regvalue | (1 << 8) | 0x20, CPM_CPAPCR);
+                        while(!(cpm_inl(CPM_CPAPCR) & (1 << 10)))
+                                ;
+                        debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
+                        break;
+                case MPLL:
+                        /* Init MPLL */
+                        cpm_outl(regvalue | (1 << 7), CPM_CPMPCR);
+                        while(!(cpm_inl(CPM_CPMPCR) & 1))
+                                ;
+                        debug("CPM_CPMPCR %x\n", cpm_inl(CPM_CPMPCR));
+                        break;
+        }
 }
 
 void pll_init(void)
@@ -113,10 +170,9 @@ void pll_init(void)
 	cpm_outl(cpccr,CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
 #endif
-	/* Only apll is init here */
-	cpm_outl(get_pllreg_value(APLL) | (0x1 << 8) | 0x20,CPM_CPAPCR);
-	while(!(cpm_inl(CPM_CPAPCR) & (0x1<<10)));
-	debug("CPM_CPAPCR %x\n", cpm_inl(CPM_CPAPCR));
+        /* apll and mpll both init here */
+        pll_set(APLL, CONFIG_SYS_APLL_FREQ);
+        pll_set(MPLL, CONFIG_SYS_MPLL_FREQ);
 
 	cpccr = (cpm_inl(CPM_CPCCR) & (0xff << 24))
 		| (CPCCR_CFG & ~(0xff << 24))

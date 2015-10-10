@@ -30,7 +30,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-
 struct cgu spl_cgu_clksel[] = {
 	/*
 	 * {offset, sel, sel_bit, en_bit, busy_bit, div}
@@ -48,7 +47,8 @@ struct cgu spl_cgu_clksel[] = {
 #ifdef CONFIG_VIDEO_JZ4775
 	{CPM_LPCDR, 0, 31, 28, 27, CGU_LCD_DIV},
 #endif
-	{CPM_I2SCDR, 2, 30, 0, 0, 0},
+        {CPM_I2SCDR, 2, 30, 0, 0, 0},
+        {CPM_PCMCDR, 2, 30, 0, 0, 0},
 };
 
 #if defined(CONFIG_BURNER) || defined(CONFIG_JZ_SLT)
@@ -328,6 +328,7 @@ void clk_init(void)
 #endif
 		| CPM_CLKGR_PDMA
 		| CPM_CLKGR_BCH
+		| CPM_CLKGR_AIC
 		;
 
 	reg_clkgr &= ~gate;
