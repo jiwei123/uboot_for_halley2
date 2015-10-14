@@ -5,6 +5,7 @@
 #include <command.h>
 #include <asm/io.h>
 #include <asm/cache.h>
+#include <asm/arch/clk.h>
 
 #include "SynopGMAC_Dev.h"
 
@@ -191,8 +192,11 @@ static void jzmac_init(void) {
 	synopGMAC_jumbo_frame_enable(gmacdev);
 	synopGMAC_rx_own_disable(gmacdev);
 	synopGMAC_loopback_off(gmacdev);
-	/* default to full duplex, I think this will be the common case */
-	synopGMAC_set_full_duplex(gmacdev);
+	if(gmacdev->DuplexMode == FULLDUPLEX) {
+		synopGMAC_set_full_duplex(gmacdev);
+	} else {
+		synopGMAC_set_half_duplex(gmacdev);
+	}
 	synopGMAC_retry_enable(gmacdev);
 	synopGMAC_pad_crc_strip_disable(gmacdev);
 	synopGMAC_back_off_limit(gmacdev,GmacBackoffLimit0);
@@ -201,8 +205,16 @@ static void jzmac_init(void) {
 	synopGMAC_tx_enable(gmacdev);
 	synopGMAC_rx_enable(gmacdev);
 #endif
-	/* default to 100M, I think this will be the common case */
-	synopGMAC_select_mii(gmacdev);
+
+	if(gmacdev->Speed == SPEED10) {
+		synopGMAC_select_mii(gmacdev);
+		synopGMACSetBits((u32 *)gmacdev->MacBase, GmacConfig, GmacFESpeed10);
+	} else if(gmacdev->Speed == SPEED100) {
+		synopGMAC_select_mii(gmacdev);
+		synopGMACSetBits((u32 *)gmacdev->MacBase, GmacConfig, GmacFESpeed100);
+	} else if(gmacdev->Speed == SPEED1000) {
+		synopGMAC_select_gmii(gmacdev);
+	}
 
 	/*Frame Filter Configuration*/
 	synopGMAC_frame_filter_enable(gmacdev);
@@ -295,8 +307,6 @@ static int jz_send(struct eth_device* dev, void *packet, int length)
 	desc->status |=  (DescTxFirst | DescTxLast | DescTxIntEnable);
 	desc->status |= DescOwnByDma;
 
-//	flush_dcache_all();
-
 	/* start tx operation*/
 	jzmac_restart_tx_dma();
 
@@ -333,7 +343,6 @@ static int jz_recv(struct eth_device* dev)
 	desc = rx_desc + next_rx;
 
 	if(!synopGMAC_is_desc_owned_by_dma(desc)) {
-
 		/* since current desc contains the valid data, now we're going to get the data */
 		length = synopGMAC_get_rx_desc_frame_length(desc->status);
 		/* Pass the packet up to the protocol layers */
@@ -345,7 +354,7 @@ static int jz_recv(struct eth_device* dev)
 
 		// printf("recv length:%d\n", length);
 		//jzmac_dump_dma_regs(__func__, __LINE__);
-#if 1
+#if 0
 		if(length  < 28) {
 			udelay(100);
 			return -1;
@@ -370,10 +379,12 @@ static int jz_recv(struct eth_device* dev)
 static int jz_init(struct eth_device* dev, bd_t * bd)
 {
 	int i;
-	/* int phy_id; */
+	int phy_id;
+	u16 data;
+	s32 status = -ESYNOPGMACNOERR;
+
 	next_tx = 0;
 	next_rx = 0;
-
 	memset(tx_buff, 0, 2048 * NUM_TX_DESCS);
 
 	printf("jz_init......\n");
@@ -382,8 +393,10 @@ static int jz_init(struct eth_device* dev, bd_t * bd)
 	rx_desc = (DmaDesc *)((unsigned long)_rx_desc | 0xa0000000);
 
 	/* reset GMAC, prepare to search phy */
-	synopGMAC_reset(gmacdev);
-
+	if (synopGMAC_reset(gmacdev) < 0) {
+		printf("func:%s, synopGMAC_reset failed\n", __func__);
+		return -1;
+	}
 	/* we do not process interrupts */
 	synopGMAC_disable_interrupt_all(gmacdev);
 
@@ -392,16 +405,10 @@ static int jz_init(struct eth_device* dev, bd_t * bd)
 			       GmacAddr0High,GmacAddr0Low,
 			       eth_get_dev()->enetaddr);
 
-	synopGMAC_set_mdc_clk_div(gmacdev,GmiiCsrClk2);
+	synopGMAC_set_mdc_clk_div(gmacdev,GmiiCsrClk4);
 	gmacdev->ClockDivMdc = synopGMAC_get_mdc_clk_div(gmacdev);
 
 	/* search phy */
-
-
-	gmacdev->PhyBase = 0;
-	synopGMAC_check_phy_init(gmacdev);
-
-#if 0
 	phy_id = synopGMAC_search_phy(gmacdev);
 	if (phy_id >= 0) {
 		printf("====>found PHY %d\n", phy_id);
@@ -409,9 +416,8 @@ static int jz_init(struct eth_device* dev, bd_t * bd)
 	} else {
 		printf("====>PHY not found!\n");
 	}
-#endif
+	synopGMAC_check_phy_init(gmacdev);
 	jz47xx_mac_configure();
-	/* setup tx_desc */
 	for (i = 0; i <  NUM_TX_DESCS; i++) {
 		synopGMAC_tx_desc_init_ring(tx_desc + i, i == (NUM_TX_DESCS - 1));
 	}
@@ -435,12 +441,9 @@ static int jz_init(struct eth_device* dev, bd_t * bd)
 		/* start transfer */
 		curr_desc->status = DescOwnByDma;
 	}
-
 	synopGMACWriteReg((u32 *)gmacdev->DmaBase,DmaRxBaseAddr, virt_to_phys(_rx_desc));
 
 	flush_dcache_all();
-
-	//jz47xx_mac_configure();
 
 #ifdef SYNOP_DEBUG
 	jzmac_dump_all_regs(__func__, __LINE__);
@@ -481,46 +484,34 @@ int jz_net_initialize(bd_t *bis)
 		return -1;
 	}
 */
+	clk_set_rate(MACPHY, 50000000);
+
 	gmacdev = &_gmacdev;
+
 #define JZ_GMAC_BASE 0xb34b0000
-	gmacdev->DmaBase =  JZ_GMAC_BASE + DMABASE;
-	gmacdev->MacBase =  JZ_GMAC_BASE + MACBASE;
-//#ifndef CONFIG_FPGA
-//	/* reset DM9161 */
-//	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
-//	mdelay(10);
-//	gpio_set_value(CONFIG_GPIO_DM9161_RESET, !CONFIG_GPIO_DM9161_RESET_ENLEVEL);
-//	mdelay(10);
-//
-//	/* initialize jz4775 gpio */
-//	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_1, 0x0003fc10);
-//	gpio_set_func(GPIO_PORT_D, GPIO_FUNC_1, 0x3c000000);
-//	udelay(100000);
-//#else
-//	/* PB7 */
-//	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_1, 0x00000080);
-//	udelay(10);
-//
-//	/* reset PE10 */
-//	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
-//	udelay(10);
-//	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, !CONFIG_GPIO_DM9161_RESET_ENLEVEL);
-//	udelay(10);
-//
-//	/* output 1 PB7 */
-//	gpio_direction_output(32 * 1 + 7, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
-//	udelay(100000);
-//#endif
+	synopGMAC_attach(gmacdev, JZ_GMAC_BASE + MACBASE, JZ_GMAC_BASE + DMABASE, 0);
+
+	gpio_set_func(CONFIG_GMAC_CRLT_PORT, CONFIG_GMAC_CRTL_PORT_SET_FUNC,\
+		      CONFIG_GMAC_CRLT_PORT_PINS);
+	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	mdelay(10);
+	gpio_direction_output(CONFIG_GPIO_DM9161_RESET, !CONFIG_GPIO_DM9161_RESET_ENLEVEL);
+	/* gpio_set_value(CONFIG_GPIO_DM9161_RESET, !CONFIG_GPIO_DM9161_RESET_ENLEVEL); */
+	mdelay(10);
+
+	/* initialize mac gpio func*/
+	gpio_set_func(CONFIG_GMAC_CRLT_PORT, CONFIG_GMAC_CRTL_PORT_INIT_FUNC,\
+		      CONFIG_GMAC_CRLT_PORT_PINS);
+	udelay(10);
+
 	dev = (struct eth_device *)malloc(sizeof(struct eth_device));
 	if(dev == NULL) {
 		printf("struct eth_device malloc fail\n");
 		return -1;
 	}
-
 	memset(dev, 0, sizeof(struct eth_device));
 
-	sprintf(dev->name, "GMAC-9161");
-
+	sprintf(dev->name, "GMAC-9162");
 	dev->iobase	= 0;
 	dev->priv	= 0;
 	dev->init	= jz_init;
@@ -532,4 +523,3 @@ int jz_net_initialize(bd_t *bis)
 
 	return 1;
 }
-

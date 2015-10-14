@@ -308,7 +308,7 @@ void clk_init(void)
 #ifdef CONFIG_JZ_SPI
 		| CPM_CLKGR_SSI
 #endif
-#ifdef CONFIG_NET_MAC
+#ifdef CONFIG_NET_GMAC
 		| CPM_CLKGR_MAC
 #endif
 		;

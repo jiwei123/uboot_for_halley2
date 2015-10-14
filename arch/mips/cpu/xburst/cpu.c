@@ -42,6 +42,35 @@
 		:			\
 		: "i" (op), "R" (*(unsigned char *)(addr)))
 
+
+#define __sync()				\
+	__asm__ __volatile__(			\
+		".set	push\n\t"		\
+		".set	noreorder\n\t"		\
+		".set	mips2\n\t"		\
+		"sync\n\t"			\
+		".set	pop"			\
+		: /* no output */		\
+		: /* no input */		\
+		: "memory")
+
+#define __fast_iob()				\
+	__asm__ __volatile__(			\
+		".set	push\n\t"		\
+		".set	noreorder\n\t"		\
+		"lw	$0,%0\n\t"		\
+		"nop\n\t"			\
+		".set	pop"			\
+		: /* no output */		\
+		: "m" (*(int *)0xa0000000)	\
+		: "memory")
+
+#define fast_iob()				\
+	do {					\
+		__sync();			\
+		__fast_iob();			\
+	} while (0)
+
 void __attribute__((weak)) _machine_restart(void)
 {
 	int time = RTC_FREQ / WDT_DIV * RESET_DELAY_MS / 1000;
@@ -136,7 +165,7 @@ void flush_dcache_all(void)
 		cache_op(INDEX_WRITEBACK_INV_D, addr);
 	}
 
-	__asm__ __volatile__("sync");
+	fast_iob();
 }
 
 void flush_cache_all(void)

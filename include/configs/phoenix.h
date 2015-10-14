@@ -106,7 +106,8 @@
 	#if defined(CONFIG_SPL_SFC_SUPPORT)
 		#if defined(CONFIG_SPL_SFC_NOR)
 			/*#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"*/
-			/* #define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=192.168.4.254:192.168.4.1:192.168.4.1:255.255.255.0 rootdelay=2 nfsroot=192.168.4.13:/home/fpga/kyhe/rootfs rw" */
+			/* #define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=192.168.4.90:192.168.4.1:192.168.4.1:255.255.255.0 rootdelay=2 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/bliu/boliu/only_for_test/root_ok rw" */
+			/* #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 fpga/user/bliu/x1000/uImage ;bootm 0x80600000" */
 			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"
 			#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x300000 0x80800000 ;bootm 0x80800000"
 		#else  /* CONFIG_SPL_SFC_NAND */
@@ -197,8 +198,12 @@
 #define CONFIG_NET_PHY_TYPE   PHY_TYPE_DM9161
 
 #define CONFIG_NET_GMAC
-#define CONFIG_GPIO_DM9161_RESET   GPIO_PB(25)
+#define CONFIG_GPIO_DM9161_RESET   GPIO_PB(3)
 #define CONFIG_GPIO_DM9161_RESET_ENLEVEL   0
+#define CONFIG_GMAC_CRLT_PORT GPIO_PORT_B
+#define CONFIG_GMAC_CRLT_PORT_PINS (0x7 << 7)
+#define CONFIG_GMAC_CRTL_PORT_INIT_FUNC GPIO_FUNC_1
+#define CONFIG_GMAC_CRTL_PORT_SET_FUNC GPIO_OUTPUT0
 
 /* LCD */
 #ifndef CONFIG_RVMS
