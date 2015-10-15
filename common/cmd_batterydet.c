@@ -894,7 +894,9 @@ static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 		return ret;
 	}
 
+#ifdef CONFIG_PMU_RICOH6x
 	ricoh619_limit_current_init();
+#endif
 
 	battery_detect();
 	return ret;
