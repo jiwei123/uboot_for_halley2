@@ -53,8 +53,8 @@
 #define CONFIG_BAUDRATE			57600
 #else
 #define CONFIG_SYS_UART_INDEX		2
-#define CONFIG_SYS_UART2_PD
-/* #define CONFIG_SYS_UART2_PC */
+/* #define CONFIG_SYS_UART2_PD */
+#define CONFIG_SYS_UART2_PC
 #define CONFIG_BAUDRATE			57600
 #endif
 
