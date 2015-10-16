@@ -1,0 +1,142 @@
+
+#include <common.h>
+#include <regulator.h>
+#include <asm/gpio.h>
+#include <jz_lcd/jz_lcd_v1_2.h>
+
+#include <jz_lcd/jz_dsim.h>
+#include <jz_lcd/st7796s.h>
+
+struct lcd_power_regulator {
+    char *name;
+    int  voltage;
+    int  mdelay;
+};
+
+#define LCD_REGULATOR_REG(_name, _voltage, _mdelay) \
+{ \
+    .name    = _name, \
+    .voltage = _voltage, \
+    .mdelay  = _mdelay, \
+}
+
+static struct lcd_power_regulator lcd_power_regulator[] = {
+#ifdef CONFIG_PMU_RICOH6x
+#if defined(CONFIG_AW808)
+    LCD_REGULATOR_REG("RICOH619_DC4",   1800000, 0),
+    LCD_REGULATOR_REG("RICOH619_DC5",   3300000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO6",  3000000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO10",  2800000, 0),
+#else
+    LCD_REGULATOR_REG("RICOH619_LDO9",  1800000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO10", 3300000, 0),
+#endif
+#elif defined CONFIG_PMU_D2041
+#endif
+};
+
+#if defined(CONFIG_ACRAB)
+#define GPIO_LCD_BLK_EN GPIO_PC(9)
+#elif defined(CONFIG_AW808)
+#define GPIO_LCD_BLK_EN GPIO_PC(23)
+#endif
+
+#if defined(CONFIG_ACRAB)
+#define MIPI_RST_N GPIO_PC(16)
+#else
+#define MIPI_RST_N GPIO_PC(19)
+#endif
+
+static int inline lcd_power_regulator_init(const char *id, int voltage, int delay)
+{
+    struct regulator *lcd_regulator;
+    if (voltage < 0 || id == NULL ) {
+        printf("lcd power regulator init args wrong\n");
+        return -1;
+    }
+
+    lcd_regulator = regulator_get(id);
+    if (lcd_regulator) {
+        regulator_set_voltage(lcd_regulator, voltage, voltage);
+        regulator_enable(lcd_regulator);
+    } else {
+        printf("%s regulator get failed\n", id);
+        return -1;
+    }
+
+    if (delay);
+        mdelay(delay);
+	printf("st7796 regulator %s set %d mv\n", lcd_regulator->name, voltage);
+    return 0;
+}
+
+void board_set_lcd_power_on(void)
+{
+    int i;
+    for (i = 0; i < ARRAY_SIZE(lcd_power_regulator); i++) {
+        lcd_power_regulator_init(lcd_power_regulator[i].name,
+                lcd_power_regulator[i].voltage,
+                lcd_power_regulator[i].mdelay);
+    }
+    printf("st7798s set lcd power on\n");
+}
+
+struct st7796s_platform_data st7796s_pdata = {
+    .gpio_rst = MIPI_RST_N,
+#if (defined(CONFIG_ACRAB) || defined(CONFIG_AW808))
+	.gpio_lcd_bl = GPIO_LCD_BLK_EN,
+#endif
+};
+
+struct dsi_config jz_dsi_config={
+    .max_lanes = 1,
+    .max_hs_to_lp_cycles = 100,
+    .max_lp_to_hs_cycles = 40,
+    .max_bta_cycles = 4095,
+	.min_mbps = 360, /* 360Mbps */
+    .color_mode_polarity = 1,
+    .shut_down_polarity = 1,
+	.auto_clklane_ctrl = 0,
+};
+
+struct video_config jz_dsi_video_config={
+    .no_of_lanes = 1,
+    .virtual_channel = 0,
+    .color_coding = COLOR_CODE_24BIT,
+    //.color_coding = COLOR_CODE_18BIT_CONFIG1,
+    //.byte_clock = ( CONFIG_DEFAULT_BYTE_CLOCK * 1000) / 8,
+    .video_mode = VIDEO_BURST_WITH_SYNC_PULSES,
+
+    .receive_ack_packets = 0,	/* enable receiving of ack packets */
+    .is_18_loosely = 0, /*loosely: R0R1R2R3R4R5__G0G1G2G3G4G5G6__B0B1B2B3B4B5B6,
+    not loosely: R0R1R2R3R4R5G0G1G2G3G4G5B0B1B2B3B4B5*/
+    .data_en_polarity = 1,
+};
+
+struct dsi_device jz_dsi = {
+    .dsi_config = &jz_dsi_config,
+    .video_config = &jz_dsi_video_config,
+};
+
+struct jzfb_config_info jzfb1_init_data = {
+    //.num_modes = 1,
+    .modes = &jzfb1_videomode,
+
+#ifdef ST7796S_IN_VIDEO_MODE
+    .lcd_type = LCD_TYPE_GENERIC_24_BIT,
+#else
+    .lcd_type = LCD_TYPE_SLCD,
+#endif
+    .bpp = 24,
+
+    .smart_config.smart_type      = SMART_LCD_TYPE_PARALLEL,
+    .smart_config.clkply_active_rising = 0,
+    .smart_config.rsply_cmd_high = 0,
+    .smart_config.csply_active_high = 0,
+    .smart_config.bus_width = 8,
+    .dither_enable = 1,
+    .dither.dither_red = 1,	/* 6bit */
+    .dither.dither_green = 1,	/* 6bit */
+    .dither.dither_blue = 1,	/* 6bit */
+};

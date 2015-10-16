@@ -179,6 +179,10 @@
 #define CONFIG_JZ_MIPI_DSI
 #endif
 
+#ifdef  CONFIG_VIDEO_ST7796S
+#define CONFIG_JZ_MIPI_DSI
+#endif
+
 #ifdef  CONFIG_VIDEO_BYD_9177AA
 #define CONFIG_JZ_MIPI_DSI
 #endif

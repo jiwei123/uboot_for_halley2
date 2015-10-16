@@ -154,6 +154,7 @@ static char lcd_flush_dcache;	/* 1 to flush dcache after each lcd update */
 extern int flush_cache_all(void);
 extern void lcd_restart_dma(void);
 extern void auo_x163_display_on(struct dsi_device *dsi);
+extern void st7796s_display_on(struct dsi_device *dsi);
 extern struct dsi_device jz_dsi;
 
 /************************************************************************/
@@ -790,6 +791,9 @@ static int lcd_init(void *lcdbase)
 #ifdef CONFIG_VIDEO_X163
 	mdelay(100);
 	auo_x163_display_on(&jz_dsi);
+#elif defined(CONFIG_VIDEO_ST7796S)
+    mdelay(100);
+    st7796s_display_on(&jz_dsi);
 #endif
 
 	/* Initialize the console */

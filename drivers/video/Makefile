@@ -59,6 +59,8 @@ COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 COBJS-$(CONFIG_VIDEO_BYD_BM8766U) += jz_lcd/lcd_panel/byd_bm8766u.o
 COBJS-$(CONFIG_VIDEO_BM347WV_F_8991FTGF) += jz_lcd/lcd_panel/byd_8991.o \
 	jz_lcd/lcd_panel/byd_8991_init.o
+COBJS-$(CONFIG_VIDEO_ST7796S) += jz_lcd/lcd_panel/st7796s.o \
+				jz_lcd/lcd_panel/write_command_st7796s.o
 COBJS-$(CONFIG_VIDEO_BYD_9177AA) += jz_lcd/lcd_panel/byd_9177aa.o
 COBJS-$(CONFIG_VIDEO_SAMSUNG) += jz_lcd/lcd_panel/samsung.o
 COBJS-$(CONFIG_VIDEO_X163) += jz_lcd/lcd_panel/auo_x163.o \

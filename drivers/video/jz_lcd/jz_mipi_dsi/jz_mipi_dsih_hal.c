@@ -1431,7 +1431,11 @@ int write_command(struct dsi_device * dsi, struct dsi_cmd_packet cmd_data)
 	dsi_command_param[0] = cmd_data.cmd0_or_wc_lsb;
 	dsi_command_param[1] = cmd_data.cmd1_or_wc_msb;
 	debug("packet_type  = %x\n",  packet_type);
-	if(packet_type == 0x39){ //dcs long packet
+    if (packet_type == 0xFF) {
+        mdelay(dsi_command_param[0]);
+        debug("Delay %d ms\n",  dsi_command_param[0]);
+    }
+	else if(packet_type == 0x39){ //dcs long packet
 		word_count = ((dsi_command_param[1] << 8 ) | dsi_command_param[0]);
 		debug("word_count  = %x\n", word_count);
 		j = 2;
