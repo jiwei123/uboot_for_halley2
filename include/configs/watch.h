@@ -51,6 +51,13 @@
 #define CONFIG_SYS_MPLL_FREQ        600000000   /*If MPLL not use mast be set 0*/
 #endif
 
+#if defined(CONFIG_IN901)
+#undef CONFIG_SYS_APLL_FREQ
+#undef CONFIG_SYS_CPU_FREQ
+#define CONFIG_SYS_APLL_FREQ        1200000000
+#define CONFIG_SYS_CPU_FREQ         1200000000
+#endif
+
 #define CONFIG_CPU_SEL_PLL          APLL
 #define CONFIG_DDR_SEL_PLL          MPLL
 #define CONFIG_SYS_EXTAL            24000000    /* EXTAL freq: 24 MHz */
