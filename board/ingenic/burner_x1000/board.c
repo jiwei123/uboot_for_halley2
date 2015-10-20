@@ -41,6 +41,10 @@ struct cgu_clk_src cgu_clk_src[] = {
 	{SFC, MPLL},
 	{SRC_EOF,SRC_EOF}
 };
+void board_nand_init(void)
+{
+	    return 0;
+}
 
 int board_early_init_f(void)
 {

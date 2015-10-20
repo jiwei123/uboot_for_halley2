@@ -38,7 +38,7 @@
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
 #define CONFIG_SYS_CPU_FREQ		1008000000
-#define CONFIG_SYS_MEM_FREQ		200000000
+#define CONFIG_SYS_MEM_FREQ		100000000
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
 #define CONFIG_SYS_HZ			1000 /* incrementer freq */
@@ -125,6 +125,12 @@
 	  #define CONFIG_BOOTCOMMAND "mmc read 0x80f00000 0x1800 0x1000; bootm 0x80f00000"*/
 
 	#endif
+#elif defined(CONFIG_SPL_SPI_NAND)
+		#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw"
+/*		#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc root=/dev/mtdblock2 rw"*/
+	/*	#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"*/
+/*		#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off ip=off root=/dev/ram0 rw rdinit=/linuxrc"*/
+		#define CONFIG_BOOTCOMMAND "spinand read 0x100000 0x400000 0x80600000 ;bootm 0x80600000"
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT)
 	#ifdef CONFIG_JZ_MMC_MSC0
 		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
@@ -311,6 +317,8 @@
 	#else  /* CONFIG_SPL_SFC_NAND */
 		#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "-sfcnand# "
 	#endif
+#elif defined(CONFIG_SPL_SPI_NAND)
+		#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "-spinand# "
 #endif
 
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
@@ -406,6 +414,31 @@
 #endif
 #endif
 
+#ifdef CONFIG_SPL_SPI_NAND
+#define CONFIG_SYS_UART2_PD
+#define CONFIG_UBOOT_OFFSET             (4<<12)
+#define CONFIG_SPL_TEXT_BASE		0xf4001000
+#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_SPL_PAD_TO		16384
+#define CONFIG_SPI_NAND_BPP			(2048 +128)		/*Bytes Per Page*/
+#define CONFIG_SPI_NAND_PPB			(64)		/*Page Per Block*/
+#define CONFIG_SPI_SPL_CHECK
+#define CONFIG_JZ_SPI
+#define CONFIG_JZ_SSI0_PA
+#define CONFIG_MTD_SPINAND
+#define CONFIG_CMD_SPINAND
+#define CONFIG_SPI_FLASH
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_CMD_MTDPARTS
+
+
+#define CONFIG_CMD_NAND /*use the mtd and the function do_nand() */
+#define CONFIG_SYS_MAX_NAND_DEVICE  1
+
+#endif /*CONFIG_SPL_SPI_NAND*/
+
 #ifdef CONFIG_CMD_SPI
 #define CONFIG_SSI_BASE SSI0_BASE
 #define CONFIG_SPI_BUILD
@@ -453,5 +486,10 @@
 #define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
 #endif
 
+
+/*
+* MTD support
+*/
+#define CONFIG_SYS_NAND_SELF_INIT
 
 #endif /* __CONFIG_PHOENIX_H__ */

@@ -269,7 +269,7 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 	return 0;
 }
 
-static void jz_cs_reversal(void )
+void jz_cs_reversal(void )
 {
 	spi_release_bus(NULL);
 

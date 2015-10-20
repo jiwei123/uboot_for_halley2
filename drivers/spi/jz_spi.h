@@ -26,7 +26,7 @@
 #ifdef CONFIG_JZ_SFC
 #include <asm/arch/sfc.h>
 #endif
-#define SSI_BASE CONFIG_SSI_BASE
+#define SSI_BASE SSI0_BASE
 #define COMMAND_MAX_LENGTH		8
 #define SIZEOF_NAME			32
 #define FIFI_THRESHOLD			64
@@ -49,11 +49,13 @@ struct jz_spi_support {
 	u8 id_device;
 	char name[SIZEOF_NAME];
 	int page_size;
+	int oobsize;
 	int sector_size;
 	int block_size;
 	int size;
 	int page_num;
 	unsigned int *page_list;
+	unsigned short column_cmdaddr_bits;/* read from cache ,the bits of cmd + addr */
 	struct spi_quad_mode quad_mode;
 };
 
@@ -71,6 +73,36 @@ static struct jz_spi_support jz_spi_nand_support_table[] = {
 		.page_size = 2 * 1024,
 		.block_size = 128 * 1024,
 		.size = 128 * 1024 * 1024,
+	},
+	{
+		.id_manufactory = 0xc8,
+		.id_device = 0xd1,
+		.name = "GD5F1GQ4UBY1G",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 128 * 1024 * 1024,
+		.column_cmdaddr_bits = 16,
+	},
+	{
+		.id_manufactory = 0xc9,
+		.id_device = 0x51,
+		.name = "QPSYG01AW0A-A1",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 128 * 1024 * 1024,
+		.column_cmdaddr_bits = 16,
+	},
+	{
+		.id_manufactory = 0xb2,
+		.id_device = 0x48,
+		.name = "GD5F2GQ4UCY1G",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 256 * 1024 * 1024,
+		.column_cmdaddr_bits = 24,
 	},
 	{
 		.id_manufactory = 0xc8,

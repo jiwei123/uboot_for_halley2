@@ -26,6 +26,7 @@ COBJS-$(CONFIG_SPL_MMC_SUPPORT) += spl_mmc.o
 COBJS-$(CONFIG_SPL_JZMMC_SUPPORT) += spl_jzmmc.o
 COBJS-$(CONFIG_SPL_SFC_NOR) += spl_sfc_nor.o
 COBJS-$(CONFIG_SPL_SFC_NAND) += spl_sfc_nand.o
+COBJS-$(CONFIG_SPL_SPI_NAND) += spl_spi_nand.o
 ifndef CONFIG_SPL_LIBCOMMON_SUPPORT
 COBJS-y += spl_printf.o
 endif

@@ -80,5 +80,23 @@
 #define SSI_FRMHL_CE0_HIGH_CE1_HIGH (3 << 30)
 #define SSI_GPCMD           (1 << 25)
 
+#define TRAN_SPI_QUAD 0x5
+#define TRAN_SPI_IO_QUAD   (0x6)
+
+/* spi nand gd */
+#define CMD_PARD				0x13	/* page read */
+#define CMD_PE					0x10	/* program execute*/
+#define CMD_PRO_LOAD			0x02	/* program load */
+#define CMD_PRO_RDM				0x84	/* program random */
+#define CMD_ERASE_128K			0xd8
+#define CMD_R_CACHE				0x03	/* read from cache */
+#define CMD_FR_CACHE			0x0b	/* fast read from cache */
+#define CMD_GET_FEATURE			0x0f
+
+#define FEATURE_ADDR			0xc0
+
+#define P_FAIL			(1 << 3)	/* program fail */
+#define E_FAIL			(1 << 2)	/* erase fail */
+#define ECC_UNCORRECTED	(0x10 << 2) /* ecc uncorrected */
 
 #endif

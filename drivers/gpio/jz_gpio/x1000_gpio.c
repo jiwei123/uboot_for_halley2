@@ -36,7 +36,7 @@ static struct jz_gpio_func_def gpio_func[] = {
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x03f00000},
 #endif
 #if defined(CONFIG_JZ_SSI0_PA)
-	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_2, .pins = 0x00fc0000},
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_2, .pins = 0x3c000000},
 #endif
 #if defined(CONFIG_JZ_MMC_MSC0_PA_8BIT)
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x03ff0000},
