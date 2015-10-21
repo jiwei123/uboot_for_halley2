@@ -66,6 +66,8 @@ struct jz_spi_slave {
 };
 
 static struct jz_spi_support jz_spi_nand_support_table[] = {
+
+	/****************** spi nor ********************/
 	{
 		.id_manufactory = 0xc8,
 		.id_device = 0xf1,
@@ -73,36 +75,6 @@ static struct jz_spi_support jz_spi_nand_support_table[] = {
 		.page_size = 2 * 1024,
 		.block_size = 128 * 1024,
 		.size = 128 * 1024 * 1024,
-	},
-	{
-		.id_manufactory = 0xc8,
-		.id_device = 0xd1,
-		.name = "GD5F1GQ4UBY1G",
-		.page_size = 2 * 1024,
-		.oobsize = 128,
-		.block_size = 128 * 1024,
-		.size = 128 * 1024 * 1024,
-		.column_cmdaddr_bits = 16,
-	},
-	{
-		.id_manufactory = 0xc9,
-		.id_device = 0x51,
-		.name = "QPSYG01AW0A-A1",
-		.page_size = 2 * 1024,
-		.oobsize = 128,
-		.block_size = 128 * 1024,
-		.size = 128 * 1024 * 1024,
-		.column_cmdaddr_bits = 16,
-	},
-	{
-		.id_manufactory = 0xb2,
-		.id_device = 0x48,
-		.name = "GD5F2GQ4UCY1G",
-		.page_size = 2 * 1024,
-		.oobsize = 128,
-		.block_size = 128 * 1024,
-		.size = 256 * 1024 * 1024,
-		.column_cmdaddr_bits = 24,
 	},
 	{
 		.id_manufactory = 0xc8,
@@ -119,7 +91,49 @@ static struct jz_spi_support jz_spi_nand_support_table[] = {
 		.page_size = 2 * 1024,
 		.block_size = 128 * 1024,
 		.size = 512 * 1024 * 1024,
-	}
+	},
+
+	/**************** spi nand *************************/
+	{
+		.id_manufactory = 0xc8,
+		.id_device = 0xd1,
+		.name = "GD5F1GQ4UBY1G",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 128 * 1024 * 1024,
+		.column_cmdaddr_bits = 24,
+	},
+	{
+		.id_manufactory = 0xa1,
+		.id_device = 0xe1,
+		.name = "PN26G01AWSIUG-1Gbit",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 128 * 1024 * 1024,
+		.column_cmdaddr_bits = 24,
+	},
+	{
+		.id_manufactory = 0xc9,
+		.id_device = 0x51,
+		.name = "QPSYG01AW0A-A1",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 128 * 1024 * 1024,
+		.column_cmdaddr_bits = 24,
+	},
+	{
+		.id_manufactory = 0xb2,
+		.id_device = 0x48,
+		.name = "GD5F2GQ4UCY1G",
+		.page_size = 2 * 1024,
+		.oobsize = 128,
+		.block_size = 128 * 1024,
+		.size = 256 * 1024 * 1024,
+		.column_cmdaddr_bits = 32,
+	},
 };
 
 static struct jz_spi_support jz_spi_support_table[] = {
