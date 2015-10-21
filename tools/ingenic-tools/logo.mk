@@ -17,18 +17,20 @@ endif
 
 BOOT_LOGO_JPG ?= $(TOPDIR)/tools/logos/ingenic.jpg
 
-ifneq ($(wildcard $(TOPDIR)/board/$(BOAwDDIR)/charge_logo/*.jpg),)
-DIR_PREFIX = $(TOPDIR)/board/$(BOARDDIR)/charge_logo
-else
-DIR_PREFIX = $(TOPDIR)/tools/charge_logo
+ifneq ($(wildcard $(shell echo $(TOPDIR)/board/$(BOARDDIR)/charge_logo/$(CONFIG_CHARGE_LOGO_DIR))/*.jpg),)
+DIR_PREFIX ?= $(shell echo $(TOPDIR)/board/$(BOARDDIR)/charge_logo/$(CONFIG_CHARGE_LOGO_DIR))
 endif
+
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.jpg),)
+DIR_PREFIX ?= $(TOPDIR)/board/$(BOARDDIR)/charge_logo
+endif
+
+DIR_PREFIX ?= $(TOPDIR)/tools/charge_logo
 
 CHARGE_LOGO_JPG = $(shell ls  $(DIR_PREFIX)/*.jpg)
 
-
 BOOT_RLE_OBJ   := $(BOOT_LOGO_JPG:.jpg=.rle)
 CHARGE_RLE_OBJS   := $(CHARGE_LOGO_JPG:.jpg=.rle)
-
 
 $(RLE_BOOT_LOGO_H):	$(obj)bin2array $(BOOT_RLE_OBJ)
 	$(obj)./bin2array --one $(BOOT_RLE_OBJ) $@

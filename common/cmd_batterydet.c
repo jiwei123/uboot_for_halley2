@@ -302,12 +302,12 @@ static int jz_pm_do_hibernate(void)
 #endif
 
 #ifdef CONFIG_PMU_RICOH6x
-	printf("The battery voltage is too low, will power down\n");
+	printf("RICOH619 power down\n");
 	ricoh619_power_off();
 #endif
 
 #ifdef CONFIG_PMU_SM5007
-	printf("SM5007  The battery voltage is too low, will power down\n");
+	printf("SM5007 power down\n");
 	sm5007_shutdown();
 #endif
 	mdelay(100);
@@ -492,12 +492,24 @@ static int get_viberation_signature(void)
     }
 }
 
-int detect_charger_state(void) {
+int detect_boot_state(void)
+{
+	if (readl(CPM_BASE + CPM_RSR) & CPM_RSR_WR)
+		return 1;
+
+	if (get_viberation_signature())
+	    return 1;
+
+	return 0;
+}
+
+int detect_charger_state(void)
+{
 	int charging = 0;
 	int i;
 
 	for (i = 0; i < 5; i++) {
-		mdelay(10);
+		mdelay(5);
 		charging += __charge_detect();
 	}
 
@@ -506,30 +518,8 @@ int detect_charger_state(void) {
 
 static int charge_detect(void)
 {
-	int ret = 0;
-	int i;
-
-	if (readl(CPM_BASE + CPM_RSR) & CPM_RSR_WR)
-		return ret;
-
-	if (get_viberation_signature()) {
-	    return ret;
-	}
-
-#ifndef CONFIG_BATTERY_INIT_GPIO
-	/* IF default battery_init_gpio function is not suitable for actual board,
-	 * define and call the init function in board setup file. For example ,
-	 * init gpio in borad/ingenic/mensa/mensa.c */
-	battery_init_gpio();
-#endif
-	for (i = 0; i < 5; i++) {
-		mdelay(10);
-		ret += __charge_detect();
-	}
-	printf("ret = %d\n", ret);
-	return ret;
+	return detect_charger_state();
 }
-
 
 #define NO_PRESS -1
 #define SHORT_PRESS 0
@@ -568,6 +558,7 @@ static int battery_is_low(void)
 	int capa = 0, vsys = 0, first = 0;
 
 	vsys = cmd_measure_vbat_ADC();
+	printf ("vsys: %u\n",vsys);
 	if (charge_detect()) {
 
 #ifdef LOW_BATTERY_MIN
@@ -736,7 +727,7 @@ static inline void wait_lcd_refresh_finish(void)
  * there are three states: idle, charging and hibernate
  * if it is not idle state, we think it as charging state
  */
-static void show_charging_logo(void)
+static void show_charging_logo_normal(void)
 {
 /* Show time for the charge flash */
 #define FLASH_IDLE_FREQUENCY 12
@@ -832,6 +823,48 @@ static void show_charging_logo(void)
 	}
 }
 
+#ifndef CONFIG_CHARGE_LOGO_TICK_TIME_MS
+#define CONFIG_CHARGE_LOGO_TICK_TIME_MS 800
+#endif
+
+static inline unsigned long get_charging_tick(void) {
+	return get_timer(0) / CONFIG_CHARGE_LOGO_TICK_TIME_MS;
+}
+
+static void show_charging_logo_tencent_os(void)
+{
+	unsigned long last_time = 0xffff0000;
+	unsigned long current_time;
+	unsigned int lcd_flush_count = 0;
+	void *lcd_base = (void *)gd->fb_base;
+
+	while (1) {
+		if (!battery_is_low()) {
+			printf ("show_charging_logo: battery is not low now, boot\n");
+			break;
+		}
+
+		if (!charge_detect()) {
+			printf ("show_charging_logo: battery is low now, shutdown\n");
+			wait_lcd_refresh_finish();
+			lcd_clear_black();
+			wait_lcd_refresh_finish();
+			jz_pm_do_hibernate();
+		}
+
+		current_time = get_charging_tick();
+		if (current_time != last_time) {
+			rle_plot(rle_charge_logo_addr[lcd_flush_count % 2], lcd_base);
+			lcd_sync();
+			lcd_flush_count++;
+			last_time = current_time;
+		}
+	}
+
+	wait_lcd_refresh_finish();
+	lcd_clear_black();
+}
+
 static void show_battery_low_logo(void)
 {
 	lcd_clear_black();
@@ -840,20 +873,46 @@ static void show_battery_low_logo(void)
 	lcd_close_backlight();
 }
 
-static void battery_detect(void)
-{
+/* 腾讯的开机流程 */
+static void battery_detect_tencent_os(void) {
+	if (detect_boot_state() && !battery_is_low()) {
+		printf ("is in reboot process\n");
+		return;
+	}
+
 	if (charge_detect()) {
-		show_charging_logo();
-#ifdef CONFIG_PMU_SM5007
-		sm5007_enable_chgen(1);
-#endif
+		show_charging_logo_tencent_os();
+	} else if(battery_is_low()){
+		printf("The battery voltage is too low. Please charge\n");
+		printf("Battery low level,Into hibernate mode ... \n");
+		jz_pm_do_hibernate();
+	}
+}
+
+/* 一般的开机流程 */
+static void battery_detect_normal(void) {
+	if (detect_boot_state() && !battery_is_low()) {
+		printf ("is in reboot process\n");
+		return;
+	}
+
+	if (charge_detect()) {
+		show_charging_logo_normal();
 	} else if(battery_is_low()){
 		show_battery_low_logo();
 		printf("The battery voltage is too low. Please charge\n");
 		printf("Battery low level,Into hibernate mode ... \n");
 		jz_pm_do_hibernate();
-	}
+	}	
+}
 
+static void battery_detect(void)
+{
+#if defined(CONFIG_BOOT_PROGRESS_TENCENT_OS)
+	battery_detect_tencent_os();
+#else
+	battery_detect_normal();
+#endif
 }
 static int  voltage_argument_init(int argc, char *const argv[])
 {
@@ -889,13 +948,25 @@ static int do_battery_detect(cmd_tbl_t * cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	int ret = 0;
+
 	ret = voltage_argument_init(argc, argv);
 	if(ret != 0){
 		return ret;
 	}
 
+#ifndef CONFIG_BATTERY_INIT_GPIO
+	/* IF default battery_init_gpio function is not suitable for actual board,
+	 * define and call the init function in board setup file. For example ,
+	 * init gpio in borad/ingenic/mensa/mensa.c */
+	battery_init_gpio();
+#endif
+
 #ifdef CONFIG_PMU_RICOH6x
 	ricoh619_limit_current_init();
+#endif
+
+#ifdef CONFIG_PMU_SM5007
+		sm5007_enable_chgen(1);
 #endif
 
 	battery_detect();
