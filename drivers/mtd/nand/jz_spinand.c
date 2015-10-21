@@ -282,7 +282,7 @@ static int spi_nand_read_page(u_char *buffer,int page,int column,size_t rlen)
 	}
 	jz_cs_reversal();
 	switch(column_cmdaddr_bits){
-		case 16:
+		case 24:
 			cmd[0] = CMD_R_CACHE;
 			cmd[1] = (column >> 8) & 0xff;
 			cmd[2] = column & 0xff;
@@ -290,7 +290,7 @@ static int spi_nand_read_page(u_char *buffer,int page,int column,size_t rlen)
 
 			spi_send_cmd(cmd, 4);
 			break;
-		case 24:
+		case 32:
 			cmd[0] = CMD_FR_CACHE;/* CMD_R_CACHE read odd addr may be error */
 			cmd[1] = 0x0;
 			cmd[2] = (column >> 8) & 0xff;
@@ -494,7 +494,6 @@ static int spinand_read_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops 
 	cmd[1] = FEATURE_ADDR;
 	spi_send_cmd(cmd, 2);
 
-	buffer[0] = 0;///////////////////////////////////////////////////
 
 	spi_recv_cmd(&read_buf, 1);
 	while(read_buf & 0x1)
@@ -502,6 +501,7 @@ static int spinand_read_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops 
 
 	if((read_buf & 0x30) == 0x20) {
 		printf("%s %d read error pageid = %d!!!\n",__func__,__LINE__,page);
+		memset(ops->oobbuf,0,ops->ooblen);
 		return 1;
 	}
 	jz_cs_reversal();
