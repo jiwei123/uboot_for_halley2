@@ -415,7 +415,6 @@
 #endif
 
 #ifdef CONFIG_SPL_SPI_NAND
-#define CONFIG_SYS_UART2_PD
 #define CONFIG_UBOOT_OFFSET             (4<<12)
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)

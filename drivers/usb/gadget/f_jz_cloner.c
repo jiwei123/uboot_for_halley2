@@ -39,10 +39,11 @@
 #include "cloner_nand.c"
 #include "cloner_mmc.c"
 #include "cloner_efuse.c"
-//#include "cloner_spi.c"
+#include "cloner_spi.c"
 #include "cloner_sfc.c"
+#ifdef CONFIG_MTD_SPINAND
 #include "cloner_spinand.c"
-
+#endif
 int i2c_program(struct cloner *cloner)
 {
 	int i = 0;
@@ -89,27 +90,25 @@ int cloner_init(struct cloner *cloner)
 	}
 #endif	/*CONFIG_JZ_MMC*/
 
+#ifdef CONFIG_JZ_SPI
 #ifdef CONFIG_MTD_SPINAND
-	if(/*cloner->args->use_nand_mtd*/1){
+	if(cloner->args->use_spi_nand){
 		ssi_rate = (&cloner->args->spi_args)->rate;
 		printf("******** ssi_rate = %d oldrate = %d spi_erase = %d\n",ssi_rate,(&cloner->args->spi_args)->rate,cloner->args->spi_erase);
 		mtd_spinand_probe_burner(/*&cloner->args->MTDPartInfo,*/cloner->args->spi_erase);
 	}
 #endif
 
-#if 0
-#ifdef CONFIG_JZ_SPI
-	if(cloner->args->use_spi){
+	if(cloner->args->use_spi_nor){
 		if (cloner->args->spi_erase == SPI_ERASE_PART) {
 			spi_erase(cloner);
 		}
 		printf("cloner->args->spi_args.rate:%d\n",cloner->args->spi_args.rate);
 	}
 #endif
-#endif
 
 #ifdef CONFIG_JZ_SFC
-	if(cloner->args->use_sfc){
+	if(cloner->args->use_sfc_nor){
 		if (cloner->args->spi_erase == SPI_ERASE_PART) {
 			sfc_erase(cloner);
 		}
@@ -249,15 +248,16 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			cloner->ack = efuse_program(cloner);
 			break;
 #endif
-		case OPS(SPI,RAW):
-#ifdef CONFIG_MTD_SPINAND
-			cloner->ack = spinand_program(cloner);
-#else
+		case OPS(SPI_NOR,RAW):
 			cloner->ack = spi_program(cloner);
-#endif
 			break;
+#ifdef CONFIG_MTD_SPINAND
+		case OPS(SPI_NAND,RAW):
+			cloner->ack = spinand_program(cloner);
+			break;
+#endif
 #ifdef CONFIG_JZ_SFC
-		case OPS(SFC,RAW):
+		case OPS(SFC_NOR,RAW):
 			cloner->ack = sfc_program(cloner);
 			break;
 #endif

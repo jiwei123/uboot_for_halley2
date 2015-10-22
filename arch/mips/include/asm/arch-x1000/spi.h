@@ -97,6 +97,7 @@
 
 #define P_FAIL			(1 << 3)	/* program fail */
 #define E_FAIL			(1 << 2)	/* erase fail */
+#define SPINAND_IS_BUSY	(1 << 0)	/* read , write ,erase ops is executing*/
 #define ECC_UNCORRECTED	(0x10 << 2) /* ecc uncorrected */
 
 #endif

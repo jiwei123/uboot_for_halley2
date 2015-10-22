@@ -72,8 +72,10 @@ enum medium_type {
 	I2C,
 	EFUSE,
 	REGISTER,
-	SPI,
-	SFC
+	SPI_NOR,
+	SFC_NOR,
+	SPI_NAND,
+	SFC_NAND,
 };
 
 enum data_type {
@@ -113,8 +115,10 @@ struct arguments {
 	int use_nand_mgr;
 	int use_nand_mtd;
 	int use_mmc;
-	int use_spi;
-	int use_sfc;
+	uint32_t use_spi_nor;
+	uint32_t use_sfc_nor;
+	uint32_t use_spi_nand;
+	uint32_t use_sfc_nand;
 
 	int nand_erase;
 	int nand_erase_count;
