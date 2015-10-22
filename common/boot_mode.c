@@ -34,6 +34,7 @@
 #define FASTBOOT_RECOVERY_BOOT          3
 #define REBOOT_BOOT                     4
 #define FTEST_BOOT                      5
+#define SHOW_CHARGING_LOGO_BOOT         6
 
 #define UPDATE_UBOOT                    0
 #define UPDATE_RADIO                    1
@@ -101,6 +102,25 @@ static int get_recovery_signature(void)
 }
 
 /*
+ * Get show charging logo signature and reset it.
+ */
+static int get_show_charging_logo_signature(void)
+{
+	unsigned int flag = cpm_get_scrpad();
+
+	if ((flag & 0xffff) == SHOW_CHARGING_LOGO_SIGNATURE) {
+		/*
+		 * Clear the signature,
+		 * reset the signature to force into normal boot
+		 */
+		cpm_set_scrpad(flag & ~(0xffff));
+		return KEY_PRESS;
+	} else {
+		return KEY_UNPRESS;
+	}
+}
+
+/*
  * Get boot keys.
  * ret: 0: USB boot  1: normal boot  2: recovery boot
  */
@@ -125,6 +145,12 @@ static int get_boot_sel(void)
         if (get_key_status(CONFIG_GPIO_RECOVERY, CONFIG_GPIO_RECOVERY_ENLEVEL)) {
                 return RECOVERY_BOOT;
         }
+
+		/* show charging logo reboot */
+		if (get_show_charging_logo_signature()) {
+			return SHOW_CHARGING_LOGO_BOOT;
+		}
+
         return NORMAL_BOOT;
 }
 
@@ -220,10 +246,16 @@ int set_bootloader_message(const struct bootloader_message *in)
         return 0;
 }
 
+static int boot_select = NORMAL_BOOT;
+
+int boot_mode_is_show_charging_logo(void) {
+	return boot_select == SHOW_CHARGING_LOGO_BOOT;
+}
+
 /* Select boot mode */
 void boot_mode_select(void)
 {
-	int boot_select, rc;
+   int rc;
         int boot_cmd = NORMAL_BOOT;
 
         /* Second, handle boot message (MISC partition). */
@@ -256,6 +288,7 @@ void boot_mode_select(void)
 		printf("Mod:   Recovery boot mode.\n");
 		setenv("bootcmd", CONFIG_RECOVERY_BOOT);
 		break;
+	case SHOW_CHARGING_LOGO_BOOT:
 	case NORMAL_BOOT:
 	default:
 		printf("Mod:   Normal boot mode.\n");

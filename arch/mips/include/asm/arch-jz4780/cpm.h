@@ -168,6 +168,7 @@
 
 /* CPM scratch pad protected register(CPSPPR) */
 #define CPSPPR_CPSPR_WRITABLE   (0x00005a5a)
+#define SHOW_CHARGING_LOGO_SIGNATURE (0x001717)
 #define RECOVERY_SIGNATURE      (0x1a1a)        /* means "RECY" */
 #define RECOVERY_SIGNATURE_SEC  0x800           /* means "RECY" */
 #define FASTBOOT_SIGNATURE      (0x0666)        /* means "FASTBOOT" */

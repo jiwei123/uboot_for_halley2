@@ -39,6 +39,8 @@
 #include <power/sm5007_api.h>
 #endif
 
+extern int boot_mode_is_show_charging_logo(void);
+
 DECLARE_GLOBAL_DATA_PTR;
 #define LOGO_CHARGE_SIZE    (0xffffffff)	//need to fixed!
 #define RLE_LOGO_BASE_ADDR  (0x00000000)	//need to fixed!
@@ -494,6 +496,9 @@ static int get_viberation_signature(void)
 
 int detect_boot_state(void)
 {
+	if (boot_mode_is_show_charging_logo())
+		return 0;
+
 	if (readl(CPM_BASE + CPM_RSR) & CPM_RSR_WR)
 		return 1;
 
@@ -781,6 +786,9 @@ static void show_charging_logo_normal(void)
 			printf("Charge is stop, do not Power on System, so shutdown!\n");
 //			show_charge_logo_rle(rle_num_base);
 //			wait_lcd_refresh_finish();
+			wait_lcd_refresh_finish();
+			lcd_clear_black();
+			wait_lcd_refresh_finish();
 			jz_pm_do_hibernate();
 		}
 
@@ -882,9 +890,12 @@ static void battery_detect_tencent_os(void) {
 
 	if (charge_detect()) {
 		show_charging_logo_tencent_os();
-	} else if(battery_is_low()){
+	} else if (battery_is_low()) {
 		printf("The battery voltage is too low. Please charge\n");
 		printf("Battery low level,Into hibernate mode ... \n");
+		jz_pm_do_hibernate();
+	} else if (boot_mode_is_show_charging_logo()) {
+		printf("Not show charging logo because not charing\n");
 		jz_pm_do_hibernate();
 	}
 }
@@ -898,12 +909,15 @@ static void battery_detect_normal(void) {
 
 	if (charge_detect()) {
 		show_charging_logo_normal();
-	} else if(battery_is_low()){
+	} else if (battery_is_low()) {
 		show_battery_low_logo();
 		printf("The battery voltage is too low. Please charge\n");
 		printf("Battery low level,Into hibernate mode ... \n");
 		jz_pm_do_hibernate();
-	}	
+	} else if (boot_mode_is_show_charging_logo()) {
+		printf("Not show charging logo because not charing\n");
+		jz_pm_do_hibernate();
+	}
 }
 
 static void battery_detect(void)
