@@ -8,6 +8,7 @@
 #include <command.h>
 #include <common.h> /* simple_strtol need */
 #include <i2c.h>
+#include <regulator.h>
 
 #if defined(CONFIG_VIBRATE_DRV2605)
 static int drv2605_select_mode(struct client_i2c_bus *bus)
@@ -97,19 +98,9 @@ static int do_drv2605_vibrate()
 }
 #endif
 
-static int vibrate_at_machine_begin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
 #if defined(CONFIG_VIBRATE_GPIO)
-	long time = 200; /* time = 200ms default */
-	if(argc != 1) {
-		if(argc > 2) {
-			printf("your param is error\n");
-			return 0;
-		} else {
-			time = simple_strtol(argv[1], '\0', 0);
-		}
-	}
-
+static int do_gpio_vibrate(long time)
+{
 	if(gpio_request(VIBRATOR_EN, "vibrator_en") >= 0)
 		gpio_direction_output(VIBRATOR_EN, !(ACTIVE_LEVEL));
 	else
@@ -118,12 +109,58 @@ static int vibrate_at_machine_begin(cmd_tbl_t *cmdtp, int flag, int argc, char *
 	mdelay(time);
 
 	gpio_direction_output(VIBRATOR_EN, (ACTIVE_LEVEL));
+	return 0;
+}
+#endif
+
+#if defined(CONFIG_VIBRATE_REGULATOR)
+#if defined(CONFIG_F1)
+#define REGULATOR_NAME  "RICOH619_LDO9"
+#else
+#define REGULATOR_NAME  NULL
+#endif
+
+static int do_regulator_vibrate(long time)
+{
+	struct regulator *power = regulator_get(REGULATOR_NAME);
+
+	if (power == NULL) {
+	    printf("%s : Can not vibrate!\n", __func__);
+	    return -1;
+	}
+
+	regulator_enable(power);
+	mdelay(time);
+	regulator_disable(power);
+	return 0;
+}
+#endif
+
+static int vibrate_at_machine_begin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+    long time = 200;
+
+#if defined(CONFIG_VIBRATE_GPIO)
+    if (argc != 1) {
+        if (argc > 2) {
+            printf("%s : your param is errof\n", __func__);
+            return 0;
+        } else {
+            time = simple_strtol(argv[1], '\0', 0);
+        }
+    }
+
+    do_gpio_vibrate(time);
+#endif
+
+#if defined(CONFIG_VIBRATE_REGULATOR)
+    do_regulator_vibrate(time);
 #endif
 
 #if defined(CONFIG_VIBRATE_DRV2605)
-	do_drv2605_vibrate();
+    do_drv2605_vibrate();
 #endif
-	return 0;
+    return 0;
 }
 
 U_BOOT_CMD(

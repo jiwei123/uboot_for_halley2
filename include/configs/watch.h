@@ -385,7 +385,11 @@
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
+#if defined(CONFIG_F1)
+#define CONFIG_SYS_MONITOR_LEN      (1768 * 1024)
+#else
 #define CONFIG_SYS_MONITOR_LEN		(768 * 1024)
+#endif
 #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
@@ -525,7 +529,7 @@
 #if defined(CONFIG_ACRAB)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
-#elif defined(CONFIG_AW808) || defined(CONFIG_X3) || defined(CONFIG_IN901)
+#elif defined(CONFIG_AW808) || defined(CONFIG_X3) || defined(CONFIG_IN901) || defined(CONFIG_F1)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(1)
 #define CONFIG_GPIO_PRE_TEST		GPIO_PE(10)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
