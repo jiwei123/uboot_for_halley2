@@ -43,7 +43,7 @@ static const char *const mtdids_default = "nand0:nand";
 
 #define SIZE_UBOOT  0x100000    /* 1M */
 #define SIZE_KERNEL 0x800000    /* 8M */
-#define SIZE_ROOTFS (0x100000 * 60)        /* -1: all of left */
+#define SIZE_ROOTFS (0x100000 * 40)        /* -1: all of left */
 
 unsigned short column_cmdaddr_bits;/* read from cache ,the bits of cmd + addr */
 
@@ -91,6 +91,7 @@ int spi_nand_erase(struct mtd_info *mtd,int addr)
 	int erase_cmd;
 	int page = addr / mtd->writesize;
 	int block_size = mtd->erasesize;
+	int timeout = 2000;
 
 	switch(block_size){
 		case 4 * 1024:
@@ -122,13 +123,14 @@ int spi_nand_erase(struct mtd_info *mtd,int addr)
 	spi_send_cmd(cmd, 4);
 	udelay(t_erase);
 
-	jz_cs_reversal();
-	cmd[0] = CMD_GET_FEATURE;
-	cmd[1] = FEATURE_ADDR;
-	spi_send_cmd(cmd, 2);
-	spi_recv_cmd(&read_buf, 1);
-	while(read_buf & 0x1)
-		    spi_recv_cmd(&read_buf, 1);
+	do{
+		jz_cs_reversal();
+		cmd[0] = CMD_GET_FEATURE;
+		cmd[1] = FEATURE_ADDR;
+		spi_send_cmd(cmd, 2);
+		spi_recv_cmd(&read_buf, 1);
+		timeout--;
+	}while((read_buf & SPINAND_IS_BUSY) && (timeout > 0));
 
 	if(read_buf & E_FAIL)
 		return -1;
@@ -140,6 +142,7 @@ static int spi_nand_write_page(u_char *buffer,int page,int column,size_t wlen)
 	size_t ops_len;
 	unsigned char cmd[COMMAND_MAX_LENGTH];
 	volatile unsigned char state;
+	int timeout = 2000;
 
 	jz_cs_reversal();
 	cmd[0] = CMD_PRO_LOAD;
@@ -171,14 +174,15 @@ static int spi_nand_write_page(u_char *buffer,int page,int column,size_t wlen)
 	spi_send_cmd(cmd, 4);
 	udelay(t_write);
 
-	jz_cs_reversal();
-	cmd[0] = CMD_GET_FEATURE;
-	cmd[1] = FEATURE_ADDR;
-	spi_send_cmd(cmd, 2);
+	do{
+		jz_cs_reversal();
+		cmd[0] = CMD_GET_FEATURE;
+		cmd[1] = FEATURE_ADDR;
+		spi_send_cmd(cmd, 2);
 
-	spi_recv_cmd(&state, 1);
-	while(state & 0x1) ///////////////////////////////////////////
 		spi_recv_cmd(&state, 1);
+		timeout--;
+	}while((state & SPINAND_IS_BUSY) && (timeout > 0));
 
 	if(state & P_FAIL){
 		printf("WARNING: write fail !\n");
@@ -259,6 +263,8 @@ static int spi_nand_read_page(u_char *buffer,int page,int column,size_t rlen)
 {
 	unsigned char cmd[COMMAND_MAX_LENGTH];
 	volatile unsigned char read_buf;
+	int timeout = 2000;
+
 	jz_cs_reversal();
 	cmd[0] = CMD_PARD;
 	cmd[1] = (page >> 16) & 0xff;
@@ -267,14 +273,15 @@ static int spi_nand_read_page(u_char *buffer,int page,int column,size_t rlen)
 	spi_send_cmd(cmd, 4);
 	udelay(t_read);
 
-	jz_cs_reversal();
-	cmd[0] = CMD_GET_FEATURE;
-	cmd[1] = FEATURE_ADDR;
-	spi_send_cmd(cmd, 2);
+	do{
+		jz_cs_reversal();
+		cmd[0] = CMD_GET_FEATURE;
+		cmd[1] = FEATURE_ADDR;
+		spi_send_cmd(cmd, 2);
 
-	spi_recv_cmd(&read_buf, 1);
-	while(read_buf & 0x1)
 		spi_recv_cmd(&read_buf, 1);
+		timeout--;
+	}while((read_buf & SPINAND_IS_BUSY) && (timeout > 0));
 
 	if((read_buf & 0x30) == 0x20) {
 		printf("%s %d read error pageid = %d!!!\n",__func__,__LINE__,page);
@@ -380,6 +387,7 @@ static int spinand_write_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops
 	int ret,state;
 	int column = mtd->writesize;
 	int ops_len = ops->ooblen;
+	int timeout = 2000;
 	u_char *buffer = ops->oobbuf;
 
 	jz_cs_reversal();
@@ -419,14 +427,15 @@ static int spinand_write_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops
 	spi_send_cmd(cmd, 4);
 	udelay(t_write);
 
-	jz_cs_reversal();
-	cmd[0] = CMD_GET_FEATURE;
-	cmd[1] = FEATURE_ADDR;
-	spi_send_cmd(cmd, 2);
+	do{
+		jz_cs_reversal();
+		cmd[0] = CMD_GET_FEATURE;
+		cmd[1] = FEATURE_ADDR;
+		spi_send_cmd(cmd, 2);
 
-	spi_recv_cmd(&state, 1);
-	while(state & 0x1)
 		spi_recv_cmd(&state, 1);
+		timeout--;
+	}while((state & SPINAND_IS_BUSY) && (timeout > 0));
 
 	if(state & P_FAIL){
 		printf("WARNING: write fail !\n");
@@ -479,6 +488,7 @@ static int spinand_read_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops 
 	volatile unsigned char read_buf;
 	int page_size = mtd->writesize;
 	int page = addr / page_size;
+	int timeout = 2000;
 	u_char *buffer = ops->oobbuf;
 
 	jz_cs_reversal();
@@ -489,15 +499,15 @@ static int spinand_read_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops 
 	spi_send_cmd(cmd, 4);
 	udelay(t_read);
 
-	jz_cs_reversal();
-	cmd[0] = CMD_GET_FEATURE;
-	cmd[1] = FEATURE_ADDR;
-	spi_send_cmd(cmd, 2);
+	do{
+		jz_cs_reversal();
+		cmd[0] = CMD_GET_FEATURE;
+		cmd[1] = FEATURE_ADDR;
+		spi_send_cmd(cmd, 2);
 
-
-	spi_recv_cmd(&read_buf, 1);
-	while(read_buf & 0x1)
 		spi_recv_cmd(&read_buf, 1);
+		timeout--;
+	}while((read_buf & SPINAND_IS_BUSY) && (timeout > 0));
 
 	if((read_buf & 0x30) == 0x20) {
 		printf("%s %d read error pageid = %d!!!\n",__func__,__LINE__,page);

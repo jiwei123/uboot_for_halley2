@@ -20,7 +20,7 @@ int spinand_program(struct cloner *cloner)
 
 	partation = get_partion_index(startaddr,&pt_index);
 
-	if(!cloner->args->spi_erase){
+	if((!cloner->args->spi_erase) && (partation->manager_mode != UBI_MANAGER)){
 		if(pt_index != pt_index_bak){/* erase part partation */
 			pt_index_bak = pt_index;
 			memset(command, 0 , 128);
@@ -41,14 +41,12 @@ int spinand_program(struct cloner *cloner)
 		printf("...ok\n");
 	}else if(partation->manager_mode == UBI_MANAGER){
 		if(!(part_name == partation->name) && cloner->args->spi_erase){/* need change part */
-
 			memset(command, 0, 128);
 			sprintf(command, "ubi part %s", partation->name);
 			printf("%s\n", command);
 			ret = run_command(command, 0);
-
 			memset(command, 0, X_COMMAND_LENGTH);
-			sprintf(command, "ubi create %s",partation->name);
+			sprintf(command, "ubi create %s",partation->name,partation->size);
 			ret = run_command(command, 0);
 
 			if (ret) {
@@ -58,16 +56,23 @@ int spinand_program(struct cloner *cloner)
 			part_name = partation->name;
 		}
 
+		if(cloner->full_size && !(cloner->args->spi_erase)){
+			memset(command, 0, 128);
+			sprintf(command, "ubi part %s", partation->name);
+			printf("%s\n", command);
+			ret = run_command(command, 0);
+		}
+
 		memset(command, 0, 128);
 		static wlen = 0;
 		wlen += length;
 		if (full_size && (full_size <= length)) {
 			length = full_size;
-			sprintf(command, "ubi write 0x%x %s 0x%x", (unsigned)databuf, part_name, length);
+			sprintf(command, "ubi write 0x%x %s 0x%x", (unsigned)databuf, partation->name, length);
 		} else if (full_size) {
-			sprintf(command, "ubi write.part 0x%x %s 0x%x 0x%x",(unsigned)databuf, part_name, length, full_size);
+			sprintf(command, "ubi write.part 0x%x %s 0x%x 0x%x",(unsigned)databuf, partation->name, length, full_size);
 		} else {
-			sprintf(command, "ubi write.part 0x%x %s 0x%x",(unsigned)databuf, part_name, length);
+			sprintf(command, "ubi write.part 0x%x %s 0x%x",(unsigned)databuf, partation->name, length);
 		}
 
 

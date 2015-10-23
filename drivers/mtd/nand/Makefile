@@ -92,7 +92,6 @@ COBJS-$(CONFIG_TEGRA_NAND) += tegra_nand.o
 COBJS-$(CONFIG_NAND_OMAP_GPMC) += omap_gpmc.o
 COBJS-$(CONFIG_NAND_PLAT) += nand_plat.o
 COBJS-$(CONFIG_NAND_DOCG4) += docg4.o
-COBJS-$(CONFIG_JZ_SPI_NANDFLASH) += jz_spi_nand.o
 COBJS-$(CONFIG_MTD_SPINAND) += jz_spinand.o
 else  # minimal SPL drivers
 
