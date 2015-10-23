@@ -389,7 +389,9 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 {
 }
 #endif
-
+void fb_fill(void *logo_addr, void *fb_addr, int count)
+{
+}
 int jzfb_get_controller_bpp(unsigned int bpp)
 {
 	switch (bpp) {
