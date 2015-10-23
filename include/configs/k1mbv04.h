@@ -35,7 +35,7 @@
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 
-#define CONFIG_SYS_APLL_FREQ		792000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		912000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
@@ -89,7 +89,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS2,115200n8 mem=128M@0x0 "
+#define BOOTARGS_COMMON "console=ttyS2,115200n8 loglevel=4 mem=128M@0x0 "
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"

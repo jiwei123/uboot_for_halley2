@@ -9,7 +9,7 @@ partition:
 	boot      =     3m,     8m, EMPTY
 	test      =     12m,    20m, LINUX_FS
 	system    =    32m,    256m, LINUX_FS
-    data      =    288m,   32m, LINUX_FS
-    misc      =    320m,   6860m, LINUX_FS
+    data      =    288m,   64m, LINUX_FS
+    misc      =    352m,   6828m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY
