@@ -145,8 +145,8 @@
 /**
  * Boot command definitions.
  */
-#ifdef CONFIG_DORADO_V21
-#define CONFIG_BOOTDELAY 1
+#if defined(CONFIG_TIZEN_OS) || defined(CONFIG_BOOT_ANDROID)
+#define CONFIG_BOOTDELAY 0
 #else
 #define CONFIG_BOOTDELAY 1
 #endif
