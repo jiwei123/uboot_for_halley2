@@ -1199,55 +1199,138 @@ s32 synopGMAC_check_phy_init(synopGMACdevice * gmacdev) {
 	u16 data;
 	s32 status = -ESYNOPGMACNOERR;
 	s32 loop_count;
-
-	//loop_count = DEFAULT_LOOP_VARIABLE;
-	loop_count = 1000000;
-	while(loop_count-- > 0)
+#if 0
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,18, &data);
+	printf("#####  %s, %d reg 18 = 0x%x\n", __func__, __LINE__, data);
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,17, &data);
+	printf("#####  %s, %d reg 17 = 0x%x\n", __func__, __LINE__, data);
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_STATUS_REG, &data);
+	printf("#####  %s, %d reg PHY_STATUS_REG = 0x%x\n", __func__, __LINE__, data);
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_ID_HI_REG, &data);
+	printf("#####  %s, %d reg PHY_ID_HI_REG = 0x%x\n", __func__, __LINE__, data);
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_ID_LOW_REG, &data);
+	printf("#####  %s, %d reg PHY_ID_LOW_REG = 0x%x\n", __func__, __LINE__, data);
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,31, &data);
+	printf("#####  %s, %d reg 31 = 0x%x\n", __func__, __LINE__, data);
 	{
-		udelay(100);
+		u16 phy[] = {0, 1, 2, 3, 4, 5, 6, 17, 18, 26, 27, 29, 30, 31};
+		u16 data[sizeof(phy) / sizeof(u16)];
+		int i;
+
+		printf("\n-------->PHY dump: \n");
+		for (i = 0; i < sizeof(phy) / sizeof(u16); i++)
+			status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,phy[i], &data[i]);
+		for (i = 0; i < sizeof(phy) / sizeof(u16); i++)
+			printf("PHY reg%d, value %04X\n", phy[i], data[i]);
+	}
+#endif
+
+	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_CONTROL_REG, &data);
+	if(status)
+		return status;
+	if(data & 0x1000){//Autonegotiation
+		//loop_count = DEFAULT_LOOP_VARIABLE;
+		loop_count = 1000000;
+		while(loop_count-- > 0){
+			udelay(100);
+			status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_STATUS_REG, &data);
+			if(status)
+				return status;
+
+			//	printf("PHY_STATUS_REG:%x\n", data);
+			if((data & Mii_AutoNegCmplt) != 0){
+				TR("Autonegotiation Complete\n");
+				break;
+			}
+		}
 		status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_STATUS_REG, &data);
 		if(status)
 			return status;
-
-	//	printf("PHY_STATUS_REG:%x\n", data);
-		if((data & Mii_AutoNegCmplt) != 0){
-			TR("Autonegotiation Complete\n");
-			break;
+#if (CONFIG_NET_PHY_TYPE == PHY_TYPE_DM9161) || (CONFIG_NET_PHY_TYPE == PHY_TYPE_8710A)
+		if((data & 1) == 0){
+			TR("No Link\n");
+			gmacdev->LinkState = LINKDOWN;
+			return -ESYNOPGMACPHYERR;
 		}
-	}
-	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_STATUS_REG, &data);
+		else{
+			gmacdev->LinkState = LINKUP;
+			TR("Link UP\n");
+		}
+		status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_SPECIFIC_STATUS_REG, &data);
+		if(status)
+			return status;
+		if((data&(6<<2))==(6<<2)) {
+			gmacdev->DuplexMode = FULLDUPLEX;
+			gmacdev->Speed      =   SPEED100;
+		}
+		else if((data&(2<<2))==(2<<2)) {
+			gmacdev->DuplexMode = HALFDUPLEX;
+			gmacdev->Speed      =   SPEED100;
 
-	if(status)
-		return status;
-	if((data & 1) == 0){
-		TR("No Link\n");
-		gmacdev->LinkState = LINKDOWN;
-		return -ESYNOPGMACPHYERR;
-	}
-	else{
-		gmacdev->LinkState = LINKUP;
-		TR("Link UP\n");
-	}
-	status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_SPECIFIC_STATUS_REG, &data);
-	if(status)
-		return status;
-	if(data & 0x8000) {
-		gmacdev->DuplexMode = FULLDUPLEX;
-		gmacdev->Speed      =   SPEED100;
-	}
-	else if(data & 0x4000) {
-		gmacdev->DuplexMode = HALFDUPLEX;
-		gmacdev->Speed      =   SPEED100;
+		}
+		else if((data&(5<<2))==(5<<2)) {
+			gmacdev->DuplexMode = FULLDUPLEX;
+			gmacdev->Speed      =   SPEED10;
 
-	}
-	else if(data & 0x2000) {
-		gmacdev->DuplexMode = FULLDUPLEX;
-		gmacdev->Speed      =   SPEED10;
-
-	}
-	else if(data & 0x1000) {
-		gmacdev->DuplexMode = HALFDUPLEX;
-		gmacdev->Speed = SPEED10;
+		}
+		else if((data&(1<<2))==(1<<2)) {
+			gmacdev->DuplexMode = HALFDUPLEX;
+			gmacdev->Speed = SPEED10;
+		}
+#elif (CONFIG_NET_PHY_TYPE == PHY_TYPE_88E1111)
+		if((data & 0x4) == 0){
+			TR("No Link\n");
+			gmacdev->LinkState = LINKDOWN;
+			return -ESYNOPGMACPHYERR;
+		}
+		else{
+			gmacdev->LinkState = LINKUP;
+			TR("Link UP\n");
+		}
+		status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_SPECIFIC_STATUS_REG, &data);
+		int speed_bit;
+		speed_bit = data & (0x3<<14);
+		switch(speed_bit) {
+			case 0x8000:
+				gmacdev->Speed = SPEED1000;
+				break;
+			case 0x4000:
+				gmacdev->Speed = SPEED100;
+				break;
+			case 0x0000:
+				gmacdev->Speed = SPEED10;
+				break;
+		}
+		if(data & (0x1<<13)) {
+			gmacdev->DuplexMode = FULLDUPLEX;
+		} else {
+			gmacdev->DuplexMode = HALFDUPLEX;
+		}
+#endif //CONFIG_NET_PHY_TYPE
+	}else{
+		status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_STATUS_REG, &data);
+		if(status)
+			return status;
+		if((data & 1) == 0){
+			TR("No Link\n");
+			gmacdev->LinkState = LINKDOWN;
+			return -ESYNOPGMACPHYERR;
+		}
+		else{
+			gmacdev->LinkState = LINKUP;
+			TR("Link UP\n");
+		}
+		status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase,gmacdev->PhyBase,PHY_CONTROL_REG, &data);
+		if(status)
+			return status;
+		if(data & 0x2000)
+			gmacdev->Speed      =   SPEED100;
+		else
+			gmacdev->Speed      =   SPEED10;
+		if(data & 0x0100)
+			gmacdev->DuplexMode = FULLDUPLEX;
+		else
+			gmacdev->DuplexMode = HALFDUPLEX;
 	}
 
 	TR("Link is up in %s mode\n",(gmacdev->DuplexMode == FULLDUPLEX) ? "FULL DUPLEX": "HALF DUPLEX");
