@@ -212,6 +212,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		break;
 #endif
 
+#ifdef CONFIG_SPL_SPI_NAND
+	case BOOT_DEVICE_SPI_NAND:
+		spl_spi_nand_load_image();
+		break;
+#endif
 #ifdef CONFIG_SPL_SFC_NOR
 	case BOOT_DEVICE_SFC_NOR:
 		spl_sfc_nor_load_image();

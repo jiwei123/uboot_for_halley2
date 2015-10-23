@@ -156,6 +156,7 @@ COBJS-$(CONFIG_MP) += cmd_mp.o
 COBJS-$(CONFIG_CMD_MTDPARTS) += cmd_mtdparts.o
 COBJS-$(CONFIG_CMD_NAND) += cmd_nand.o
 COBJS-$(CONFIG_CMD_ZM_NAND) += cmd_nand_zm.o
+COBJS-$(CONFIG_CMD_SPINAND) += cmd_spinand.o
 COBJS-$(CONFIG_CMD_NET) += cmd_net.o
 COBJS-$(CONFIG_CMD_ONENAND) += cmd_onenand.o
 COBJS-$(CONFIG_CMD_OTP) += cmd_otp.o

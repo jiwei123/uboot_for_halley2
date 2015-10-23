@@ -205,6 +205,27 @@
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x1000)
 #define CONFIG_SPL_SERIAL_SUPPORT
 
+/*
+ *MTD
+ */
+#define CONFIG_CMD_NAND
+#define CONFIG_SYS_MAX_NAND_DEVICE  1
+#define CONFIG_SYS_NAND_BASE CONFIG_SSI_BASE
+#define CONFIG_SYS_NAND_SELF_INIT
+#define CONFIG_CMD_UBI
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_CMD_MTDPARTS
+
+#define CONFIG_CMD_JFFS2
+#define CONFIG_JFFS2_NAND	1
+#define CONFIG_JFFS2_DEV	"nand0"
+#define CONFIG_JFFS2_PART_OFFSET	0x800000	/*jffs2 offset*/
+#define CONFIG_JFFS2_PART_SIZE		0x7800000	/* jffs2  part size*/
+
+#define MTDIDS_DEFAULT                  "nand0=nand"
+#define CONFIG_MTD_DEVICE
+#define CONFIG_CMD_MTDPARTS
+
 /**
  * Burner
  */

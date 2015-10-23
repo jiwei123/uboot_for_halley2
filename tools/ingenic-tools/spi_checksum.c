@@ -45,70 +45,7 @@
 
 #define le(a) (((a & 0xff)<<24) | ((a>>8 & 0xff)<< 16) | ((a>>16 & 0xff)<< 8) | ((a>>24 & 0xff)))
 
-#ifndef CONFIG_SPL_SFC_SUPPORT
-int main(int argc, char *argv[])
-{
-	int fd, count;
-	int bytes_read;
-	char buffer[BUFFER_SIZE];
-	unsigned int check = 0;
-	volatile int t = 0;
-	
-	if (argc != 2) {
-		printf("Usage: %s fromfile tofile\n\a",argv[0]);
-		return 1;
-	}
-
-	fd = open(argv[1], O_RDWR);
-	if (fd < 0) {
-		printf("Open %s Error\n", argv[1]);
-		return 1;
-	}
-
-	count = 0;
-
-	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
-		if (t >= SKIP_SIZE)
-			check += *((unsigned int *)buffer);
-		else 	
-			t += BUFFER_SIZE;
-		count += bytes_read;
-	}
-
-	printf("spi spl count = %d \n", count);
-	printf("spi spl check = %#x \n", check);
-
-	lseek( fd, 8, SEEK_SET);
-	
-	if ((t = write(fd, &count, 4)) != 4) {
-		printf("Write %s Error\n",argv[1]);
-		return 1;
-	}
-
-	check = 0 - check;
-	if ((t = write(fd, &check, 4)) != 4) {
-		printf("Check: Write %s Error\n",argv[1]);
-		return 1;}
-
-#if 0
-	lseek( fd, 8, SEEK_SET);
-
-	if ((t = read(fd,buffer,BUFFER_SIZE) < 0)) {
-		printf("read %d \n",t);
-	}
-	printf("%#x\t", *(unsigned int *)buffer);
-
-	if ((t = read(fd,buffer,BUFFER_SIZE) < 0)) {
-		printf("read %d \n",t);
-	}
-	printf("%#x\n", *(unsigned int *)buffer);
-	
-#endif
-	close(fd);
-
-	return 0;
-}
-#else
+#if defined(CONFIG_SPL_SFC_SUPPORT) || defined(CONFIG_SPL_SPI_NAND)
 
 #define BUFFER_SIZE 4
 #define CRC_POSITION	9		/* 9th bytes */
@@ -211,6 +148,69 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	close(fd);
+
+	return 0;
+}
+#else
+int main(int argc, char *argv[])
+{
+	int fd, count;
+	int bytes_read;
+	char buffer[BUFFER_SIZE];
+	unsigned int check = 0;
+	volatile int t = 0;
+
+	if (argc != 2) {
+		printf("Usage: %s fromfile tofile\n\a",argv[0]);
+		return 1;
+	}
+
+	fd = open(argv[1], O_RDWR);
+	if (fd < 0) {
+		printf("Open %s Error\n", argv[1]);
+		return 1;
+	}
+
+	count = 0;
+
+	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
+		if (t >= SKIP_SIZE)
+			check += *((unsigned int *)buffer);
+		else
+			t += BUFFER_SIZE;
+		count += bytes_read;
+	}
+
+	printf("spi spl count = %d \n", count);
+	printf("spi spl check = %#x \n", check);
+
+	lseek( fd, 8, SEEK_SET);
+
+	if ((t = write(fd, &count, 4)) != 4) {
+		printf("Write %s Error\n",argv[1]);
+		return 1;
+	}
+
+	check = 0 - check;
+	if ((t = write(fd, &check, 4)) != 4) {
+		printf("Check: Write %s Error\n",argv[1]);
+		return 1;}
+
+#if 0
+	lseek( fd, 8, SEEK_SET);
+
+	if ((t = read(fd,buffer,BUFFER_SIZE) < 0)) {
+		printf("read %d \n",t);
+	}
+	printf("%#x\t", *(unsigned int *)buffer);
+
+	if ((t = read(fd,buffer,BUFFER_SIZE) < 0)) {
+		printf("read %d \n",t);
+	}
+	printf("%#x\n", *(unsigned int *)buffer);
+
+#endif
 	close(fd);
 
 	return 0;

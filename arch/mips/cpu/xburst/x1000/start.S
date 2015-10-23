@@ -45,7 +45,7 @@ _start:
 	.word 0
 #endif /* CONFIG_SPL_NOR_SUPPORT */
 
-#ifdef CONFIG_SPL_SFC_SUPPORT
+#if defined(CONFIG_SPL_SFC_SUPPORT) || defined(CONFIG_SPL_SPI_NAND)
 	.word 0x03040506
 	.word 0x55aa5502
 #ifdef CONFIG_SPL_SFC_NOR
