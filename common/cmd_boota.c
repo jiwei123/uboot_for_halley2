@@ -39,14 +39,12 @@
 
 struct boot_img_hdr bootimginfo;
 struct mmc *mmc;
-
-#ifndef CONFIG_BURNER
-	static u8       cmdline[256] = CONFIG_BOOTARGS;
-#else
-	static u8       cmdline[256] = {0,};
-#endif
+static u8       cmdline[256] = {0,};
 
 int add_cmd_line_arg(char *arg) {
+#ifndef CONFIG_BURNER
+	strcpy(cmdline, getenv("bootargs"));
+#endif
 	if ((strlen(cmdline) + strlen(arg)) >= sizeof(cmdline)) {
 		printf ("cmdline : cmd line is no space for %s\n", arg);
 		return -ENOMEM;
