@@ -922,10 +922,10 @@ static void battery_detect_normal(void) {
 
 static void battery_detect(void)
 {
-#if defined(CONFIG_BOOT_PROGRESS_TENCENT_OS)
-	battery_detect_tencent_os();
-#else
+#if defined(CONFIG_BOOT_PROGRESS_NORMAL)
 	battery_detect_normal();
+#else
+	battery_detect_tencent_os();
 #endif
 }
 static int  voltage_argument_init(int argc, char *const argv[])
