@@ -17,6 +17,11 @@ endif
 
 BOOT_LOGO_JPG ?= $(TOPDIR)/tools/logos/ingenic.jpg
 
+# default boot progress type is tencent:CONFIG_BOOT_PROGRESS_TENCENT_OS
+ifeq ($(CONFIG_BOOT_PROGRESS_NORMAL),)
+CONFIG_CHARGE_LOGO_DIR ?= tencent
+endif
+
 ifneq ($(wildcard $(shell echo $(TOPDIR)/board/$(BOARDDIR)/charge_logo/$(CONFIG_CHARGE_LOGO_DIR))/*.jpg),)
 DIR_PREFIX ?= $(shell echo $(TOPDIR)/board/$(BOARDDIR)/charge_logo/$(CONFIG_CHARGE_LOGO_DIR))
 endif
