@@ -42,9 +42,6 @@ struct mmc *mmc;
 static u8       cmdline[256] = {0,};
 
 int add_cmd_line_arg(char *arg) {
-#ifndef CONFIG_BURNER
-	strcpy(cmdline, getenv("bootargs"));
-#endif
 	if ((strlen(cmdline) + strlen(arg)) >= sizeof(cmdline)) {
 		printf ("cmdline : cmd line is no space for %s\n", arg);
 		return -ENOMEM;
@@ -106,6 +103,7 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 	char initrd_param[64];
 	unsigned int pos;
 	unsigned long dsize = 0;
+	char *bootargs;
 
 	unsigned char *bulk_data_buf;
 	static unsigned long bulk_data_size = 0;
@@ -150,28 +148,26 @@ int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
 	tmpbuf = (u8 *)(CONFIG_PARAM_BASE + 32);
 
 	memset(initrd_param, 0, 40);
-	strcpy((char *)initrd_param, " rd_start=0x");
 
-	pos = strlen(initrd_param);
-	uint2str(CONFIG_RAMDISK_DST, (unsigned char *)(initrd_param + pos));
-	pos = strlen(initrd_param);
+	sprintf(initrd_param, " rd_start=0x%x rd_size=0x%x ", CONFIG_RAMDISK_DST, bootimginfo.ramdisk_size);
 
-	strcpy((char *)(initrd_param + pos), " rd_size=0x");
-	pos = strlen(initrd_param);
-	uint2str(bootimginfo.ramdisk_size, (unsigned char *)(initrd_param + pos));
+	add_cmd_line_arg(initrd_param);
 
-	pos = strlen((char *)cmdline);
-	strcpy((char *)(cmdline + pos), initrd_param);
+#ifndef CONFIG_BURNER
+	bootargs = getenv("bootargs");
+	if (!bootargs) {
+		debug("Error.. %s get bootargs failed, use default\n",
+			__FUNCTION__);
+		add_cmd_line_arg(CONFIG_BOOTARGS);
+	} else {
+		add_cmd_line_arg(bootargs);
+	}
+#endif //CONFIG_BURNER
 
 	for (i = 0; i < 256; i++)
 		tmpbuf[i] = cmdline[i];
 
 	printf("cmdline: %s\n",(char *)cmdline);
-
-	if (strlen(cmdline) >= sizeof(cmdline)) {
-		printf ("cmdline: cmdline is out of range!!\n");
-		return -ENOMEM;
-	}
 
 	return 0;
 }
