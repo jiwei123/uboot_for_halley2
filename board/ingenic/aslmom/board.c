@@ -114,12 +114,11 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: Canna (Ingenic XBurst X1000 SoC)\n");
+	puts("Board: Aslmom (Ingenic XBurst X1000 SoC)\n");
 	return 0;
 }
 
 #ifdef CONFIG_SPL_BUILD
-
 void spl_board_init(void)
 {
 }
