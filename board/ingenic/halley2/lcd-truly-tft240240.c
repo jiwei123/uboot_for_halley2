@@ -32,7 +32,7 @@ unsigned long truly_cmd_buf[]= {
     0x2C2C2C2C,
 };
 
-#ifdef	CONFIG_PMU_RICOH6x
+#ifdef  CONFIG_REGULATOR
 void board_set_lcd_power_on(void)
 {
 	char *id = CONFIG_LCD_REGULATOR;
