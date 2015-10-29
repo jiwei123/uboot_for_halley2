@@ -111,6 +111,13 @@ int board_mmc_init(bd_t *bd)
 }
 #endif
 
+#ifdef CONFIG_SYS_NAND_SELF_INIT
+void board_nand_init(void)
+{
+	return 0;
+}
+#endif
+
 int board_eth_init(bd_t *bis)
 {
 	int rv;
