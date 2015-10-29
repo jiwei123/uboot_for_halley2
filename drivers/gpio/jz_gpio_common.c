@@ -38,6 +38,9 @@ extern ulong simple_strtoul(const char *cp, char **endp, unsigned int base);
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define INTC_ICMCR0	0x0C
+#define INTC_ICMR0_GPIO0_BIT	17
+
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 {
 	unsigned int base = GPIO_BASE + 0x100 * n;
@@ -224,6 +227,12 @@ void gpio_ack_irq(unsigned gpio)
 	unsigned pin = gpio % 32;
 
 	writel(1 << pin, GPIO_PXFLGC(port));
+}
+
+void intc_unmask_gpio_irq(unsigned gpio)
+{
+	unsigned port = gpio / 32;
+	writel(1 << (INTC_ICMR0_GPIO0_BIT - port), INTC_BASE + INTC_ICMCR0);
 }
 
 void dump_gpio_func( unsigned int gpio);

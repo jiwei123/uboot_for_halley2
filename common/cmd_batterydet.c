@@ -39,6 +39,8 @@
 #include <power/sm5007_api.h>
 #endif
 
+#include "../drivers/gpio/fixed_gpio.h"
+
 extern int boot_mode_is_show_charging_logo(void);
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -61,30 +63,92 @@ DECLARE_GLOBAL_DATA_PTR;
 extern void board_powerdown_device(void);
 */
 
-#define __is_gpio_en(GPIO)	\
-	(GPIO##_ENLEVEL ? gpio_get_value(GPIO) : !gpio_get_value(GPIO))
-
-#define __poweron_key_pressed()	__is_gpio_en(CONFIG_GPIO_PWR_WAKE)
-
-#if defined(CONFIG_GPIO_USB_DETECT) && defined(CONFIG_GPIO_USB_DETECT_ENLEVEL)
-#define __usb_detected()	__is_gpio_en(CONFIG_GPIO_USB_DETECT)
-#else
-#define __usb_detected()	0
+#ifndef CONFIG_GPIO_USB_DETECT
+#define CONFIG_GPIO_USB_DETECT -1
+#define CONFIG_GPIO_USB_DETECT_ENLEVEL 0
 #endif
 
-#if defined(CONFIG_GPIO_DC_DETECT) && defined(CONFIG_GPIO_DC_DETECT_ENLEVEL)
-#define __dc_detected()		__is_gpio_en(CONFIG_GPIO_DC_DETECT)
-#else
-#define __dc_detected()		0
+#ifndef CONFIG_GPIO_DC_DETECT
+#define CONFIG_GPIO_DC_DETECT -1
+#define CONFIG_GPIO_DC_DETECT_ENLEVEL 0
 #endif
 
-#if defined(CONFIG_GPIO_CHARGE_DETECT) && defined(CONFIG_GPIO_CHARGE_DETECT_ENLEVEL)
-#define __battery_is_charging()		__is_gpio_en(CONFIG_GPIO_DC_DETECT)
-#else
-#define __battery_is_charging()		0
+#ifndef CONFIG_GPIO_CHARGE_DETECT
+#define CONFIG_GPIO_CHARGE_DETECT -1
+#define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL 0
 #endif
 
-#define __charge_detect()	(__battery_is_charging() || __dc_detected() || __usb_detected())
+#ifndef CONFIG_GPIO_VOL_SUB
+#define CONFIG_GPIO_VOL_SUB -1
+#define CONFIG_GPIO_VOL_SUB_ENLEVEL 0
+#endif
+
+#ifndef CONFIG_GPIO_VOL_ADD
+#define CONFIG_GPIO_VOL_ADD -1
+#define CONFIG_GPIO_VOL_ADD_ENLEVEL 0
+#endif
+
+#ifndef CONFIG_GPIO_BACK
+#define CONFIG_GPIO_BACK -1
+#define CONFIG_GPIO_BACK_ENLEVEL 0
+#endif
+
+#ifndef CONFIG_GPIO_MENU
+#define CONFIG_GPIO_MENU -1
+#define CONFIG_GPIO_MENU_ENLEVEL 0
+#endif
+
+#ifndef CONFIG_GPIO_HOME
+#define CONFIG_GPIO_HOME -1
+#define CONFIG_GPIO_HOME_ENLEVEL 0
+#endif
+
+#ifndef CONFIG_GPIO_PWR_WAKE
+#define CONFIG_GPIO_PWR_WAKE -1
+#define CONFIG_GPIO_PWR_WAKE_ENLEVEL 0
+#endif
+
+enum {
+	GPIO_USB = 0,
+	GPIO_DC,
+	GPIO_CHARGE,
+	GPIO_VOL_SUB,
+	GPIO_VOL_ADD,
+	GPIO_BACK,
+	GPIO_MENU,
+	GPIO_HOME,
+	GPIO_PWR_WAKE,
+	GPIO_NUMS,
+};
+
+struct fixed_gpio gpio_arr[GPIO_NUMS] = {
+	[GPIO_USB] = {CONFIG_GPIO_USB_DETECT, CONFIG_GPIO_USB_DETECT_ENLEVEL},
+	[GPIO_DC] = {CONFIG_GPIO_DC_DETECT, CONFIG_GPIO_DC_DETECT_ENLEVEL},
+	[GPIO_CHARGE] = {CONFIG_GPIO_CHARGE_DETECT, CONFIG_GPIO_CHARGE_DETECT_ENLEVEL},
+	[GPIO_VOL_SUB] = {CONFIG_GPIO_VOL_SUB, CONFIG_GPIO_VOL_SUB_ENLEVEL},
+	[GPIO_VOL_ADD] = {CONFIG_GPIO_VOL_ADD, CONFIG_GPIO_VOL_ADD_ENLEVEL},
+	[GPIO_BACK] = {CONFIG_GPIO_BACK, CONFIG_GPIO_BACK_ENLEVEL},
+	[GPIO_MENU] = {CONFIG_GPIO_MENU, CONFIG_GPIO_MENU_ENLEVEL},
+	[GPIO_HOME] = {CONFIG_GPIO_HOME, CONFIG_GPIO_HOME_ENLEVEL},
+	[GPIO_PWR_WAKE] = {CONFIG_GPIO_PWR_WAKE, CONFIG_GPIO_PWR_WAKE_ENLEVEL},
+};
+
+#define __poweron_key_pressed() fixed_gpio_is_active(gpio_arr[GPIO_PWR_WAKE])
+#define __usb_detected()        fixed_gpio_is_active(gpio_arr[GPIO_USB])
+#define __dc_detected()         fixed_gpio_is_active(gpio_arr[GPIO_DC])
+#define __battery_is_charging() fixed_gpio_is_active(gpio_arr[GPIO_CHARGE])
+#define __charge_detect()      (__battery_is_charging() || __dc_detected() || __usb_detected())
+
+#define __vol_add_key_pressed() fixed_gpio_is_active(gpio_arr[GPIO_VOL_ADD])
+#define __vol_sub_key_pressed() fixed_gpio_is_active(gpio_arr[GPIO_VOL_SUB])
+#define __back_key_pressed()    fixed_gpio_is_active(gpio_arr[GPIO_BACK])
+#define __menu_key_pressed()    fixed_gpio_is_active(gpio_arr[GPIO_MENU])
+#define __home_key_pressed()    fixed_gpio_is_active(gpio_arr[GPIO_HOME])
+#define keys_pressed()         (__vol_add_key_pressed() || \
+                                __vol_sub_key_pressed() || \
+                                __back_key_pressed() || \
+                                __menu_key_pressed() || \
+                                __home_key_pressed())
 
 static long slop = 0;
 static long cut = 0;
@@ -93,14 +157,6 @@ static	unsigned char  *logo_addr;
 static unsigned int battery_voltage_min;
 static unsigned int battery_voltage_max;
 static unsigned int battery_voltage_scale;
-
-#define INTC_ICMCR0	0x0C
-#define INTC_ICMR0_GPIO0_BIT	17
-static void intc_unmask_gpio_irq(unsigned gpio)
-{
-	unsigned port = gpio / 32;
-	writel(1 << (INTC_ICMR0_GPIO0_BIT - port), INTC_BASE + INTC_ICMCR0);
-}
 
 static void inline reg_bit_set(unsigned int reg_addr, int bit)
 {
@@ -120,43 +176,11 @@ static void inline reg_bit_clr(unsigned int reg_addr, int bit)
 
 static void key_init_gpio(void)
 {
-#ifdef CONFIG_GPIO_VOL_SUB
-	gpio_direction_input(CONFIG_GPIO_VOL_SUB);
-#endif
-#ifdef CONFIG_GPIO_VOL_ADD
-	gpio_direction_input(CONFIG_GPIO_VOL_ADD);
-#endif
-#ifdef CONFIG_GPIO_BACK
-	gpio_direction_input(CONFIG_GPIO_BACK);
-#endif
-#ifdef CONFIG_GPIO_MENU
-	gpio_direction_input(CONFIG_GPIO_MENU);
-#endif
-#ifdef CONFIG_GPIO_HOME
-	gpio_direction_input(CONFIG_GPIO_HOME);
-#endif
-	return;
-}
-
-static int keys_pressed(void)
-{
-	int pressed = 0;
-#if defined(CONFIG_GPIO_VOL_ADD) && defined(CONFIG_GPIO_VOL_ADD_ENLEVEL)
-	pressed |= __is_gpio_en(CONFIG_GPIO_VOL_ADD);
-#endif
-#if defined(CONFIG_GPIO_VOL_SUB) && defined(CONFIG_GPIO_VOL_SUB_ENLEVEL)
-	pressed |= __is_gpio_en(CONFIG_GPIO_VOL_SUB);
-#endif
-#if defined(CONFIG_GPIO_BACK) && defined(CONFIG_GPIO_BACK_ENLEVEL)
-	pressed |= __is_gpio_en(CONFIG_GPIO_BACK);
-#endif
-#if defined(CONFIG_GPIO_MENU) && defined(CONFIG_GPIO_MENU_ENLEVEL)
-	pressed |= __is_gpio_en(CONFIG_GPIO_MENU);
-#endif
-#if defined(CONFIG_GPIO_HOME) && defined(CONFIG_GPIO_HOME_ENLEVEL)
-	pressed |= __is_gpio_en(CONFIG_GPIO_HOME);
-#endif
-	return pressed;
+	fixed_gpio_direction_input(gpio_arr[GPIO_VOL_SUB]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_VOL_ADD]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_BACK]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_MENU]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_HOME]);
 }
 
 int poweron_key_pressed(void)
@@ -330,19 +354,8 @@ static void jz_pm_do_idle(void)
 	/* unmask IRQ_GPIOn depends on GPIO_WAKEUP */
 	intc_unmask_gpio_irq(CONFIG_GPIO_PWR_WAKE);
 
-#ifdef CONFIG_GPIO_DC_DETECT
-	gpio_as_irq_fall_edge(CONFIG_GPIO_DC_DETECT);
-	/* unmask IRQ_GPIOn depends on GPIO_WAKEUP */
-	intc_unmask_gpio_irq(CONFIG_GPIO_DC_DETECT);
-	gpio_ack_irq(CONFIG_GPIO_DC_DETECT);
-#endif
-
-#ifdef CONFIG_GPIO_USB_DETECT
-	gpio_as_irq_fall_edge(CONFIG_GPIO_USB_DETECT);
-	/* unmask IRQ_GPIOn depends on GPIO_WAKEUP */
-	intc_unmask_gpio_irq(CONFIG_GPIO_USB_DETECT);
-	gpio_ack_irq(CONFIG_GPIO_USB_DETECT);
-#endif
+	fixed_gpio_set_active_irq(gpio_arr[GPIO_DC]);
+	fixed_gpio_set_active_irq(gpio_arr[GPIO_USB]);
 
 	printf("enter sleep mode\n");
 	mdelay(50);
@@ -353,12 +366,8 @@ static void jz_pm_do_idle(void)
 			  "nop\n\t" "nop\n\t" "nop\n\t" ".set mips32");
 	printf("out  sleep mode\n");
 
-#ifdef CONFIG_GPIO_USB_DETECT
-	gpio_direction_input(CONFIG_GPIO_USB_DETECT);
-#endif
-#ifdef CONFIG_GPIO_DC_DETECT
-	gpio_direction_input(CONFIG_GPIO_DC_DETECT);
-#endif
+	fixed_gpio_direction_input(gpio_arr[GPIO_USB]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_DC]);
 }
 
 static unsigned int read_adc_vbat(void)
@@ -468,17 +477,12 @@ unsigned int read_battery_voltage(void)
 
 static void battery_init_gpio(void)
 {
-#if defined(CONFIG_GPIO_USB_DETECT) && defined(CONFIG_GPIO_USB_DETECT_ENLEVEL)
-	gpio_direction_input(CONFIG_GPIO_USB_DETECT);
-	gpio_disable_pull(CONFIG_GPIO_USB_DETECT);
-#endif
-#if defined(CONFIG_GPIO_DC_DETECT) && defined(CONFIG_GPIO_DC_DETECT_ENLEVEL)
-	gpio_direction_input(CONFIG_GPIO_DC_DETECT);
-	gpio_disable_pull(CONFIG_GPIO_DC_DETECT);
-#endif
-#if defined(CONFIG_GPIO_CHARGE_DETECT) && defined(CONFIG_GPIO_CHARGE_DETECT_ENLEVEL)
-	gpio_direction_input(CONFIG_GPIO_CHARGE_DETECT);
-#endif
+	fixed_gpio_direction_input(gpio_arr[GPIO_USB]);
+	fixed_gpio_disable_pull(gpio_arr[GPIO_USB]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_DC]);
+	fixed_gpio_disable_pull(gpio_arr[GPIO_DC]);
+	fixed_gpio_direction_input(gpio_arr[GPIO_CHARGE]);
+	fixed_gpio_disable_pull(gpio_arr[GPIO_CHARGE]);
 }
 
 static int get_viberation_signature(void)
