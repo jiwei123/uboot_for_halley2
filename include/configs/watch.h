@@ -51,7 +51,7 @@
 #define CONFIG_SYS_MPLL_FREQ        600000000   /*If MPLL not use mast be set 0*/
 #endif
 
-#if defined(CONFIG_IN901)
+#if defined(CONFIG_IN901) || defined(CONFIG_F1)
 #undef CONFIG_SYS_APLL_FREQ
 #undef CONFIG_SYS_CPU_FREQ
 #define CONFIG_SYS_APLL_FREQ        1200000000
@@ -448,7 +448,7 @@
 #define CONFIG_SPL_I2C_SUPPORT
 #define CONFIG_SPL_REGULATOR_SUPPORT
 
-#if defined(CONFIG_IN901)
+#if defined(CONFIG_IN901) || defined(CONFIG_F1)
 #define CONFIG_SPL_CORE_VOLTAGE		1250
 #else
 #define CONFIG_SPL_CORE_VOLTAGE		1100

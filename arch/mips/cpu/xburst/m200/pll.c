@@ -229,7 +229,7 @@ static void final_fill_div(int cpll, int ddrpll)
 	pll_cfg.l2div = cpu_pll_freq%l2cache_clk ? cpu_pll_freq/l2cache_clk + 1 :
 		cpu_pll_freq/l2cache_clk;
 
-#if defined(CONFIG_IN901)
+#if defined(CONFIG_IN901) || defined(CONFIG_F1)
 	pll_cfg.l2div = 3;
 #endif
 
