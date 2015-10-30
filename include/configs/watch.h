@@ -78,9 +78,14 @@
 #define CONFIG_DDR_FORCE_SELECT_CS1
 
 #define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32			1	/* 1-32bit-width, 0-16bit-width */
+#define CONFIG_DDR_CS0				1	/* 1-connected, 0-disconnected */
+#ifdef CONFIG_MEM_2RANKS
+	#define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
+#else
+	#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
+#endif
+#define CONFIG_DDR_DW32				1	/* 1-32bit-width, 0-16bit-width */
+
 #ifdef  CONFIG_SOLAR
 #define CONFIG_PMU_SM5007
 #define CONFIG_CMD_PMU
@@ -104,13 +109,21 @@
 /**
  * Boot arguments definitions.
  */
-
-#ifdef CONFIG_NO_KERNEL_CONSOLE
-	#define BOOTARGS_COMMON "console=none mem=250M@0x0 mem=256M@0x30000000"
+/* console */
+#ifdef CONFIG_KERNEL_CONSOLE
+	#define BOOTARGS_CONSOLE " console="CONFIG_KERNEL_CONSOLE
 #else
-	#define BOOTARGS_COMMON "console=ttyS3,57600n8 mem=250M@0x0 mem=256M@0x30000000"
+	#define BOOTARGS_CONSOLE " console=ttyS3,57600n8 "
 #endif
 
+/* DDR Capacity */
+#ifdef CONFIG_MEM1GB
+	#define BOOTARGS_MEM " mem=250M@0x0 mem=768M@0x30000000"
+#else
+	#define BOOTARGS_MEM " mem=250M@0x0 mem=256M@0x30000000"
+#endif
+
+#define BOOTARGS_COMMON BOOTARGS_CONSOLE BOOTARGS_MEM
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -498,6 +511,16 @@
 #ifdef CONFIG_MMC4GP2
 #undef CONFIG_GPT_TABLE_FILE
 #define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/mmc4gp2.tab"
+#endif
+
+#ifdef CONFIG_MMC8GP1
+#undef CONFIG_GPT_TABLE_FILE
+#define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/mmc8gp1.tab"
+#endif
+
+#ifdef CONFIG_MMC8GP2
+#undef CONFIG_GPT_TABLE_FILE
+#define CONFIG_GPT_TABLE_FILE   "$(TOPDIR)/board/$(BOARDDIR)/mmc8gp2.tab"
 #endif
 
 #else
