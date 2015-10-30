@@ -77,14 +77,16 @@
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_FORCE_SELECT_CS1
 
-#define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_DDR_CS0				1	/* 1-connected, 0-disconnected */
-#ifdef CONFIG_MEM_2RANKS
-	#define CONFIG_DDR_CS1			1	/* 1-connected, 0-disconnected */
-#else
-	#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
+#if defined(CONFIG_MEM1GB) && !defined(CONFIG_MEM_RANKS)		/* MEM:1GB default RANKS:1 */
+	#define CONFIG_MEM_RANKS		1
+#elif !defined(CONFIG_MEM_RANKS)
+	#define CONFIG_MEM_RANKS		0
 #endif
-#define CONFIG_DDR_DW32				1	/* 1-32bit-width, 0-16bit-width */
+
+#define CONFIG_DDR_TYPE_LPDDR2
+#define CONFIG_DDR_CS0				1			/* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1				CONFIG_MEM_RANKS	/* 1-connected, 0-disconnected */
+#define CONFIG_DDR_DW32				1			/* 1-32bit-width, 0-16bit-width */
 
 #ifdef  CONFIG_SOLAR
 #define CONFIG_PMU_SM5007
