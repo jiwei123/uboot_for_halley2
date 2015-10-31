@@ -370,7 +370,7 @@ static void ddr_phy_param_init(unsigned int mode)
 	switch(DDR_TYPE_MODE(mode)){
 	case LPDDR:
 		ddr_writel(0x30c00813, DDRP_ACIOCR);
-		ddr_writel(0x4802, DDRP_DXCCR);
+		ddr_writel(0x4910, DDRP_DXCCR);
 		break;
 	case DDR3:
 		break;
@@ -465,9 +465,10 @@ static int ddr_training_hardware(unsigned int mode)
 		pir_val |= DDRP_PIR_QSTRN;
 		break;
 	}
-	if(IS_BYPASS_MODE(mode))
+	if(IS_BYPASS_MODE(mode)) {
 		pir_val |= DDRP_PIR_DLLBYP | (1 << 29);
-
+		pir_val &= ~(DDRP_PIR_DLLLOCK);
+	}
 	ddr_writel(pir_val, DDRP_PIR);
 	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
 					 | DDRP_PGSR_DLDONE
@@ -537,52 +538,6 @@ static int ddr_training_software(unsigned int mode)
 	}
 	return result;
 }
-static int lpddr_retrain_bypass(unsigned int mode)
-{
-	unsigned int result = 0;
-	int timeout = 10000;
-	unsigned int ddr_bl, ddr_cl;
-	unsigned int mr0_tmp = 1;
-
-#ifdef CONFIG_DDR_HOST_CC
-	ddr_bl = DDR_BL;
-	ddr_cl = DDR_CL;
-#else /* CONFIG_DDR_HOST_CC */
-	ddr_cl = ddr_params_p->cl;
-	ddr_bl = ddr_params_p->bl;
-#endif /* CONFIG_DDR_HOST_CC */
-
-	while (ddr_bl >> mr0_tmp)
-		mr0_tmp++;
-	ddr_writel((ddr_cl << 4) | (mr0_tmp - 1), DDRP_MR0);
-
-
-#ifndef CONFIG_DDR_PHY_ODT
-	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT, DDRP_PIR);
-#else /* CONFIG_DDR_PHY_ODT */
-	ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
-		   DDRP_PIR);
-	ddr_writel(0x1, DDRP_ACDLLCR);
-#endif /* CONFIG_DDR_PHY_ODT */
-
-	if(IS_BYPASS_MODE(mode)) {
-		ddr_writel(DDRP_PIR_INIT | DDRP_PIR_DRAMINT | DDRP_PIR_DLLLOCK | DDRP_PIR_DLLBYP | (1 << 29),
-				DDRP_PIR);
-		ddr_writel(0x1, DDRP_ACDLLCR);
-	}
-
-	while ((ddr_readl(DDRP_PGSR) != (DDRP_PGSR_IDONE
-					 | DDRP_PGSR_DLDONE
-					 | DDRP_PGSR_ZCDONE
-					 | DDRP_PGSR_DIDONE
-					 | DDRP_PGSR_DTDONE))
-	       && --timeout);
-	if (timeout == 0) {
-		printf("DDR PHY init timeout: PGSR=%X\n", ddr_readl(DDRP_PGSR));
-		result = -1;
-	}
-	return result;
-}
 
 static void ddr_training(unsigned int mode)
 {
@@ -602,8 +557,6 @@ static void ddr_training(unsigned int mode)
 		training_state = ddr_training_software(mode);
 #endif // CONFIG_SPL_DDR_SOFT_TRAINING
 	}
-	if(DDR_TYPE_MODE(mode) == LPDDR)
-		training_state = lpddr_retrain_bypass(mode);
 	if(training_state)
 		hang();
 }
