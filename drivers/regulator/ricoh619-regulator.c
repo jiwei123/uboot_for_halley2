@@ -277,6 +277,28 @@ enum regulator_type {
 };
 #endif
 
+static int BatteryTypeDef = 2;
+static int Battery_Type(void)
+{
+#if defined (CONFIG_LARGE_CAPACITY_BATTERY)
+	BatteryTypeDef = 0;
+#elif defined(CONFIG_SMALL_CAPACITY_BATTERY)
+	BatteryTypeDef = 1;
+#elif defined(CONFIG_300MAH_CAPACITY_BATTERY)||defined(CONFIG_320MAH_CAPACITY_BATTERY)
+	BatteryTypeDef = 2;
+#elif defined(CONFIG_200MAH_CAPACITY_BATTERY)
+	BatteryTypeDef = 3;
+#elif defined(CONFIG_BATTERY_WAKEUP_320MAH_4200MV)\
+	|| defined(CONFIG_BATTERY_AW808_320MAH_4200MV)
+	BatteryTypeDef = 4;
+#elif defined(CONFIG_BATTERY_OBAND_300MAH_4350MV)\
+	|| defined(CONFIG_BATTERY_OBAND_310MAH_4350MV)\
+	|| defined(CONFIG_BATTERY_INWATCH_310MAH_4350MV)
+	BatteryTypeDef = 5;
+#endif
+	return BatteryTypeDef;
+}
+
 static int ricoh61x_write_reg(u8 reg, u8 *val)
 {
 	unsigned int  ret;
@@ -2152,7 +2174,7 @@ void ricoh619_battery_init(void)
 	struct ricoh61x *ricoh61x;
 	int ret;
 	int temp =  0, temp1 = 0;
-	int type_n = 0;
+	int type_n = Battery_Type();
 	info = kzalloc(sizeof(struct ricoh61x_battery_info), GFP_KERNEL);
 	info->fg_rsense_val = 100;
 
