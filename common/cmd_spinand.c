@@ -54,7 +54,6 @@ void spi_nand_init(void)
 	mtd = &nand_info[0];
 
 	jz_spi_nand_init();
-	printf("==================== %s %d chip->scan_bbt = %p===================\n",__func__,__LINE__,chip->scan_bbt);
 
 	chip =mtd->priv;
 	chip->scan_bbt(mtd);
