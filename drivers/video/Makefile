@@ -78,7 +78,7 @@ COBJS-$(CONFIG_JZ_MIPI_DSI) += jz_lcd/jz_mipi_dsi/jz_mipi_dsi.o jz_lcd/jz_mipi_d
 				jz_lcd/jz_mipi_dsi/write_command_to_mipi.o
 COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4775_lcd.o
 COBJS-$(CONFIG_VIDEO_JZ4780) += jz_lcd/backlight_pwm.o jz_lcd/jz4780_lcd.o
-COBJS-$(CONFIG_VIDEO_M200) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v1_2.o
+COBJS-$(CONFIG_VIDEO_M200) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v1_2.o show_rle_picture.o
 COBJS-$(CONFIG_EASYSCALE_BACKLIGHT) += backlight_EasyScale.o
 COBJS-$(CONFIG_TPS65137) += digital_pulse.o
 
