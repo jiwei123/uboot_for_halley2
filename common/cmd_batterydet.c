@@ -637,27 +637,10 @@ static void free_charge_logo(void *addr)
 
 static int show_charge_logo_rle(int rle_num)
 {
-	void *lcd_base = (void *)gd->fb_base;
-	int vm_width = panel_info.vl_col;
-	int vm_height = panel_info.vl_row;
-	int bpp = NBITS(panel_info.vl_bpix);
-	int buf_size = vm_height * vm_width * bpp / 8;
 	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
 	if (rle_num < 0 && rle_num > logo_charge_num)
 		return -EINVAL;
-	if(logo_addr == NULL) {
-		logo_addr = (unsigned char *)malloc_charge_logo(buf_size);
-		if(logo_addr == NULL){
-			printf("famebuffer malloc failed\n");
-			goto orig;
-		}
-	}
-
-	rle_plot(rle_charge_logo_addr[rle_num], logo_addr);
-	fb_fill(logo_addr, lcd_base, buf_size);
-	lcd_sync();
-
-orig:
+	show_rle_picture_in_fb_middle(rle_charge_logo_addr + rle_num);
 	return 0;
 }
 
@@ -849,7 +832,7 @@ static void show_charging_logo_tencent_os(void)
 	unsigned long current_time;
 	unsigned int lcd_flush_count = 0;
 	void *lcd_base = (void *)gd->fb_base;
-
+	unsigned short *src_picture_addr;
 	while (1) {
 		if (!battery_is_low()) {
 			printf ("show_charging_logo: battery is not low now, boot\n");
@@ -866,8 +849,7 @@ static void show_charging_logo_tencent_os(void)
 
 		current_time = get_charging_tick();
 		if (current_time != last_time) {
-			rle_plot(rle_charge_logo_addr[lcd_flush_count % 2], lcd_base);
-			lcd_sync();
+			show_rle_picture_in_fb_middle(rle_charge_logo_addr + lcd_flush_count % 2);
 			lcd_flush_count++;
 			last_time = current_time;
 		}

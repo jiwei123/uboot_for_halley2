@@ -42,7 +42,7 @@
 #endif
 #include <lcd.h>
 #include <watchdog.h>
-
+#include <malloc.h>
 #include <splash.h>
 
 #if defined(CONFIG_CPU_PXA25X) || defined(CONFIG_CPU_PXA27X) || \
@@ -156,6 +156,7 @@ extern void lcd_restart_dma(void);
 extern void auo_x163_display_on(struct dsi_device *dsi);
 extern void st7796s_display_on(struct dsi_device *dsi);
 extern struct dsi_device jz_dsi;
+extern unsigned char rle_default_logo_addr[];
 
 /************************************************************************/
 
@@ -467,6 +468,11 @@ int lcd_get_size(int *line_length)
 {
 	*line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
 	return *line_length * panel_info.vl_row;
+}
+
+int lcd_get_pixels_line_length()
+{
+	return panel_info.vl_col;
 }
 
 int drv_lcd_init(void)
@@ -1415,7 +1421,7 @@ int  lcd_display_rle(unsigned short *src_buf)
 		return -1;
 	lcd_is_enabled = 0;
 	lcd_clear_black();
-	rle_plot(src_buf, lcd_base);
+	show_rle_picture_in_fb_middle(src_buf);
 	lcd_sync();
 	return 0;
 }
@@ -1611,18 +1617,17 @@ int lcd_dt_simplefb_enable_existing_node(void *blob)
 }
 #endif
 
-/*
- * show a logo on lcd while startup
- */
 static int
 do_lcd_logo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
+	int ret;
+	unsigned short *src_picture_addr = (unsigned short *)rle_default_logo_addr;
 	if (argc != 2)
 		return CMD_RET_USAGE;
-
 	if (strcmp("on", argv[1]) == 0) {
-		rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
-		lcd_sync();
+		ret = show_rle_picture_in_fb_middle(src_picture_addr);
+		if(!ret)
+			return CMD_RET_USAGE;
 	} else if (strcmp("off", argv[1]) == 0) {
 		lcd_clear_black();
 	} else {
@@ -1630,10 +1635,9 @@ do_lcd_logo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 	return CMD_RET_SUCCESS;
-}
+	}
 
 U_BOOT_CMD(lcd_logo, 2, 0, do_lcd_logo,
 	"on/off lcd logo",
 	"<on|off>\n"
 	"    - on/off the lcd logo");
-
