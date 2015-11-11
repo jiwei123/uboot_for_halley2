@@ -546,7 +546,7 @@
 
 #define CONFIG_MSC_U_BOOT
 #ifdef  CONFIG_MSC_U_BOOT
-#define PTN_MISC_OFFSET         0x6000000
+#define PTN_MISC_OFFSET         0x5c00000
 #endif
 /**
  * Keys.
