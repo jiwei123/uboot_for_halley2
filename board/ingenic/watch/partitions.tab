@@ -8,12 +8,11 @@ partition:
 	xboot     =     0m,     3m,
 	boot      =     3m,     8m, EMPTY
 	recovery  =    12m,    16m, EMPTY
-        pretest   =    28m,    16m, EMPTY
-        reserved  =    44m,    48m, EMPTY
-	misc      =    92m,     4m, EMPTY
+        misc      =    28m,    16m, EMPTY
+        reserved  =    44m,    52m, EMPTY
 	oeminfo   =    96m,     4m, EMPTY
 	cache     =   100m,   100m, LINUX_FS
-    system    =   200m,   400m, LINUX_FS
-    data      =   600m,  2984m, LINUX_FS
+	system    =   200m,   400m, LINUX_FS
+	data      =   600m,  2984m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY
