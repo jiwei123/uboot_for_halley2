@@ -67,7 +67,6 @@ struct jz_spi_slave {
 
 static struct jz_spi_support jz_spi_nand_support_table[] = {
 
-	/****************** spi nor ********************/
 	{
 		.id_manufactory = 0xc8,
 		.id_device = 0xf1,
@@ -93,7 +92,7 @@ static struct jz_spi_support jz_spi_nand_support_table[] = {
 		.size = 512 * 1024 * 1024,
 	},
 
-	/**************** spi nand *************************/
+	/****************supported spi nand *************************/
 	{
 		.id_manufactory = 0xc8,
 		.id_device = 0xd1,
