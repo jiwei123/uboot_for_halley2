@@ -7,6 +7,7 @@
  * published by the Free Software Foundation.
 */
 #include <common.h>
+#include <errno.h>
 #include "jz_mipi_dsih_hal.h"
 #include "jz_mipi_dsi_regs.h"
 /**
@@ -1426,6 +1427,7 @@ int write_command(struct dsi_device * dsi, struct dsi_cmd_packet cmd_data)
 	unsigned int packet_type;
 	unsigned char dsi_command_param[MAX_WORD_COUNT] = {0};
 	unsigned short word_count = 0;
+	unsigned int timeout = 0;
 	/*word count*/
 	packet_type = cmd_data.packet_type;
 	dsi_command_param[0] = cmd_data.cmd0_or_wc_lsb;
@@ -1452,6 +1454,17 @@ int write_command(struct dsi_device * dsi, struct dsi_cmd_packet cmd_data)
 		debug("not support packet type, please checkout!,\n");
 	}
 	mipi_dsih_gen_wr_packet(dsi, 0, packet_type, dsi_command_param, word_count + 2);
-	udelay(1000);
+
+	/* wait for cmd fifo to be empty, make sure all cmds send out*/
+	timeout = 1000000 / 50;
+	do {
+		udelay(50);
+		timeout--;
+	} while (!mipi_dsih_hal_gen_cmd_fifo_empty(dsi) || (timeout == 0));
+	if (timeout == 0) {
+		pr_err("%s:wait for mipi dsi cmd fifo empty failed\n", __func__);
+		return -ETIME;
+	}
+
 	return 0;
 }
