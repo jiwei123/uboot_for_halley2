@@ -2240,16 +2240,27 @@ out:
 
 }
 
+static void ricoh61x_noe_init(void)
+{
+	/* N_OE timer setting to 128mS */
+	__ricoh61x_write(RICOH61x_PWR_NOE_TIMSET, 0x0);
+	/* Repeat power ON after reset (Power Off/N_OE) */
+	__ricoh61x_write(RICOH61x_PWR_REP_CNT, 0x1);
+}
 
 int ricoh61x_regulator_init(void)
 {
 
 	int ret,i;
+
 	ret = i2c_probe(RICOH61x_I2C_ADDR);
 	if(ret) {
 		printf("probe richo61x error, i2c addr ox%x\n", RICOH61x_I2C_ADDR);
 		return -EIO;
 	}
+
+	ricoh61x_noe_init();
+
 	for (i = 0; i < ARRAY_SIZE(ricoh61x_regulator); i++) {
 		ret = regulator_register(&ricoh61x_regulator[i].desc, NULL);
 		rdev_set_drvdata(&ricoh61x_regulator[i].desc,&ricoh61x_regulator[i]);
