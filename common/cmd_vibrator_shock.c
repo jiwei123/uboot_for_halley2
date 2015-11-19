@@ -10,6 +10,12 @@
 #include <i2c.h>
 #include <regulator.h>
 
+#if defined(CONFIG_PMU_RICOH6x)
+	#define VIBRATE_POWER_NAME  "RICOH619_DC5"
+#else
+	#define VIBRATE_POWER_NAME  NULL
+#endif
+
 #if defined(CONFIG_VIBRATE_DRV2605)
 static int drv2605_select_mode(struct client_i2c_bus *bus)
 {
@@ -136,9 +142,15 @@ static int do_regulator_vibrate(long time)
 }
 #endif
 
-static int vibrate_at_machine_begin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int vibrate_at_machine_begin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-    long time = 200;
+	long time = 200;
+	struct regulator *power = regulator_get(VIBRATE_POWER_NAME);
+
+	if (power == NULL) {
+		printf("%s :do not vibrate power!\n", __func__);
+	}
+	regulator_enable(power);
 
 #if defined(CONFIG_VIBRATE_GPIO)
     if (argc != 1) {

@@ -63,7 +63,7 @@ extern int ricoh61x_regulator_init(void);
 extern int mmc_backup_save(void);
 extern int mmc_backup_restore(void);
 #endif
-
+extern int vibrate_at_machine_begin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 void image_backup_restore(void)
 {
 #ifdef CONFIG_MMC
@@ -137,6 +137,9 @@ int board_early_init_r(void)
 #ifdef CONFIG_REGULATOR
 	regulator_init();
 #endif
+
+	vibrate_at_machine_begin(NULL,0,1,NULL);
+
 	return 0;
 }
 
