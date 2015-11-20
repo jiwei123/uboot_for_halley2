@@ -206,7 +206,7 @@
 
 /* LCD */
 #ifndef CONFIG_RVMS
-/*#define CONFIG_LCD*/
+#define CONFIG_LCD
 #endif
 
 #define CONFIG_GPIO_PWR_WAKE		GPIO_PB(31)
