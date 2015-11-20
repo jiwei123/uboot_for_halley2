@@ -515,12 +515,28 @@ static int spinand_read_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops 
 		return 1;
 	}
 	jz_cs_reversal();
-	cmd[0] = CMD_R_CACHE;
-	cmd[1] = (column >> 8) & 0xff;
-	cmd[2] = column & 0xff;
-	cmd[3] = 0x0;
-	spi_send_cmd(cmd, 4);
+	switch(column_cmdaddr_bits){
+		case 24:
+			cmd[0] = CMD_R_CACHE;
+			cmd[1] = (column >> 8) & 0xff;
+			cmd[2] = column & 0xff;
+			cmd[3] = 0x0;
 
+			spi_send_cmd(cmd, 4);
+			break;
+		case 32:
+			cmd[0] = CMD_FR_CACHE;/* CMD_R_CACHE read odd addr may be error */
+			cmd[1] = 0x0;
+			cmd[2] = (column >> 8) & 0xff;
+			cmd[3] = column & 0xff;
+			cmd[4] = 0;/*dummy*/
+
+			spi_send_cmd(cmd, 5);
+			break;
+		default:
+			printk("can't support the column addr format !!!\n");
+			break;
+	}
 	spi_recv_cmd(buffer, len);
 
 	return 0;
