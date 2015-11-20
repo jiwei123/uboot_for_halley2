@@ -527,7 +527,7 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 	unsigned int tmp = 0;
 	unsigned int dinit1 = 0;
 	struct tck *tck = &p->tck;
-#ifdef CONFIG_DDR_TYPE_LPDDR2
+#if defined(CONFIG_DDR_TYPE_LPDDR) || defined(CONFIG_DDR_TYPE_LPDDR2)
 	unsigned int  count = 0;
 #endif
 
@@ -633,7 +633,9 @@ static void ddrp_params_creat(struct ddrp_reg *ddrp, struct ddr_params *p)
 		/* MRn registers */
 
 		ddrp->mr0.lpddr.CL = p->cl;
-		ddrp->mr0.lpddr.BL = 3;
+		tmp = p->bl;
+		while (tmp >>= 1) count++;
+		ddrp->mr0.lpddr.BL = count;
 
 		/* PTRn registers */
 		ddrp->ptr0.b.tDLLSRST = calc_nck(p->private_params.lpddr_params.tDLLSRST, tck->ps);
