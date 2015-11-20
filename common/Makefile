@@ -68,6 +68,7 @@ COBJS-$(CONFIG_ENV_IS_IN_MMC) += env_mmc.o
 COBJS-$(CONFIG_ENV_IS_IN_SFC) += env_sfc.o
 COBJS-$(CONFIG_ENV_IS_IN_FAT) += env_fat.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND) += env_nand.o
+COBJS-$(CONFIG_ENV_IS_IN_SPI_NAND) += env_spinand.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND_ZM) += env_nand_zm.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND_JZMTD) += env_nand_jzmtd.o
 COBJS-$(CONFIG_ENV_IS_IN_NVRAM) += env_nvram.o

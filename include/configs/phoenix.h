@@ -352,10 +352,6 @@
 #define CONFIG_ENV_SIZE			(4 << 10)
 #define CONFIG_ENV_OFFSET		0x3e800 /*write nor flash 250k address*/
 #define CONFIG_CMD_SAVEENV
-#else
-#define CONFIG_ENV_IS_NOWHERE
-#define CONFIG_ENV_SIZE			(32 << 10)
-#define CONFIG_ENV_OFFSET		(CONFIG_SYS_NAND_BLOCK_SIZE * 5)
 #endif
 
 /**
@@ -430,6 +426,15 @@
 #define CONFIG_CMD_UBIFS
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_CMD_MTDPARTS
+#define CONFIG_ENV_IS_IN_SPI_NAND
+
+/* spi nand environment */
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
+#define CONFIG_ENV_SECT_SIZE 0x20000 /* 128K*/
+#define SPI_NAND_BLK		0x20000 /*the spi nand block size */
+#define CONFIG_ENV_SIZE		SPI_NAND_BLK /* uboot is 1M but the last block size is the env*/
+#define CONFIG_ENV_OFFSET	0xc0000 /* offset is 768k */
+#define CONFIG_ENV_OFFSET_REDUND (CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
 
 
 #define CONFIG_CMD_NAND /*use the mtd and the function do_nand() */
