@@ -802,7 +802,7 @@ int jz_spi_nand_init()
 
 	return 0;
 }
-static int mtd_spinand_partition_analysis(/*MTDPartitionInfo *pinfo*/)
+static int mtd_spinand_partition_analysis(/*MTDPartitionInfo *pinfo,*/unsigned int blk_sz)
 {
 	char mtdparts_env[X_ENV_LENGTH];
 	char command[X_COMMAND_LENGTH];
@@ -819,9 +819,12 @@ static int mtd_spinand_partition_analysis(/*MTDPartitionInfo *pinfo*/)
 			sprintf(mtdparts_env,"%s-(%s)", mtdparts_env,
 					jz_mtd_spinand_partition[part].name);
 			break;
-		} else if (jz_mtd_spinand_partition[part].size != 0) {
-			sprintf(mtdparts_env,"%s%dM(%s),", mtdparts_env,
-					jz_mtd_spinand_partition[part].size / 0x100000,
+		} else if (jz_mtd_spinand_partition[part].size  != 0) {
+			if(jz_mtd_spinand_partition[part].size % blk_sz != 0)
+				    printf("ERROR:the partition [%s] don't algin as block size [0x%08x] ,it will be error !\n",jz_mtd_spinand_partition[part].name,blk_sz);
+
+			sprintf(mtdparts_env,"%s%dK(%s),", mtdparts_env,
+					jz_mtd_spinand_partition[part].size / 0x400,
 					jz_mtd_spinand_partition[part].name);
 		} else
 			break;
@@ -863,6 +866,6 @@ int mtd_spinand_probe_burner(/*MTDPartitionInfo *pinfo,*/int erase_mode)
 	chip = mtd->priv;
 	chip->scan_bbt(mtd);
 	chip->options |= NAND_BBT_SCANNED;
-	mtd_spinand_partition_analysis(/*pinfo*/);
+	mtd_spinand_partition_analysis(/*pinfo,*/mtd->erasesize);
 	return 0;
 }
