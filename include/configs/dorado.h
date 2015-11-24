@@ -166,9 +166,9 @@
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 bliu/85/uImage.new; bootm" */
-	#define CONFIG_BOOTCOMMAND "mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+	#define CONFIG_BOOTCOMMAND "mmc read 0x80f00000 0x1800 0xa000; bootm 0x80f00000"
   #elif defined(CONFIG_JZ_NAND_MGR)
-	#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x600000 0x80600000;bootm"
+	#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x600000 0x80f00000;bootm"
   #else
 	#define CONFIG_BOOTCOMMAND  "mtdparts default; ubi part kernel; ubifsmount ubi:ndboot;" \
 	"ubifsload 0x80f00000 uImage; bootm 0x80f00000"
