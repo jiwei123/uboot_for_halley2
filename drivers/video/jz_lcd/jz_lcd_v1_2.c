@@ -288,6 +288,12 @@ void dump_lcd_reg()
 }/*end dump_lcd_reg*/
 #endif
 
+__weak void lcd_open_backlight(void)
+{
+	printf("\n\n\n\n########\n\n\n");
+	return;
+}
+
 #if defined(CONFIG_LCD_LOGO)
 static void fbmem_set(void *_ptr, unsigned short val, unsigned count)
 {
@@ -314,12 +320,9 @@ static void fbmem_set(void *_ptr, unsigned short val, unsigned count)
 		bdata = (bdata << 3) | 0x7;
 
 		if (lcd_config_info.fmt_order == FORMAT_X8B8G8R8) {
-			val_32 =
-			    (alpha << 24) | (bdata << 16) | (gdata << 8) | rdata;
-			/*fixed */
+			val_32 = (alpha << 24) | (bdata << 16) | (gdata << 8) | rdata;
 		} else if (lcd_config_info.fmt_order == FORMAT_X8R8G8B8) {
-			val_32 =
-			    (alpha << 24) | (rdata << 16) | (gdata << 8) | bdata;
+			val_32 = (alpha << 24) | (rdata << 16) | (gdata << 8) | bdata;
 		}
 
 		while (count--){
@@ -635,6 +638,9 @@ void rle_plot(unsigned short *buf, unsigned char *dst_buf)
 	}else if(flag > 0){
 		rle_plot_biger(photo_ptr, lcd_fb, bpp);
 	}
+
+	flush_cache_all();
+
 	return;
 }
 
@@ -650,19 +656,19 @@ void fb_fill(void *logo_addr, void *fb_addr, int count)
 	int *dest_addr = (int *)fb_addr;
 	int *src_addr = (int *)logo_addr;
 #ifndef CONFIG_SLCDC_CONTINUA
-        int smart_ctrl = 0;
+	int smart_ctrl = 0;
 #endif
 	for(i = 0; i < count; i = i + 4){
 		*dest_addr =  *src_addr;
 		src_addr++;
 		dest_addr++;
 	}
-#ifndef CONFIG_SLCDC_CONTINUA
-        smart_ctrl = reg_read(SLCDC_CTRL);
-        smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
-        reg_write(SLCDC_CTRL, smart_ctrl);
-#endif
 
+#ifndef CONFIG_SLCDC_CONTINUA
+	smart_ctrl = reg_read(SLCDC_CTRL);
+	smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+	reg_write(SLCDC_CTRL, smart_ctrl);
+#endif
 }
 
 int jzfb_get_controller_bpp(unsigned int bpp)
@@ -685,7 +691,7 @@ static void jzfb_config_fg0(struct jzfb_config_info *info)
 	/* OSD mode enable and alpha blending is enabled */
 	cfg = LCDC_OSDC_OSDEN | LCDC_OSDC_ALPHAEN;	//|  LCDC_OSDC_PREMULTI0;
 	cfg |= 1 << 16;		/* once transfer two pixels */
-	cfg |= LCDC_OSDC_COEF_SLE0_1;
+	cfg |= LCDC_OSDC_COEF_SLE0_1; //ykliu
 	/* OSD control register is read only */
 
 	if (info->fmt_order == FORMAT_X8B8G8R8) {
@@ -698,6 +704,18 @@ static void jzfb_config_fg0(struct jzfb_config_info *info)
 	}
 	reg_write(LCDC_OSDC, cfg);
 	reg_write(LCDC_RGBC, rgb_ctrl);
+}
+
+void lcd_restart_dma(void)
+{
+#ifndef CONFIG_SLCDC_CONTINUA
+	if (lcd_enable_state != 0) {
+		int smart_ctrl = 0;
+		smart_ctrl = reg_read(SLCDC_CTRL);
+		smart_ctrl |= SLCDC_CTRL_DMA_START; //trigger a new frame
+		reg_write(SLCDC_CTRL, smart_ctrl);
+	}
+#endif
 }
 
 static void jzfb_config_tft_lcd_dma(struct jzfb_config_info *info)
@@ -887,6 +905,7 @@ static int jzfb_prepare_dma_desc(struct jzfb_config_info *info)
 		jzfb_config_smart_lcd_dma(info);
 	}
 	jzfb_config_fg1_dma(info);
+	reg_write(LCDC_DA0, info->fdadr0);
 	return 0;
 }
 
@@ -932,13 +951,15 @@ void lcd_enable(void)
 	unsigned ctrl;
 	if (lcd_enable_state == 0) {
 		reg_write(LCDC_STATE, 0);
-		reg_write(LCDC_DA0, lcd_config_info.fdadr0);
+		//reg_write(LCDC_DA0, lcd_config_info.fdadr0);
+		reg_write(LCDC_OSDS, 0);
 		ctrl = reg_read(LCDC_CTRL);
 		ctrl |= LCDC_CTRL_ENA;
 		ctrl &= ~LCDC_CTRL_DIS;
 		reg_write(LCDC_CTRL, ctrl);
 		serial_puts("dump_lcdc_registers\n");
 
+#if 0
 		int frame_num = 10;
 		while(frame_num--) {
 			int count = 100000;
@@ -950,11 +971,14 @@ void lcd_enable(void)
 			state &= ~LCDC_STATE_EOF;
 			reg_write(LCDC_STATE, state);
 		}
+#endif
 	}
 	lcd_enable_state = 1;
 #ifdef DEBUG
 	dump_lcd_reg();
+#ifdef CONFIG_JZ_MIPI_DSI
 	dump_dsi_reg(dsi);
+#endif
 #endif
 }
 
@@ -1180,7 +1204,8 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		smart_cfg |= 1 << 16;
 		smart_new_cfg |= 4 << 13;
 		smart_ctrl |= 1 << 7 | 1 << 6;
-		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG,0x1); //te
+
+    		mipi_dsih_write_word(dsi, R_DSI_HOST_CMD_MODE_CFG,0x1); //te
 		mipi_dsih_dphy_enable_hs_clk(dsi, 1);
 		mipi_dsih_hal_gen_set_mode(dsi, 1);
 		mipi_dsih_hal_dpi_color_coding(dsi,
@@ -1267,14 +1292,14 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
 		(unsigned long)lcdbase + fb_size + PAGE_SIZE - palette_mem_size;
 	info->dma_cmd_buf = ((unsigned long)lcdbase + fb_size + PAGE_SIZE - 1) & ~(PAGE_SIZE -1);
 	if (info->lcd_type == LCD_TYPE_SLCD) {
-        int i;
-        unsigned long *ptr;
-        ptr = (unsigned long *)info->dma_cmd_buf;
-        for (i = 0; i < info->smart_config.length_cmd; i++) {
-            ptr[i] = info->smart_config.write_gram_cmd[i];
-        }
-        flush_cache_all();
-    }
+		int i;
+		unsigned long *ptr;
+		ptr = (unsigned long *)info->dma_cmd_buf;
+		for (i = 0; i < info->smart_config.length_cmd; i++) {
+			ptr[i] = info->smart_config.write_gram_cmd[i];
+		}
+		flush_cache_all();
+	}
 	return 0;
 }
 
@@ -1286,9 +1311,14 @@ static void refresh_pixclock_auto_adapt(struct jzfb_config_info *info)
 	uint16_t ht, vt;
 	unsigned long rate;
 
+	if (info == NULL) {
+		printf("invalid argument: struct jzfb_config_info *info == NULL.\n");
+		return ;
+	}
 	mode = info->modes;
 	if (mode == NULL) {
-		printf("%s error: get video mode failed\n", __func__);
+		printf("%s error: get video mode failed.\n", __func__);
+		return ;
 	}
 
 	hds = mode->hsync_len + mode->left_margin;
@@ -1299,19 +1329,18 @@ static void refresh_pixclock_auto_adapt(struct jzfb_config_info *info)
 	vde = vds + mode->yres;
 	vt = vde + mode->lower_margin;
 
-	if(mode->refresh){
+	if (mode->refresh) {
 		if (info->lcd_type == LCD_TYPE_8BIT_SERIAL) {
 			rate = mode->refresh * (vt + 2 * mode->xres) * ht;
 		} else {
-			rate = mode->refresh * vt * ht;
+			rate = mode->refresh * ht * vt;
 		}
 		mode->pixclock = KHZ2PICOS(rate / 1000);
-
-	}else if(mode->pixclock){
+	} else if (mode->pixclock) {
 		rate = PICOS2KHZ(mode->pixclock) * 1000;
 		mode->refresh = rate / vt / ht;
-	}else{
-		printf("%s error:lcd important config info is absenced\n",__func__);
+	} else {
+		printf("%s error:lcd important config info is absenced.\n", __func__);
 	}
 
 }
@@ -1344,7 +1373,7 @@ void lcd_ctrl_init(void *lcd_base)
 
 	if (lcd_config_info.lcd_type == LCD_TYPE_SLCD) {
 		lcd_config_info.fmt_order = FORMAT_X8R8G8B8;
-    } else {
+	} else {
 #ifdef CONFIG_LCD_FORMAT_X8B8G8R8
 		lcd_config_info.fmt_order = FORMAT_X8B8G8R8;
 #else
@@ -1357,6 +1386,7 @@ void lcd_ctrl_init(void *lcd_base)
 	board_set_lcd_power_on();
 
 	panel_power_on();
+	lcd_open_backlight();
 
 #ifdef CONFIG_JZ_MIPI_DSI
 	dsi->bpp_info = lcd_config_info.bpp;
@@ -1370,13 +1400,13 @@ void lcd_ctrl_init(void *lcd_base)
 #ifdef CONFIG_JZ_MIPI_DSI
 	panel_display_on(dsi);
 #endif
-/*
+
 #ifdef DEFAULT_BACKLIGHT_LEVEL
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);
+
 #endif
-*/
 	return;
 }
 
