@@ -87,6 +87,12 @@
 #define CONFIG_SPL_SFC_SUPPORT
 #endif
 
+/*get wifi_mac from SFC flash*/
+#ifdef CONFIG_GET_WIFI_MAC
+#define WIFI_MAC_READ_ADDR	0x40000
+#define WIFI_MAC_READ_COUNT	12
+#endif
+
 /**
  * Boot arguments definitions.
  */
@@ -126,7 +132,12 @@
 
 #ifdef CONFIG_SPL_OS_BOOT
 #define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of zImage being loaded */
+
+#ifdef CONFIG_GET_WIFI_MAC
+#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 wifi_mac=xxxxxxxxxxxx rw"
+#else
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
+#endif
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
 #define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock4 rw"
 #undef  CONFIG_BOOTCOMMAND

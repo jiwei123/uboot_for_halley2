@@ -29,6 +29,7 @@
 #include <linux/compiler.h>
 #include <boot_img.h>
 
+extern void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_addr);
 /* Pointer to as well as the global data structure for SPL */
 DECLARE_GLOBAL_DATA_PTR;
 __weak gd_t gdata __attribute__ ((section(".data")));
@@ -63,12 +64,25 @@ int __weak cleanup_before_linux (void)
 void __noreturn jump_to_image_linux(void *arg)
 {
 	debug("Entering kernel arg pointer: 0x%p\n", arg);
+#if defined (CONFIG_GET_WIFI_MAC)
+	char *wifi_mac_str = NULL;
+	unsigned int mac_addr[4] = {};
+#endif
 	static u32 *param_addr = NULL;
 	typedef void (*image_entry_arg_t)(int, char **, void *)
 		__attribute__ ((noreturn));
+
+	debug("Entering kernel arg pointer: 0x%p\n", arg);
 	image_entry_arg_t image_entry =
 		(image_entry_arg_t) spl_image.entry_point;
 
+#if defined (CONFIG_GET_WIFI_MAC)
+	memset(mac_addr, 0 , sizeof(mac_addr));
+	sfc_nor_load(WIFI_MAC_READ_ADDR, WIFI_MAC_READ_COUNT, mac_addr);
+	wifi_mac_str = strstr(arg, "wifi_mac");
+	if (wifi_mac_str != NULL)
+		memcpy(wifi_mac_str + 9, mac_addr, WIFI_MAC_READ_COUNT);
+#endif
 	cleanup_before_linux();
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
