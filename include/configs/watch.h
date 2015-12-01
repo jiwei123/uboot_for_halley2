@@ -611,11 +611,9 @@
 
 /* ***************************DRV2605 VIBRATOR START ******************** */
 #if defined(CONFIG_VIBRATE_DRV2605)
-#if defined(CONFIG_IN901)
 #define DRV2605_ENABLE          GPIO_PE(2)
 #define DRV2605_ACTIVE_LEVEL    1
 #define DRV2605_I2C_ADDR        0x5a
-#endif
 #endif
 /* ***************************DRV2605 VIBRATOR END ********************** */
 
