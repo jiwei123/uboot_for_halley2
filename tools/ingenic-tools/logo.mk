@@ -34,14 +34,24 @@ DIR_PREFIX ?= $(TOPDIR)/tools/charge_logo
 
 CHARGE_LOGO_JPG = $(shell ls  $(DIR_PREFIX)/*.jpg)
 
+ifneq ($(wildcard $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOW_BATTERY_LOGO_FILE)).jpg),)
+	LOW_BATTERY_LOGO_JPG ?= $(shell echo $(TOPDIR)/board/$(BOARDDIR)/logo/$(CONFIG_LOW_BATTERY_LOGO_FILE).jpg)
+endif
+
+LOW_BATTERY_LOGO_JPG ?= $(TOPDIR)/tools/logos/low_battery_logo.jpg
+
 BOOT_RLE_OBJ   := $(BOOT_LOGO_JPG:.jpg=.rle)
 CHARGE_RLE_OBJS   := $(CHARGE_LOGO_JPG:.jpg=.rle)
+LOW_BATTERY_LOGO_OBJ := $(LOW_BATTERY_LOGO_JPG:.jpg=.rle)
 
 $(RLE_BOOT_LOGO_H):	$(obj)bin2array $(BOOT_RLE_OBJ)
 	$(obj)./bin2array --one $(BOOT_RLE_OBJ) $@
 
 $(RLE_CHARGE_LOGO_H):	$(obj)bin2array $(CHARGE_RLE_OBJS)
 	$(obj)./bin2array --mult $(CHARGE_RLE_OBJS)  $@
+
+$(RLE_LOW_BATTERY_LOGO_H):	$(obj)bin2array $(LOW_BATTERY_LOGO_OBJ)
+	$(obj)./bin2array --one $(LOW_BATTERY_LOGO_OBJ) $@ --arrayname rle_low_battery_addr
 
 %.rle: %.jpg
 	$(obj)./img2rle  $< $@

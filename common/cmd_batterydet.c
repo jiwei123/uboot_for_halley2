@@ -32,6 +32,7 @@
 #include <asm/arch/sadc.h>
 #include <lcd.h>
 #include <rle_charge_logo.h>
+#include <rle_low_battery_logo.h>
 #include <malloc.h>
 #include <regulator.h>
 
@@ -833,11 +834,11 @@ static void show_charging_logo_tencent_os(void)
 	unsigned int lcd_flush_count = 0;
 	void *lcd_base = (void *)gd->fb_base;
 	unsigned short *src_picture_addr;
+	int charge_ok = 0;
+
 	while (1) {
-		if (!battery_is_low()) {
-			printf ("show_charging_logo: battery is not low now, boot\n");
-			break;
-		}
+		if (!battery_is_low())
+			charge_ok = 1;
 
 		if (!charge_detect()) {
 			printf ("show_charging_logo: battery is low now, shutdown\n");
@@ -845,6 +846,11 @@ static void show_charging_logo_tencent_os(void)
 			lcd_clear_black();
 			wait_lcd_refresh_finish();
 			jz_pm_do_hibernate();
+		}
+
+		if (charge_ok) {
+			printf ("show_charging_logo: battery is not low now, boot\n");
+			break;
 		}
 
 		current_time = get_charging_tick();
@@ -862,8 +868,8 @@ static void show_charging_logo_tencent_os(void)
 static void show_battery_low_logo(void)
 {
 	lcd_clear_black();
-	show_charge_logo_rle(0);
-	mdelay(5000);
+	show_rle_picture_in_fb_middle(rle_low_battery_addr);
+	mdelay(2000);
 	lcd_close_backlight();
 }
 
@@ -877,6 +883,7 @@ static void battery_detect_tencent_os(void) {
 	if (charge_detect()) {
 		show_charging_logo_tencent_os();
 	} else if (battery_is_low()) {
+		show_battery_low_logo();
 		printf("The battery voltage is too low. Please charge\n");
 		printf("Battery low level,Into hibernate mode ... \n");
 		jz_pm_do_hibernate();

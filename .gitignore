@@ -61,6 +61,8 @@ kk
 /include/rle_charge_logo.h
 /common/rle_logo.c
 /tools/logos/ingenic.jpg.rle
+/include/rle_low_battery_logo.h
+/tools/logos/low_battery_logo.rle
 
 *.depend*
 /LOG
