@@ -80,5 +80,10 @@
 #define SSI_FRMHL_CE0_HIGH_CE1_HIGH (3 << 30)
 #define SSI_GPCMD           (1 << 25)
 
-
+/* 3/4 bytes address */
+#define CMD_FAST_READ4 	0x0C	/* Read Data at high speed */
+#define CMD_PP_4B 		0x12	/* Page Program(write data) */
+#define CMD_ERASE_4K_4B            0x21
+#define CMD_ERASE_32K_4B           0x5C
+#define CMD_ERASE_64K_4B           0xDC
 #endif

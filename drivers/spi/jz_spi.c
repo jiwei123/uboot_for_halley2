@@ -350,14 +350,24 @@ int jz_read_nand(struct spi_flash *flash, u32 offset, size_t len, void *data)
 
 int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 {
-	unsigned char cmd[5];
+	unsigned char cmd[6];
 	unsigned long read_len;
+	unsigned long addr_size;
+	int i;
 
-	cmd[0] = CMD_FAST_READ;
-	cmd[1] = offset >> 16;
-	cmd[2] = offset >> 8;
-	cmd[3] = offset >> 0;
-	cmd[4] = 0x00;
+	addr_size = flash->addr_size;
+
+	if (addr_size == 4) {
+		cmd[0] = CMD_FAST_READ4;
+	} else {
+		cmd[0] = CMD_FAST_READ;
+	}
+
+	for (i = 0; i < addr_size; i++) {
+		cmd[i + 1] = offset >> (addr_size - i - 1) * 8;
+	}
+
+	cmd[addr_size + 1] = 0x00;
 
 	read_len = flash->size - offset;
 
@@ -365,7 +375,7 @@ int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 		read_len = len;
 
 	jz_cs_reversal();
-	spi_send_cmd(&cmd[0], 5);
+	spi_send_cmd(&cmd[0], addr_size + 2);
 	spi_recv_cmd(data, read_len);
 
 	return 0;
@@ -373,32 +383,35 @@ int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 
 int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 {
-	unsigned char cmd[6], tmp;
+	unsigned char cmd[7], tmp;
 	int chunk_len, actual, i;
-	unsigned long byte_addr, page_size;
+	unsigned long byte_addr, page_size, addr_size;
 	unsigned char *send_buf = (unsigned char *)buf;
 
 	page_size = flash->page_size;
+	addr_size = flash->addr_size;
 
 	cmd[0] = CMD_WREN;
+	if (addr_size == 4) {
+		cmd[1] = CMD_PP_4B;
+	} else {
+		cmd[1] = CMD_PP;
+	}
 
-	cmd[1] = CMD_PP;
-
-	cmd[5] = CMD_RDSR;
+	cmd[addr_size + 2] = CMD_RDSR;
 
 	for (actual = 0; actual < len; actual += chunk_len) {
 		byte_addr = offset % page_size;
 		chunk_len = min(len - actual, page_size - byte_addr);
 
-		cmd[2] = offset >> 16;
-		cmd[3] = offset >> 8;
-		cmd[4] = offset >> 0;
-
+		for ( i = 0; i < addr_size; i++) {
+			cmd[2 + i] = offset >> (addr_size - i - 1) * 8;
+		}
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[0], 1);
 
 		jz_cs_reversal();
-		spi_send_cmd(&cmd[1], 4);
+		spi_send_cmd(&cmd[1], addr_size + 1);
 
 
 		for(i = 0; i < chunk_len; i += 100) {
@@ -410,7 +423,7 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 		}
 
 		jz_cs_reversal();
-		spi_send_cmd(&cmd[5], 1);
+		spi_send_cmd(&cmd[addr_size + 2], 1);
 		spi_recv_cmd(&tmp, 1);
 		while(tmp & CMD_SR_WIP) {
 			spi_recv_cmd(&tmp, 1);
@@ -605,8 +618,11 @@ rewrite:
 
 int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
-	unsigned long erase_size;
-	unsigned char cmd[6], buf;
+	unsigned long erase_size, addr_size;
+	unsigned char cmd[7], buf;
+	int i;
+
+	addr_size = flash->addr_size;
 
 	if((len >= 0x10000)&&((offset % 0x10000) == 0)){
 		erase_size = 0x10000;
@@ -625,25 +641,37 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 
 	switch(erase_size) {
 	case 0x1000 :
-		cmd[1] = CMD_ERASE_4K;
+		if (addr_size == 4) {
+			cmd[1] = CMD_ERASE_4K_4B;
+		} else {
+			cmd[1] = CMD_ERASE_4K;
+		}
 		break;
 	case 0x8000 :
-		cmd[1] = CMD_ERASE_32K;
+		if (addr_size == 4) {
+			cmd[1] = CMD_ERASE_32K_4B;
+		} else {
+			cmd[1] = CMD_ERASE_32K;
+		}
 		break;
 	case 0x10000 :
-		cmd[1] = CMD_ERASE_64K;
+		if (addr_size == 4) {
+			cmd[1] = CMD_ERASE_64K_4B;
+		} else {
+			cmd[1] = CMD_ERASE_64K;
+		}
 		break;
 	default:
 		printf("unknown erase size !\n");
 		return -1;
 	}
 
-	cmd[5] = CMD_RDSR;
+	cmd[addr_size + 2] = CMD_RDSR;
 
 	while(len) {
-		cmd[2] = offset >> 16;
-		cmd[3] = offset >> 8;
-		cmd[4] = offset >> 0;
+		for ( i = 0; i < addr_size; i++) {
+			cmd[2 + i] = offset >> (addr_size - i - 1) * 8;
+		}
 
 	//	printf("erase %x %x %x %x %x %x %x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], offset);
 
@@ -651,10 +679,10 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 		spi_send_cmd(&cmd[0], 1);
 
 		jz_cs_reversal();
-		spi_send_cmd(&cmd[1], 4);
+		spi_send_cmd(&cmd[1], addr_size + 1);
 
 		jz_cs_reversal();
-		spi_send_cmd(&cmd[5], 1);
+		spi_send_cmd(&cmd[addr_size + 2], 1);
 		spi_recv_cmd(&buf, 1);
 		while(buf & CMD_SR_WIP) {
 			spi_recv_cmd(&buf, 1);
@@ -913,7 +941,7 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 
 	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
 		params = &jz_spi_support_table[i];
-		if (params->id_manufactory == idcode[0])
+		if (params->id_manufactory == (idcode[2] << 16 | idcode[1] << 8 | idcode[0]))
 			break;
 	}
 
@@ -945,6 +973,7 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 
 	flash->page_size = params->page_size;
 	flash->sector_size = params->sector_size;
+	flash->addr_size = params->addr_size;
 	flash->size = params->size;
 
 	return flash;
