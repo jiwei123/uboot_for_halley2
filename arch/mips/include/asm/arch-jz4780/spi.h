@@ -74,6 +74,8 @@
 #define CMD_ERASE_32K           0x52
 #define CMD_ERASE_64K           0xd8
 #define CMD_ERASE_CE            0x60
+#define CMD_EN4B                0xB7
+#define CMD_EX4B                0xE9
 #define SSI_FRMHL_CE0_LOW_CE1_LOW   (0 << 30)
 #define SSI_FRMHL_CE0_HIGH_CE1_LOW  (1 << 30)
 #define SSI_FRMHL_CE0_LOW_CE1_HIGH  (2 << 30)
