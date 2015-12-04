@@ -555,12 +555,45 @@ int sfc_nand_read_data(unsigned int *data, unsigned int length)
 {
 	 return sfc_read_data(data,length);
 }
+
+int jz_sfc_set_address_mode(struct spi_flash *flash, int on)
+{
+	unsigned char cmd[3];
+	unsigned int  buf = 0;
+	int err = 0;
+
+	if(flash->addr_size == 4){
+		cmd[0] = CMD_WREN;
+		if(on == 1){
+			cmd[1] = CMD_EN4B;
+		}else{
+			cmd[1] = CMD_EX4B;
+		}
+		cmd[2] = CMD_RDSR;
+
+		sfc_send_cmd(&cmd[0],0,0,0,0,0,1);
+
+		sfc_send_cmd(&cmd[1],0,0,0,0,0,1);
+
+		sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
+
+		sfc_read_data(&buf, 1);
+		while(buf & CMD_SR_WIP) {
+			sfc_send_cmd(&cmd[2], 1,0,0,0,1,0);
+			sfc_read_data(&buf, 1);
+		}
+	}
+	return 0;
+}
+
 int jz_sfc_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 {
 	unsigned char cmd[5];
 	unsigned long read_len;
 	unsigned int words_of_len = 0;
+	unsigned int i;
 
+	jz_sfc_set_address_mode(flash,1);
 
 	if(sfc_quad_mode == 1){
 		cmd[0]  = quad_mode->cmd_read;
@@ -569,9 +602,10 @@ int jz_sfc_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 		cmd[0]  = CMD_READ;
 		mode = TRAN_SPI_STANDARD;
 	}
-	cmd[1] = offset >> 16;
-	cmd[2] = offset >> 8;
-	cmd[3] = offset >> 0;
+
+	for(i = 0; i < flash->addr_size; i++){
+		cmd[i + 1] = offset >> (flash->addr_size - i - 1) * 8;
+	}
 
 	read_len = flash->size - offset;
 
@@ -585,24 +619,28 @@ int jz_sfc_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 		 * */
 
 	if(sfc_quad_mode == 1){
-		sfc_send_cmd(&cmd[0],read_len,offset,3,quad_mode->dummy_byte,1,0);
+		sfc_send_cmd(&cmd[0],read_len,offset,flash->addr_size,quad_mode->dummy_byte,1,0);
 	}else{
-		sfc_send_cmd(&cmd[0],read_len,offset,3,0,1,0);
+		sfc_send_cmd(&cmd[0],read_len,offset,flash->addr_size,0,1,0);
 	}
 	//	dump_sfc_reg();
 	sfc_read_data(data, len);
+
+	jz_sfc_set_address_mode(flash,0);
 
 	return 0;
 }
 
 int jz_sfc_write(struct spi_flash *flash, u32 offset, size_t length, const void *buf)
 {
-	unsigned char cmd[6];
+	unsigned char cmd[7];
 	unsigned tmp = 0;
 	int chunk_len, actual, i;
 	unsigned long byte_addr;
 	unsigned char *send_buf = (unsigned char *)buf;
 	unsigned int pagelen = 0,len = 0,retlen = 0;
+
+	jz_sfc_set_address_mode(flash,1);
 
 	if (offset + length > flash->size) {
 		printf("Data write overflow this chip\n");
@@ -619,10 +657,7 @@ int jz_sfc_write(struct spi_flash *flash, u32 offset, size_t length, const void 
 		mode = TRAN_SPI_STANDARD;
 	}
 
-	//	cmd[1] = CMD_PP;
-
-	cmd[5] = CMD_RDSR;
-
+	cmd[flash->addr_size + 2] = CMD_RDSR;
 
 	while (length) {
 		if (length >= flash->page_size)
@@ -646,11 +681,11 @@ int jz_sfc_write(struct spi_flash *flash, u32 offset, size_t length, const void 
 		if (offset % flash->page_size + len > flash->page_size)
 			len -= offset % flash->page_size + len - flash->page_size;
 
-		cmd[2] = offset >> 16;
-		cmd[3] = offset >> 8;
-		cmd[4] = offset >> 0;
+		for(i = 0; i < flash->addr_size; i++){
+			cmd[i+2] = offset >> (flash->addr_size - i - 1) * 8;
+		}
 
-		sfc_send_cmd(&cmd[1], len,offset,3,0,1,1);
+		sfc_send_cmd(&cmd[1], len,offset,flash->addr_size,0,1,1);
 
 	//	dump_sfc_reg();
 
@@ -659,10 +694,10 @@ int jz_sfc_write(struct spi_flash *flash, u32 offset, size_t length, const void 
 		retlen = len;
 
 		/*polling*/
-		sfc_send_cmd(&cmd[5],1,0,0,0,1,0);
+		sfc_send_cmd(&cmd[flash->addr_size + 2],1,0,0,0,1,0);
 		sfc_read_data(&tmp, 1);
 		while(tmp & CMD_SR_WIP) {
-			sfc_send_cmd(&cmd[5],1,0,0,0,1,0);
+			sfc_send_cmd(&cmd[flash->addr_size + 2],1,0,0,0,1,0);
 			sfc_read_data(&tmp, 1);
 		}
 
@@ -676,6 +711,7 @@ int jz_sfc_write(struct spi_flash *flash, u32 offset, size_t length, const void 
 		length -= retlen;
 	}
 
+	jz_sfc_set_address_mode(flash,0);
 	return 0;
 }
 
@@ -730,9 +766,11 @@ int jz_sfc_chip_erase()
 int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
 	unsigned long erase_size;
-	unsigned char cmd[6];
-	unsigned int  buf = 0;
+	unsigned char cmd[7];
+	unsigned int  buf = 0, i;
 
+
+	jz_sfc_set_address_mode(flash,1);
 
 	if((len >= 0x10000)&&((offset % 0x10000) == 0)){
 		erase_size = 0x10000;
@@ -741,7 +779,6 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 	}else{
 		erase_size = 0x1000;
 	}
-
 
 	if(len % erase_size != 0){
 		len = len - (len % erase_size) + erase_size;
@@ -769,14 +806,14 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 		return -1;
 	}
 
-	cmd[5] = CMD_RDSR;
+	cmd[flash->addr_size + 2] = CMD_RDSR;
 
 	while(len > 0) {
-		cmd[2] = offset >> 16;
-		cmd[3] = offset >> 8;
-		cmd[4] = offset >> 0;
+		for(i = 0; i < flash->addr_size; i++){
+			cmd[i+2] = offset >> (flash->addr_size - i - 1) * 8;
+		}
 
-	//	printf("erase %x %x %x %x %x %x %x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], offset);
+		//	printf("erase %x %x %x %x %x %x %x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], offset);
 
 		/* the paraterms is
 		 * cmd , len, addr,addr_len
@@ -786,12 +823,12 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 		 * */
 		sfc_send_cmd(&cmd[0],0,0,0,0,0,1);
 
-		sfc_send_cmd(&cmd[1],0,offset,3,0,0,1);
+		sfc_send_cmd(&cmd[1],0,offset,flash->addr_size,0,0,1);
 
-		sfc_send_cmd(&cmd[5], 1,0,0,0,1,0);
+		sfc_send_cmd(&cmd[flash->addr_size + 2], 1,0,0,0,1,0);
 		sfc_read_data(&buf, 1);
 		while(buf & CMD_SR_WIP) {
-			sfc_send_cmd(&cmd[5], 1,0,0,0,1,0);
+			sfc_send_cmd(&cmd[flash->addr_size + 2], 1,0,0,0,1,0);
 			sfc_read_data(&buf, 1);
 		}
 
@@ -799,6 +836,7 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 		len -= erase_size;
 	}
 
+	jz_sfc_set_address_mode(flash,0);
 	return 0;
 }
 
@@ -807,11 +845,11 @@ struct spi_flash *sfc_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 {
 	int i;
 	struct spi_flash *flash;
-	struct jz_spi_support *params;
+	//struct jz_spi_support *params;
 
 	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
-		params = &jz_spi_support_table[i];
-		if (params->id_manufactory == idcode[0])
+		gparams = &jz_spi_support_table[i];
+		if (gparams->id_manufactory == idcode[0])
 			break;
 	}
 
@@ -819,7 +857,7 @@ struct spi_flash *sfc_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 #ifdef CONFIG_BURNER
 		if (idcode[0] != 0){
 			printf("unsupport ID is %04x if the id not be 0x00,the flash is ok for burner\n",idcode[0]);
-			params = &jz_spi_support_table[1];
+			gparams = &jz_spi_support_table[1];
 		}else{
 			printf("ingenic: Unsupported ID %04x\n", idcode[0]);
 			return NULL;
@@ -831,7 +869,7 @@ struct spi_flash *sfc_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 #endif
 	}
 
-	flash = spi_flash_alloc_base(spi, params->name);
+	flash = spi_flash_alloc_base(spi, gparams->name);
 	if (!flash) {
 		printf("ingenic: Failed to allocate memory\n");
 		return NULL;
@@ -841,10 +879,10 @@ struct spi_flash *sfc_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 	flash->write = jz_sfc_write;
 	flash->read  = jz_sfc_read;
 
-	flash->page_size = params->page_size;
-	flash->sector_size = params->sector_size;
-	flash->size = params->size;
-
+	flash->page_size = gparams->page_size;
+	flash->sector_size = gparams->sector_size;
+	flash->size = gparams->size;
+	flash->addr_size = gparams->addr_size;
 	return flash;
 }
 
@@ -916,14 +954,14 @@ void sfc_nor_RDID(unsigned int *idcode)
 int sfc_nor_init()
 {
 	unsigned int idcode;
-	struct jz_spi_support *params;
+	//struct jz_spi_support *params;
 	int i = 0;
 	sfc_nor_RDID(&idcode);
 
 	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
-		params = &jz_spi_support_table[i];
-		if (params->id_manufactory == idcode){
-			printf("the id code = %x, the flash name is %s\n",idcode,params->name);
+		gparams = &jz_spi_support_table[i];
+		if (gparams->id_manufactory == idcode){
+			printf("the id code = %x, the flash name is %s\n",idcode,gparams->name);
 			if(sfc_quad_mode == 1){
 				quad_mode = &jz_spi_support_table[i].quad_mode;
 			}
@@ -951,18 +989,12 @@ int sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_addr
 	int i,j;
 	unsigned char *data;
 	unsigned int temp;
-//	int sfc_mode = 0;
 	int ret = 0,err = 0;
 	unsigned int spl_len = 0,words_of_spl;
-	int addr_len = 3;
+	int addr_len;
 	struct spi_flash flash;
 
 	flag = 0;
-	flash.page_size = 256;
-	flash.sector_size = 4 *1024;
-	flash.size = 16*1024*1024;
-//	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), words_of_spl);
-
 
 #ifdef CONFIG_SPI_QUAD
 	sfc_quad_mode = 1;
@@ -975,6 +1007,11 @@ int sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_addr
 			return -1;
 		}
 	}
+
+	flash.page_size = gparams->page_size;
+	flash.sector_size = gparams->sector_size;
+	flash.size = gparams->size;
+	flash.addr_size = gparams->addr_size;
 
 	if(sfc_quad_mode == 1){
 		if(quad_mode_is_set == 0){
@@ -1001,10 +1038,6 @@ int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	int ret = 0,err = 0;
 	struct spi_flash flash;
 
-	flash.page_size = 256;
-	flash.sector_size = 4 *1024;
-	flash.size = 16*1024*1024;
-
 	if(erase_en == 1){
 		jz_sfc_erase(&flash,src_addr,count);
 		printf("sfc erase ok\n");
@@ -1021,6 +1054,11 @@ int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_add
 			return -1;
 		}
 	}
+
+	flash.page_size = gparams->page_size;
+	flash.sector_size = gparams->sector_size;
+	flash.size = gparams->size;
+	flash.addr_size = gparams->addr_size;
 
 	if(sfc_quad_mode == 1){
 		if(quad_mode_is_set == 0){
@@ -1048,12 +1086,8 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 	int ret = 0;
 	int err = 0;
 	unsigned int spl_len = 0,words_of_spl;
-	int addr_len = 3;
 	struct spi_flash flash;
 
-	flash.page_size = 256;
-	flash.sector_size = 4 *1024;
-	flash.size = 16*1024*1024;
 
 
 #ifdef CONFIG_SPI_QUAD
@@ -1073,6 +1107,11 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 			sfc_set_quad_mode();
 		}
 	}
+
+	flash.page_size = gparams->page_size;
+	flash.sector_size = gparams->sector_size;
+	flash.size = gparams->size;
+	flash.addr_size = gparams->addr_size;
 
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 	ret = jz_sfc_erase(&flash,src_addr,count);
