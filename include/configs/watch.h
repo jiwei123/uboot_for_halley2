@@ -245,6 +245,10 @@
 #define CONFIG_LCD_GPIO_FUNC2_SLCD
 #endif
 
+#ifdef  CONFIG_VIDEO_BOE_HSX0154B24B
+#define CONFIG_LCD_GPIO_FUNC2_SLCD
+#endif
+
 #ifdef  CONFIG_VIDEO_TRULY_TFT320320
 #define CONFIG_LCD_GPIO_FUNC2_SLCD
 #endif
@@ -543,7 +547,7 @@
 #if defined(CONFIG_ACRAB)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(29)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
-#elif defined(CONFIG_AW808) || defined(CONFIG_X3) || defined(CONFIG_IN901) || defined(CONFIG_F1)
+#elif defined(CONFIG_AW808) || defined(CONFIG_SWIMBOT) || defined(CONFIG_X3) || defined(CONFIG_IN901) || defined(CONFIG_F1)
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(1)
 #define CONFIG_GPIO_PRE_TEST		GPIO_PE(10)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	0
@@ -556,7 +560,7 @@
 #endif
 
 /* Pretest keys. */
-#if  defined(CONFIG_X3) || defined(CONFIG_AW808)
+#if  defined(CONFIG_X3) || defined(CONFIG_AW808) || defined(CONFIG_SWIMBOT)
 #define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* pretest key */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	1
 #else

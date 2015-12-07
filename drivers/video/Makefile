@@ -66,6 +66,7 @@ COBJS-$(CONFIG_VIDEO_SAMSUNG) += jz_lcd/lcd_panel/samsung.o
 COBJS-$(CONFIG_VIDEO_X163) += jz_lcd/lcd_panel/auo_x163.o \
 				jz_lcd/lcd_panel/write_command_auo_x163.o
 COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += jz_lcd/lcd_panel/truly_tft240240_2_e.o
+COBJS-$(CONFIG_VIDEO_BOE_HSX0154B24B) += jz_lcd/lcd_panel/boe_hsx0154b24b.o
 COBJS-$(CONFIG_VIDEO_TRULY_TFT320320) += jz_lcd/lcd_panel/truly_tft320320.o
 COBJS-$(CONFIG_VIDEO_ORISE_OTM3201A) += jz_lcd/lcd_panel/orise_otm3210a.o
 COBJS-$(CONFIG_VIDEO_BOE_TFT320320) += jz_lcd/lcd_panel/boe_tft320320.o
