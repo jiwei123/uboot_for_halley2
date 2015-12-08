@@ -143,8 +143,13 @@
 #endif
 
 #ifdef CONFIG_SPL_OS_BOOT
+#ifdef CONFIG_NOR_SPL_BOOT_OS /* norflash spl boot kernel */
+#define CONFIG_SPL_OS_OFFSET        (0x40000) /* spi offset of xImage being loaded */
+#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"
+#else/* ota */
 #define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of xImage being loaded */
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
+#endif /*CONFIG_NOR_SPL_BOOT_OS*/
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
 #define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock4 rw"
 #undef  CONFIG_BOOTCOMMAND
