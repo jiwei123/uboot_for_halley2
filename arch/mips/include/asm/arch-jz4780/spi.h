@@ -82,5 +82,6 @@
 #define SSI_FRMHL_CE0_HIGH_CE1_HIGH (3 << 30)
 #define SSI_GPCMD           (1 << 25)
 
-
+/* 3/4 address mode cmd */
+#define CMD_READ4 	0x13	/* Read Data */
 #endif

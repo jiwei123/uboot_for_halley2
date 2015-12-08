@@ -193,18 +193,6 @@ void spi_recv_cmd(unsigned char *read_buf, unsigned int count)
 	}
 }
 
-void spi_load(unsigned int src_addr, unsigned int count, unsigned int dst_addr)
-{
-	unsigned char cmd;
-	cmd = CMD_READ;
-	src_addr = ((src_addr & 0xFF) << 16) | (src_addr & 0x0000FF00) | ((src_addr >> 16) & 0xFF);
-	spi_init();
-	jz_spi_writel(jz_spi_readl(SSI_CR1) | SSI_CR1_UNFIN, SSI_CR1);
-	spi_send_cmd(&cmd, 1);
-	spi_send_cmd((unsigned char *)&src_addr, 3);
-	spi_recv_cmd((unsigned char *)dst_addr, count);
-	jz_spi_writel(jz_spi_readl(SSI_CR1) & (~SSI_CR1_UNFIN), SSI_CR1);
-}
 
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int mode)
@@ -996,6 +984,68 @@ struct spi_flash *spi_flash_probe_ingenic(struct spi_slave *spi, u8 *idcode)
 	return flash;
 }
 #endif
+
+
+void spi_nor_read_id(unsigned int *idcode)
+{
+	unsigned char cmd;
+	unsigned int chip_id;
+
+	jz_cs_reversal();
+	cmd = CMD_RDID;
+	spi_send_cmd(&cmd, 1);
+	spi_recv_cmd(&chip_id, 4);
+	*idcode = chip_id & 0x00ffffff;
+}
+
+void spi_nor_init(unsigned int *addrsize)
+{
+	unsigned int idcode,i;
+	struct spi_flash *flash;
+	struct jz_spi_support *params;
+
+	spi_nor_read_id(&idcode);
+
+	for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
+		params = &jz_spi_support_table[i];
+		if (params->id_manufactory == idcode){
+			printf("the flash ID  = %x\n",idcode);
+			break;
+		}
+	}
+
+	if (i == ARRAY_SIZE(jz_spi_support_table)) {
+		printf("ingenic: Unsupported ID %x\n",idcode);
+		*addrsize = 3;
+	}else{
+		*addrsize = params->addr_size;
+	}
+}
+
+void spi_load(unsigned int src_addr, unsigned int count, unsigned int dst_addr)
+{
+	unsigned char cmd;
+	unsigned int addr_len;
+	unsigned int idcode;
+
+	spi_init();
+	spi_nor_init(&addr_len);
+
+	jz_cs_reversal();
+	if(addr_len == 4){
+		cmd = CMD_READ4;
+		src_addr = ((src_addr & 0xFF) << 24) | ((src_addr & 0x0000FF00) << 8) | ((src_addr & 0x00FF0000) >> 8) | ((src_addr >> 24) & 0xFF);
+	}else{
+		cmd = CMD_READ;
+		src_addr = ((src_addr & 0xFF) << 16) | (src_addr & 0x0000FF00) | ((src_addr >> 16) & 0xFF);
+	}
+
+//	jz_spi_writel(jz_spi_readl(SSI_CR1) | SSI_CR1_UNFIN, SSI_CR1);
+	spi_send_cmd(&cmd, 1);
+	spi_send_cmd((unsigned char *)&src_addr, addr_len);
+	spi_recv_cmd((unsigned char *)dst_addr, count);
+//	jz_spi_writel(jz_spi_readl(SSI_CR1) & (~SSI_CR1_UNFIN), SSI_CR1);
+}
 
 #ifdef CONFIG_SPL_SPI_SUPPORT
 void spl_spi_load_image(void)
