@@ -22,7 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v12.h>
 #include <jz_lcd/truly_tft240240_2_e.h>
 
 //#define CONFIG_SLCD_TRULY_18BIT

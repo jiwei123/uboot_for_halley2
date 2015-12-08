@@ -22,7 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_3.h>
+#include <jz_lcd/jz_lcd_v13.h>
 #include <jz_lcd/truly_tft240240_2_e.h>
 
 //#define CONFIG_SLCD_TRULY_18BIT
@@ -48,7 +48,7 @@ struct smart_lcd_data_table truly_tft240240_data_table[] = {
     {SMART_CONFIG_CMD, 0x01},  //soft reset, 120 ms = 120 000 us
     {SMART_CONFIG_UDELAY, 120000},
     {SMART_CONFIG_CMD, 0x11},
-    {SMART_CONFIG_UDELAY, 5000},	  /* sleep out 5 ms  */
+    {SMART_CONFIG_UDELAY, 50000},	  /* sleep out 50 ms  */
 
     {SMART_CONFIG_CMD, 0x36},
 #ifdef	CONFIG_TRULY_240X240_ROTATE_180
@@ -201,8 +201,8 @@ struct jzfb_config_info jzfb1_init_data = {
 };
 
 struct truly_tft240240_2_e_data truly_tft240240_2_e_pdata = {
-	.gpio_lcd_rd  = GPIO_PB(16),
-	.gpio_lcd_rst = GPIO_PD(0),
-	.gpio_lcd_cs  = GPIO_PB(18),
-	.gpio_lcd_bl  = GPIO_PD(1),
+	.gpio_lcd_rd  = CONFIG_GPIO_LCD_RD,
+	.gpio_lcd_rst = CONFIG_GPIO_LCD_RST,
+	.gpio_lcd_cs  = CONFIG_GPIO_LCD_CS,
+	.gpio_lcd_bl  = CONFIG_GPIO_LCD_BL,
 };

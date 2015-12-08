@@ -22,7 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v12.h>
 #ifdef CONFIG_PMU_RICOH6x
 #define CONFIG_LCD_REGULATOR_LDO9	"RICOH619_LDO9"
 #define CONFIG_LCD_REGULATOR_DC4	"RICOH619_DC4"

@@ -2,7 +2,7 @@
 
 #include <common.h>
 #include <jz_lcd/jz_dsim.h>
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v12.h>
 #include <jz_lcd/auo_x163.h>
 
 static struct dsi_device *dsi = &jz_dsi;

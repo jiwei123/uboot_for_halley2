@@ -244,6 +244,13 @@
 /*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
 #define CONFIG_VIDEO_TRULY_TFT240240_2_E
 
+#ifdef CONFIG_VIDEO_TRULY_TFT240240_2_E
+#define CONFIG_GPIO_LCD_RD GPIO_PB(16)
+#define CONFIG_GPIO_LCD_RST GPIO_PD(0)
+#define CONFIG_GPIO_LCD_CS GPIO_PB(18)
+#define CONFIG_GPIO_LCD_BL GPIO_PD(1)
+#endif	/* CONFIG_VIDEO_TRULY_TFT240240_2_E */
+
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET       /* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE /*display the logo using rle command*/

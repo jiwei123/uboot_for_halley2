@@ -27,7 +27,7 @@
 #include <lcd.h>
 #include <asm/gpio.h>
 
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v12.h>
 #include <jz_lcd/jz_dsim.h>
 #include <jz_lcd/boe_tft320320.h>
 
@@ -157,4 +157,3 @@ struct jzfb_config_info jzfb1_init_data = {
 	.dither.dither_blue  = 1,	/* 6bit */
 
 };
-
