@@ -55,7 +55,7 @@
 #define CONFIG_SYS_UART_INDEX		2
 /* #define CONFIG_SYS_UART2_PD */
 #define CONFIG_SYS_UART2_PC
-#define CONFIG_BAUDRATE			57600
+#define CONFIG_BAUDRATE			115200
 #endif
 
 /*#define CONFIG_DDR_TEST*/
@@ -65,6 +65,7 @@
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			0	/* 1-32bit-width, 0-16bit-width */
+/* #define CONFIG_MDDR_ECM220ACBCN_50 */
 #define CONFIG_MDDR_H5MS5122DFR_J3M
 /*#define CONFIG_DDR3_TSD34096M1333C9_E*/
 
@@ -101,7 +102,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS2,57600n8 mem=31M@0x0 "
+#define BOOTARGS_COMMON "console=ttyS2,115200n8 mem=31M@0x0 "
 #if defined(CONFIG_SPL_NOR_SUPPORT) || defined(CONFIG_SPL_SFC_SUPPORT)
 	#if defined(CONFIG_SPL_SFC_SUPPORT)
 		#if defined(CONFIG_SPL_SFC_NOR)
