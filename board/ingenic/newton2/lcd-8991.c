@@ -51,18 +51,10 @@ struct jzfb_config_info jzfb1_init_data = {
 	.dither_enable = 0,
 };
 
-#ifdef CONFIG_DORADO_V20
-#define GPIO_LCD_DISP GPIO_PE(10)
-#define GPIO_LCD_SPI_CLK	GPIO_PD(28)
-#endif
-#ifdef CONFIG_DORADO_V21
-#define GPIO_LCD_DISP GPIO_PB(0)
-#define GPIO_LCD_SPI_CLK	GPIO_PD(28)
-#endif
-#ifdef CONFIG_DORADO_V22
+
 #define GPIO_LCD_DISP PCA953X_GPIO(9)
 #define GPIO_LCD_SPI_CLK	GPIO_PB(0)
-#endif
+
 struct byd_8991_data byd_8991_pdata = {
 	.gpio_lcd_disp = GPIO_LCD_DISP,
 	.gpio_lcd_de = 0,

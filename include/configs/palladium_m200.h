@@ -38,22 +38,12 @@
 /*#define CONFIG_SPL_DDR_SOFT_TRAINING*/
 #define CONFIG_DDR_FORCE_SELECT_CS1
 
-#ifndef CONFIG_RVMS
 #define CONFIG_SYS_APLL_FREQ		600000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
 #define CONFIG_SYS_CPU_FREQ		600000000
 #define CONFIG_SYS_MEM_FREQ		200000000
-
-#else /* defined CONFIG_RVMS */
-#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		1200000000	/*If MPLL not use mast be set 0*/
-#define CONFIG_CPU_SEL_PLL		APLL
-#define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		1200000000
-#define CONFIG_SYS_MEM_FREQ		300000000
-#endif
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
@@ -64,11 +54,8 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		0
-#ifndef CONFIG_RVMS
+
 #define CONFIG_BAUDRATE			3750000
-#else /* defined CONFIG_RVMS */
-#define CONFIG_BAUDRATE			3750000
-#endif
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
@@ -101,11 +88,7 @@
 /**
  * Boot arguments definitions.
  */
-#ifndef CONFIG_RVMS
 #define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=256M@0x0 mem=768M@0x30000000"
-#else
-#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=256M@0x0 mem=768M@0x30000000"
-#endif
 
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
