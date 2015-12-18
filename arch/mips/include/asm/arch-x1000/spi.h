@@ -100,4 +100,10 @@
 #define SPINAND_IS_BUSY	(1 << 0)	/* read , write ,erase ops is executing*/
 #define ECC_UNCORRECTED	(0x10 << 2) /* ecc uncorrected */
 
+/* 3/4 bytes address */
+#define CMD_FAST_READ4 	0x0C	/* Read Data at high speed */
+#define CMD_PP_4B 		0x12	/* Page Program(write data) */
+#define CMD_ERASE_4K_4B            0x21
+#define CMD_ERASE_32K_4B           0x5C
+#define CMD_ERASE_64K_4B           0xDC
 #endif

@@ -52,6 +52,7 @@ struct jz_spi_support {
 	int oobsize;
 	int sector_size;
 	int block_size;
+	int addr_size;
 	int size;
 	int page_num;
 	unsigned int *page_list;
@@ -141,6 +142,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.name = "MX25L12835F",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
+		.addr_size = 3,
 		.size = 16 * 1024 * 1024,
 		.quad_mode = {
 			.dummy_byte = 8,
@@ -161,6 +163,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.name = "GD25Q128C",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
+		.addr_size = 3,
 		.size = 16 * 1024 * 1024,
 		.quad_mode = {
 			.dummy_byte = 8,
@@ -181,6 +184,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.name = "GD25LQ128C",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
+		.addr_size = 3,
 		.size = 16 * 1024 * 1024,
 		.quad_mode = {
 			.dummy_byte = 8,
@@ -201,6 +205,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.name = "IS25LP128",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
+		.addr_size = 3,
 		.size = 16 * 1024 * 1024,
 		.quad_mode = {
 			.dummy_byte = 6,
@@ -221,6 +226,7 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.name = "win25Q128fvq",
 		.page_size = 256,
 		.sector_size = 4 * 1024,
+		.addr_size = 3,
 		.size = 16 * 1024 * 1024,
 		.quad_mode = {
 			.dummy_byte = 6,
@@ -236,7 +242,27 @@ static struct jz_spi_support jz_spi_support_table[] = {
 #endif
 		},
 	},
-
+	{
+		.id_manufactory = 0x1940c8,
+		.name = "GD25Q256C",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.addr_size = 4,
+		.size = 32 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x40,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
 
 };
 
