@@ -281,6 +281,34 @@ void jz_cs_reversal(void )
 	return ;
 }
 
+void jz_spi_norflash_address_mode(struct spi_flash *flash, int on)
+{
+	unsigned char cmd[3],buf;
+	if(flash->addr_size == 4){
+
+		cmd[0] = CMD_WREN;
+		if(on == 1){
+			cmd[1] = CMD_EN4B;
+		}else{
+			cmd[1] = CMD_EX4B;
+		}
+		cmd[2] = CMD_WRDI;
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[0], 1);
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[1],1);
+
+		jz_cs_reversal();
+		spi_send_cmd(&cmd[2],1);
+		spi_recv_cmd(&buf, 1);
+		while(buf & CMD_SR_WIP) {
+			spi_recv_cmd(&buf, 1);
+		}
+	}
+}
+
 int jz_read_nand(struct spi_flash *flash, u32 offset, size_t len, void *data)
 {
 	unsigned int page_bak, page, page_num, column, i;
@@ -358,12 +386,9 @@ int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 
 	addr_size = flash->addr_size;
 
-	if (addr_size == 4) {
-		cmd[0] = CMD_FAST_READ4;
-	} else {
-		cmd[0] = CMD_FAST_READ;
-	}
+	jz_spi_norflash_address_mode(flash, 1);
 
+	cmd[0] = CMD_FAST_READ;
 	for (i = 0; i < addr_size; i++) {
 		cmd[i + 1] = offset >> (addr_size - i - 1) * 8;
 	}
@@ -379,6 +404,7 @@ int jz_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 	spi_send_cmd(&cmd[0], addr_size + 2);
 	spi_recv_cmd(data, read_len);
 
+	jz_spi_norflash_address_mode(flash, 0);
 	return 0;
 }
 
@@ -392,13 +418,10 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 	page_size = flash->page_size;
 	addr_size = flash->addr_size;
 
-	cmd[0] = CMD_WREN;
-	if (addr_size == 4) {
-		cmd[1] = CMD_PP_4B;
-	} else {
-		cmd[1] = CMD_PP;
-	}
+	jz_spi_norflash_address_mode(flash, 1);
 
+	cmd[0] = CMD_WREN;
+	cmd[1] = CMD_PP;
 	cmd[addr_size + 2] = CMD_RDSR;
 
 	for (actual = 0; actual < len; actual += chunk_len) {
@@ -408,12 +431,12 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 		for ( i = 0; i < addr_size; i++) {
 			cmd[2 + i] = offset >> (addr_size - i - 1) * 8;
 		}
+
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[0], 1);
 
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[1], addr_size + 1);
-
 
 		for(i = 0; i < chunk_len; i += 100) {
 			if((chunk_len - i) < 100)
@@ -432,6 +455,7 @@ int jz_write(struct spi_flash *flash, u32 offset, size_t len, const void *buf)
 
 		offset += chunk_len;
 	}
+	jz_spi_norflash_address_mode(flash, 0);
 	return 0;
 }
 
@@ -638,29 +662,19 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 		return -1;
 	}
 
+	jz_spi_norflash_address_mode(flash, 1);
+
 	cmd[0] = CMD_WREN;
 
 	switch(erase_size) {
 	case 0x1000 :
-		if (addr_size == 4) {
-			cmd[1] = CMD_ERASE_4K_4B;
-		} else {
-			cmd[1] = CMD_ERASE_4K;
-		}
+		cmd[1] = CMD_ERASE_4K;
 		break;
 	case 0x8000 :
-		if (addr_size == 4) {
-			cmd[1] = CMD_ERASE_32K_4B;
-		} else {
-			cmd[1] = CMD_ERASE_32K;
-		}
+		cmd[1] = CMD_ERASE_32K;
 		break;
 	case 0x10000 :
-		if (addr_size == 4) {
-			cmd[1] = CMD_ERASE_64K_4B;
-		} else {
-			cmd[1] = CMD_ERASE_64K;
-		}
+		cmd[1] = CMD_ERASE_64K;
 		break;
 	default:
 		printf("unknown erase size !\n");
@@ -670,6 +684,7 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 	cmd[addr_size + 2] = CMD_RDSR;
 
 	while(len) {
+
 		for ( i = 0; i < addr_size; i++) {
 			cmd[2 + i] = offset >> (addr_size - i - 1) * 8;
 		}
@@ -685,6 +700,7 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[addr_size + 2], 1);
 		spi_recv_cmd(&buf, 1);
+
 		while(buf & CMD_SR_WIP) {
 			spi_recv_cmd(&buf, 1);
 		}
@@ -693,6 +709,7 @@ int jz_erase(struct spi_flash *flash, u32 offset, size_t len)
 		len -= erase_size;
 	}
 
+	jz_spi_norflash_address_mode(flash, 0);
 	return 0;
 }
 
