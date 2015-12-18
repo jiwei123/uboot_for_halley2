@@ -83,6 +83,7 @@
 #define SSI_GPCMD           (1 << 25)
 
 /* 3/4 bytes address */
+#define CMD_READ4 	0x13	/* Read Data */
 #define CMD_FAST_READ4 	0x0C	/* Read Data at high speed */
 #define CMD_PP_4B 		0x12	/* Page Program(write data) */
 #define CMD_ERASE_4K_4B            0x21

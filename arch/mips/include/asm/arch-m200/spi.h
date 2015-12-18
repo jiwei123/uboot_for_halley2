@@ -83,4 +83,6 @@
 
 #define CMD_SR_WIP			(1 << 0)
 
+/* 3/4 address mode cmd */
+#define CMD_READ4 	0x13	/* Read Data */
 #endif
