@@ -41,7 +41,7 @@
 #include "cloner_efuse.c"
 #include "cloner_spi.c"
 #include "cloner_sfc.c"
-#ifdef CONFIG_MTD_SPINAND
+#if CONFIG_MTD_SPINAND || CONFIG_MTD_SFCNAND
 #include "cloner_spinand.c"
 #endif
 int i2c_program(struct cloner *cloner)
@@ -106,7 +106,13 @@ int cloner_init(struct cloner *cloner)
 		printf("cloner->args->spi_args.rate:%d\n",cloner->args->spi_args.rate);
 	}
 #endif
+#if CONFIG_MTD_SFCNAND
 
+	if(cloner->args->use_sfc_nand){
+		ssi_rate = (&cloner->args->spi_args)->rate;
+		mtd_sfcnand_probe_burner(cloner->args->spi_erase,cloner->args->spi_args.sfc_quad_mode);
+	}
+#endif
 #ifdef CONFIG_JZ_SFC
 	if(cloner->args->use_sfc_nor){
 		if (cloner->args->spi_erase == SPI_ERASE_PART) {
@@ -259,6 +265,11 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 #ifdef CONFIG_JZ_SFC
 		case OPS(SFC_NOR,RAW):
 			cloner->ack = sfc_program(cloner);
+			break;
+#endif
+#ifdef CONFIG_MTD_SFCNAND
+		case OPS(SFC_NAND,RAW):
+			cloner->ack = spinand_program(cloner);
 			break;
 #endif
 		case OPS(MEMORY,RAW):

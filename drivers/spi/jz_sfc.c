@@ -547,7 +547,14 @@ void sfc_send_cmd(unsigned char *cmd,unsigned int len,unsigned int addr ,unsigne
 	}
 
 }
-
+int sfc_nand_write_data(unsigned int *data,unsigned int length)
+{
+	return sfc_write_data(data,length);
+}
+int sfc_nand_read_data(unsigned int *data, unsigned int length)
+{
+	 return sfc_read_data(data,length);
+}
 int jz_sfc_read(struct spi_flash *flash, u32 offset, size_t len, void *data)
 {
 	unsigned char cmd[5];
@@ -1075,5 +1082,59 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 	}
 
 	return 0;
+}
+void sfc_for_nand_init(int sfc_quad_mode)
+{
+	unsigned int i;
+	volatile unsigned int tmp;
+	sfc_rate = 100000000;
+	clk_set_rate(SSI, sfc_rate);
+
+	tmp = jz_sfc_readl(SFC_GLB);
+	tmp &= ~(TRAN_DIR | OP_MODE );
+	tmp |= WP_EN;
+	jz_sfc_writel(tmp,SFC_GLB);
+	tmp = jz_sfc_readl(SFC_DEV_CONF);
+	tmp &= ~(CMD_TYPE | CPHA | CPOL | SMP_DELAY_MSK |
+				THOLD_MSK | TSETUP_MSK | TSH_MSK);
+	tmp |= (CEDL | HOLDDL | WPDL | 1 << SMP_DELAY_OFFSET);
+	jz_sfc_writel(tmp,SFC_DEV_CONF);
+	for (i = 0; i < 6; i++) {
+		jz_sfc_writel((jz_sfc_readl(SFC_TRAN_CONF(i))& (~(TRAN_MODE_MSK | FMAT))),SFC_TRAN_CONF(i));
+	     if(sfc_quad_mode==1)
+	     {
+		unsigned int temp=0;
+		temp=jz_sfc_readl(SFC_TRAN_CONF(i));
+		temp&=~(7<<29);
+		temp|=(5<<29);
+		jz_sfc_writel(temp,SFC_TRAN_CONF(i));
+	     }
+	}
+	jz_sfc_writel((CLR_END | CLR_TREQ | CLR_RREQ | CLR_OVER | CLR_UNDER),SFC_INTC);
+	jz_sfc_writel(0,SFC_CGE);
+	tmp = jz_sfc_readl(SFC_GLB);
+	tmp &= ~(THRESHOLD_MSK);
+	tmp |= (THRESHOLD << THRESHOLD_OFFSET);
+	jz_sfc_writel(tmp,SFC_GLB);
+
+}
+int read_sfcnand_id(u8 *response,size_t len)
+{
+	/* the paraterms is
+	* cmd , len, addr,addr_len
+	* dummy_byte, daten
+	* dir
+	*
+	* */
+	unsigned char cmd[1];
+	//  unsigned char chip_id[4];
+	unsigned int chip_id = 0;
+	cmd[0] = CMD_RDID;
+	sfc_send_cmd(&cmd[0],len,0,1,0,1,0);
+	sfc_read_data(response,len);
+	printf("id0=%02x\n",response[0]);
+	printf("id1=%02x\n",response[1]);
+	printf("SFC_DEV_STA_RT=0x%08x,\n",jz_sfc_readl(SFC_DEV_STA_RT));
+	//  *idcode = chip_id[0];
 }
 

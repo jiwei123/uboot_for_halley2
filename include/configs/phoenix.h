@@ -110,8 +110,9 @@
 			#define  CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off rootfstype=cramfs root=/dev/mtdblock2 ro init=/linuxrc"
 			#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x300000 0x80800000 ;bootm 0x80800000"
 		#else  /* CONFIG_SPL_SFC_NAND */
-			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
-			#define CONFIG_BOOTCOMMAND "sfcnand read 0x80600000 0x800000 0x500000 ;bootm 0x80600000"
+/*			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"*/
+		#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw"
+			#define CONFIG_BOOTCOMMAND "sfcnand read 0x100000 0x400000 0x80600000 ;bootm 0x80600000"
 		#endif
 	#else
 /*#define	 CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.3:/home/rootdir rw"*/
@@ -395,11 +396,26 @@
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
 #define CONFIG_SPL_PAD_TO		16384
 #define CONFIG_SPL_SFC_NAND
-#define CONFIG_CMD_SFC_NAND
+#define CONFIG_MTD_SFCNAND
+#define CONFIG_JZ_SFC
+#define CONFIG_CMD_SFCNAND
 #define CONFIG_CMD_NAND
+#define CONFIG_SPI_SPL_CHECK
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE    0xb3441000
 #define CONFIG_SYS_MAXARGS	6
+
+/*SFCNAND env*/
+/* spi nand environment */
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
+#define CONFIG_ENV_SECT_SIZE 0x20000 /* 128K*/
+#define SPI_NAND_BLK            0x20000 /*the spi nand block size */
+#define CONFIG_ENV_SIZE         SPI_NAND_BLK /* uboot is 1M but the last block size is the env*/
+#define CONFIG_ENV_OFFSET       0xc0000 /* offset is 768k */
+#define CONFIG_ENV_OFFSET_REDUND (CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_IS_IN_SFC_NAND
+
+
 #else
 #define CONFIG_SPI_SPL_CHECK
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
