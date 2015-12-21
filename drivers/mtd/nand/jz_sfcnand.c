@@ -362,9 +362,23 @@ static int sfcnand_read_oob(struct mtd_info *mtd,loff_t addr,struct mtd_oob_ops 
 		printf("%s %d read error pageid = %d!!!\n",__func__,__LINE__,page);
 		return 1;
 	}
-    cmd[0]=CMD_R_CACHE;//get feature
-	sfc_send_cmd(&cmd[0],len,column,2,1,1,0);
-	sfc_nand_read_data(buffer,len);
+        switch(column_cmdaddr_bits){
+        	case 24:
+			cmd[0]=CMD_R_CACHE;//get feature
+			column=(column<<8)&0xffffff00;
+			sfc_send_cmd(&cmd[0],len,column,3,0,1,0);
+			sfc_nand_read_data(buffer,len);
+			break;
+		case 32:
+			cmd[0]=CMD_FR_CACHE;//get feature
+			column=(column<<8)&0xffffff00;
+			sfc_send_cmd(&cmd[0],len,column,4,0,1,0);
+			sfc_nand_read_data(buffer,len);
+			break;
+		default:
+			printk("can't support the column addr format !!!\n");
+			break;
+	}
 
 	return 0;
 }
