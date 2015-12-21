@@ -30,13 +30,23 @@ static struct jz_gpio_func_def uart_gpio_func[] = {
 
 static struct jz_gpio_func_def gpio_func[] = {
 #if defined(CONFIG_JZ_MMC_MSC0_PA_4BIT)
+#if defined(CONFIG_JZ_MMC_MSC0_PA_ENABLE_PULL)
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1 | GPIO_PULL, .pins = 0x00f80000},
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00040000},
+#else
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00fc0000},
+#endif
 #endif
 #if defined(CONFIG_JZ_SSI0_PA)
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_2, .pins = 0x00fc0000},
 #endif
 #if defined(CONFIG_JZ_MMC_MSC0_PA_8BIT)
+#if defined(CONFIG_JZ_MMC_MSC0_PA_ENABLE_PULL)
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1 | GPIO_PULL, .pins = 0x00f800f0},
+	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00040000},
+#else
 	{ .port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x00fc00f0},
+#endif
 #endif
 #if defined(CONFIG_JZ_MMC_MSC0_PE)
 	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0, .pins = 0x30f00000},

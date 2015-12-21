@@ -10,7 +10,7 @@
 //#include <linux/fb.h>
 
 #define DSI_BASE (0xb3014000)
-#define DATALANE_BYTECLOCK_KHZ	(CONFIG_DATALANE_BPS_MHZ * 1000 / 8)
+#define DATALANE_BYTECLOCK_KHZ (CONFIG_DATALANE_BPS_MHZ * 1000 / 8)
 
 #define REFERENCE_FREQ (24000)  //24MHZ, ext
 #define DPHY_DIV_UPPER_LIMIT    (40000)
@@ -61,8 +61,10 @@ struct dsi_config {
 	unsigned char max_hs_to_lp_cycles;
 	unsigned char max_lp_to_hs_cycles;
 	unsigned short max_bta_cycles;
+//	unsigned int max_bps;
 	int color_mode_polarity;
 	int shut_down_polarity;
+	int auto_clklane_ctrl;
 };
 
 typedef enum {

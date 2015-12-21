@@ -35,8 +35,16 @@ void mipi_dsih_write_part(struct dsi_device *dsi, unsigned int reg_address,
 			  unsigned int data, unsigned char shift,
 			  unsigned char width)
 {
-	unsigned int mask = (1 << width) - 1;
-	unsigned int temp = mipi_dsih_read_word(dsi, reg_address);
+	unsigned int mask;
+	unsigned int temp;
+
+	if (width == 32) {
+		mipi_dsih_write_word(dsi, reg_address, data);
+		return ;
+	}
+
+	mask = (1 << width) - 1;
+	temp = mipi_dsih_read_word(dsi, reg_address);
 	temp &= ~(mask << shift);
 	temp |= (data & mask) << shift;
 	mipi_dsih_write_word(dsi, reg_address, temp);
@@ -68,8 +76,10 @@ unsigned int mipi_dsih_read_part(struct dsi_device *dsi,
 				 unsigned int reg_address, unsigned char shift,
 				 unsigned char width)
 {
-	return (mipi_dsih_read_word(dsi, reg_address) >> shift) & ((1 << width)
-								   - 1);
+	if (width == 32)
+		return mipi_dsih_read_word(dsi, reg_address);
+
+	return (mipi_dsih_read_word(dsi, reg_address) >> shift) & ((1 << width) - 1);
 }
 
 /**
@@ -1011,12 +1021,19 @@ int mipi_dsih_hal_gen_cmd_fifo_empty(struct dsi_device *dsi)
 dsih_error_t mipi_dsih_phy_hs2lp_config(struct dsi_device * dsi,
 					unsigned char no_of_byte_cycles)
 {
+	/* clock lane */
+	if (no_of_byte_cycles < 0x400) {
+		mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_TMR_LPCLK_CFG,
+				     no_of_byte_cycles, 16, 10);
+	} else {
+		return ERR_DSI_OVERFLOW;
+	}
+
+	/* data lane */
 	if (no_of_byte_cycles < 0x100) {
 		mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_TMR_CFG,
 				     no_of_byte_cycles, 24, 8);
-	}
-
-	else {
+	} else {
 		return ERR_DSI_OVERFLOW;
 	}
 	return OK;
@@ -1032,14 +1049,22 @@ dsih_error_t mipi_dsih_phy_hs2lp_config(struct dsi_device * dsi,
 dsih_error_t mipi_dsih_phy_lp2hs_config(struct dsi_device * dsi,
 					unsigned char no_of_byte_cycles)
 {
+	/* clock lane */
+	if (no_of_byte_cycles < 0x400) {
+		mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_TMR_LPCLK_CFG,
+				     no_of_byte_cycles, 0, 10);
+	} else {
+		return ERR_DSI_OVERFLOW;
+	}
+
+	/* data lane */
 	if (no_of_byte_cycles < 0x100) {
 		mipi_dsih_write_part(dsi, R_DSI_HOST_PHY_TMR_CFG,
 				     no_of_byte_cycles, 16, 8);
-	}
-
-	else {
+	} else {
 		return ERR_DSI_OVERFLOW;
 	}
+
 	return OK;
 }
 
@@ -1109,6 +1134,11 @@ void mipi_dsih_dphy_test_clock(struct dsi_device *dsi, int value)
 			mipi_dsih_dphy_test_clock(dsi, 0);
 		}
 	}
+}
+
+void mipi_dsih_dphy_enable_auto_clk(struct dsi_device *dsi, int enable)
+{
+	mipi_dsih_write_part(dsi, R_DSI_HOST_LPCLK_CTRL, enable, 1, 1);
 }
 
 void mipi_dsih_dphy_enable_hs_clk(struct dsi_device *dsi, int enable)
@@ -1279,7 +1309,7 @@ dsih_error_t mipi_dsih_gen_wr_packet(struct dsi_device * dsi,
 		return ERR_DSI_OUT_OF_BOUND;
 	}
 	if (param_length > 2) {	/* long packet - write word count to header, and the rest to payload */
-		payload = params + (2 * sizeof(params[0]));
+		payload = params + (2 * sizeof(params[0])); /* point to the really data */
 		word_count = (params[1] << 8) | params[0];
 		if ((param_length - 2) < word_count) {
 			printf
@@ -1292,7 +1322,8 @@ dsih_error_t mipi_dsih_gen_wr_packet(struct dsi_device * dsi,
 		}
 		for (i = 0; i < (param_length - 2); i += j) {
 			temp = 0;
-			for (j = 0; (j < 4) && ((j + i) < (param_length - 2)); j++) {	/* temp = (payload[i + 3] << 24) | (payload[i + 2] << 16) | (payload[i + 1] << 8) | payload[i]; */
+			for (j = 0; (j < 4) && ((j + i) < (param_length - 2)); j++) {
+			 /* temp = (payload[i + 3] << 24) | (payload[i + 2] << 16) | (payload[i + 1] << 8) | payload[i]; */
 				temp |= payload[i + j] << (j * 8);
 			}
 

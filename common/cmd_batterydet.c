@@ -327,6 +327,11 @@ int jz_pm_do_hibernate(void)
 		printf("ricoh618_power_off failed \n");
 #endif
 
+#ifdef CONFIG_PMU_SM5007
+	printf("SM5007  The battery voltage is too low, will power down\n");
+	sm5007_shutdown();
+#endif
+
 	while (a--) {
 		printf
 			("We should not come here, please check the jz4760rtc.h!!!\n");
