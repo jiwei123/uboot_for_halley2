@@ -234,10 +234,18 @@ void spl_sfc_nor_load_image(void)
 
 	sfc_init();
 #ifdef CONFIG_SPL_OS_BOOT
+#ifdef CONFIG_NOR_SPL_BOOT_OS /* norflash spl boot kernel */
+		sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+		spl_parse_image_header(header);
+		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
+		return ;
+#endif //CONFIG_NOR_SPL_BOOT_OS
+
 	nv_map_area((unsigned int)&src_addr);
 	sfc_nor_load(src_addr, count, nv_buf);
 	updata_flag = nv_buf[3];
-	if((updata_flag & 0x3) != 0x3) {
+	if((updata_flag & 0x3) != 0x3)
+	{
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
 		spl_parse_image_header(header);
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
