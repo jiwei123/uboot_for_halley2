@@ -290,7 +290,6 @@ void dump_lcd_reg()
 
 __weak void lcd_open_backlight(void)
 {
-	printf("\n\n\n\n########\n\n\n");
 	return;
 }
 

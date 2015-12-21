@@ -35,9 +35,9 @@
 #ifndef CONFIG_DORADO_V30 // no def
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 #endif //endif CONFIG_DORADO_V30
+
 #define CONFIG_SPL_DDR_SOFT_TRAINING
 #define CONFIG_RTC_JZ47XX
-#ifndef CONFIG_RVMS
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
@@ -45,14 +45,6 @@
 #define CONFIG_SYS_CPU_FREQ		1200000000
 #define CONFIG_SYS_MEM_FREQ		300000000
 
-#else /* defined CONFIG_RVMS */
-#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
-#define CONFIG_CPU_SEL_PLL		APLL
-#define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		800000000
-#define CONFIG_SYS_MEM_FREQ		300000000
-#endif
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 24 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
@@ -63,11 +55,8 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		1
-#ifndef CONFIG_RVMS
-#define CONFIG_BAUDRATE			57600
-#else /* defined CONFIG_RVMS */
-#define CONFIG_BAUDRATE			115200
-#endif
+
+#define CONFIG_BAUDRATE	 	115200
 
 /*#define CONFIG_DDR_TEST_CPU
 #define CONFIG_DDR_TEST*/
@@ -83,15 +72,10 @@
 /*#define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2*/
 #define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2
 #endif // CONFIG_DORADO_V30
-#ifdef CONFIG_DORADO_V20
-#define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1          1   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
-#else
+
 #define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
-#endif
 
 /* #define CONFIG_DDR_DLL_OFF */
 /*
@@ -109,25 +93,8 @@
  * console=ttyS1: kernel boot time (7s)
  * console=null:  kernel boot time (4s), for product board
  */
-#ifndef CONFIG_RVMS
-#if defined(CONFIG_DORADO_V21) || defined(CONFIG_DORADO_V22)
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=256M@0x30000000"
-/*#define BOOTARGS_COMMON "console=null, mem=255M@0x0 mem=256M@0x30000000"*/
-#elif defined(CONFIG_DORADO_V30)
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=256M@0x30000000"
-#else
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=768M@0x30000000"
-#endif
-#else
-#if defined(CONFIG_DORADO_V21)
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=255M@0x0 mem=256M@0x30000000"
-#elif defined(CONFIG_DORADO_V30)
-#define BOOTARGS_COMMON "console=ttyS1,57600n8 mem=255M@0x0 mem=256M@0x30000000"
-#else
-#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=255M@0x0 mem=768M@0x30000000"
-#endif
-#endif
-
+/*#define BOOTARGS_COMMON "console=null, mem=255M@0x0 mem=256M@0x30000000"*/
 #ifdef CONFIG_BOOT_ANDROID
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
 #else
@@ -145,11 +112,7 @@
 /**
  * Boot command definitions.
  */
-#ifdef CONFIG_DORADO_V21
 #define CONFIG_BOOTDELAY 1
-#else
-#define CONFIG_BOOTDELAY 1
-#endif
 
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
@@ -179,15 +142,10 @@
  */
 
 /* LCD */
-#ifndef CONFIG_RVMS
 #define CONFIG_LCD
-#endif
 
 #ifdef CONFIG_LCD
 #define CONFIG_LCD_FORMAT_X8B8G8R8
-#ifdef CONFIG_DORADO_V21
-#define CONFIG_JZ_MIPI_DSI
-#endif
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 
@@ -278,21 +236,6 @@
 /* I2C */
 #define CONFIG_INGENIC_SOFT_I2C
 
-#ifdef CONFIG_DORADO_V20
-#define CONFIG_RICOH61X_I2C_SCL	GPIO_PE(31)
-#define CONFIG_RICOH61X_I2C_SDA	GPIO_PE(30)
-#define CONFIG_SOFT_I2C_READ_REPEATED_START
-/*#define CONFIG_SPL_CORE_VOLTAGE*/
-/*#define CONFIG_SPL_MEM_VOLTAGE*/
-#define CONFIG_PMU_RICOH6x
-#endif
-
-#ifdef CONFIG_DORADO_V21
-#define CONFIG_RICOH61X_I2C_SCL	GPIO_PA(13)
-#define CONFIG_RICOH61X_I2C_SDA	GPIO_PA(12)
-#define CONFIG_SOFT_I2C_READ_REPEATED_START
-#define CONFIG_PMU_RICOH6x
-#endif
 
 #ifdef CONFIG_DORADO_V22
 #define CONFIG_RICOH61X_I2C_SCL	GPIO_PE(31)
