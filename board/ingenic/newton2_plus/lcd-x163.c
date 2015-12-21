@@ -12,7 +12,7 @@
 #include <regulator.h>
 //#include <include/regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v12.h>
 
 #include <jz_lcd/jz_dsim.h>
 #include <jz_lcd/auo_x163.h>

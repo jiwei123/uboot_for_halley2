@@ -22,7 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_2.h>
+#include <jz_lcd/jz_lcd_v12.h>
 #include <jz_lcd/byd_bm8766u.h>
 
 void board_set_lcd_power_on(void)
