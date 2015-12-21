@@ -55,7 +55,7 @@
 #define CONFIG_SYS_UART_INDEX		2
 /*#define CONFIG_SYS_UART2_PD*/
 #define CONFIG_SYS_UART2_PC
-#define CONFIG_BAUDRATE			57600
+#define CONFIG_BAUDRATE			115200
 #endif
 
 /*#define CONFIG_DDR_TEST*/
@@ -101,7 +101,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS2,57600n8 mem=31M@0x0 "
+#define BOOTARGS_COMMON "console=ttyS2,115200n8 mem=31M@0x0 "
 #if defined(CONFIG_SPL_NOR_SUPPORT) || defined(CONFIG_SPL_SFC_SUPPORT)
 	#if defined(CONFIG_SPL_SFC_SUPPORT)
 		#if defined(CONFIG_SPL_SFC_NOR)
