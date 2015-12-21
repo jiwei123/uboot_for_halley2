@@ -855,7 +855,7 @@ static void show_charging_logo_tencent_os(void)
 
 		current_time = get_charging_tick();
 		if (current_time != last_time) {
-			show_rle_picture_in_fb_middle(rle_charge_logo_addr + lcd_flush_count % 2);
+			show_rle_picture_in_fb_middle(rle_charge_logo_addr + lcd_flush_count % ARRAY_SIZE(rle_charge_logo_addr));
 			lcd_flush_count++;
 			last_time = current_time;
 		}
