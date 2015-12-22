@@ -139,9 +139,9 @@
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
 #endif
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
-#define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock4 rw"
-#undef  CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND          "bootx sfc 0x80f00000 0xd00000"
+#define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+#undef CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND          "bootx fat mmc 0:0 0x80f00000 zImage-ramfs"
 #endif
 
 #define PARTITION_NUM 10

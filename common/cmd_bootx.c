@@ -31,6 +31,8 @@
 #include <config.h>
 #include <mmc.h>
 #include <boot_img.h>
+#include <fs.h>
+#include <fat.h>
 
 extern void flush_cache_all(void);
 
@@ -110,7 +112,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 #endif
 static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	unsigned long mem_address,sfc_addr, size;
+	unsigned long mem_address,sfc_addr;
 	/* Consume 'boota' */
         argc--; argv++;
 	if (argc < 2)
@@ -139,6 +141,40 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 		printf("SPI boot error\n");
 		return 0;
+	} else if (!strcmp("fat", argv[0])) {
+		unsigned long time;
+		int len_read;
+
+		/* Get fat block device */
+		if (fs_set_blk_dev(argv[1], (argc >= 3) ? argv[2] : NULL, FS_TYPE_FAT)) {
+			printf("Fat no %s device\n", argv[1]);
+			return CMD_RET_FAILURE;
+		}
+
+		mem_address = simple_strtoul(argv[3], NULL, 16);
+
+		/* fat DOS filesystem read */
+		time = get_timer(0);
+		len_read = fs_read(argv[4], mem_address, sizeof(struct image_header), 0);
+		time = get_timer(time);
+		if (len_read <= 0) {
+			printf("FAT read failed\n");
+			return CMD_RET_FAILURE;
+		}
+
+		printf("%d bytes read in %lu ms", len_read, time);
+		if (time > 0) {
+			puts(" (");
+			print_size(len_read / time * 1000, "/s");
+			puts(")");
+		}
+		puts("\n");
+
+		setenv_hex("filesize", len_read);
+
+		printf("FAT boot start\n");
+		bootx_jump_kernel(mem_address);
+		printf("FAT boot error\n");
 	} else {
 		printf("%s boot unsupport\n", argv[0]);
                 return CMD_RET_USAGE;
@@ -157,6 +193,6 @@ static char bootx_help_text[] =
 #endif
 
 U_BOOT_CMD(
-	bootx, 5, 1, do_bootx,
+	bootx, 6, 1, do_bootx,
 	"boot xImage ",bootx_help_text
 );
