@@ -13,7 +13,7 @@
 //#include <include/regulator.h>
 #include <asm/gpio.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
-
+#include <linux/err.h>
 #include <jz_lcd/jz_dsim.h>
 #include <jz_lcd/auo_x163.h>
 
@@ -21,6 +21,7 @@ struct lcd_power_regulator {
     char *name;
     int  voltage;
     int  mdelay;
+    struct regulator *regulator;
 };
 
 #define LCD_REGULATOR_REG(_name, _voltage, _mdelay) \
@@ -33,27 +34,27 @@ struct lcd_power_regulator {
 static struct lcd_power_regulator lcd_power_regulator[] = {
 #ifdef CONFIG_PMU_RICOH6x
 #if defined(CONFIG_AW808)
-    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO6",  2800000, 0),
+    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO6",  2800000, 5),
 #elif defined(CONFIG_X3)
-    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO6",  2800000, 0),
+    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO6",  2800000, 5),
 #elif defined(CONFIG_F1)
-    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO6",  2950000, 0),
+    LCD_REGULATOR_REG("RICOH619_DC5",   3400000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO4",  1800000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO6",  2950000, 5),
 #else
-    LCD_REGULATOR_REG("RICOH619_LDO9",  1800000, 0),
-    LCD_REGULATOR_REG("RICOH619_LDO10", 3300000, 0),
+    LCD_REGULATOR_REG("RICOH619_LDO9",  1800000, 5),
+    LCD_REGULATOR_REG("RICOH619_LDO10", 3300000, 5),
 #endif
 #elif defined CONFIG_PMU_D2041
 #elif defined CONFIG_PMU_SM5007
 #if defined(CONFIG_SOLAR)
-    LCD_REGULATOR_REG("SM5007_BUCK4", 3300000, 0),
-    LCD_REGULATOR_REG("SM5007_LDO2",  1800000, 0),
-    LCD_REGULATOR_REG("SM5007_LDO4",  2800000, 0),
+    LCD_REGULATOR_REG("SM5007_BUCK4", 3300000, 5),
+    LCD_REGULATOR_REG("SM5007_LDO2",  1800000, 5),
+    LCD_REGULATOR_REG("SM5007_LDO4",  2800000, 5),
 #endif
 #endif
 };
@@ -74,7 +75,7 @@ static struct lcd_power_regulator lcd_power_regulator[] = {
 #define MIPI_RST_N GPIO_PD(3)
 #endif
 
-static int inline lcd_power_regulator_init(const char *id, int voltage, int delay)
+static inline struct regulator *lcd_power_regulator_init(const char *id, int voltage, int delay)
 {
     struct regulator *lcd_regulator;
     if (voltage < 0 || id == NULL ) {
@@ -88,22 +89,37 @@ static int inline lcd_power_regulator_init(const char *id, int voltage, int dela
         regulator_enable(lcd_regulator);
     } else {
         printf("%s regulator get failed\n", id);
-        return -1;
+        return NULL;
     }
 
     if (delay);
         mdelay(delay);
 
-    return 0;
+    return lcd_regulator;
 }
 
 void board_set_lcd_power_on(void)
 {
     int i;
     for (i = 0; i < ARRAY_SIZE(lcd_power_regulator); i++) {
-        lcd_power_regulator_init(lcd_power_regulator[i].name,
+		struct regulator *reg = NULL;
+        reg = lcd_power_regulator_init(lcd_power_regulator[i].name,
                 lcd_power_regulator[i].voltage,
                 lcd_power_regulator[i].mdelay);
+		if (!reg) {
+			printf("init lcd power %s error:%d\n", lcd_power_regulator[i].name, PTR_ERR(reg));
+		} else {
+			lcd_power_regulator[i].regulator = reg;
+		}
+    }
+}
+
+void board_set_lcd_power_off(void)
+{
+    int i;
+    for (i = 0; i < ARRAY_SIZE(lcd_power_regulator); i++) {
+		regulator_disable(lcd_power_regulator[i].regulator);
+		mdelay(lcd_power_regulator[i].mdelay);
     }
 }
 

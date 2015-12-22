@@ -30,7 +30,9 @@ void panel_pin_init(void);
 void panel_power_on(void);
 void panel_power_off(void);
 void panel_init_set_sequence(struct dsi_device *dsi);
+void panel_suspend(void);
 void board_set_lcd_power_on(void);
+void board_set_lcd_power_off(void);
 #if PWM_BACKLIGHT_CHIP
 void lcd_set_backlight_level(int num);
 void lcd_close_backlight(void);

@@ -21,16 +21,15 @@
 #include <asm/arch/lcdc.h>
 #include <asm/arch/gpio.h>
 #include <regulator.h>
-
 #include <jz_lcd/jz_dsim.h>
 #include <jz_lcd/auo_x163.h>
 #include "../jz_mipi_dsi/jz_mipi_dsih_hal.h"
-
 
 #ifdef CONFIG_TPS65137
 void tps65137_digital_pulse_power_on(int gpio, int low_enable, unsigned int level);
 void tps65137_digital_pulse_power_off(int gpio, int low_enable);
 #endif
+extern struct dsi_device *dsi;
 
 vidinfo_t panel_info = { 320, 320, LCD_BPP, };
 
@@ -117,6 +116,13 @@ void auo_x163_set_pixel_on(struct dsi_device *dsi) /* set_pixels_on */
 	write_command(dsi, data_to_send);
 }
 
+void auo_x163_normal_display_mode_on(struct dsi_device *dsi) /* set_pixels_on */
+{
+	struct dsi_cmd_packet data_to_send = {0x39, 0x02, 0x00, {0x13,0x00}};
+
+	write_command(dsi, data_to_send);
+}
+
 void auo_x163_set_brightness(struct dsi_device *dsi, unsigned int brightness) /* set brightness */
 {
 	if(brightness >= 255) {
@@ -127,15 +133,30 @@ void auo_x163_set_brightness(struct dsi_device *dsi, unsigned int brightness) /*
 	write_command(dsi, data_to_send);
 }
 
+void auo_display_on (struct dsi_device *dsi)
+{
+#ifdef CONFIG_TPS65137
+	tps65137_digital_pulse_power_on(auo_x163_pdata.gpio_lcd_bl, 0, 19);
+#endif
+	auo_x163_display_on(dsi);
+
+#ifdef CONFIG_TPS65137
+	auo_x163_normal_display_mode_on(dsi);
+#else
+	auo_x163_normal_display_mode_on(dsi);
+	gpio_direction_output(auo_x163_pdata.gpio_lcd_bl, 1);
+#endif
+}
+
 void panel_power_on(void)
 {
 	debug("--------------------%s\n", __func__);
 	gpio_direction_output(auo_x163_pdata.gpio_rst, 1);
 	gpio_direction_output(auo_x163_pdata.gpio_rst, 0);  //reset active low
-	mdelay(5);
+	udelay(22);
 	gpio_direction_output(auo_x163_pdata.gpio_rst, 1);
 	mdelay(5);
-	serial_puts("auo_x163 panel display on\n");
+	serial_puts("auo_x163 panel reset\n");
 }
 
 /**
@@ -143,11 +164,8 @@ void panel_power_on(void)
  */
 void lcd_open_backlight(void)
 {
-#ifdef CONFIG_TPS65137
-	tps65137_digital_pulse_power_on(auo_x163_pdata.gpio_lcd_bl, 0, 19);
-#else
-	gpio_direction_output(auo_x163_pdata.gpio_lcd_bl, 1);
-#endif
+	auo_display_on(dsi);
+	auo_x163_set_brightness(dsi, CONFIG_SYS_BACKLIGHT_LEVEL);
 
 	return;
 }
@@ -265,7 +283,8 @@ static void auo_x163_panel_condition_setting(struct dsi_device *dsi)
 	ops_cmd_write(auo_x163_cmd_list3);
 
 	//backlight default is 0x00
-	//ops_cmd_write(auo_x163_cmd_list10);
+	ops_cmd_write(auo_x163_cmd_list10);
+	auo_x163_set_pixel_off(dsi);
 
 	//4
 	mdelay(300);
@@ -282,7 +301,6 @@ static void auo_x163_panel_condition_setting(struct dsi_device *dsi)
 	//7
 	mdelay(20);
 	ops_cmd_write(auo_x163_cmd_list7);
-
 	//8
 	mdelay(20);
 	ops_cmd_write(auo_x163_cmd_list8);
@@ -290,6 +308,7 @@ static void auo_x163_panel_condition_setting(struct dsi_device *dsi)
 	//10
 	mdelay(20);
 	ops_cmd_write(auo_x163_cmd_list9);
+
 }
 
 void panel_init_set_sequence(struct dsi_device *dsi)
@@ -301,6 +320,18 @@ void panel_init_set_sequence(struct dsi_device *dsi)
 	//auo_x163_display_on(dsi);
 	//auo_x163_memory_access(dsi);
 	//mdelay(10);
+}
+
+void panel_suspend(void)
+{
+	auo_x163_set_brightness(dsi, 0);
+	auo_x163_set_pixel_off(dsi);
+	lcd_close_backlight();
+	auo_x163_display_off(dsi);
+	mdelay(5);
+	auo_x163_sleep_in(dsi);
+	mdelay(120);
+	gpio_direction_output(auo_x163_pdata.gpio_rst, 0);
 }
 
 void panel_pin_init(void)

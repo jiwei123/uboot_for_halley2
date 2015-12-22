@@ -303,6 +303,8 @@ static int jz_pm_do_hibernate(void)
 	printf("jz_do_hibernate...\n");
 
 	lcd_close_backlight();
+	panel_suspend();
+	board_set_lcd_power_off();
 	/*
 	 * RTC Wakeup or 1Hz interrupt can be enabled or disabled
 	 * through  RTC driver's ioctl (linux/driver/char/rtc_jz.c).
@@ -694,7 +696,7 @@ static int voltage_to_rle_num(void)
 			rle_num_base = (vsys - battery_voltage_min) / battery_voltage_scale - 1;
 		} else {
 			rle_num_base = 5;
-		}   
+		}
 		return rle_num_base;
 	}
 #else

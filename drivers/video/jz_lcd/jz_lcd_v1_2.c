@@ -36,8 +36,9 @@
 #include <jz_lcd/jz_dsim.h>
 #include "./jz_mipi_dsi/jz_mipi_dsi_regs.h"
 #include "./jz_mipi_dsi/jz_mipi_dsih_hal.h"
+
 struct dsi_device *dsi;
-void jz_dsi_init();
+void jz_dsi_init(struct dsi_device *dsi);
 int jz_dsi_video_cfg(struct dsi_device *dsi);
 #endif
 
@@ -1130,3 +1131,24 @@ void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue)
 {
 	return;
 }
+
+void __attribute__((weak)) panel_suspend(void)
+{
+	printf("no %s implement\n", __func__);
+}
+
+void __attribute__((weak)) board_set_lcd_power_off(void)
+{
+	printf("no %s implement\n", __func__);
+}
+
+static int do_lcd_suspend(cmd_tbl_t * cmdtp, int flag, int argc,
+							 char *const argv[]) {
+//	lcd_clear_black();
+	panel_suspend();
+	board_set_lcd_power_off();
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(lcd_suspend, 4, 1, do_lcd_suspend,
+	   "suspend the lcd panel", "lcd_suspend");
