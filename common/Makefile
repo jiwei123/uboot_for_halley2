@@ -50,6 +50,7 @@ COBJS-$(CONFIG_CMD_BOOTM) += cmd_bootm.o
 COBJS-y += cmd_help.o
 COBJS-y += cmd_version.o
 COBJS-y += cmd_ddr_test.o
+COBJS-y += cmd_vibrator_shock.o
 
 # environment
 COBJS-y += env_attr.o

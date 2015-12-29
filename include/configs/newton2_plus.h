@@ -476,4 +476,10 @@
 #define CONFIG_GPIO_CHARGE_DETECT               GPIO_PG(12)
 #define CONFIG_GPIO_CHARGE_DETECT_ENLEVEL       0
 */
+/*  ***************************GPIO VIBRATOR***************************** */
+#if defined(CONFIG_VIBRATE_GPIO)
+#define	VIBRATOR_EN	   -1
+#define	ACTIVE_LEVEL	0
+#endif
+/*  ***************************GPIO VIBRATOR***************************** */
 #endif /* __CONFIG_DORAOD_H__ */
