@@ -686,10 +686,10 @@ static int get_rle_num(void)
 	}else{
 		if (capacity < 10) {
 			rle_num_base = 0;
-		} else if (capacity > 95) {
+		} else if (capacity > 90) {
 			rle_num_base = 4;
 		} else if (logo_charge_num > 2) {
-			rle_num_base = 1 + (capacity - 10) * (logo_charge_num - 2) / 86;
+			rle_num_base = 1 + (capacity - 10) * (logo_charge_num - 2) / 81;
 		}
 	}
 #ifdef CONFIG_RTC_POWER_DETECT
