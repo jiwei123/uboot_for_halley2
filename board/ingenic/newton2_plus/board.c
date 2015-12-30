@@ -87,7 +87,9 @@ int board_early_init_r(void)
 #ifdef CONFIG_JZ_GPIO
 	gpio_init();
 #endif
+#ifdef CONFIG_VIBRATE_REGULATOR
 	vibrate_at_machine_begin(NULL,0,1,NULL);
+#endif
 	return 0;
 }
 

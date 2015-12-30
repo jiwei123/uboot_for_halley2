@@ -50,7 +50,6 @@ COBJS-$(CONFIG_CMD_BOOTM) += cmd_bootm.o
 COBJS-y += cmd_help.o
 COBJS-y += cmd_version.o
 COBJS-y += cmd_ddr_test.o
-COBJS-y += cmd_vibrator_shock.o
 
 # environment
 COBJS-y += env_attr.o
@@ -97,6 +96,7 @@ COBJS-$(CONFIG_CMD_CPLBINFO) += cmd_cplbinfo.o
 COBJS-$(CONFIG_DATAFLASH_MMC_SELECT) += cmd_dataflash_mmc_mux.o
 COBJS-$(CONFIG_CMD_DATE) += cmd_date.o
 COBJS-$(CONFIG_CMD_SOUND) += cmd_sound.o
+COBJS-$(CONFIG_VIBRATE_REGULATOR) += cmd_vibrator_shock.o
 ifdef CONFIG_4xx
 COBJS-$(CONFIG_CMD_SETGETDCR) += cmd_dcr.o
 endif
