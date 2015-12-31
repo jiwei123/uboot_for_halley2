@@ -159,6 +159,6 @@ void pll_init(void)
 	cpccr = CPCCR_CFG | (7 << 20);
 	cpm_outl(cpccr,CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
-
+	print_clock();
 	debug("pll init ok\n");
 }

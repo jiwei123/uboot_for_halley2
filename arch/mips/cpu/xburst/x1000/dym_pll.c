@@ -213,11 +213,12 @@ void pll_init(void)
 	tmp = (cpccr & (0xff << 24)) | (cpm_inl(CPM_CPCCR) & ~(0xff << 24));
 	cpm_outl(tmp ,CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
-
-	printf("cpuspeed:%d\n",gd->arch.gi->cpufreq);
+	print_clock();
+/*	printf("cpuspeed:%d\n",gd->arch.gi->cpufreq);
 	printf("ddrspeed:%d\n",gd->arch.gi->ddrfreq);
 	printf("ddrdiv:%d\n", gd->arch.gi->ddr_div);
 	printf("cpapcr %x\n", cpm_inl(CPM_CPAPCR));
 	printf("cpmpcr %x\n", cpm_inl(CPM_CPMPCR));
 	printf("cpccr:%x\n", cpm_inl(CPM_CPCCR));
+*/
 }

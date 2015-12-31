@@ -485,7 +485,7 @@ void clk_init(void)
 
 	reg_clkgr &= ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR);
-	
+
 reg_clkgr = cpm_inl(CPM_CLKGR1);
 	gate = 0
 #ifdef CONFIG_JZ_EPD
@@ -598,4 +598,35 @@ void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {
 	tmp_reg &= ~CPM_CLKGR_OTG;
 	cpm_outl(tmp_reg, CPM_CLKGR);
 #endif
+}
+
+void print_clock()
+{
+        unsigned apll=0, mpll=0, cclk=0, l2clk=0, h0clk=0,h2clk=0,pclk=0, pll_tmp=0,cpccr=0;
+        int chose_tmp;
+        apll=pll_get_rate(APLL);
+        mpll=pll_get_rate(MPLL);
+        cpccr=cpm_inl(CPM_CPCCR);
+        chose_tmp=( cpccr  >> 28) & 3;
+        if(chose_tmp==1){
+                l2clk=apll/((cpccr>>4) & 0xf);
+        }else if(chose_tmp==2){
+                l2clk=mpll/((cpccr>>4) & 0xf);
+        }
+        chose_tmp=( cpccr  >> 26) & 3;
+        if(chose_tmp==1){
+                h0clk=apll/((cpccr>>8) & 0xf);
+        }else if(chose_tmp==2){
+                h0clk=mpll/((cpccr>>8) & 0xf);
+        }
+        chose_tmp=( cpccr  >> 24) & 3;
+        if(chose_tmp==1){
+                h2clk=apll/((cpccr>>12) & 0xf);
+                pclk=apll/((cpccr>>16) & 0xf);
+        }else if(chose_tmp==2){
+                h2clk=mpll/((cpccr>>12) & 0xf);
+                pclk=mpll/((cpccr>>16) & 0xf);
+        }
+        printf("ddrfreq= %d\ncpufreq= %d\nL2cachefreq= %d\n",gd->arch.gi->ddrfreq,gd->arch.gi->cpufreq,l2clk);
+        printf("AHB0freq= %d\nAHB2freq= %d\npclk %d\n",h0clk,h2clk,pclk);
 }
