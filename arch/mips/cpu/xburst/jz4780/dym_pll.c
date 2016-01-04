@@ -97,7 +97,7 @@ void pll_init(void)
 	if(tmp < 1)
 		tmp = 1;
 	mpll_value = nfro(ginfo->extal,ginfo->ddrfreq * tmp);
-	
+
 	cpm_outl(mpll_value | 0x1,CPM_CPMPCR);
 	while(!(cpm_inl(CPM_CPMPCR) & (0x1<<4)));
 
@@ -110,15 +110,15 @@ void pll_init(void)
 	}else {
 		cpccr = CPCCR_CFG(2,2,2,2,4,2,tmp,2,1) | (7 << 20);
 	}
-/*
+
 	printf("cpuspeed:%d\n",ginfo->cpufreq);
 	printf("ddrspeed:%d\n",ginfo->ddrfreq);
 	printf("tmp:%d\n",tmp);
 	printf("cpccr:%x\n",cpccr);
-*/
+
 	cpm_outl(cpccr,CPM_CPCCR);
 	while(cpm_inl(CPM_CPCSR) & 0x7);
-	print_clock() ;
+//	print_clock() ;
 }
 
 #endif

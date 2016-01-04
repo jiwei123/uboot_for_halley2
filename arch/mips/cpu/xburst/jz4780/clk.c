@@ -390,7 +390,7 @@ void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {
 	cpm_outl(tmp_reg,CPM_CLKGR0);
 #endif
 }
-void print_clock()
+/*void print_clock()
 {
         unsigned apll=0, mpll=0, cclk=0, l2clk=0, h0clk=0,h2clk=0,pclk=0, pll_tmp=0,cpccr=0;
         int chose_tmp;
@@ -420,4 +420,4 @@ void print_clock()
         printf("ddrfreq= %d\ncpufreq= %d\nL2cachefreq= %d\n",gd->arch.gi->ddrfreq,gd->arch.gi->cpufreq,l2clk);
         printf("AHB0freq= %d\nAHB2freq= %d\npclk %d\n",h0clk,h2clk,pclk);
 }
-
+*/
