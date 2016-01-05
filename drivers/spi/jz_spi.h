@@ -26,6 +26,7 @@
 #ifdef CONFIG_JZ_SFC
 #include <asm/arch/sfc.h>
 #endif
+#define SPL_TYPE_FLAG_LEN       6
 #define SSI_BASE SSI0_BASE
 #define COMMAND_MAX_LENGTH		8
 #define SIZEOF_NAME			32
@@ -65,7 +66,29 @@ struct jz_spi_slave {
 	unsigned int mode;
 	unsigned int max_hz;
 };
-
+struct jz_spi_support_from_burner{
+		unsigned int id_manufactory;
+		char id_device;
+		char name[32];
+		int page_size;
+		int oobsize;
+		int sector_size;
+		int block_size;
+		int size;
+		int page_num;
+		uint32_t tRD_maxbusy;
+		uint32_t tPROG_maxbusy;
+		uint32_t tBERS_maxbusy;
+		unsigned short column_cmdaddr_bits;
+};
+struct nand_param_from_burner {
+	int version;
+	int flash_type;
+	int para_num;
+	struct jz_spi_support_from_burner *addr;
+	int partition_num;
+	struct jz_spinand_partition *partition;
+};
 static struct jz_spi_support jz_spi_nand_support_table[] = {
 
 	{

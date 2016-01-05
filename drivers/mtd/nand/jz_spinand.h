@@ -11,7 +11,7 @@
 #define UBI_MANAGER		0x1
 
 struct jz_spinand_partition {
-	char *name;         /* identifier string */
+	char name[32];         /* identifier string */
 	uint32_t size;          /* partition size */
 	uint32_t offset;        /* offset within the master MTD space */
 	u_int32_t mask_flags;       /* master MTD flags to mask out for this partition */

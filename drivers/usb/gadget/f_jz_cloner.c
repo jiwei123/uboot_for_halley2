@@ -95,7 +95,8 @@ int cloner_init(struct cloner *cloner)
 	if(cloner->args->use_spi_nand){
 		ssi_rate = (&cloner->args->spi_args)->rate;
 		printf("******** ssi_rate = %d oldrate = %d spi_erase = %d\n",ssi_rate,(&cloner->args->spi_args)->rate,cloner->args->spi_erase);
-		mtd_spinand_probe_burner(/*&cloner->args->MTDPartInfo,*/cloner->args->spi_erase);
+		get_burner_nandinfo(cloner,&nand_param_from_burner);
+		mtd_spinand_probe_burner(&(cloner->args->spi_erase),&nand_param_from_burner);
 	}
 #endif
 
@@ -110,7 +111,8 @@ int cloner_init(struct cloner *cloner)
 
 	if(cloner->args->use_sfc_nand){
 		ssi_rate = (&cloner->args->spi_args)->rate;
-		mtd_sfcnand_probe_burner(cloner->args->spi_erase,cloner->args->spi_args.sfc_quad_mode);
+		get_burner_nandinfo(cloner,&nand_param_from_burner);
+		mtd_sfcnand_probe_burner(&(cloner->args->spi_erase),cloner->args->spi_args.sfc_quad_mode,&nand_param_from_burner);
 	}
 #endif
 #ifdef CONFIG_JZ_SFC

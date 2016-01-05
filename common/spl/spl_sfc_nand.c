@@ -337,7 +337,7 @@ void spl_sfc_nand_load_image(void)
 
 	spl_parse_image_header(header);
 	sfc_nand_load(CONFIG_UBOOT_OFFSET,CONFIG_SYS_MONITOR_LEN,(void *)CONFIG_SYS_TEXT_BASE);
-	/*sfc_read_page(0x100000/2048,0x80100000,2048);
+/*	sfc_read_page(0x100000/2048,0x80100000,2048);
 	for(i=0;i<2048;)
 	{
 		printf("%x",((unsigned char *)0x80100000)[i]);
@@ -345,6 +345,7 @@ void spl_sfc_nand_load_image(void)
 		if(i%12==0)printf("\n");
 	}
 	printf("\n");
-	while(1);*/
+	while(1);
+	*/
 }
 

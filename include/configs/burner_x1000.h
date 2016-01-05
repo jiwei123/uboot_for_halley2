@@ -136,7 +136,6 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_BURN		/*ingenic usb burner support*/
-
 /**
  * Serial download configuration
  */
@@ -204,7 +203,7 @@
 #define CONFIG_SPL_TEXT_BASE		0xf4001800
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x1000)
 #define CONFIG_SPL_SERIAL_SUPPORT
-
+#define CONFIG_SPIFLASH_PART_OFFSET	0x3c00
 /*
  *MTD
  */

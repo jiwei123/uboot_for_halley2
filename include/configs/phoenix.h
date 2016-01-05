@@ -402,6 +402,7 @@
 #define CONFIG_UBOOT_OFFSET             (4<<12)
 #define CONFIG_JZ_SFC_PA_6BIT
 #ifdef	CONFIG_SPL_SFC_NAND
+#define CONFIG_SPIFLASH_PART_OFFSET     0x3c00
 #define CONFIG_SPI_NAND_BPP			(2048 +64)		/*Bytes Per Page*/
 #define CONFIG_SPI_NAND_PPB			(64)		/*Page Per Block*/
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
@@ -438,6 +439,7 @@
 #endif
 
 #ifdef CONFIG_SPL_SPI_NAND
+#define CONFIG_SPIFLASH_PART_OFFSET     0x3c00
 #define CONFIG_UBOOT_OFFSET             (4<<12)
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
