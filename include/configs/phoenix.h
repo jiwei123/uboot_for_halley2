@@ -495,6 +495,7 @@
 #define CONFIG_JZ_SFC
 /*#define CONFIG_SPI_DUAL*/
 #define CONFIG_SPI_QUAD
+#define CONFIG_SPIFLASH_PART_OFFSET     0x3c00
 #endif
 /**
  * MBR configuration

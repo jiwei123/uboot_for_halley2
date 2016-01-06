@@ -117,6 +117,7 @@ int cloner_init(struct cloner *cloner)
 #endif
 #ifdef CONFIG_JZ_SFC
 	if(cloner->args->use_sfc_nor){
+		get_norflash_params_from_burner((unsigned char *)cloner->args + sizeof(struct arguments));
 		if (cloner->args->spi_erase == SPI_ERASE_PART) {
 			sfc_erase(cloner);
 		}
