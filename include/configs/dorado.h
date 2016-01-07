@@ -96,7 +96,7 @@
 #define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=255M@0x0 mem=256M@0x30000000"
 /*#define BOOTARGS_COMMON "console=null, mem=255M@0x0 mem=256M@0x30000000"*/
 #ifdef CONFIG_BOOT_ANDROID
-  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init androidboot.hardware=dorado"
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.8.3:/home/nfsroot/bliu/buildroot rw" */
