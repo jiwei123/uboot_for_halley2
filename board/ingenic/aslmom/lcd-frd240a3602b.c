@@ -22,7 +22,7 @@
 
 #include <regulator.h>
 #include <asm/gpio.h>
-#include <jz_lcd/jz_lcd_v1_3.h>
+#include <jz_lcd/jz_lcd_v13.h>
 #include <jz_lcd/frd240a3602b.h>
 
 unsigned long frd240a3602b_cmd_buf[]= {
