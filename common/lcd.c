@@ -436,8 +436,9 @@ int lcd_get_size(int *line_length)
 int drv_lcd_init(void)
 {
 	struct stdio_dev lcddev;
-	int rc;
-
+	int rc = 0;
+	if((get_update_flag() & 0x3) == 0x3)
+		return 1;
 	lcd_base = (void *) gd->fb_base;
 
 	lcd_init(lcd_base);		/* LCD initialization */
@@ -625,7 +626,10 @@ void lcd_clear(void)
 static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 			char *const argv[])
 {
-	lcd_clear();
+	if((get_update_flag() & 0x3) != 0x3){
+		printf("====>get_update_flag = %x\n",get_update_flag());
+		lcd_clear();
+	}
 	return 0;
 }
 
