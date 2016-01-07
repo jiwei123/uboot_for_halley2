@@ -102,7 +102,7 @@ int main (int argc, char *argv[])
 	int	mode = -1, i, j, x;
 	FILE	*fp;
 	uint16_t data_offset, n_colors = 0;
-	int nbit;
+	uint16_t nbit;
 
 	if (argc < 3) {
 		usage(argv[0]);
@@ -154,6 +154,7 @@ int main (int argc, char *argv[])
 		data_offset = le_short(data_offset);
 		b->width = le_short(b->width);
 		b->height = le_short(b->height);
+		nbit = le_short(nbit);
 		n_colors = le_short(n_colors);
 
 		if(nbit != 24) {

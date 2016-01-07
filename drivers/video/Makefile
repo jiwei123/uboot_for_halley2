@@ -75,6 +75,7 @@ COBJS-$(CONFIG_VIDEO_ED060XD1) += jz4775_epd/epd_panel/ED060XD1/lcd-ED060XD1.o  
 COBJS-$(CONFIG_VIDEO_BYD_9177AA) += jz_lcd/lcd_panel/byd_9177aa.o
 COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += jz_lcd/lcd_panel/truly_tft240240_2_e.o
 COBJS-$(CONFIG_VIDEO_BOE_TFT320320) += jz_lcd/lcd_panel/boe_tft320320.o
+COBJS-$(CONFIG_VIDEO_FRD240A3602B) += jz_lcd/lcd_panel/frd240a3602b.o
 COBJS-$(CONFIG_VIDEO_LH155) += jz_lcd/lcd_panel/lh155.o
 COBJS-$(CONFIG_JZ_MIPI_DSI) += jz_lcd/jz_mipi_dsi/jz_mipi_dsi.o jz_lcd/jz_mipi_dsi/jz_mipi_dsi_lowlevel.o jz_lcd/jz_mipi_dsi/jz_mipi_dsih_hal.o \
 				jz_lcd/jz_mipi_dsi/write_command_to_mipi.o

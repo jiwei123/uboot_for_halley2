@@ -69,7 +69,6 @@
 #include <video_font.h>		/* Get font data, width and height	*/
 #include <video_font_data.h>
 
-
 /************************************************************************/
 /* ** LOGO DATA								*/
 /************************************************************************/
@@ -443,6 +442,7 @@ int drv_lcd_init(void)
 
 	lcd_init(lcd_base);		/* LCD initialization */
 
+#ifdef CONFIG_LCD_INFO
 	/* Device initialization */
 	memset(&lcddev, 0, sizeof(lcddev));
 
@@ -453,6 +453,7 @@ int drv_lcd_init(void)
 	lcddev.puts  = lcd_puts;		/* 'puts' function */
 
 	rc = stdio_register(&lcddev);
+#endif
 
 	return (rc == 0) ? 1 : rc;
 }
@@ -1247,7 +1248,7 @@ static void *lcd_logo(void)
 #if defined(CONFIG_RLE_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
 	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
 #else
-	bitmap_plot(0, 85);
+	bitmap_plot(0, 0);
 #endif
 	flush_cache_all();
 #ifdef CONFIG_LCD_INFO

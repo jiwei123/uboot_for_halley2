@@ -888,6 +888,11 @@ static void jzfb_slcd_mcu_init(struct jzfb_config_info *info)
 		printf("the slcd slcd_cfg_new is %08x\n", tmp);
 	}
 
+#if defined(CONFIG_VIDEO_FRD240A3602B)
+	reg_write(SLCDC_CFG_NEW,reg_read(SLCDC_CFG_NEW) & (0x0<<8));
+	reg_write(SLCDC_CFG_NEW,reg_read(SLCDC_CFG_NEW) | (0x01<<9));
+#endif
+
 #ifdef CONFIG_FB_JZ_DEBUG
 	/*for register mode test,
 	 * you can write test code according to the lcd panel
