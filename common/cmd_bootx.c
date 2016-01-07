@@ -33,6 +33,8 @@
 #include <mmc.h>
 #include <boot_img.h>
 #include <asm/gpio.h>
+#include <fs.h>
+#include <fat.h>
 extern void flush_cache_all(void);
 
 
@@ -134,9 +136,14 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long mem_address,sfc_addr, size;
 	unsigned int update_flag;
-	update_flag = get_update_flag();
-	/* Consume 'boota' */
         argc--; argv++;
+	update_flag = get_update_flag();
+	if((update_flag & 0x3) != 0x3)	{
+		strcpy(argv[0],"sfc");
+		strcpy(argv[1],argv[3]);
+	}
+	printf("argv[0]: %s,argv[1]:%s\n",argv[0],argv[1]);
+	/* Consume 'boota' */
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
@@ -147,10 +154,10 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("mem boot error\n");
 	} else if (!strcmp("sfc",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
-		if((update_flag & 0x03) != 0x03)
+	//	if((update_flag & 0x03) != 0x03)
 			sfc_addr = 0x100000;
-		else
-			sfc_addr = simple_strtoul(argv[2], NULL, 16);
+	//	else
+	//		sfc_addr = simple_strtoul(argv[2], NULL, 16);
 		printf("===>sfc_addr is 0x%x,mem_address is 0x%x\n",sfc_addr,mem_address);
 		printf("SFC boot start\n");
 #ifdef CONFIG_JZ_SFC
@@ -167,41 +174,40 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 		printf("SPI boot error\n");
 		return 0;
-	} else if (!strcmp("fat", argv[0])) {
-		unsigned long time;
-		int len_read;
+	    } else if (!strcmp("fat", argv[0])) {
+                unsigned long time;
+                int len_read;
+                /* Get fat block device */
+                if (fs_set_blk_dev(argv[1], (argc >= 3) ? argv[2] : NULL, FS_TYPE_FAT)) {
+                        printf("Fat no %s device\n", argv[1]);
+                        return CMD_RET_FAILURE;
+                }
 
-		/* Get fat block device */
-		if (fs_set_blk_dev(argv[1], (argc >= 3) ? argv[2] : NULL, FS_TYPE_FAT)) {
-			printf("Fat no %s device\n", argv[1]);
-			return CMD_RET_FAILURE;
-		}
+                mem_address = simple_strtoul(argv[3], NULL, 16);
 
-		mem_address = simple_strtoul(argv[3], NULL, 16);
+                /* fat DOS filesystem read */
+                time = get_timer(0);
+                len_read = fs_read(argv[4], mem_address, sizeof(struct image_header), 0);
+                time = get_timer(time);
+                if (len_read <= 0) {
+                        printf("FAT read failed\n");
+                        return CMD_RET_FAILURE;
+                }
 
-		/* fat DOS filesystem read */
-		time = get_timer(0);
-		len_read = fs_read(argv[4], mem_address, sizeof(struct image_header), 0);
-		time = get_timer(time);
-		if (len_read <= 0) {
-			printf("FAT read failed\n");
-			return CMD_RET_FAILURE;
-		}
-
-		printf("%d bytes read in %lu ms", len_read, time);
-		if (time > 0) {
-			puts(" (");
+                printf("%d bytes read in %lu ms", len_read, time);
+                if (time > 0) {
+                        puts(" (");
 			print_size(len_read / time * 1000, "/s");
-			puts(")");
-		}
-		puts("\n");
+                        puts(")");
+                }
+                puts("\n");
 
-		setenv_hex("filesize", len_read);
+                setenv_hex("filesize", len_read);
 
-		printf("FAT boot start\n");
-		bootx_jump_kernel(mem_address);
-		printf("FAT boot error\n");
-	} else {
+                printf("FAT boot start\n");
+                bootx_jump_kernel(mem_address);
+                printf("FAT boot error\n");
+	}else {
 		printf("%s boot unsupport\n", argv[0]);
                 return CMD_RET_USAGE;
 	}
@@ -219,6 +225,8 @@ static char bootx_help_text[] =
 #endif
 
 U_BOOT_CMD(
-	bootx, 6, 1, do_bootx,
-	"boot xImage ",bootx_help_text
+        bootx, 6, 1, do_bootx,
+        "boot xImage ",bootx_help_text
 );
+
+
