@@ -147,7 +147,6 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	size = image_get_data_size(header) + header_size;
 
 	sfc_nor_read(sfc_addr, size, load_addr);
-	//gpio_set_value(88,0);
 	panel_power_off();
 	bootx_jump_kernel(mem_address);
 }
@@ -161,6 +160,8 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if((update_flag & 0x3) != 0x3)	{
 		strcpy(argv[0],"sfc");
 		strcpy(argv[1],argv[3]);
+		if(get_show_cpt_flag() == 0x69)
+			clear_show_cpt_flag();
 	}
 	printf("argv[0]: %s,argv[1]:%s\n",argv[0],argv[1]);
 	/* Consume 'boota' */

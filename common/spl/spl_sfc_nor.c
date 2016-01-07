@@ -215,14 +215,29 @@ static void nv_map_area(unsigned int *base_addr)
 	*base_addr = NV_AREA_START + nv_num * 32 * 1024 + 1024;
 }
 
+void spl_load_kernel(struct image_header *header)
+{
+	sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+	spl_parse_image_header(header);
+	sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
+}
+
+void spl_load_uboot(struct image_header *header)
+{
+	spl_parse_image_header(header);
+	sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+}
+
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
-
+	int usb_insert;
 #ifdef CONFIG_SPL_OS_BOOT
 	unsigned nv_buf[4];
+	unsigned char charge_buf[64];
 	int count = 16;
 	unsigned int src_addr, updata_flag;
+	unsigned char charge_flag;
 #endif
 	//set PB(8),USB_DETE PIN as input	
 	gpio_port_direction_input(1, 8); 
@@ -246,31 +261,27 @@ void spl_sfc_nor_load_image(void)
 	nv_map_area((unsigned int)&src_addr);
 	sfc_nor_load(src_addr, count, nv_buf);
 	updata_flag = nv_buf[3];
-<<<<<<< HEAD
-	if((updata_flag & 0x3) != 0x3)
-	{
-		sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
-		spl_parse_image_header(header);
-		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
-	} else
-=======
+	sfc_nor_load(src_addr,64,charge_buf);
+	charge_flag = charge_buf[32];
+	printf("charge_flag is 0x%x\n",charge_flag);
+
 	if((updata_flag & 0x3) != 0x3) {
 		//if USB not insert spl load image
-		if(gpio_get_value(40) == 1){
-			sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
-			spl_parse_image_header(header);
-			sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
+		usb_insert = gpio_get_value(40);
+		if(usb_insert == 1){
+			spl_load_kernel(header);
 		} else{
-			//spl load uboot
-			spl_parse_image_header(header);
-			sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+			if(((cpm_test_bit(1,CPM_RSR)) == CPM_RSR_WR)
+				&& (charge_flag == 0x69) || (cpm_inl(CPM_RSR)== 0x1))
+				spl_load_uboot(header);
+			else
+				spl_load_kernel(header);
+
 		}
 	}else
->>>>>>> 1c4c80a... add charge detect function
 #endif
 	{
-		spl_parse_image_header(header);
-		sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+		spl_load_uboot(header);
 	}
 	return ;
 
