@@ -21,6 +21,7 @@
  */
 
 #include <stdarg.h>
+#include <config.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/ctype.h>
@@ -31,18 +32,18 @@
 #include <config.h>
 #include <mmc.h>
 #include <boot_img.h>
-#include <fs.h>
-#include <fat.h>
-
+#include <asm/gpio.h>
 extern void flush_cache_all(void);
 
 
-/*boot.img has been in memory already. just call init_boot_linux() and jump to kernel.*/
+/*boot.img has been in memory alreaxdy. just call init_boot_linux() and jump to kernel.*/
 static void bootx_jump_kernel(unsigned long mem_address)
 {
 	static u32 *param_addr = NULL;
 	typedef void (*image_entry_arg_t)(int, char **, void *)
 		__attribute__ ((noreturn));
+	unsigned int update_flag;
+	update_flag = get_update_flag();
 
 	image_entry_arg_t image_entry =
 		(image_entry_arg_t) mem_address;
@@ -50,7 +51,11 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	printf("Prepare kernel parameters ...\n");
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
-	param_addr[1] = CONFIG_BOOTX_BOOTARGS;
+	if((update_flag & 0x3) != 0x3)
+		param_addr[1] = CONFIG_SPL_BOOTARGS;
+	else
+		param_addr[1] = CONFIG_BOOTX_BOOTARGS;
+	printf("param_addr[1] is %s\n",param_addr[1]);
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
 
@@ -94,7 +99,22 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	struct image_header *header;
 	unsigned int header_size;
 	unsigned int entry_point, load_addr, size;
-
+	gpio_port_direction_input(1,31);
+	gpio_port_direction_input(1,8);
+	unsigned int update_flag;
+	update_flag = get_update_flag();
+	if((update_flag & 0x03) != 0x03){
+		while(gpio_get_value(63) && (!(gpio_get_value(40))))
+			;
+		printf("gpio_get_value(40) == %d\n",gpio_get_value(40));
+		printf("gpio_get_value(63) == %d\n",gpio_get_value(63));
+		if(gpio_get_value(40)){
+			printf("usb have remove ,power off!!!\n");
+			//call axp173 power off 
+			while(1);
+		}
+	}
+	
 	printf("Enter SFC_boot routine ...\n");
 	header_size = sizeof(struct image_header);
 	sfc_nor_read(sfc_addr, header_size, CONFIG_SYS_TEXT_BASE);
@@ -112,7 +132,9 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 #endif
 static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	unsigned long mem_address,sfc_addr;
+	unsigned long mem_address,sfc_addr, size;
+	unsigned int update_flag;
+	update_flag = get_update_flag();
 	/* Consume 'boota' */
         argc--; argv++;
 	if (argc < 2)
@@ -125,7 +147,11 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("mem boot error\n");
 	} else if (!strcmp("sfc",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
-		sfc_addr = simple_strtoul(argv[2], NULL, 16);
+		if((update_flag & 0x03) != 0x03)
+			sfc_addr = 0x100000;
+		else
+			sfc_addr = simple_strtoul(argv[2], NULL, 16);
+		printf("===>sfc_addr is 0x%x,mem_address is 0x%x\n",sfc_addr,mem_address);
 		printf("SFC boot start\n");
 #ifdef CONFIG_JZ_SFC
 		sfc_boot(mem_address, sfc_addr);

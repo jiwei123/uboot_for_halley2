@@ -7,7 +7,7 @@
 #include <asm/arch/sfc.h>
 #include <asm/arch/spi.h>
 #include <asm/arch/clk.h>
-
+#include <asm/arch/gpio.h>
 static uint32_t jz_sfc_readl(unsigned int offset)
 {
 	return readl(SFC_BASE + offset);
@@ -224,6 +224,8 @@ void spl_sfc_nor_load_image(void)
 	int count = 16;
 	unsigned int src_addr, updata_flag;
 #endif
+	//set PB(8),USB_DETE PIN as input	
+	gpio_port_direction_input(1, 8); 
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
 	/*the sfc clk is 1/2 ssi clk */
@@ -244,12 +246,27 @@ void spl_sfc_nor_load_image(void)
 	nv_map_area((unsigned int)&src_addr);
 	sfc_nor_load(src_addr, count, nv_buf);
 	updata_flag = nv_buf[3];
+<<<<<<< HEAD
 	if((updata_flag & 0x3) != 0x3)
 	{
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
 		spl_parse_image_header(header);
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
 	} else
+=======
+	if((updata_flag & 0x3) != 0x3) {
+		//if USB not insert spl load image
+		if(gpio_get_value(40) == 1){
+			sfc_nor_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+			spl_parse_image_header(header);
+			sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
+		} else{
+			//spl load uboot
+			spl_parse_image_header(header);
+			sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
+		}
+	}else
+>>>>>>> 1c4c80a... add charge detect function
 #endif
 	{
 		spl_parse_image_header(header);

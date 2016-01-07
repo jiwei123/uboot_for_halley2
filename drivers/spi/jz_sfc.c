@@ -1030,6 +1030,44 @@ int sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_addr
 	return 0;
 }
 
+#define NV_AREA_START_ADDR (288 * 1024)
+static void nv_map_area_addr(unsigned int *base_addr)
+{
+        unsigned int buf[3][2];
+        unsigned int tmp_buf[4];
+        unsigned int nv_num = 0, nv_count = 0;
+        unsigned int addr, i;
+
+        for(i = 0; i < 3; i++) {
+                addr = NV_AREA_START_ADDR + i * 32 * 1024;
+                sfc_nor_read(addr, 4, buf[i]);
+                if(buf[i][0] == 0x5a5a5a5a) {
+                        sfc_nor_read(addr + 1 *1024,  16, tmp_buf);
+                        addr += 32 * 1024 - 8;
+                        sfc_nor_read(addr, 8, buf[i]);
+                        if(buf[i][1] == 0xa5a5a5a5) {
+                                if(nv_count < buf[i][0]) {
+                                        nv_count = buf[i][0];
+                                        nv_num = i;
+                                }
+                        }
+                }
+        }
+        *base_addr = NV_AREA_START_ADDR + nv_num * 32 * 1024 + 1024;
+}
+
+unsigned int get_update_flag()
+{
+        unsigned nv_buf[4];
+        int count = 16;
+        unsigned int src_addr, update_flag;
+        nv_map_area_addr((unsigned int)&src_addr);
+        sfc_nor_read(src_addr, count, nv_buf);
+        update_flag = nv_buf[3];
+
+        return update_flag;
+}
+
 int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_addr,unsigned int erase_en)
 {
 
