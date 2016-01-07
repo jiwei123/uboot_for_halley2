@@ -97,35 +97,58 @@ static void spi_boot(unsigned int mem_address,unsigned int spi_addr)
 #ifdef CONFIG_JZ_SFC
 int bat_cap = 0;
 int first = 0;
+int line = 0;
+
+int get_line_count()
+{
+	if(bat_cap <= 10) 
+		line = bat_cap;
+	else if (bat_cap > 10 && bat_cap <= 90)
+		line = (bat_cap - 10) / 5 + bat_cap;
+	else if (bat_cap > 90 && bat_cap <= 99)
+		line = 107 + (bat_cap - 90);
+	return line;
+}
+
+void display_battery_capacity(int line)
+{
+	int i;
+	for(i = 1;i <= line; i++){
+		lcd_display_bat_line(i,0xff00);
+		lcd_sync();
+		mdelay(55);
+	}
+}
+
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
 	struct image_header *header;
 	unsigned int header_size;
 	unsigned int entry_point, load_addr, size;
+	unsigned int update_flag;
+	
 	gpio_port_direction_input(1,31);
 	gpio_port_direction_input(1,8);
-	unsigned int update_flag;
 	update_flag = get_update_flag();
+	
 	if((update_flag & 0x03) != 0x03){
 		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
-	#if 1	
-		if(!first){
+			if(!first){
 				first = 1;
 				bat_cap = get_battery_current_cpt();
+				line = get_line_count();
 			}else{
 				if(bat_cap != get_battery_current_cpt()){
 					bat_cap = get_battery_current_cpt();
-					lcd_display_bat_cap_first(bat_cap);
+					line = get_line_count();
 				}
 			}
-	#else
-					
-			//test battery capacity test
-			bat_cap = (bat_cap + 1) % 101;
-			lcd_display_bat_cap_first(bat_cap);
-			mdelay(500);
-	#endif		
-		
+			lcd_display_zero_cap();
+			mdelay(100);
+			if(bat_cap != 100)
+				display_battery_capacity(line);
+			else
+				lcd_display_bat_cap_first(100);
 		}
 		if(gpio_get_value(40)){
 		
@@ -179,7 +202,6 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			sfc_addr = 0x100000;
 	//	else
 	//		sfc_addr = simple_strtoul(argv[2], NULL, 16);
-		printf("===>sfc_addr is 0x%x,mem_address is 0x%x\n",sfc_addr,mem_address);
 		printf("SFC boot start\n");
 #ifdef CONFIG_JZ_SFC
 		sfc_boot(mem_address, sfc_addr);

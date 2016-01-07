@@ -526,33 +526,25 @@ void lcd_display_bat_cap_first(int cap)
 	else
 		color = 0xff00;
 
-	printf("cap = %d\n",cap);
 	if(cap <= 10){
 		if(cap == 0)
 			lcd_display_zero_cap();
 		for(i = 0;i <= cap ; i++)
-			//lcd_display_bat_line(i,117,color);
 			lcd_display_bat_line(i,color);
 	}else if(cap <= 90){
 		for(i = 0;i <= 10 ; i++)
-			//lcd_display_bat_line(i,117,color);
 			lcd_display_bat_line(i,color);
 		line = (cap - 10) / 5 + cap;
 		for(i = 11; i <= line ;i++)
-			//lcd_display_bat_line(i,107,color);
 			lcd_display_bat_line(i,color);
 	}else{
 		for(i = 0;i <= 10 ; i++)
-			//lcd_display_bat_line(i,117,color);
 			lcd_display_bat_line(i,color);
 		for(i = 11; i <= 80 / 5 + 90 ;i++)
-			//lcd_display_bat_line(i,107,color);
 			lcd_display_bat_line(i,color);
 		for(i = 107; i <= (cap - 90) + 107; i++)
-			//lcd_display_bat_line(i,11,color);
 			lcd_display_bat_line(i,color);
 		if(cap == 100)
-			//lcd_display_bat_line(0,0,color);
 			lcd_display_bat_line(117,color);
 	}
 	lcd_sync();
@@ -619,15 +611,13 @@ void lcd_clear(void)
 	lcd_console_address = lcd_logo();
 	console_col = 0;
 	console_row = 0;
-//	lcd_sync();
-	lcd_display_bat_cap_first(get_battery_current_cpt());
+	lcd_sync();
 }
 
 static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 			char *const argv[])
 {
 	if((get_update_flag() & 0x3) != 0x3){
-		printf("====>get_update_flag = %x\n",get_update_flag());
 		lcd_clear();
 	}
 	return 0;
