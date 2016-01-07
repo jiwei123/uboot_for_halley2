@@ -35,6 +35,7 @@
 #include <asm/gpio.h>
 #include <fs.h>
 #include <fat.h>
+#include <asm/arch/lcdc.h>
 extern void flush_cache_all(void);
 
 
@@ -114,6 +115,8 @@ void display_battery_capacity(int line)
 {
 	int i;
 	for(i = 1;i <= line; i++){
+		if(!gpio_get_value(63) ||(gpio_get_value(40)))
+			return;
 		lcd_display_bat_line(i,0xff00);
 		lcd_sync();
 		mdelay(55);
@@ -126,7 +129,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	unsigned int header_size;
 	unsigned int entry_point, load_addr, size;
 	unsigned int update_flag;
-	
+	int smart_ctrl = 0;
 	gpio_port_direction_input(1,31);
 	gpio_port_direction_input(1,8);
 	update_flag = get_update_flag();
@@ -143,12 +146,15 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 					line = get_line_count();
 				}
 			}
+			
+			lcd_enable();
 			lcd_display_zero_cap();
 			mdelay(100);
 			if(bat_cap != 100)
 				display_battery_capacity(line);
 			else
 				lcd_display_bat_cap_first(100);
+			lcd_disable();
 		}
 		if(gpio_get_value(40)){
 		

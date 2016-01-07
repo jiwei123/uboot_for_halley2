@@ -800,7 +800,7 @@ void lcd_enable(void)
 		ctrl |= LCDC_CTRL_ENA;
 		ctrl &= ~LCDC_CTRL_DIS;
 		reg_write(LCDC_CTRL, ctrl);
-		serial_puts("dump_lcdc_registers\n");
+		//serial_puts("dump_lcdc_registers\n");
 		int frame_num = 10;
 		while(frame_num--) {
 			int count = 100000;
