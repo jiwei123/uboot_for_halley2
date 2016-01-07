@@ -156,7 +156,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY 0
 
 
 /* GPIO */
