@@ -666,7 +666,7 @@ static int lcd_init(void *lcdbase)
 	lcd_line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
 	lcd_enable();
 	lcd_clear();
-	mdelay(200);
+	mdelay(100);
 	gpio_set_value(88,1);
 	/* Initialize the console */
 	console_col = 0;
