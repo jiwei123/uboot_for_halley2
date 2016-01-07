@@ -478,29 +478,41 @@ void lcd_clear_black(void)
 	}
 #endif
 }
+
 #define START_COL 327 
 #define START_ROW 102
-void lcd_display_zero_cap()
-{
-	int *lcdbase_p ;//= (int *)lcd_base;
-	int i,j;
-	for(i = 0;i <= 117 ; i++){
-		lcdbase_p = (int *)lcd_base;
-		lcdbase_p += (START_ROW + (117-i))* panel_info.vl_col + START_COL;
-		for(j = 0;j < 65 ; j++)
-			*lcdbase_p++ = 0;
-	}
-	lcd_sync();
-}
-void lcd_display_bat_line(int line ,int offset,int color)
+#define LINE_LEN 65
+void lcd_display_bat_line(int line,int color)
 {
 	int *lcdbase_p ;
 	int j;
+	int col_start;
+	int col_end;
 	lcdbase_p = (int *)lcd_base;
-	lcdbase_p += (START_ROW + (offset-line))* panel_info.vl_col + START_COL;
-	for(j = 0;j < 65 ; j++)
+	if(line < 5 ){
+		col_start = START_COL + (4 - line);
+		col_end = LINE_LEN - (4 - line) * 2;
+	}else if ( line >= 5 && line <= 113){
+		col_start = START_COL;
+		col_end = LINE_LEN;
+	}else {
+		col_start = START_COL + (4 - (117 - line));
+		col_end = LINE_LEN - (4 - (117 - line)) * 2;
+	}
+	lcdbase_p += (START_ROW + (117 - line))* panel_info.vl_col + col_start;
+	for(j = 0;j < col_end ; j++)
 		*lcdbase_p++ = color;
 }
+
+void lcd_display_zero_cap()
+{
+	int *lcdbase_p ;
+	int i,j;
+	for(i = 0;i <= 117 ; i++)
+		lcd_display_bat_line(i,0);
+	lcd_sync();
+}
+
 void lcd_display_bat_cap_first(int cap)
 {
 	
@@ -518,22 +530,29 @@ void lcd_display_bat_cap_first(int cap)
 		if(cap == 0)
 			lcd_display_zero_cap();
 		for(i = 0;i <= cap ; i++)
-			lcd_display_bat_line(i,117,color);
+			//lcd_display_bat_line(i,117,color);
+			lcd_display_bat_line(i,color);
 	}else if(cap <= 90){
 		for(i = 0;i <= 10 ; i++)
-			lcd_display_bat_line(i,117,color);
-		line = (cap - 10) / 5 + (cap - 10);
-		for(i = 1; i <= line ;i++)
-			lcd_display_bat_line(i,107,color);
+			//lcd_display_bat_line(i,117,color);
+			lcd_display_bat_line(i,color);
+		line = (cap - 10) / 5 + cap;
+		for(i = 11; i <= line ;i++)
+			//lcd_display_bat_line(i,107,color);
+			lcd_display_bat_line(i,color);
 	}else{
 		for(i = 0;i <= 10 ; i++)
-			lcd_display_bat_line(i,117,color);
-		for(i = 1; i <= 80 / 5 + 80;i++)
-			lcd_display_bat_line(i,107,color);
-		for(i = 1; i <= (cap - 90); i++)
-			lcd_display_bat_line(i,11,color);
+			//lcd_display_bat_line(i,117,color);
+			lcd_display_bat_line(i,color);
+		for(i = 11; i <= 80 / 5 + 90 ;i++)
+			//lcd_display_bat_line(i,107,color);
+			lcd_display_bat_line(i,color);
+		for(i = 107; i <= (cap - 90) + 107; i++)
+			//lcd_display_bat_line(i,11,color);
+			lcd_display_bat_line(i,color);
 		if(cap == 100)
-			lcd_display_bat_line(0,0,color);
+			//lcd_display_bat_line(0,0,color);
+			lcd_display_bat_line(117,color);
 	}
 	lcd_sync();
 }

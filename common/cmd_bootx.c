@@ -127,7 +127,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 			//lcd_clear();
 			bat_cap = (bat_cap + 1) % 101;
 			lcd_display_bat_cap_first(bat_cap);
-			mdelay(2000);
+			mdelay(500);
 	#endif		
 		
 		//	printf("battery cap is %d\n",get_battery_current_cpt());
