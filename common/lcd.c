@@ -618,8 +618,8 @@ void lcd_clear(void)
 	lcd_console_address = lcd_logo();
 	console_col = 0;
 	console_row = 0;
-	lcd_sync();
-	lcd_display_bat_cap_first(0);
+//	lcd_sync();
+	lcd_display_bat_cap_first(get_battery_current_cpt());
 }
 
 static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
@@ -639,10 +639,13 @@ U_BOOT_CMD(
 
 static int lcd_init(void *lcdbase)
 {
+	
+#if 0
 #ifdef DEFAULT_BACKLIGHT_LEVEL
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);
+#endif
 #endif
 	/* Initialize the lcd controller */
 	debug("[LCD] Initializing LCD frambuffer at %p\n", lcdbase);
@@ -661,11 +664,10 @@ static int lcd_init(void *lcdbase)
 
 	lcd_get_size(&lcd_line_length);
 	lcd_line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
-	lcd_is_enabled = 1;
-
-	lcd_clear();
 	lcd_enable();
-
+	lcd_clear();
+	mdelay(200);
+	gpio_set_value(88,1);
 	/* Initialize the console */
 	console_col = 0;
 #ifdef CONFIG_LCD_INFO_BELOW_LOGO
@@ -674,7 +676,6 @@ static int lcd_init(void *lcdbase)
 	console_row = 1;	/* leave 1 blank line below logo */
 #endif
 	lcd_is_enabled = 1;
-	gpio_set_value(88,1);
 	return 0;
 }
 

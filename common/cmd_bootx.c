@@ -108,32 +108,25 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	update_flag = get_update_flag();
 	if((update_flag & 0x03) != 0x03){
 		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
-	#if 0	
+	#if 1	
 		if(!first){
 				first = 1;
 				bat_cap = get_battery_current_cpt();
-				//lcd_display_bat_cap(bat_cap);
-				lcd_clear();
 			}else{
 				if(bat_cap != get_battery_current_cpt()){
-					printf("bat_cap %d\n,get_battery_curret_cpt()  = %d\n",bat_cap,get_battery_current_cpt());
 					bat_cap = get_battery_current_cpt();
-					//lcd_display_bat_cap(bat_cap);
-					lcd_clear();
+					lcd_display_bat_cap_first(bat_cap);
 				}
 			}
 	#else
 					
-			//lcd_clear();
+			//test battery capacity test
 			bat_cap = (bat_cap + 1) % 101;
 			lcd_display_bat_cap_first(bat_cap);
 			mdelay(500);
 	#endif		
 		
-		//	printf("battery cap is %d\n",get_battery_current_cpt());
 		}
-		printf("gpio_get_value(40) == %d\n",gpio_get_value(40));
-		printf("gpio_get_value(63) == %d\n",gpio_get_value(63));
 		if(gpio_get_value(40)){
 		
 			printf("usb have remove ,power off!!!\n");
