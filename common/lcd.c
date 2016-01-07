@@ -478,14 +478,73 @@ void lcd_clear_black(void)
 	}
 #endif
 }
+#define START_COL 327 
+#define START_ROW 102
+void lcd_display_zero_cap()
+{
+	int *lcdbase_p ;//= (int *)lcd_base;
+	int i,j;
+	for(i = 0;i <= 117 ; i++){
+		lcdbase_p = (int *)lcd_base;
+		lcdbase_p += (START_ROW + (117-i))* panel_info.vl_col + START_COL;
+		for(j = 0;j < 65 ; j++)
+			*lcdbase_p++ = 0;
+	}
+	lcd_sync();
+}
+void lcd_display_bat_line(int line ,int offset,int color)
+{
+	int *lcdbase_p ;
+	int j;
+	lcdbase_p = (int *)lcd_base;
+	lcdbase_p += (START_ROW + (offset-line))* panel_info.vl_col + START_COL;
+	for(j = 0;j < 65 ; j++)
+		*lcdbase_p++ = color;
+}
+void lcd_display_bat_cap_first(int cap)
+{
+	
+	int *lcdbase_p;
+	int i,j;
+	int color;
+	int line;
+	if(cap <= 10)
+		color = 0xff0000;
+	else
+		color = 0xff00;
 
+	printf("cap = %d\n",cap);
+	if(cap <= 10){
+		if(cap == 0)
+			lcd_display_zero_cap();
+		for(i = 0;i <= cap ; i++)
+			lcd_display_bat_line(i,117,color);
+	}else if(cap <= 90){
+		for(i = 0;i <= 10 ; i++)
+			lcd_display_bat_line(i,117,color);
+		line = (cap - 10) / 5 + (cap - 10);
+		for(i = 1; i <= line ;i++)
+			lcd_display_bat_line(i,107,color);
+	}else{
+		for(i = 0;i <= 10 ; i++)
+			lcd_display_bat_line(i,117,color);
+		for(i = 1; i <= 80 / 5 + 80;i++)
+			lcd_display_bat_line(i,107,color);
+		for(i = 1; i <= (cap - 90); i++)
+			lcd_display_bat_line(i,11,color);
+		if(cap == 100)
+			lcd_display_bat_line(0,0,color);
+	}
+	lcd_sync();
+}
 /*----------------------------------------------------------------------*/
 void lcd_clear(void)
 {
+	int cap;
 #if LCD_BPP == LCD_MONOCHROME
 	/* Setting the palette */
 	lcd_initcolregs();
-
+	
 #elif LCD_BPP == LCD_COLOR8
 	/* Setting the palette */
 	lcd_setcolreg(CONSOLE_COLOR_BLACK, 0, 0, 0);
@@ -536,11 +595,12 @@ void lcd_clear(void)
 
 	/* Paint the logo and retrieve LCD base address */
 	debug("[LCD] Drawing the logo...\n");
+	
 	lcd_console_address = lcd_logo();
-
 	console_col = 0;
 	console_row = 0;
 	lcd_sync();
+	lcd_display_bat_cap_first(0);
 }
 
 static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
@@ -595,7 +655,7 @@ static int lcd_init(void *lcdbase)
 	console_row = 1;	/* leave 1 blank line below logo */
 #endif
 	lcd_is_enabled = 1;
-
+	gpio_set_value(88,1);
 	return 0;
 }
 
@@ -1248,7 +1308,7 @@ static void *lcd_logo(void)
 #if defined(CONFIG_RLE_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
 	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
 #else
-	bitmap_plot(0, 0);
+	bitmap_plot(320, 80);
 #endif
 	flush_cache_all();
 #ifdef CONFIG_LCD_INFO

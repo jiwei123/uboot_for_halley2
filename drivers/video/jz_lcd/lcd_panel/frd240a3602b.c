@@ -77,7 +77,7 @@ void panel_power_on(void)
 	mdelay(520);
 
 	gpio_direction_output(frd240a3602b_pdata.gpio_lcd_cs, 0);
-	gpio_direction_output(frd240a3602b_pdata.gpio_lcd_bl, 1);
+	gpio_direction_output(frd240a3602b_pdata.gpio_lcd_bl, 0);
 
 	/*serial_puts("frd240a3602b panel display on\n");*/
 }

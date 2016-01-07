@@ -60,7 +60,6 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	printf("param_addr[1] is %s\n",param_addr[1]);
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
-
 	printf("We should not come here ... \n");
 }
 
@@ -96,6 +95,8 @@ static void spi_boot(unsigned int mem_address,unsigned int spi_addr)
 #endif
 
 #ifdef CONFIG_JZ_SFC
+int bat_cap = 0;
+int first = 0;
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
 	struct image_header *header;
@@ -107,7 +108,29 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	update_flag = get_update_flag();
 	if((update_flag & 0x03) != 0x03){
 		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
-			printf("battery cap is %d\n",get_battery_current_cpt());
+	#if 0	
+		if(!first){
+				first = 1;
+				bat_cap = get_battery_current_cpt();
+				//lcd_display_bat_cap(bat_cap);
+				lcd_clear();
+			}else{
+				if(bat_cap != get_battery_current_cpt()){
+					printf("bat_cap %d\n,get_battery_curret_cpt()  = %d\n",bat_cap,get_battery_current_cpt());
+					bat_cap = get_battery_current_cpt();
+					//lcd_display_bat_cap(bat_cap);
+					lcd_clear();
+				}
+			}
+	#else
+					
+			//lcd_clear();
+			bat_cap = (bat_cap + 1) % 101;
+			lcd_display_bat_cap_first(bat_cap);
+			mdelay(2000);
+	#endif		
+		
+		//	printf("battery cap is %d\n",get_battery_current_cpt());
 		}
 		printf("gpio_get_value(40) == %d\n",gpio_get_value(40));
 		printf("gpio_get_value(63) == %d\n",gpio_get_value(63));
@@ -117,6 +140,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 			//call axp173 power off 
 			jz_hibernate();		
 		}
+	
 	}
 	
 	printf("Enter SFC_boot routine ...\n");
@@ -130,7 +154,8 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	size = image_get_data_size(header) + header_size;
 
 	sfc_nor_read(sfc_addr, size, load_addr);
-
+	//gpio_set_value(88,0);
+	panel_power_off();
 	bootx_jump_kernel(mem_address);
 }
 #endif

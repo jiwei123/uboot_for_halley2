@@ -1178,8 +1178,8 @@ void lcd_ctrl_init(void *lcd_base)
 	clk_set_rate(LCD, pixel_clock_rate);
 
 	/*lcd_close_backlight();*/
+	
 	panel_pin_init();
-
 #ifdef CONFIG_LCD_FORMAT_X8B8G8R8
 	lcd_config_info.fmt_order = FORMAT_X8B8G8R8;
 #else
@@ -1191,7 +1191,6 @@ void lcd_ctrl_init(void *lcd_base)
 #ifdef  CONFIG_REGULATOR
 	//board_set_lcd_power_on();
 #endif
-
 	panel_power_on();
 
 	jzfb_set_par(&lcd_config_info);
