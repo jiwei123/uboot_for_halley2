@@ -21,7 +21,6 @@
  */
 
 #include <stdarg.h>
-#include <config.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/ctype.h>
@@ -39,7 +38,7 @@
 extern void flush_cache_all(void);
 
 
-/*boot.img has been in memory alreaxdy. just call init_boot_linux() and jump to kernel.*/
+/*boot.img has been in memory already. just call init_boot_linux() and jump to kernel.*/
 static void bootx_jump_kernel(unsigned long mem_address)
 {
 	static u32 *param_addr = NULL;
@@ -96,13 +95,14 @@ static void spi_boot(unsigned int mem_address,unsigned int spi_addr)
 #endif
 
 #ifdef CONFIG_JZ_SFC
+#ifdef CONFIG_ASLMOM_BOARD
 int bat_cap = 0;
 int first = 0;
 int line = 0;
 
 int get_line_count()
 {
-	if(bat_cap <= 10) 
+	if(bat_cap <= 10)
 		line = bat_cap;
 	else if (bat_cap > 10 && bat_cap <= 90)
 		line = (bat_cap - 10) / 5 + bat_cap;
@@ -122,7 +122,7 @@ void display_battery_capacity(int line)
 		mdelay(55);
 	}
 }
-
+#endif
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
 	struct image_header *header;
@@ -135,6 +135,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	update_flag = get_update_flag();
 	
 	if((update_flag & 0x03) != 0x03){
+#ifdef CONFIG_ASLMOM_BOARD
 		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
 			if(!first){
 				first = 1;
@@ -146,7 +147,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 					line = get_line_count();
 				}
 			}
-			
+
 			lcd_enable();
 			lcd_display_zero_cap();
 			mdelay(100);
@@ -162,7 +163,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 			//call axp173 power off 
 			jz_hibernate();		
 		}
-	
+#endif
 	}
 	
 	printf("Enter SFC_boot routine ...\n");
@@ -176,7 +177,9 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	size = image_get_data_size(header) + header_size;
 
 	sfc_nor_read(sfc_addr, size, load_addr);
+#ifdef CONFIG_ASLMOM_BOARD
 	panel_power_off();
+#endif
 	bootx_jump_kernel(mem_address);
 }
 #endif
@@ -189,8 +192,10 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if((update_flag & 0x3) != 0x3)	{
 		strcpy(argv[0],"sfc");
 		strcpy(argv[1],argv[3]);
+#ifdef CONFIG_ASLMOM_BOARD
 		if(get_show_cpt_flag() == 0x69)
 			clear_show_cpt_flag();
+#endif
 	}
 	printf("argv[0]: %s,argv[1]:%s\n",argv[0],argv[1]);
 	/* Consume 'boota' */

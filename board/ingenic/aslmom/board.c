@@ -144,9 +144,6 @@ int checkboard(void)
 #ifdef CONFIG_SPL_BUILD
 void spl_board_init(void)
 {
-	/* disable mute */
-	gpio_request(32 * 3 + 2, "soft_spi");
-	gpio_direction_output(32 * 3 + 2, 0);
 }
 
 #endif /* CONFIG_SPL_BUILD */

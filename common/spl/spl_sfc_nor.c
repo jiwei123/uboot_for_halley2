@@ -7,7 +7,9 @@
 #include <asm/arch/sfc.h>
 #include <asm/arch/spi.h>
 #include <asm/arch/clk.h>
+#ifdef CONFIG_ASLMOM_BOARD
 #include <asm/arch/gpio.h>
+#endif
 static uint32_t jz_sfc_readl(unsigned int offset)
 {
 	return readl(SFC_BASE + offset);
@@ -231,16 +233,20 @@ void spl_load_uboot(struct image_header *header)
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
+#ifdef CONFIG_ASLMOM_BOARD
 	int usb_insert;
-#ifdef CONFIG_SPL_OS_BOOT
-	unsigned nv_buf[4];
 	unsigned char charge_buf[64];
-	int count = 16;
-	unsigned int src_addr, updata_flag;
 	unsigned char charge_flag;
 #endif
+#ifdef CONFIG_SPL_OS_BOOT
+	unsigned nv_buf[4];
+	int count = 16;
+	unsigned int src_addr, updata_flag;
+#endif
+#ifdef CONFIG_ASLMOM_BOARD
 	//set PB(8),USB_DETE PIN as input	
 	gpio_port_direction_input(1, 8); 
+#endif
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
 	/*the sfc clk is 1/2 ssi clk */
@@ -261,11 +267,14 @@ void spl_sfc_nor_load_image(void)
 	nv_map_area((unsigned int)&src_addr);
 	sfc_nor_load(src_addr, count, nv_buf);
 	updata_flag = nv_buf[3];
+#ifdef CONFIG_ASLMOM_BOARD
 	sfc_nor_load(src_addr,64,charge_buf);
 	charge_flag = charge_buf[32];
 	printf("charge_flag is 0x%x\n",charge_flag);
+#endif
 
 	if((updata_flag & 0x3) != 0x3) {
+#ifdef CONFIG_ASLMOM_BOARD
 		//if USB not insert spl load image
 		usb_insert = gpio_get_value(40);
 		if(usb_insert == 1){
@@ -276,8 +285,10 @@ void spl_sfc_nor_load_image(void)
 				spl_load_uboot(header);
 			else
 				spl_load_kernel(header);
-
 		}
+#else
+		spl_load_kernel(header);
+#endif
 	}else
 #endif
 	{
