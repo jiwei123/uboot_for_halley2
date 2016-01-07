@@ -608,7 +608,13 @@ void lcd_clear(void)
 	/* Paint the logo and retrieve LCD base address */
 	debug("[LCD] Drawing the logo...\n");
 	
-	lcd_console_address = lcd_logo();
+	if((get_update_flag() & 0x3) != 0x3){
+		lcd_console_address = lcd_logo();
+	}else{
+		gpio_set_value(88,1);
+		lcd_puts_xy(80,0,"updating");	
+	
+	}
 	console_col = 0;
 	console_row = 0;
 	lcd_sync();
@@ -617,9 +623,7 @@ void lcd_clear(void)
 static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 			char *const argv[])
 {
-	if((get_update_flag() & 0x3) != 0x3){
-		lcd_clear();
-	}
+	lcd_clear();
 	return 0;
 }
 
