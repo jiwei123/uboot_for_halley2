@@ -180,8 +180,8 @@ static unsigned int jz_current_battery_voltage()
 	pmu_current = get_pmu_current();
 	voltage = pmu_charging == CHARGING_ON ? voltage - (pmu_current * INTER_RESIST
 			/ 1000) : voltage + (pmu_current * INTER_RESIST / 1000);
-	printf("========++>pmu_charging = %d, pmu_current = %d, voltage = %d\n", 
-		pmu_charging, pmu_current, voltage);
+//	printf("========++>pmu_charging = %d, pmu_current = %d, voltage = %d\n", 
+//		pmu_charging, pmu_current, voltage);
 
 	return voltage;
 }
