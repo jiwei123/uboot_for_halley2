@@ -38,6 +38,7 @@ COBJS-$(CONFIG_POWER_FSL) += power_fsl.o
 COBJS-$(CONFIG_POWER_I2C) += power_i2c.o
 COBJS-$(CONFIG_POWER_SPI) += power_spi.o
 COBJS-$(CONFIG_PMU_SM5007) += sm5007_charger.o
+COBJS-$(CONFIG_BATTERY_CAPACITY) += axp173-voltage.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

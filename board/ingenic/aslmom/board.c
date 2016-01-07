@@ -44,14 +44,37 @@ extern int jz_net_initialize(bd_t *bis);
 extern void boot_mode_select(void);
 #endif
 
+#ifdef CONFIG_PMU_AXP173
+extern int axp173_regulator_init(void);
+#endif
+
 #if defined(CONFIG_CMD_BATTERYDET) && defined(CONFIG_BATTERY_INIT_GPIO)
 static void battery_init_gpio(void)
 {
 }
 #endif
 
+#ifdef CONFIG_REGULATOR
+int regulator_init(void)
+{
+	int ret;
+#ifdef CONFIG_PMU_AXP173
+	ret = axp173_regulator_init();
+#endif
+	return ret;
+}
+#endif /* CONFIG_REGULATOR */
+
 int board_early_init_f(void)
 {
+	return 0;
+}
+
+int board_early_init_r(void)
+{
+#ifdef CONFIG_REGULATOR
+	regulator_init();
+#endif
 	return 0;
 }
 

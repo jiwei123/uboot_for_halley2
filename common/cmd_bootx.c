@@ -106,14 +106,16 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	unsigned int update_flag;
 	update_flag = get_update_flag();
 	if((update_flag & 0x03) != 0x03){
-		while(gpio_get_value(63) && (!(gpio_get_value(40))))
-			;
+		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
+			printf("battery cap is %d\n",get_battery_current_cpt());
+		}
 		printf("gpio_get_value(40) == %d\n",gpio_get_value(40));
 		printf("gpio_get_value(63) == %d\n",gpio_get_value(63));
 		if(gpio_get_value(40)){
+		
 			printf("usb have remove ,power off!!!\n");
 			//call axp173 power off 
-			while(1);
+			jz_hibernate();		
 		}
 	}
 	

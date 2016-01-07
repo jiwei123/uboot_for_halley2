@@ -1189,7 +1189,7 @@ void lcd_ctrl_init(void *lcd_base)
 	jz_lcd_init_mem(lcd_base, &lcd_config_info);
 
 #ifdef  CONFIG_REGULATOR
-	board_set_lcd_power_on();
+	//board_set_lcd_power_on();
 #endif
 
 	panel_power_on();

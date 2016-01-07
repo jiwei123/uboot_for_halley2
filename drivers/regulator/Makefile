@@ -32,6 +32,7 @@ COBJS-$(CONFIG_PMU_ACT8600) += act8600.o
 COBJS-$(CONFIG_PMU_D2041) += d2041_regulator.o
 COBJS-$(CONFIG_PMU_RICOH6x) += ricoh619-regulator.o
 COBJS-$(CONFIG_PMU_SM5007) += sm5007-regulator.o
+COBJS-$(CONFIG_PMU_AXP173) += axp173-regulator.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
