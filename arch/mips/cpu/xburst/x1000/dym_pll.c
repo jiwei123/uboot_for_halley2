@@ -204,7 +204,7 @@ void pll_init(void)
 	} else if(gd->arch.gi->cpufreq > 600000000) {
 		cpccr = CPCCR_CFG(sel_a,sel,sel,sel, 6,3,tmp,2,1) | (7 << 20);
 	} else {
-		cpccr = CPCCR_CFG(sel_a,sel,sel,sel, 4,2,tmp,2,1) | (7 << 20);
+		cpccr = CPCCR_CFG(sel_a,sel,sel,sel, 6,3,tmp,2,1) | (7 << 20);
 	}
 	tmp = (cpm_inl(CPM_CPCCR) & (0xff << 24)) | (cpccr & ~(0xff << 24)) | (7 << 20);
 	cpm_outl(tmp, CPM_CPCCR);
