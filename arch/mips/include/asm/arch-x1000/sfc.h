@@ -27,6 +27,20 @@ struct sfc_xfer{
 	int column;
 };
 
+#define NOR_PART_NUM	10
+struct nor_partition {
+	char name[32];
+	uint32_t size;
+	uint32_t offset;
+	uint32_t mask_flags;//bit0 1:the partiton unshow 0:the partiton show
+	uint32_t manager_mode;
+};
+
+struct norflash_partitions {
+	struct nor_partition nor_partition[NOR_PART_NUM];
+	int num_partition_info;
+};
+
 #define SFC_GLB		          (0x0000)
 #define SFC_DEV_CONF          (0x0004)
 #define SFC_STA_EXP           (0x0008)
