@@ -1048,24 +1048,28 @@ static void write_norflash_params_to_spl(unsigned int addr)
 
 unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 {
-	int i;
+	int i,tmp;
 	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
 		if(offset >= pdata.norflash_partitions.nor_partition[i].offset && \
 				offset < (pdata.norflash_partitions.nor_partition[i].offset + \
 				pdata.norflash_partitions.nor_partition[i].size)){
-			*pt_offset = pdata.norflash_partitions.nor_partition[i].offset;
-			*pt_size = pdata.norflash_partitions.nor_partition[i].size;
-			break;
+			tmp = i;
+			if(pdata.norflash_partitions.nor_partition[i].mask_flags & 0x1){
+				break;
+			}
 		}
 	}
-	return i;
+	*pt_offset = pdata.norflash_partitions.nor_partition[tmp].offset;
+	*pt_size = pdata.norflash_partitions.nor_partition[tmp].size;
+//	printf("==========partition info :num = %d ,offset =  %x , size = %x\n",tmp,*pt_offset,*pt_size);
+	return tmp;
 }
 
-static int sfc_nor_read_norflash_params(void);
+static int sfc_nor_read_params(void);
 int sfc_nor_init()
 {
 #ifndef CONFIG_BURNER
-	sfc_nor_read_norflash_params();
+	sfc_nor_read_params();
 #endif
 
 	memcpy(gparams.name,pdata.norflash_params.name,32);
@@ -1082,7 +1086,7 @@ int sfc_nor_init()
 
 }
 
-static int sfc_nor_read_norflash_params(void)
+static int sfc_nor_read_params(void)
 {
 	int ret;
 	struct spi_flash flash;

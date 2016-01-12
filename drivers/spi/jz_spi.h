@@ -68,6 +68,7 @@ struct jz_spi_support {
 	struct spi_quad_mode quad_mode;
 };
 
+#ifdef CONFIG_JZ_SFC
 struct norflash_params {
 	char name[SIZEOF_NAME];
 	u32 pagesize;
@@ -97,6 +98,7 @@ struct params_spl {
 	struct norflash_params norflash_params;
 	struct norflash_partitions norflash_partitions;
 };
+#endif
 
 struct jz_spi_slave {
 	struct spi_slave slave;
