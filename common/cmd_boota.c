@@ -42,7 +42,7 @@ struct mmc *mmc;
 
 extern void flush_cache_all(void);
 extern void setup_tlb(void);
-
+extern int  ricoh619_clr_left(void);
 
 /*change unsigned int to string*/
 void uint2str(unsigned int pword, unsigned char* str)
@@ -267,6 +267,10 @@ static int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
         argc--; argv++;
 	if (argc < 2)
 		return CMD_RET_USAGE;
+
+#ifdef CONFIG_PMU_RICOH6x
+	ricoh619_clr_left();
+#endif
 
 	if (!strcmp("mem",argv[0])) {
 		mem_address=simple_strtoul(argv[1], NULL, 16);

@@ -44,6 +44,11 @@ DECLARE_GLOBAL_DATA_PTR;
 /*
 extern void board_powerdown_device(void);
 */
+extern void lcd_sync(void);
+extern int calc_battery_capacity(void);
+extern int ricoh619_power_off(void);
+extern int ricoh61x_reg_charge_status(u8 reg, uint8_t bit_status);
+extern int ricoh619_set_pswr(uint8_t value);
 
 #define __is_gpio_en(GPIO)	\
 	(GPIO##_ENLEVEL ? gpio_get_value(GPIO) : !gpio_get_value(GPIO))
@@ -664,11 +669,10 @@ orig:
 	return 0;
 }
 
-extern int calc_battery_capacity();
 static int get_rle_num(void)
 {
 	int capacity;
-	int rle_num_base;
+	int rle_num_base = 0;
 	int logo_charge_num = (battery_voltage_max  - battery_voltage_min) / battery_voltage_scale;
 	unsigned int voltage;
 
