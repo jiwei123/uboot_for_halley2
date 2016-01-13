@@ -83,6 +83,7 @@
  * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
  */
 
+#define CONFIG_SPL_BOARD_INIT
 #define CONFIG_ASLMOM_BOARD
 
 /*pmu slp pin*/

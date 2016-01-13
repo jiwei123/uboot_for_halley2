@@ -144,6 +144,9 @@ int checkboard(void)
 #ifdef CONFIG_SPL_BUILD
 void spl_board_init(void)
 {
+	/* close boost */
+	gpio_request(32 * 1 + 5, "power_ctl1");
+	gpio_direction_output(32 * 1 + 5, 0);
 }
 
 #endif /* CONFIG_SPL_BUILD */
