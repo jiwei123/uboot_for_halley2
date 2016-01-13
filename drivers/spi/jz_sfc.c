@@ -795,7 +795,6 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned char cmd[7];
 	unsigned int  buf = 0, i;
 
-
 	jz_sfc_set_address_mode(flash,1);
 
 	if((len >= 0x10000)&&((offset % 0x10000) == 0)){
@@ -1048,21 +1047,17 @@ static void write_norflash_params_to_spl(unsigned int addr)
 
 unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 {
-	int i,tmp;
+	int i;
 	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
 		if(offset >= pdata.norflash_partitions.nor_partition[i].offset && \
 				offset < (pdata.norflash_partitions.nor_partition[i].offset + \
 				pdata.norflash_partitions.nor_partition[i].size)){
-			tmp = i;
-			if(pdata.norflash_partitions.nor_partition[i].mask_flags & 0x1){
-				break;
-			}
+			*pt_offset = pdata.norflash_partitions.nor_partition[i].offset;
+			*pt_size = pdata.norflash_partitions.nor_partition[i].size;
+			break;
 		}
 	}
-	*pt_offset = pdata.norflash_partitions.nor_partition[tmp].offset;
-	*pt_size = pdata.norflash_partitions.nor_partition[tmp].size;
-//	printf("==========partition info :num = %d ,offset =  %x , size = %x\n",tmp,*pt_offset,*pt_size);
-	return tmp;
+	return i;
 }
 
 static int sfc_nor_read_params(void);
@@ -1117,6 +1112,18 @@ int sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_addr
 
 	flag = 0;
 
+#ifndef CONFIG_BURNER
+	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
+		if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
+				src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
+				pdata.norflash_partitions.nor_partition[i].size) && \
+				(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_WO)){
+			printf("the partiton can't read,please check the partition RW mode\n");
+			return 0;
+		}
+	}
+#endif
+
 #ifdef CONFIG_SPI_QUAD
 	sfc_quad_mode = 1;
 #endif
@@ -1158,6 +1165,18 @@ int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	unsigned char *data;
 	int ret = 0,err = 0;
 	struct spi_flash flash;
+
+#ifndef CONFIG_BURNER
+	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
+		if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
+				src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
+				pdata.norflash_partitions.nor_partition[i].size) && \
+				(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_RO)){
+			printf("the partiton can't write,please check the partition RW mode\n");
+			return 0;
+		}
+	}
+#endif
 
 	if(erase_en == 1){
 		jz_sfc_erase(&flash,src_addr,count);
@@ -1215,7 +1234,17 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 	unsigned int spl_len = 0,words_of_spl;
 	struct spi_flash flash;
 
-
+#ifndef CONFIG_BURNER
+	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
+		if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
+				src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
+				pdata.norflash_partitions.nor_partition[i].size) && \
+				(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_RO)){
+			printf("the partiton can't erase,please check the partition RW mode\n");
+			return 0;
+		}
+	}
+#endif
 
 #ifdef CONFIG_SPI_QUAD
 	sfc_quad_mode = 1;
@@ -1228,6 +1257,7 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 			return -1;
 		}
 	}
+
 
 	flash.page_size = gparams.page_size;
 	flash.sector_size = gparams.sector_size;
@@ -1249,6 +1279,7 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 
 	return 0;
 }
+
 void sfc_for_nand_init(int sfc_quad_mode)
 {
 	unsigned int i;

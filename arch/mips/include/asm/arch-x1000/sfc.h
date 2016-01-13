@@ -27,12 +27,16 @@ struct sfc_xfer{
 	int column;
 };
 
+
 #define NOR_PART_NUM	10
+#define NORFLASH_PART_RW	0
+#define NORFLASH_PART_WO	1
+#define NORFLASH_PART_RO	2
 struct nor_partition {
 	char name[32];
 	uint32_t size;
 	uint32_t offset;
-	uint32_t mask_flags;//bit0 1:the partiton unshow 0:the partiton show
+	uint32_t mask_flags;//bit 0-1 mask the partiton RW mode, 0:RW  1:W  2:R
 	uint32_t manager_mode;
 };
 
