@@ -95,7 +95,8 @@ clean:
 		$(TOPDIR)/tools/logos/*.rle \
 		$(TOPDIR)/tools/charge_logo/*.rle \
 		$(TOPDIR)/board/$(BOARDDIR)/logo/*.rle \
-		$(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.rle
+		$(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.rle \
+		$(TOPDIR)/board/$(BOARDDIR)/charge_logo/$(CONFIG_CHARGE_LOGO_DIR)/*.rle
 
 distclean:	clean
 

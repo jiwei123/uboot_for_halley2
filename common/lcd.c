@@ -1620,13 +1620,13 @@ int lcd_dt_simplefb_enable_existing_node(void *blob)
 static int
 do_lcd_logo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	int ret;
+	int err = 0;
 	unsigned short *src_picture_addr = (unsigned short *)rle_default_logo_addr;
 	if (argc != 2)
 		return CMD_RET_USAGE;
 	if (strcmp("on", argv[1]) == 0) {
-		ret = show_rle_picture_in_fb_middle(src_picture_addr);
-		if(!ret)
+		err = show_rle_picture_in_fb_middle(src_picture_addr);
+		if(err)
 			return CMD_RET_USAGE;
 	} else if (strcmp("off", argv[1]) == 0) {
 		lcd_clear_black();
