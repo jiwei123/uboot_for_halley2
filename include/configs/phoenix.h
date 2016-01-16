@@ -145,16 +145,19 @@
 
 #ifdef CONFIG_SPL_OS_BOOT
 #ifdef CONFIG_NOR_SPL_BOOT_OS /* norflash spl boot kernel */
-#define CONFIG_SPL_OS_OFFSET        (0x40000) /* spi offset of xImage being loaded */
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"
 #else/* ota */
-#define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of xImage being loaded */
-#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
+#define CONFIG_PAR_NV_NAME        "NV_RW"
+#define CONFIG_PAR_NV_NUM        (3)
+#define CONFIG_PAT_USERFS_NAME   "user_fs"
+#define CONFIG_PAT_UPDATEFS_NAME   "update_fs"
+#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock5 rw"
 #endif /*CONFIG_NOR_SPL_BOOT_OS*/
+#define CONFIG_SPL_OS_NAME        "bootming" /* spi offset of xImage being loaded */
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
-#define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock4 rw"
+#define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock6 rw"
 #undef  CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND    "bootx sfc 0x80f00000 0xd00000"
+#define CONFIG_BOOTCOMMAND    "bootx sfc 0x80f00000"
 #endif
 
 #define PARTITION_NUM 10

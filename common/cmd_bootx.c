@@ -31,6 +31,7 @@
 #include <config.h>
 #include <mmc.h>
 #include <boot_img.h>
+#include <asm/arch/sfc.h>
 
 extern void flush_cache_all(void);
 
@@ -66,10 +67,28 @@ static int mem_bootx(unsigned int mem_address)
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
 	struct image_header *header;
-	unsigned int header_size;
+	struct norflash_partitions partition;
+	unsigned int header_size, i;
 	unsigned int entry_point, load_addr, size;
+	unsigned int user_offset, updatefs_size;
 
-	printf("Enter SFC_boot routine ...\n");
+	printf("Enter SFC_boot routine ...%x\n", sfc_addr);
+	if(sfc_addr == 0) {
+		sfc_nor_read(CONFIG_SPI_NORFLASH_PART_OFFSET,
+			     sizeof(struct norflash_partitions), &partition);
+		for (i = 0 ; i < partition.num_partition_info; i ++) {
+			if (!strncmp(partition.nor_partition[i].name,
+				     CONFIG_PAT_USERFS_NAME, sizeof(CONFIG_PAT_USERFS_NAME))) {
+				user_offset = partition.nor_partition[i].offset;
+			}
+			if (!strncmp(partition.nor_partition[i].name,
+				     CONFIG_PAT_UPDATEFS_NAME, sizeof(CONFIG_PAT_UPDATEFS_NAME))) {
+				updatefs_size = partition.nor_partition[i].size;
+			}
+		}
+		sfc_addr = user_offset + updatefs_size + 1024*1024;
+	}
+
 	header_size = sizeof(struct image_header);
 	sfc_nor_read(sfc_addr, header_size, CONFIG_SYS_TEXT_BASE);
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
@@ -87,8 +106,9 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long mem_address,sfc_addr, size;
-	/* Consume 'boota' */
-        argc--; argv++;
+	int i;
+	/* Consume 'bootx' */
+	argc--; argv++;
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
@@ -99,7 +119,11 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("mem boot error\n");
 	} else if (!strcmp("sfc",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
-		sfc_addr = simple_strtoul(argv[2], NULL, 16);
+		if(argc == 3)
+			sfc_addr = simple_strtoul(argv[2], NULL, 16);
+		else
+			sfc_addr = 0;
+
 		printf("SFC boot start\n");
 #ifdef CONFIG_JZ_SFC
 		sfc_boot(mem_address, sfc_addr);
