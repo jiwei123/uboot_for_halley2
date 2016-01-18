@@ -37,7 +37,7 @@
 #include "jz_spi.h"
 
 static struct jz_spi_support gparams;
-static struct params_spl pdata;
+static struct nor_sharing_params pdata;
 
 struct spi_quad_mode *quad_mode = NULL;
 /* wait time before read status (us) for spi nand */
@@ -795,6 +795,7 @@ int jz_sfc_erase(struct spi_flash *flash, u32 offset, size_t len)
 	unsigned char cmd[7];
 	unsigned int  buf = 0, i;
 
+
 	jz_sfc_set_address_mode(flash,1);
 
 	if((len >= 0x10000)&&((offset % 0x10000) == 0)){
@@ -1009,40 +1010,49 @@ static void dump_norflash_params(void)
 	printf(" =================================================\n");
 }
 
+#ifdef CONFIG_BURNER
 int get_norflash_params_from_burner(unsigned char *addr)
 {
 	unsigned int idcode,chipnum,i;
 	struct norflash_params *tmp;
 
-	sfc_nor_RDID(&idcode);
-	printf("the norflash chip_id is %x\n",idcode);
+	unsigned int flash_type = *(unsigned int *)(addr + 4);	//0:nor 1:nand
+	if(flash_type == 0){
 
-	//unsigned int version = *(unsigned int *)addr;
-	//unsigned int flash_type  = *(unsigned int *)(addr + 4);
-	chipnum = *(unsigned int *)(addr + 8);
-	for(i = 0; i < chipnum; i++){
-		tmp = (struct norflash_params *)(addr + 12 +sizeof(struct norflash_params) * i);
-		if(tmp->id == idcode) {
-			memcpy(&pdata.norflash_params,tmp,sizeof(struct norflash_params));
-			printf("-----break,break,break,break %x\n",idcode);
-			break;
+		sfc_nor_RDID(&idcode);
+		printf("the norflash chip_id is %x\n",idcode);
+
+		pdata.magic = NOR_MAGIC;
+		pdata.version = CONFIG_NOR_VERSION;
+
+		chipnum = *(unsigned int *)(addr + 8);
+		for(i = 0; i < chipnum; i++){
+			tmp = (struct norflash_params *)(addr + 12 +sizeof(struct norflash_params) * i);
+			if(tmp->id == idcode) {
+				memcpy(&pdata.norflash_params,tmp,sizeof(struct norflash_params));
+				printf("-----break,break,break,break %x\n",idcode);
+				break;
+			}
 		}
-	}
 
-	if(i == chipnum){
-		printf("none norflash support for the table ,please check the burner norflash supprot table\n");
+		if(i == chipnum){
+			printf("none norflash support for the table ,please check the burner norflash supprot table\n");
+			return -1;
+		}
+
+		pdata.norflash_partitions.num_partition_info = *(unsigned int *)(addr + 12 + sizeof(struct norflash_params) * chipnum);
+		memcpy(&pdata.norflash_partitions.nor_partition[0] ,addr + 12 +sizeof(struct norflash_params) * chipnum + 4, \
+				sizeof(struct nor_partition) * pdata.norflash_partitions.num_partition_info);
+	}else{
+		printf("the params recive from cloner not't the norflash\n");
 		return -1;
 	}
-
-	pdata.norflash_partitions.num_partition_info = *(unsigned int *)(addr + 12 + sizeof(struct norflash_params) * chipnum);
-	memcpy(&pdata.norflash_partitions.nor_partition[0] ,addr + 12 +sizeof(struct norflash_params) * chipnum + 4, \
-			sizeof(struct nor_partition) * pdata.norflash_partitions.num_partition_info);
 	return 0;
 }
 
 static void write_norflash_params_to_spl(unsigned int addr)
 {
-	memcpy(addr+CONFIG_SPIFLASH_PART_OFFSET,&pdata,sizeof(struct params_spl));
+	memcpy(addr+CONFIG_SPIFLASH_PART_OFFSET,&pdata,sizeof(struct nor_sharing_params));
 }
 
 unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
@@ -1059,6 +1069,7 @@ unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 	}
 	return i;
 }
+#endif
 
 static int sfc_nor_read_params(void);
 int sfc_nor_init()
@@ -1067,18 +1078,51 @@ int sfc_nor_init()
 	sfc_nor_read_params();
 #endif
 
-	memcpy(gparams.name,pdata.norflash_params.name,32);
-	gparams.id_manufactory = pdata.norflash_params.id;
-	gparams.page_size = pdata.norflash_params.pagesize;
-	gparams.sector_size = pdata.norflash_params.sectorsize;
-	gparams.addr_size = pdata.norflash_params.addrsize;
-	gparams.size = pdata.norflash_params.chipsize;
-	gparams.quad_mode = pdata.norflash_params.quad_mode;
+	if(pdata.magic == NOR_MAGIC) {
+		if(pdata.version == CONFIG_NOR_VERSION){
+			memcpy(gparams.name,pdata.norflash_params.name,32);
+			gparams.id_manufactory = pdata.norflash_params.id;
+			gparams.page_size = pdata.norflash_params.pagesize;
+			gparams.sector_size = pdata.norflash_params.sectorsize;
+			gparams.addr_size = pdata.norflash_params.addrsize;
+			gparams.size = pdata.norflash_params.chipsize;
+			gparams.quad_mode = pdata.norflash_params.quad_mode;
 
-	quad_mode = &gparams.quad_mode;
-	//dump_norflash_params();
+			quad_mode = &gparams.quad_mode;
+			//dump_norflash_params();
+		}else{
+			printf("EEEOR:norflash version mismatch,current version is %d.%d.%d,but the burner version is %d.%d.%d\n"\
+					,CONFIG_NOR_MAJOR_VERSION_NUMBER,CONFIG_NOR_MINOR_VERSION_NUMBER,CONFIG_NOR_REVERSION_NUMBER\
+					,pdata.version & 0xff,(pdata.version & 0xff00) >> 8,(pdata.version & 0xff0000) >> 16);
+			return -1;
+		}
+	} else {
+		int i = 0;
+		unsigned int idcode;
+		sfc_nor_RDID(&idcode);
+
+		for (i = 0; i < ARRAY_SIZE(jz_spi_support_table); i++) {
+			gparams = jz_spi_support_table[i];
+			if (gparams.id_manufactory == idcode){
+				printf("the id code = %x, the flash name is %s\n",idcode,gparams.name);
+				if(sfc_quad_mode == 1){
+					quad_mode = &jz_spi_support_table[i].quad_mode;
+				}
+				break;
+			}
+		}
+
+		if (i == ARRAY_SIZE(jz_spi_support_table)) {
+			if ((idcode != 0)&&(idcode != 0xff)&&(sfc_quad_mode == 0)){
+				printf("the id code = %x\n",idcode);
+				printf("unsupport ID is if the id not be 0x00,the flash is ok for burner\n");
+			}else{
+				printf("ingenic: sfc quad mode Unsupported ID %x\n", idcode);
+				return -1;
+			}
+		}
+	}
 	return 0;
-
 }
 
 static int sfc_nor_read_params(void)
@@ -1090,7 +1134,7 @@ static int sfc_nor_read_params(void)
 
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 
-	ret = jz_sfc_read_norflash_params(&flash,CONFIG_SPIFLASH_PART_OFFSET,sizeof(struct params_spl),&pdata);
+	ret = jz_sfc_read_norflash_params(&flash,CONFIG_SPIFLASH_PART_OFFSET,sizeof(struct nor_sharing_params),&pdata);
 	if (ret) {
 		printf("sfc read error\n");
 		return -1;
@@ -1113,13 +1157,15 @@ int sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_addr
 	flag = 0;
 
 #ifndef CONFIG_BURNER
-	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
-		if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
-				src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
-				pdata.norflash_partitions.nor_partition[i].size) && \
-				(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_WO)){
-			printf("the partiton can't read,please check the partition RW mode\n");
-			return 0;
+	if(pdata.norflash_partitions.num_partition_info && (pdata.norflash_partitions.num_partition_info != 0xffffffff)) {
+		for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
+			if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
+					src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
+						pdata.norflash_partitions.nor_partition[i].size) && \
+					(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_WO)){
+				printf("the partiton can't read,please check the partition RW mode\n");
+				return 0;
+			}
 		}
 	}
 #endif
@@ -1167,13 +1213,15 @@ int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	struct spi_flash flash;
 
 #ifndef CONFIG_BURNER
-	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
-		if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
-				src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
-				pdata.norflash_partitions.nor_partition[i].size) && \
-				(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_RO)){
-			printf("the partiton can't write,please check the partition RW mode\n");
-			return 0;
+	if(pdata.norflash_partitions.num_partition_info && (pdata.norflash_partitions.num_partition_info != 0xffffffff)) {
+		for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
+			if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
+					src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
+						pdata.norflash_partitions.nor_partition[i].size) && \
+					(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_RO)){
+				printf("the partiton can't write,please check the partition RW mode\n");
+				return 0;
+			}
 		}
 	}
 #endif
@@ -1235,13 +1283,15 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 	struct spi_flash flash;
 
 #ifndef CONFIG_BURNER
-	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
-		if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
-				src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
-				pdata.norflash_partitions.nor_partition[i].size) && \
-				(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_RO)){
-			printf("the partiton can't erase,please check the partition RW mode\n");
-			return 0;
+	if(pdata.norflash_partitions.num_partition_info && (pdata.norflash_partitions.num_partition_info != 0xffffffff)) {
+		for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
+			if(src_addr >= pdata.norflash_partitions.nor_partition[i].offset && \
+					src_addr < (pdata.norflash_partitions.nor_partition[i].offset + \
+						pdata.norflash_partitions.nor_partition[i].size) && \
+					(pdata.norflash_partitions.nor_partition[i].mask_flags & NORFLASH_PART_RO)){
+				printf("the partiton can't erase,please check the partition RW mode\n");
+				return 0;
+			}
 		}
 	}
 #endif

@@ -94,7 +94,9 @@ struct norflash_params {
 	struct spi_quad_mode quad_mode;
 };
 
-struct params_spl {
+struct nor_sharing_params {
+	uint32_t magic;
+	uint32_t version;
 	struct norflash_params norflash_params;
 	struct norflash_partitions norflash_partitions;
 };

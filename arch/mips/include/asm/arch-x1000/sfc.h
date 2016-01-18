@@ -27,7 +27,7 @@ struct sfc_xfer{
 	int column;
 };
 
-
+#define NOR_MAGIC	0x726f6e	//ascii "nor"
 #define NOR_PART_NUM	10
 #define NORFLASH_PART_RW	0
 #define NORFLASH_PART_WO	1
@@ -42,7 +42,7 @@ struct nor_partition {
 
 struct norflash_partitions {
 	struct nor_partition nor_partition[NOR_PART_NUM];
-	int num_partition_info;
+	uint32_t num_partition_info;
 };
 
 #define SFC_GLB		          (0x0000)
