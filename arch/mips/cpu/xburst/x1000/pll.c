@@ -372,9 +372,7 @@ int pll_init(void)
 
 		/* printf("ddr sel %s, cpu sel %s\n", CONFIG_DDR_SEL_PLL == APLL ? "apll" : "mpll", */
 		/* 		CONFIG_CPU_SEL_PLL == APLL ? "apll" : "mpll"); */
-		printf("ddrfreq %d\ncclk  %d\nl2clk %d\n",
-		       gd->arch.gi->ddrfreq, cclk, l2clk);
-		printf("h0clk %d\nh2clk  %d\npclk %d\n",h0clk,h2clk,pclk);
+		printf("ddrfreq %d\ncclk  %d\n", gd->arch.gi->ddrfreq, cclk);
 	}
 	return 0;
 }
