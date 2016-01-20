@@ -29,7 +29,11 @@ LIB	= $(obj)lib$(SOC).o
 all:	$(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
+ifeq ($(CONFIG_DDR_CS1), y)
+	@cp libm200_cs1.bk $@
+else
 	@cp libm200.bk $@
+endif
 
 #########################################################################
 
