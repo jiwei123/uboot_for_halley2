@@ -506,12 +506,14 @@ int sfc_init(void )
 	tmp |= (THRESHOLD << THRESHOLD_OFFSET);
 	jz_sfc_writel(tmp,SFC_GLB);
 
+#ifdef CONFIG_JZ_SFC_NOR
 	err = sfc_nor_init();
 	if(err < 0){
 		printf("the sfc quad mode err,check your soft code\n");
 		return -1;
 	}
 	sfc_is_init = 1;
+#endif
 	return 0;
 }
 
@@ -558,6 +560,7 @@ int sfc_nand_read_data(unsigned int *data, unsigned int length)
 	 return sfc_read_data(data,length);
 }
 
+#ifdef CONFIG_JZ_SFC_NOR
 int jz_sfc_set_address_mode(struct spi_flash *flash, int on)
 {
 	unsigned char cmd[3];
@@ -1329,6 +1332,7 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 
 	return 0;
 }
+#endif
 
 void sfc_for_nand_init(int sfc_quad_mode)
 {
