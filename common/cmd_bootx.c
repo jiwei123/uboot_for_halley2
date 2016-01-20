@@ -31,12 +31,13 @@
 #include <config.h>
 #include <mmc.h>
 #include <boot_img.h>
-#include <asm/gpio.h>
 #include <fs.h>
 #include <fat.h>
-#include <asm/arch/lcdc.h>
-extern void flush_cache_all(void);
 
+#include <asm/gpio.h>
+#include <asm/arch/lcdc.h>
+
+extern void flush_cache_all(void);
 
 /*boot.img has been in memory already. just call init_boot_linux() and jump to kernel.*/
 static void bootx_jump_kernel(unsigned long mem_address)
@@ -57,7 +58,7 @@ static void bootx_jump_kernel(unsigned long mem_address)
 		param_addr[1] = CONFIG_SPL_BOOTARGS;
 	else
 		param_addr[1] = CONFIG_BOOTX_BOOTARGS;
-	printf("param_addr[1] is %s\n",param_addr[1]);
+	printf("param_addr[1] is %x\n",param_addr[1]);
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
 	printf("We should not come here ... \n");
@@ -129,11 +130,10 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	unsigned int header_size;
 	unsigned int entry_point, load_addr, size;
 	unsigned int update_flag;
-	int smart_ctrl = 0;
 	gpio_port_direction_input(1,31);
 	gpio_port_direction_input(1,8);
 	update_flag = get_update_flag();
-	
+
 	if((update_flag & 0x03) != 0x03){
 #ifdef CONFIG_ASLMOM_BOARD
 		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
@@ -158,14 +158,14 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 			lcd_disable();
 		}
 		if(gpio_get_value(40)){
-		
+
 			printf("usb have remove ,power off!!!\n");
-			//call axp173 power off 
-			jz_hibernate();		
+			//call axp173 power off
+			jz_hibernate();
 		}
 #endif
 	}
-	
+
 	printf("Enter SFC_boot routine ...\n");
 	header_size = sizeof(struct image_header);
 	sfc_nor_read(sfc_addr, header_size, CONFIG_SYS_TEXT_BASE);
@@ -183,9 +183,90 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	bootx_jump_kernel(mem_address);
 }
 #endif
+
+static int bootx_fs_boot(
+	ulong mem_address,
+	char *load_file,
+	char *if_name,
+	char *dev_par_str,
+	char *fs_type_str)
+{
+	char *dev_par_v[3] = {NULL, NULL, NULL};
+	char par_zero[8];
+	char *par_info;
+	int fs_type;
+	ulong load_addr;
+	int load_offset;
+	unsigned long time;
+	int len_read;
+	int i;
+
+	dev_par_v[0] = dev_par_str;
+	memset(par_zero, 0, sizeof(par_zero));
+
+	par_info = strchr(dev_par_str, ':');
+	if (par_info && !strcasecmp(par_info + 1, "auto")) {
+		strncpy(par_zero, dev_par_str, par_info - dev_par_str);
+		strcat(par_zero, ":0");
+
+		dev_par_v[1] = dev_par_v[0];	/* "0:auto" first valid partition */
+		dev_par_v[0] = par_zero;	/* "0:0" None partition */
+	}
+
+	if (!strcmp(fs_type_str, "fat")) {
+		fs_type		= FS_TYPE_FAT;
+		load_addr	= mem_address;
+		load_offset	= sizeof(struct image_header);
+	} else if (!strcmp(fs_type_str, "ext4")) {
+		fs_type		= FS_TYPE_EXT;
+		load_addr	= mem_address - sizeof(struct image_header);
+		load_offset	= 0;	/* Ext read not support offset */
+	} else {
+		fs_type		= FS_TYPE_ANY;
+		load_addr	= mem_address - sizeof(struct image_header);
+		load_offset	= 0;
+	}
+
+	for (i = 0, len_read = -1; dev_par_v[i]; i++) {
+		/* Get fs block device */
+		if (fs_set_blk_dev(if_name, dev_par_v[i], fs_type) < 0)
+			continue;
+
+		printf("%s read %s partition\n", fs_type_str, dev_par_v[i]);
+
+		/* Read bootx image from filesystem */
+		time = get_timer(0);
+		len_read = fs_read(load_file, load_addr, load_offset, 0);
+		time = get_timer(time);
+		if (len_read >= 0)
+			break;
+	}
+
+	if (len_read < 0) {
+		printf("Bootx %s-%s read failed\n", if_name, fs_type_str);
+		return -1;
+	}
+
+	printf("%d bytes read in %lu ms", len_read, time);
+	if (time > 0) {
+		puts(" (");
+		print_size(len_read / time * 1000, "/s");
+		puts(")");
+	}
+	puts("\n");
+
+	setenv_hex("filesize", len_read);
+
+	/* Start boot kernel */
+	bootx_jump_kernel(mem_address);
+
+	/* Can not get there */
+	return 0;
+}
+
 static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	unsigned long mem_address,sfc_addr, size;
+	unsigned long mem_address, sfc_addr;
 	unsigned int update_flag;
         argc--; argv++;
 	update_flag = get_update_flag();
@@ -218,7 +299,6 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		sfc_boot(mem_address, sfc_addr);
 #endif
 		printf("SFC boot error\n");
-		return 0;
 	} else if (!strcmp("spi",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
 		sfc_addr = simple_strtoul(argv[2], NULL, 16);
@@ -227,41 +307,17 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		spi_boot(mem_address, sfc_addr);
 #endif
 		printf("SPI boot error\n");
-		return 0;
-	    } else if (!strcmp("fat", argv[0])) {
-                unsigned long time;
-                int len_read;
-                /* Get fat block device */
-                if (fs_set_blk_dev(argv[1], (argc >= 3) ? argv[2] : NULL, FS_TYPE_FAT)) {
-                        printf("Fat no %s device\n", argv[1]);
-                        return CMD_RET_FAILURE;
-                }
+	} else if (!strcmp("fat", argv[0]) || !strcmp("ext4", argv[0])) {
+		if (argc < 5)
+			return CMD_RET_USAGE;
 
-                mem_address = simple_strtoul(argv[3], NULL, 16);
+		mem_address = simple_strtoul(argv[3], NULL, 16);
+		printf("%s boot start\n", argv[0]);
+		if (bootx_fs_boot(mem_address, argv[4], argv[1], argv[2], argv[0]) < 0)
+			return CMD_RET_FAILURE;
 
-                /* fat DOS filesystem read */
-                time = get_timer(0);
-                len_read = fs_read(argv[4], mem_address, sizeof(struct image_header), 0);
-                time = get_timer(time);
-                if (len_read <= 0) {
-                        printf("FAT read failed\n");
-                        return CMD_RET_FAILURE;
-                }
-
-                printf("%d bytes read in %lu ms", len_read, time);
-                if (time > 0) {
-                        puts(" (");
-			print_size(len_read / time * 1000, "/s");
-                        puts(")");
-                }
-                puts("\n");
-
-                setenv_hex("filesize", len_read);
-
-                printf("FAT boot start\n");
-                bootx_jump_kernel(mem_address);
-                printf("FAT boot error\n");
-	}else {
+		printf("%s boot error\n", argv[0]);
+	} else {
 		printf("%s boot unsupport\n", argv[0]);
                 return CMD_RET_USAGE;
 	}
@@ -275,6 +331,7 @@ static char bootx_help_text[] =
         "\tThe argument [way] means the way of booting boot.img.[way]='mem'/'sfc'.\n"
         "\tThe argument [mem_address] means the start position of xImage in memory.\n"
         "\tThe argument [offset] means the position of xImage in sfc-nor.\n"
+	"\t[fs_type],[fs_dev],[dev:par],[mem_offset],[load_path] for filesystem boot.\n"
         "";
 #endif
 
