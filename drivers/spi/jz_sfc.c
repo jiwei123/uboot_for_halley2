@@ -417,9 +417,6 @@ void sfc_set_status_reg(unsigned regnum)
 	printf("coc -3\n");
 	jz_sfc_writel(START,SFC_TRIG);
 	sfc_write_data(&data, 1);
-
-
-
 	while (!(jz_nor_read_status(1) & 0x2/*STATUS_WIP*/)) {
 
 	}

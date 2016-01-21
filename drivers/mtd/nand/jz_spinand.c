@@ -39,7 +39,32 @@ static const char *const mtdids_default = MTDIDS_DEFAULT;
 #else
 static const char *const mtdids_default = "nand0:nand";
 #endif
+#define SIZE_UBOOT  0x100000    /* 1M */
+#define SIZE_KERNEL 0x800000    /* 8M */
+#define SIZE_ROOTFS (0x100000 * 40)        /* -1: all of left */
 
+extern unsigned int sfc_rate ;
+static struct jz_spinand_partition jz_mtd_spinand_partition[] = {
+        {
+                .name =     "uboot",
+                .offset =   0,
+                .size =     SIZE_UBOOT,
+                .manager_mode = MTD_MODE,
+        },
+        {
+                .name =     "kernel",
+                .offset =   SIZE_UBOOT,
+                .size =     SIZE_KERNEL,
+                .manager_mode = MTD_MODE,
+        },
+        {
+                .name   =       "rootfs",
+                .offset =   SIZE_UBOOT + SIZE_KERNEL,
+                .size   =   SIZE_ROOTFS,
+                .manager_mode = UBI_MANAGER,
+                //.manager_mode = MTD_MODE
+        },
+};
 
 static unsigned short column_cmdaddr_bits=24;/* read from cache ,the bits of cmd + addr */
 
@@ -726,7 +751,7 @@ static struct jz_spi_support_from_burner *spi_nandflash_probe(u8 *idcode,struct 
 {
 	int i;
 	struct jz_spi_support_from_burner *params=param_array->addr;
-
+	printf("sfcnand param num=%d\n",param_array->para_num);
 	for (i = 0; i < param_array->para_num; i++) {
 		if(params->id_manufactory == ((idcode[0]<<8) | idcode[1]))
 			break;
@@ -737,7 +762,7 @@ static struct jz_spi_support_from_burner *spi_nandflash_probe(u8 *idcode,struct 
 		printf("ingenic: Unsupported ID %02x\n", idcode[0]);
 		return NULL;
 	}
-#if DEBUG
+#if 0
 	printf("***********************chip information*************************\n");
 	printf("param num=%x\n",param_array->para_num);
 	printf("param id=%x\n",params->id_manufactory);
@@ -769,7 +794,7 @@ static struct jz_spi_support_from_burner *spi_nandflash_probe(u8 *idcode,struct 
 }
 static void jz_spi_get_param(char *buffer,struct nand_param_from_burner *param)
 {
-	char * member_addr=buffer;
+	char * member_addr=buffer+sizeof(int32_t);
 	memcpy(&param->version,member_addr,sizeof(param->version));
 	member_addr+=sizeof(param->version);
 	memcpy(&param->flash_type,member_addr,sizeof(param->flash_type));
@@ -790,6 +815,14 @@ static int get_spinand_pagesize(int page,int column)
        pagesize=buffer[SPL_TYPE_FLAG_LEN+5]*1024;
        return pagesize;
 }
+static int32_t get_nand_magic(int page,int column)
+{
+        char buffer[100];
+        int32_t nand_magic=0;
+        spi_nand_read_page(buffer,page,column,100);
+        nand_magic=*(int32_t *)(buffer);
+        return nand_magic;
+}
 static int get_spinand_param(char *buffer,int ptcount,struct nand_param_from_burner *param,int pagesize)
 {
         int offset=ptcount % pagesize;
@@ -801,17 +834,48 @@ static int get_spinand_param(char *buffer,int ptcount,struct nand_param_from_bur
  *addr in CONFIG_SPIFLASH_PART_OFFSET,
  *you must check addr is in same page,
  * *****************************************************************************************/
-static char *get_chip_param_from_nand(struct nand_param_from_burner **param)
+static char *get_chip_param_from_nand(struct nand_param_from_burner **param,int *using_way)
 {
+        int pagesize=0;
         char *buffer=NULL;
-	int pagesize;
-	*param=malloc(sizeof(struct nand_param_from_burner));
-	pagesize=get_spinand_pagesize(0,0);
-        buffer=malloc(pagesize);
-	get_spinand_param(buffer,CONFIG_SPIFLASH_PART_OFFSET,*param,pagesize);
+        int32_t nand_magic;
+        pagesize=get_spinand_pagesize(0,0);
+        nand_magic=get_nand_magic(CONFIG_SPIFLASH_PART_OFFSET/pagesize,CONFIG_SPIFLASH_PART_OFFSET%pagesize);
+        if(nand_magic==0x6e616e64)
+        {
+                *param=malloc(sizeof(struct nand_param_from_burner));
+                buffer=malloc(pagesize);
+                get_spinand_param(buffer,CONFIG_SPIFLASH_PART_OFFSET,*param,pagesize);
+                *using_way=0;
+        }else{
+                *using_way=1;
+        }
         return buffer;
 }
-
+static void tran_old_burnway(struct nand_param_from_burner **param)
+{
+        int i;
+        *param=malloc(sizeof(struct nand_param_from_burner));
+        (*param)->version=-1;
+        (*param)->flash_type=1;
+        (*param)->para_num=ARRAY_SIZE(jz_spi_nand_support_table);
+        (*param)->addr=malloc((*param)->para_num*sizeof(struct jz_spi_support_from_burner));
+        for(i=0;i<(*param)->para_num;i++){
+                (((*param)->addr)[i]).id_manufactory=jz_spi_nand_support_table[i].id_manufactory*256+
+			jz_spi_nand_support_table[i].id_device;
+                (((*param)->addr)[i]).id_device=jz_spi_nand_support_table[i].id_device;
+                memcpy((((*param)->addr)[i]).name,jz_spi_nand_support_table[i].name,32);
+                (((*param)->addr)[i]).page_size=jz_spi_nand_support_table[i].page_size;
+                (((*param)->addr)[i]).oobsize=jz_spi_nand_support_table[i].oobsize;
+                (((*param)->addr)[i]).sector_size=jz_spi_nand_support_table[i].sector_size;
+                (((*param)->addr)[i]).block_size=jz_spi_nand_support_table[i].block_size;
+                (((*param)->addr)[i]).size=jz_spi_nand_support_table[i].size;
+                (((*param)->addr)[i]).page_num=jz_spi_nand_support_table[i].page_num;
+                (((*param)->addr)[i]).column_cmdaddr_bits=jz_spi_nand_support_table[i].column_cmdaddr_bits;
+        }
+        (*param)->partition_num=ARRAY_SIZE(jz_mtd_spinand_partition);
+        (*param)->partition=jz_mtd_spinand_partition;
+}
 #define IDCODE_LEN (IDCODE_CONT_LEN + IDCODE_PART_LEN)
 int jz_spi_nand_init(struct nand_param_from_burner *param)
 {
@@ -819,12 +883,17 @@ int jz_spi_nand_init(struct nand_param_from_burner *param)
 	struct nand_chip *chip;
 	struct mtd_info *mtd;
 	struct jz_spi_support_from_burner *spi_flash;
+	int using_way;
 	mtd = &nand_info[0];
 
 	spi_init();
 	//printf("------->> idcode0 = %02x idcode1 = %02x idcode2 = %02x idcode3 = %02x\n",idcode[0],idcode[1],idcode[2],idcode[3]);
 #ifndef CONFIG_BURNER
-	char *buffer=get_chip_param_from_nand(&param);		//buffer,storge nand info
+	char *buffer=get_chip_param_from_nand(&param,&using_way);
+	if(using_way==1)                //use old way
+	{
+		tran_old_burnway(&param);
+	}
 #endif
 	read_spinand_id(idcode,sizeof(idcode));
 	spi_flash = spi_nandflash_probe(idcode,param);

@@ -126,10 +126,13 @@ out:
 void add_information_to_spl(char *databuf)
 {
 	int page_spl=0;
+	int32_t nand_magic=0x6e616e64;
 	char *member_addr=databuf;
 	page_spl=((nand_param_from_burner.addr->page_num/32)<<16)|((nand_param_from_burner.addr->page_size/1024)<<24);//compatible
-	*((int *)(databuf+8))=( *((int *)(databuf+8)))|page_spl;
-	member_addr+=CONFIG_SPIFLASH_PART_OFFSET;		//spinand parameter number addr
+	*((int *)(databuf+8))=( *((int *)(databuf+8)))|page_spl;	//write pagesize to spl head
+	member_addr+=CONFIG_SPIFLASH_PART_OFFSET;			//spinand parameter number addr
+	memcpy((char *)member_addr,&nand_magic,sizeof(int32_t));
+	member_addr+=sizeof(int32_t);					//spinand parameter magic  addr
 	memcpy((char *)member_addr,&nand_param_from_burner.version,sizeof(nand_param_from_burner.version));
 	member_addr+=sizeof(nand_param_from_burner.version);		//spinand parameter number addr
 	memcpy((char *)member_addr,&nand_param_from_burner.flash_type,sizeof(nand_param_from_burner.flash_type));

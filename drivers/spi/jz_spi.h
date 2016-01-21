@@ -54,7 +54,7 @@ struct spi_quad_mode {
 
 struct jz_spi_support {
 	unsigned int id_manufactory;
-	u8 id_device;
+	unsigned char id_device;
 	char name[SIZEOF_NAME];
 	int page_size;
 	int oobsize;
@@ -109,7 +109,7 @@ struct jz_spi_slave {
 };
 struct jz_spi_support_from_burner{
 		unsigned int id_manufactory;
-		char id_device;
+		unsigned char id_device;
 		char name[32];
 		int page_size;
 		int oobsize;
