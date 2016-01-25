@@ -206,6 +206,11 @@ static int bootx_fs_boot(
 
 	par_info = strchr(dev_par_str, ':');
 	if (par_info && !strcasecmp(par_info + 1, "auto")) {
+		if (par_info - dev_par_str > 3) {
+			printf("Bootx fs invalid par info: %s\n", dev_par_str);
+			return -1;
+		}
+
 		strncpy(par_zero, dev_par_str, par_info - dev_par_str);
 		strcat(par_zero, ":0");
 
