@@ -77,7 +77,9 @@
   #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
+/*    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.4.250:192.168.4.1:192.168.4.1:255.255.255.0 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/bliu/root_ok rw"*/
+/*	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc" */
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " rootdelay=2 init=/linuxrc root=/dev/mmcblk0p1 rw"
   #elif defined(CONFIG_JZ_NAND_MGR)
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"
   #else
@@ -180,9 +182,10 @@
 #define CONFIG_GPIO_DM9161_RESET	GPIO_PB(7)
 #define CONFIG_GPIO_DM9161_RESET_ENLEVEL	0
 
-/* DEBUG ETHERNET
-#define CONFIG_SERVERIP		192.168.4.122
-#define CONFIG_IPADDR		192.168.4.121
+/* DEBUG ETHERNET*/
+/*
+#define CONFIG_SERVERIP		192.168.4.250
+#define CONFIG_IPADDR		192.168.4.106
 #define CONFIG_GATEWAYIP        192.168.4.1
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_ETHADDR          00:11:22:33:44:55
@@ -437,7 +440,7 @@
  * MBR configuration
  */
 /*#ifdef CONFIG_MBR_CREATOR*/
-#define CONFIG_MBR_P0_OFF	64mb
+#define CONFIG_MBR_P0_OFF	56mb
 #define CONFIG_MBR_P0_END	556mb
 #define CONFIG_MBR_P0_TYPE 	linux
 
@@ -446,7 +449,7 @@
 #define CONFIG_MBR_P1_TYPE 	linux
 
 #define CONFIG_MBR_P2_OFF	28mb
-#define CONFIG_MBR_P2_END	58mb
+#define CONFIG_MBR_P2_END	54mb
 #define CONFIG_MBR_P2_TYPE 	linux
 
 #define CONFIG_MBR_P3_OFF	1609mb
