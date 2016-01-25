@@ -47,7 +47,7 @@ void board_set_backlight_init(int num)
 }
 
 struct jzfb_config_info jzfb1_init_data = {
-#if defined(CONFIG_VIDEO_VIRTUAL)
+#if defined(CONFIG_VIDEO_VIRTUAL_800480)
 	.modes = &jzfb1_videomode,
 	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
 	.bpp = 16,

@@ -58,6 +58,7 @@ COBJS-$(CONFIG_VIDEO_TEGRA) += tegra.o
 COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 COBJS-$(CONFIG_VIDEO_BYD_BM8766U) += jz_lcd/lcd_panel/byd_bm8766u.o
 COBJS-$(CONFIG_VIDEO_VIRTUAL) += jz_lcd/lcd_panel/virtual.o
+COBJS-$(CONFIG_VIDEO_VIRTUAL_800480) += jz_lcd/lcd_panel/virtual_800480.o
 COBJS-$(CONFIG_VIDEO_HIMAX7033) += jz_lcd/lcd_panel/himax7033.o \
 	jz_lcd/lcd_panel/himax7033_init.o
 COBJS-$(CONFIG_VIDEO_HIMAX7097) += jz_lcd/lcd_panel/himax7097.o \
