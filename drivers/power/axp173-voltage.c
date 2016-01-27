@@ -257,3 +257,17 @@ void low_power_detect(void)
 	}
 #endif
 }
+
+void disable_ldo4(void)
+{
+	int ret;
+	unsigned char tmp;
+	unsigned char reg = POWER_ON_OFF_REG;
+
+	axp173_read_reg(reg, &tmp, 1);
+
+	tmp &= (~(1 << 1));
+	ret = axp173_write_reg(reg, &tmp);
+	if (ret < 0)
+		printf("Error in writing the POWER_ON_OFF_REG_Reg\n");
+}

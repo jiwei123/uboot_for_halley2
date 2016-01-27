@@ -139,6 +139,7 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 
 #ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
+	disable_ldo4();
 	gpio_port_direction_input(1,31);
 	gpio_port_direction_input(1,8);
 	update_flag = get_update_flag();
