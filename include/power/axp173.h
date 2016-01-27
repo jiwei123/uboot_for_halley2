@@ -27,7 +27,9 @@
 #ifndef __AXP173_H
 #define __AXP173_H
 
-#define	AXP173_POWER_OFF		(0x32)
+#define   POWER_STATUS			(0x00)
+#define   POWER_MODE_CHGSTATUS		(0x01)
+#define	  AXP173_POWER_OFF		(0x32)
 /* adc data register */
 #define   POWER_ACIN_VOL_H8		(0x56)
 #define   POWER_ACIN_VOL_L4		(0x57)
@@ -47,6 +49,10 @@
 #define   POWER_BAT_AVERCHGCUR_L5	(0x7B)
 #define   POWER_BAT_AVERDISCHGCUR_H8	(0x7C)
 #define   POWER_BAT_AVERDISCHGCUR_L5	(0x7D)
+
+#define CHARGED_STATUS			(1<<6)
+#define AC_AVAILABLE			(1<<6)
+#define USB_AVAILABLE			(1<<4)
 
 struct ocv2soc {
         int vol;

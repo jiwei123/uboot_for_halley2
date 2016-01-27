@@ -16,26 +16,21 @@ extern int axp173_write_reg(u8 reg, u8 *val);
 #ifdef CONFIG_ASLMOM_BATTERY
 struct ocv2soc ocv2soc[] = {
         {4321, 100},
-        {4152,  97},
-        {4096,  93},
-        {4030,  88},
-        {3974,  83},
-        {3920,  78},
-        {3868,  73},
-        {3804,  67},
-        {3764,  62},
-        {3721,  56},
-        {3679,  48},
-        {3653,  41},
-        {3628,  35},
-        {3603,  28},
-        {3576,  22},
-        {3552,  17},
-        {3522,  12},
-        {3497,   9},
-        {3461,   6},
-        {3417,   3},
-        {3371,   0},
+        {4152,  95},
+        {4096,  89},
+        {4030,  83},
+        {3974,  77},
+        {3920,  71},
+        {3868,  65},
+        {3804,  58},
+        {3764,  52},
+        {3721,  45},
+        {3679,  37},
+        {3653,  29},
+        {3628,  22},
+        {3603,  14},
+        {3576,   7},
+        {3545,   0},
 };
 #else
 struct ocv2soc ocv2soc[] = {
@@ -177,6 +172,8 @@ static unsigned int jz_current_battery_voltage()
 		pmu_charging = 0;
 
 	voltage = get_pmu_voltage();
+//	printf("=>>>>>in jz_current_battery_voltage:luduan_vol = %d\n",voltage);
+	low_power_detect(pmu_charging, voltage);
 	pmu_current = get_pmu_current();
 	voltage = pmu_charging == CHARGING_ON ? voltage - (pmu_current * INTER_RESIST
 			/ 1000) : voltage + (pmu_current * INTER_RESIST / 1000);
@@ -209,11 +206,54 @@ static int jz_current_battery_current_cpt(unsigned int voltage)
 	return cpt;
 }
 
+int get_battery_status(void)
+{
+	int ret = 0;
+	unsigned char power_status = 0;
+	unsigned char power_mode_chgstatus = 0;
+
+	axp173_read_reg(POWER_STATUS, &power_status, 1);
+        axp173_read_reg(POWER_MODE_CHGSTATUS, &power_mode_chgstatus, 1);
+	if ((!(power_mode_chgstatus & CHARGED_STATUS)) &&
+		(power_status & (AC_AVAILABLE | USB_AVAILABLE)))
+		ret = 100;
+
+	return ret;
+}
+
 int get_battery_current_cpt(void)
 {
+	int cpt = 0;
 	unsigned int voltage = 0;
 
 	mdelay(250);
+	cpt = get_battery_status();
+	if(cpt == 100)
+		return cpt;
 	voltage = jz_current_battery_voltage();
-	return jz_current_battery_current_cpt(voltage);
+	cpt = jz_current_battery_current_cpt(voltage);
+	return cpt;
+}
+
+void low_power_detect(void)
+{
+	unsigned int voltage = 0;
+	int charging = 0;
+	int value;
+
+	gpio_direction_input(USB_DETE);
+	value = gpio_get_value(USB_DETE);
+	if(value == 0)
+		charging = 1;
+	if(value == 1)
+		charging = 0;
+//	printf("in low_power_detect:charging = %d,voltage = %d\n",charging,voltage);
+	voltage = get_pmu_voltage();
+#if 0
+	if(!charging && (voltage < 3400)) {
+//		printf("Electricity is insufficient, please charge!\n");
+//		jz_hibernate();
+		axp173_power_off();
+	}
+#endif
 }
