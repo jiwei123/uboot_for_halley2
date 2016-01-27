@@ -34,9 +34,10 @@
 #include <fs.h>
 #include <fat.h>
 
+#ifdef CONFIG_ASLMOM_BOARD
 #include <asm/gpio.h>
 #include <asm/arch/lcdc.h>
-
+#endif
 extern void flush_cache_all(void);
 
 /*boot.img has been in memory already. just call init_boot_linux() and jump to kernel.*/
@@ -45,19 +46,25 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	static u32 *param_addr = NULL;
 	typedef void (*image_entry_arg_t)(int, char **, void *)
 		__attribute__ ((noreturn));
+	
+#ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
 	update_flag = get_update_flag();
-
+#endif
 	image_entry_arg_t image_entry =
 		(image_entry_arg_t) mem_address;
 
 	printf("Prepare kernel parameters ...\n");
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
+#ifdef CONFIG_ASLMOM_BOARD
 	if((update_flag & 0x3) != 0x3)
 		param_addr[1] = CONFIG_SPL_BOOTARGS;
 	else
 		param_addr[1] = CONFIG_BOOTX_BOOTARGS;
+#else
+	param_addr[1] = CONFIG_BOOTX_BOOTARGS;
+#endif
 	printf("param_addr[1] is %x\n",param_addr[1]);
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
@@ -129,13 +136,13 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	struct image_header *header;
 	unsigned int header_size;
 	unsigned int entry_point, load_addr, size;
+
+#ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
 	gpio_port_direction_input(1,31);
 	gpio_port_direction_input(1,8);
 	update_flag = get_update_flag();
-
 	if((update_flag & 0x03) != 0x03){
-#ifdef CONFIG_ASLMOM_BOARD
 		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
 			if(!first){
 				first = 1;
@@ -163,9 +170,8 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 			//call axp173 power off
 			jz_hibernate();
 		}
-#endif
 	}
-
+#endif
 	printf("Enter SFC_boot routine ...\n");
 	header_size = sizeof(struct image_header);
 	sfc_nor_read(sfc_addr, header_size, CONFIG_SYS_TEXT_BASE);
@@ -272,17 +278,20 @@ static int bootx_fs_boot(
 static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long mem_address, sfc_addr;
+#ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
-        argc--; argv++;
+#endif
+	argc--; argv++;
+#ifdef CONFIG_ASLMOM_BOARD
 	update_flag = get_update_flag();
 	if((update_flag & 0x3) != 0x3)	{
 		strcpy(argv[0],"sfc");
 		strcpy(argv[1],argv[3]);
-#ifdef CONFIG_ASLMOM_BOARD
 		if(get_show_cpt_flag() == 0x69)
 			clear_show_cpt_flag();
-#endif
 	}
+
+#endif
 	printf("argv[0]: %s,argv[1]:%s\n",argv[0],argv[1]);
 	/* Consume 'boota' */
 	if (argc < 2)
@@ -295,15 +304,17 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("mem boot error\n");
 	} else if (!strcmp("sfc",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
-	//	if((update_flag & 0x03) != 0x03)
-			sfc_addr = 0x100000;
-	//	else
-	//		sfc_addr = simple_strtoul(argv[2], NULL, 16);
+#ifdef CONFIG_ASLMOM_BOARD
+		sfc_addr = 0x100000;
+#else
+		sfc_addr = simple_strtoul(argv[2], NULL, 16);
+#endif
 		printf("SFC boot start\n");
 #ifdef CONFIG_JZ_SFC
 		sfc_boot(mem_address, sfc_addr);
 #endif
 		printf("SFC boot error\n");
+		return 0;
 	} else if (!strcmp("spi",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
 		sfc_addr = simple_strtoul(argv[2], NULL, 16);
@@ -340,9 +351,16 @@ static char bootx_help_text[] =
         "";
 #endif
 
+#ifdef CONFIG_ASLMOM_BOARD
 U_BOOT_CMD(
         bootx, 6, 1, do_bootx,
         "boot xImage ",bootx_help_text
 );
+#else
+U_BOOT_CMD(
+        bootx, 5, 1, do_bootx,
+        "boot xImage ",bootx_help_text
+);
+#endif
 
 
