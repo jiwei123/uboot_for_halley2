@@ -154,15 +154,15 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 					line = get_line_count();
 				}
 			}
-
-			lcd_enable();
-			lcd_display_zero_cap();
-			mdelay(100);
-			if(bat_cap != 100)
+			if(bat_cap != 100){
+				lcd_enable();
+				lcd_display_zero_cap();
+				mdelay(100);
 				display_battery_capacity(line);
-			else
+				lcd_disable();
+			}else{
 				lcd_display_bat_cap_first(100);
-			lcd_disable();
+			}
 		}
 		if(gpio_get_value(40)){
 
