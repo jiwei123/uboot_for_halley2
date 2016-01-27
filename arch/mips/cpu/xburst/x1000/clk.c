@@ -418,31 +418,53 @@ void otg_phy_init(enum otg_mode_t mode, unsigned extclk) {
 
 void print_clock()
 {
-        unsigned apll=0, mpll=0, cclk=0, l2clk=0, h0clk=0,h2clk=0,pclk=0, pll_tmp=0,cpccr=0;
-        int chose_tmp;
-        apll=pll_get_rate(APLL);
-        mpll=pll_get_rate(MPLL);
-        cpccr=cpm_inl(CPM_CPCCR);
-        chose_tmp=( cpccr  >> 28) & 3;
-        if(chose_tmp==1){
-                l2clk=apll/((cpccr>>4) & 0xf);
-        }else if(chose_tmp==2){
-                l2clk=mpll/((cpccr>>4) & 0xf);
-        }
-        chose_tmp=( cpccr  >> 26) & 3;
-        if(chose_tmp==1){
-                h0clk=apll/((cpccr>>8) & 0xf);
-        }else if(chose_tmp==2){
-                h0clk=mpll/((cpccr>>8) & 0xf);
-        }
-        chose_tmp=( cpccr  >> 24) & 3;
-        if(chose_tmp==1){
-                h2clk=apll/((cpccr>>12) & 0xf);
-                pclk=apll/((cpccr>>16) & 0xf);
-        }else if(chose_tmp==2){
-                h2clk=mpll/((cpccr>>12) & 0xf);
-                pclk=mpll/((cpccr>>16) & 0xf);
-        }
-        printf("ddrfreq= %d\ncpufreq= %d\nL2cachefreq= %d\n",gd->arch.gi->ddrfreq,gd->arch.gi->cpufreq,l2clk);
-        printf("AHB0freq= %d\nAHB2freq= %d\npclk %d\n",h0clk,h2clk,pclk);
+/* #ifndef CONFIG_BURNER */
+/* 	unsigned int apll = 0, mpll = 0; */
+/* 	unsigned int cclk = 0, l2clk = 0; */
+/* 	unsigned int h0clk = 0, h2clk = 0; */
+/* 	unsigned int pclk = 0; */
+/* 	unsigned int pll_tmp = 0, cpccr = 0; */
+/* 	int chose_tmp, div, div1; */
+
+/* 	/\* apll = pll_get_rate(APLL); *\/ */
+/* 	/\* mpll = pll_get_rate(MPLL); *\/ */
+/* 	apll = CONFIG_SYS_APLL_FREQ; */
+/* 	mpll = CONFIG_SYS_MPLL_FREQ; */
+
+/* 	cpccr = cpm_inl(CPM_CPCCR); */
+
+/* 	chose_tmp=(cpccr  >> 28) & 3; */
+/* 	div = (cpccr>>4) & 0xf + 1; */
+/* 	if(chose_tmp==1){ */
+/* 		l2clk=apll/div; */
+/* 	}else if(chose_tmp==2){ */
+/* 		l2clk=mpll/div; */
+/* 	} */
+
+/* 	chose_tmp=( cpccr  >> 26) & 3; */
+/* 	div = (cpccr>>8) & 0xf + 1; */
+/* 	if(chose_tmp==1){ */
+/* 		h0clk=apll/div; */
+/* 	}else if(chose_tmp==2){ */
+/* 		h0clk=mpll/div; */
+/* 	} */
+/* 	chose_tmp=( cpccr  >> 24) & 3; */
+/* 	div = (cpccr>>12) & 0xf + 1; */
+/* 	div1 = (cpccr>>16) & 0xf + 1; */
+/* 	if(chose_tmp==1){ */
+/* 		h2clk=apll/div; */
+/* 		pclk=apll/div1; */
+/* 	}else if(chose_tmp==2){ */
+/* 		h2clk=mpll/div; */
+/* 		pclk=mpll/div1; */
+/* 	} */
+/* 	printf("apll = %d\n mpll = %d\n", apll, mpll); */
+
+/* 	printf("ddrfreq = %d\n cpufreq = %d\n l2cache = %d\n",\ */
+/* 	       gd->arch.gi->ddrfreq, gd->arch.gi->cpufreq, l2clk); */
+/* 	printf("AHB0freq= %d\nAHB2freq= %d\npclk %d\n",h0clk,h2clk,pclk); */
+/* #else */
+	printf("apll = %d\n mpll = %d\n", pll_get_rate(APLL), pll_get_rate(MPLL));
+	printf("cpccr = %x\n", cpm_inl(CPM_CPCCR));
+/* #endif */
 }

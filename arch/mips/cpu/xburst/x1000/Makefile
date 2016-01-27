@@ -40,7 +40,7 @@ endif
 
 COBJS-y += clk.o
 COBJS-y += ddr_set_dll.o
-COBJS-$(CONFIG_BURNER) += burn_ddr.o
+COBJS-$(CONFIG_BURNER) += ./ddr_dwc.o
 ifndef CONFIG_BURNER
 COBJS-y += ./ddr_dwc.o
 endif

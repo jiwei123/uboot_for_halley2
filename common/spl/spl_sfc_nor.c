@@ -190,6 +190,7 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	return ;
 }
 
+#ifdef CONFIG_SPL_OS_BOOT
 static void nv_map_area(unsigned int *base_addr, unsigned int nv_addr, unsigned int blocksize)
 {
 	unsigned int buf[3][2];
@@ -214,7 +215,7 @@ static void nv_map_area(unsigned int *base_addr, unsigned int nv_addr, unsigned 
 	}
 	*base_addr = nv_addr + nv_num * blocksize;
 }
-
+#endif
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
