@@ -213,7 +213,11 @@ static void nv_map_area(unsigned int *base_addr, unsigned int nv_addr, unsigned 
 			}
 		}
 	}
+#ifdef CONFIG_OTA_VERSION20
 	*base_addr = nv_addr + nv_num * blocksize;
+#else
+	*base_addr = nv_addr + nv_num * blocksize + 1024;
+#endif
 }
 #endif
 void spl_sfc_nor_load_image(void)
@@ -221,13 +225,21 @@ void spl_sfc_nor_load_image(void)
 	struct image_header *header;
 
 #ifdef CONFIG_SPL_OS_BOOT
-	struct norflash_partitions partition;
-	unsigned nv_buf[2];
-	int count = 8, i;
 	unsigned int bootimg_addr;
 	unsigned int nv_rw_addr;
 	unsigned int nor_blocksize;
 	unsigned int src_addr, updata_flag;
+#ifdef CONFIG_OTA_VERSION20
+	struct norflash_partitions partition;
+	unsigned nv_buf[2];
+	int count = 8, i;
+#else
+	unsigned nv_buf[4];
+	int count = 16;
+	nv_rw_addr = 288 * 1024;
+	nor_blocksize = 32 *1024;
+	bootimg_addr = CONFIG_SPL_OS_OFFSET;
+#endif
 #endif
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
@@ -240,6 +252,13 @@ void spl_sfc_nor_load_image(void)
 	sfc_init();
 
 #ifdef CONFIG_SPL_OS_BOOT
+#ifdef CONFIG_NOR_SPL_BOOT_OS /* norflash spl boot kernel */
+	sfc_nor_load(bootimg_addr, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+	spl_parse_image_header(header);
+	sfc_nor_load(bootimg_addr, spl_image.size, spl_image.load_addr);
+	return ;
+#else //not defined CONFIG_NOR_SPL_BOOT_OS
+#ifdef CONFIG_OTA_VERSION20
 	sfc_nor_load(CONFIG_SPI_NORFLASH_PART_OFFSET, sizeof(struct norflash_partitions), &partition);
 	for (i = 0 ; i < partition.num_partition_info; i ++) {
 		if (!strncmp(partition.nor_partition[i].name, CONFIG_SPL_OS_NAME, sizeof(CONFIG_SPL_OS_NAME))) {
@@ -250,23 +269,21 @@ void spl_sfc_nor_load_image(void)
 			nor_blocksize = partition.nor_partition[i].size / CONFIG_PAR_NV_NUM;
 		}
 	}
-
-#ifdef CONFIG_NOR_SPL_BOOT_OS /* norflash spl boot kernel */
-	sfc_nor_load(bootimg_addr, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
-	spl_parse_image_header(header);
-	sfc_nor_load(bootimg_addr, spl_image.size, spl_image.load_addr);
-	return ;
-#endif //CONFIG_NOR_SPL_BOOT_OS
-
 	nv_map_area((unsigned int)&src_addr, nv_rw_addr, nor_blocksize);
 	sfc_nor_load(src_addr, count, nv_buf);
 	updata_flag = nv_buf[1];
+#else
+	nv_map_area((unsigned int)&src_addr, nv_rw_addr, nor_blocksize);
+	sfc_nor_load(src_addr, count, nv_buf);
+	updata_flag = nv_buf[3];
+#endif
 	if((updata_flag & 0x3) != 0x3)
 	{
 		sfc_nor_load(bootimg_addr, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
 		spl_parse_image_header(header);
 		sfc_nor_load(bootimg_addr, spl_image.size, spl_image.load_addr);
 	} else
+#endif
 #endif
 	{
 		spl_parse_image_header(header);

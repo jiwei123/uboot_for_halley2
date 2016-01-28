@@ -67,28 +67,32 @@ static int mem_bootx(unsigned int mem_address)
 static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 {
 	struct image_header *header;
-	struct norflash_partitions partition;
-	unsigned int header_size, i;
+	unsigned int header_size;
 	unsigned int entry_point, load_addr, size;
 	unsigned int user_offset, updatefs_size;
 
 	printf("Enter SFC_boot routine ...%x\n", sfc_addr);
-	if(sfc_addr == 0) {
-		sfc_nor_read(CONFIG_SPI_NORFLASH_PART_OFFSET,
-			     sizeof(struct norflash_partitions), &partition);
-		for (i = 0 ; i < partition.num_partition_info; i ++) {
-			if (!strncmp(partition.nor_partition[i].name,
-				     CONFIG_PAT_USERFS_NAME, sizeof(CONFIG_PAT_USERFS_NAME))) {
-				user_offset = partition.nor_partition[i].offset;
+#ifdef CONFIG_OTA_VERSION20
+	{
+		struct norflash_partitions partition;
+		int i;
+		if(sfc_addr == 0) {
+			sfc_nor_read(CONFIG_SPI_NORFLASH_PART_OFFSET,
+				     sizeof(struct norflash_partitions), &partition);
+			for (i = 0 ; i < partition.num_partition_info; i ++) {
+				if (!strncmp(partition.nor_partition[i].name,
+					     CONFIG_PAT_USERFS_NAME, sizeof(CONFIG_PAT_USERFS_NAME))) {
+					user_offset = partition.nor_partition[i].offset;
+				}
+				if (!strncmp(partition.nor_partition[i].name,
+					     CONFIG_PAT_UPDATEFS_NAME, sizeof(CONFIG_PAT_UPDATEFS_NAME))) {
+					updatefs_size = partition.nor_partition[i].size;
+				}
 			}
-			if (!strncmp(partition.nor_partition[i].name,
-				     CONFIG_PAT_UPDATEFS_NAME, sizeof(CONFIG_PAT_UPDATEFS_NAME))) {
-				updatefs_size = partition.nor_partition[i].size;
-			}
+			sfc_addr = user_offset + updatefs_size + 1024*1024;
 		}
-		sfc_addr = user_offset + updatefs_size + 1024*1024;
 	}
-
+#endif
 	header_size = sizeof(struct image_header);
 	sfc_nor_read(sfc_addr, header_size, CONFIG_SYS_TEXT_BASE);
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
