@@ -121,7 +121,7 @@
 #define BOOTARGS_COMMON BOOTARGS_CONSOLE BOOTARGS_MEM
 
 #ifdef CONFIG_BOOT_ANDROID
-  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init androidboot.hardware=watch "
 #else
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.205:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.8.3:/home/nfsroot/bliu/buildroot rw" */
