@@ -172,7 +172,6 @@ static unsigned int jz_current_battery_voltage()
 		pmu_charging = 0;
 
 	voltage = get_pmu_voltage();
-//	printf("=>>>>>in jz_current_battery_voltage:luduan_vol = %d\n",voltage);
 	low_power_detect(pmu_charging, voltage);
 	pmu_current = get_pmu_current();
 	voltage = pmu_charging == CHARGING_ON ? voltage - (pmu_current * INTER_RESIST
@@ -238,24 +237,10 @@ int get_battery_current_cpt(void)
 void low_power_detect(void)
 {
 	unsigned int voltage = 0;
-	int charging = 0;
 	int value;
-
-	gpio_direction_input(USB_DETE);
-	value = gpio_get_value(USB_DETE);
-	if(value == 0)
-		charging = 1;
-	if(value == 1)
-		charging = 0;
-//	printf("in low_power_detect:charging = %d,voltage = %d\n",charging,voltage);
 	voltage = get_pmu_voltage();
-#if 0
-	if(!charging && (voltage < 3400)) {
-//		printf("Electricity is insufficient, please charge!\n");
-//		jz_hibernate();
+	if(voltage < 3400)
 		axp173_power_off();
-	}
-#endif
 }
 
 void disable_ldo4(void)

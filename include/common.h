@@ -852,11 +852,18 @@ int	getc(void);
 int	tstc(void);
 
 /* stdout */
+#if defined CONFIG_SMALLER_SPL && defined CONFIG_SPL_BUILD
+#define putc(c) 		do {} while(0)
+#define puts(s)			do {} while(0)
+#define printf(fmt, args...)	do {} while(0)
+#define vprintf(fmt, args) 	do {} while(0)
+#else
 void	putc(const char c);
 void	puts(const char *s);
 int	printf(const char *fmt, ...)
 		__attribute__ ((format (__printf__, 1, 2)));
 int	vprintf(const char *fmt, va_list args);
+#endif
 
 /* stderr */
 #define eputc(c)		fputc(stderr, c)

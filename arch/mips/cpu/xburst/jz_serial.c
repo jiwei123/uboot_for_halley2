@@ -30,6 +30,83 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_SMALLER_SPL
+unsigned char *spl_uart = (UART0_BASE + CONFIG_SYS_UART_INDEX * 0x1000);
+void simple_puts(const char *s);
+
+void simple_serial_init(void)
+{
+        unsigned int baud_div, tmp;
+
+        /* Disable port interrupts while changing hardware */
+        writeb(0, spl_uart + 0x4);
+
+        /* Disable UART unit function */
+        writeb(~UART_FCR_UUE, spl_uart + 0x8);
+
+        /* Set both receiver and transmitter in UART mode (not SIR) */
+        writeb(~(SIRCR_RSIRE | SIRCR_TSIRE), spl_uart + 0x20);
+
+        /*
+         * Set databits, stopbits and parity.
+         * (8-bit data, 1 stopbit, no parity)
+         */
+        writeb(UART_LCR_WLEN_8 | UART_LCR_STOP_1, spl_uart + 0xc);
+
+        /* Set baud rate */
+        baud_div = CONFIG_SYS_EXTAL / 16 / CONFIG_BAUDRATE;
+        tmp = readb(spl_uart + 0xc);
+        tmp |= UART_LCR_DLAB;
+        writeb(tmp, spl_uart + 0xc);
+        writeb((baud_div >> 8) & 0xff, spl_uart + 0x4);
+        writeb(baud_div & 0xff, spl_uart + 0);
+        tmp &= ~UART_LCR_DLAB;
+        writeb(tmp, spl_uart + 0xc);
+
+        /* Enable UART unit, enable and clear FIFO */
+        writeb(UART_FCR_UUE | UART_FCR_FE | UART_FCR_TFLS | UART_FCR_RFLS,
+                spl_uart + 0x8);
+
+	simple_puts("U-Boot SPL\n");
+}
+
+void simple_putc(const char c)
+{
+        if (c == '\n')
+                simple_putc('\r');
+	writeb((u8)c, spl_uart + 0);
+
+	while (!((readb(spl_uart + 0x14) & (UART_LSR_TDRQ | UART_LSR_TEMT)) == 0x60))
+                ;
+}
+
+void simple_puts(const char *s)
+{
+        while(*s)
+                simple_putc(*s++);
+}
+
+void simple_put_dec(unsigned int  d)
+{
+        char c[16];
+        int i;
+        int j = 0;
+        int x = d;
+
+        while (x /= 10)
+                j++;
+
+        for (i = j; i >= 0; i--) {
+                c[i] = d % 10;
+                c[i] += 0x30;
+                d /= 10;
+        }
+        c[j + 1] = '\n';
+        c[j + 2] = 0;
+        simple_puts(c);
+}
+#endif
+
 /*
  * serial_init - initialize a channel
  *

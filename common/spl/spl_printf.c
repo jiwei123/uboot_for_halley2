@@ -98,6 +98,7 @@ int spl_vsprintf(char *str,const char *fmt,va_list ap)
 }
 #endif
 
+#ifndef CONFIG_SMALLER_SPL
 int printf(const char *fmt,...)
 {
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
@@ -112,10 +113,13 @@ int printf(const char *fmt,...)
 #endif
 	return 0;
 }
+#endif
 
+#ifndef CONFIG_SMALLER_SPL
 void puts(const char *s)
 {
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	serial_puts(s);
 #endif
 }
+#endif

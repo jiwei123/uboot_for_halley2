@@ -34,6 +34,9 @@
 #ifdef CONFIG_AUDIO_CAL_DIV
 #include <generated/audio.h>
 #endif
+#ifdef CONFIG_SMALLER_SPL
+#include <asm/jz_uart.h>
+#endif
 #ifdef CONFIG_SPL_BUILD
 
 /* Pointer to as well as the global data structure for SPL */
@@ -74,6 +77,10 @@ void board_init_f(ulong dummy)
 
 	/* Init uart first */
 	enable_uart_clk();
+
+#ifdef CONFIG_SMALLER_SPL
+	simple_serial_init();
+#endif
 
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();

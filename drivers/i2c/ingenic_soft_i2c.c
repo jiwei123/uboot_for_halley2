@@ -74,11 +74,9 @@ static void send_reset(struct i2c *i2c)
 	i2c_sda(i2c,1);
 	for(j = 0; j < 9; j++) {
 		i2c_scl(i2c,0);
-		udelay(5);
-		udelay(5);
+		udelay(10);
 		i2c_scl(i2c,1);
-		udelay(5);
-		udelay(5);
+		udelay(10);
 	}
 	send_stop(i2c);
 }
@@ -123,8 +121,7 @@ static void send_ack(struct i2c *i2c,int ack)
 	i2c_sda(i2c,ack);
 	udelay(5);
 	i2c_scl(i2c,1);
-	udelay(5);
-	udelay(5);
+	udelay(10);
 	i2c_scl(i2c,0);
 	udelay(5);
 }
@@ -143,8 +140,7 @@ static int write_byte(struct i2c *i2c,unsigned char data)
 		i2c_sda(i2c,data & 0x80);
 		udelay(5);
 		i2c_scl(i2c,1);
-		udelay(5);
-		udelay(5);
+		udelay(10);
 
 		data <<= 1;
 	}
@@ -157,8 +153,7 @@ static int write_byte(struct i2c *i2c,unsigned char data)
 	i2c_sda(i2c,1);
 	udelay(5);
 	i2c_scl(i2c,1);
-	udelay(5);
-	udelay(5);
+	udelay(10);
 	nack = i2c_read_sda(i2c);
 	i2c_scl(i2c,0);
 	udelay(5);

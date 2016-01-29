@@ -141,14 +141,19 @@ int checkboard(void)
 	return 0;
 }
 
+extern void low_power_detect(void);
+
 #ifdef CONFIG_SPL_BUILD
 void spl_board_init(void)
 {
+	axp173_regulator_init();
+	/* power on detection */
+	low_power_detect();
 	/* close boost */
-	gpio_request(32 * 1 + 5, "power_ctl1");
+	gpio_request(32 * 1 + 5, NULL);
 	gpio_direction_output(32 * 1 + 5, 0);
 	/* close codec mute */
-	gpio_request(32 * 3 + 2, "codec_mute");
+	gpio_request(32 * 3 + 2, NULL);
 	gpio_direction_output(32 * 3 + 2, 0);
 }
 

@@ -191,6 +191,7 @@ static unsigned int get_cclk_rate(void)
 	return 0;
 }
 
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
 static unsigned int get_msc_rate(unsigned int xcdr)
 {
 	unsigned int msc0cdr  = cpm_inl(CPM_MSC0CDR);
@@ -210,6 +211,7 @@ static unsigned int get_msc_rate(unsigned int xcdr)
 
 	return ret;
 }
+#endif
 
 unsigned int cpm_get_h2clk(void)
 {
@@ -236,10 +238,12 @@ unsigned int clk_get_rate(int clk)
 		return get_cclk_rate();
 	case H2CLK:
 		return cpm_get_h2clk();
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
 	case MSC0:
 		return get_msc_rate(CPM_MSC0CDR);
 	case MSC1:
 		return get_msc_rate(CPM_MSC1CDR);
+#endif
 	case APLL:
 		return pll_get_rate(APLL);
 	case MPLL:
