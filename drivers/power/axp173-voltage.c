@@ -237,9 +237,11 @@ int get_battery_current_cpt(void)
 void low_power_detect(void)
 {
 	unsigned int voltage = 0;
-	int value;
+retry:
 	voltage = get_pmu_voltage();
-	if(voltage < 3400)
+	if(voltage == 0)
+		goto retry;
+	else if(voltage < 3400)
 		axp173_power_off();
 }
 
