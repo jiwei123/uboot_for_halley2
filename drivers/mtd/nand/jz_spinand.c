@@ -759,7 +759,7 @@ static struct jz_spi_support_from_burner *spi_nandflash_probe(u8 *idcode,struct 
 	}
 
 	if (i == param_array->para_num ) {
-		printf("ingenic: Unsupported ID %02x\n", idcode[0]);
+		printf("ingenic: Unsupported ID %04x\n", (idcode[0]<<8)|idcode[1]);
 		return NULL;
 	}
 #if 0
