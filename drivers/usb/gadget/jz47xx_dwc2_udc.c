@@ -1218,6 +1218,26 @@ int udc_irq(void)
 	return IRQ_HANDLED;
 }
 
+int usb_chager_type_dete(void)
+{
+	u32 intsts;
+	u32 gintmsk;
+	u32 pending;
+	int retry = 300;
+
+	dwc_udc_init(NULL);
+	do {
+		intsts  = udc_read_reg(GINT_STS);
+		gintmsk = udc_read_reg(GINT_MASK);
+		pending = intsts & gintmsk;
+		if (pending & GINTSTS_ENUM_DONE) {
+			return CHGER_USB;
+		}
+		mdelay(1);
+	} while(retry--);
+
+	return CHGER_USB_ADAPTER;
+}
 /*
   Register entry point for the peripheral controller driver.
 */

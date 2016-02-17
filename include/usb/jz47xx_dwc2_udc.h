@@ -6,6 +6,14 @@
 #include <asm/types.h>
 #include <asm/arch/base.h>
 
+typedef enum chger_type {
+	CHGER_USB = 0, 	    /* usb cable which is pluged into pc usb port */
+	CHGER_USB_ADAPTER,  /* usb cable which is pluged into usb power adapter */
+	CHGER_DC,	    /* dc port */
+	CHGER_VBUS,	    /* vbus means board or pmu can not judgement usb or usb_adapter */
+	CHGER_UNKNOWN,
+} chger_type_t;
+
 struct dwc2_request {
 	struct usb_request req;
 	struct dwc2_ep *dep;
