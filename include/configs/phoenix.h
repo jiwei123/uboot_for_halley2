@@ -135,10 +135,10 @@
 		#define CONFIG_BOOTCOMMAND "spinand read 0x100000 0x400000 0x80600000 ;bootm 0x80600000"
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT)
 	#ifdef CONFIG_JZ_MMC_MSC0
-		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p1"
+		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p7 rootfstype=ext4 rootdelay=1 rw"
 		#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
 	#else
-		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk1p1"
+		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk1p7 rootfstype=ext4 rootdelay=1 rw"
 		#define CONFIG_BOOTCOMMAND "mmc dev 1;mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
 	#endif
 #endif
