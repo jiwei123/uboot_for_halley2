@@ -24,20 +24,20 @@
  * MDDR controller timing1 register
  */
 #define DDR_tRAS 45 /*tRAS: ACTIVE to PRECHARGE command period to the same bank. */
-#define DDR_tRTP 12 /* 7.5ns READ to PRECHARGE command period. */
+#define DDR_tRTP MAX(2,0) /* 7.5ns READ to PRECHARGE command period. */
 #define DDR_tRP 18 /* tRP: PRECHARGE command period to the same bank */
 #define DDR_tRCD 18 /* ACTIVE to READ or WRITE command period to the same bank. */
-#define DDR_tRC 60 /* ACTIVE to ACTIVE command period to the same bank.*/
+#define DDR_tRC (DDR_tRAS + DDR_tRP) /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRRD 12   /* ACTIVE bank A to ACTIVE bank B command period. */
 #define DDR_tWR 15 /* WRITE Recovery Time defined by register MR of DDR2 memory */
-#define DDR_tWTR 1 /* WRITE to READ command delay. */
+#define DDR_tWTR MAX(2,0) /* WRITE to READ command delay. */
 
 /*
  * MDDR controller timing2 register
  */
-#define DDR_tRFC 72 /* ns,  AUTO-REFRESH command period. */
-#define DDR_tMINSR 6 /* Minimum Self-Refresh / Deep-Power-Down */
-#define DDR_tXP  2 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
+#define DDR_tRFC 120 /* ns,  AUTO-REFRESH command period. */
+#define DDR_tMINSR DDR_GET_VALUE(DDR_tRFC, tck_g.ps) /* Minimum Self-Refresh / Deep-Power-Down */
+#define DDR_tXP  5 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
 #define DDR_tMRD 2 /* unit: tCK Load-Mode-Register to next valid command period: 1 to 4 tCK */
 
 /* new add */
@@ -47,13 +47,13 @@
 #define DDR_tWL 1		/* MDDR: must 1 */
 #define DDR_tRDLAT	(DDR_tRL - 2)
 #define DDR_tWDLAT	(DDR_tWL - 1)
-#define DDR_tCCD 2		/* CAS# to CAS# command delay , tCK, MDDR no*/
+#define DDR_tCCD 4		/* CAS# to CAS# command delay , tCK, MDDR no*/
 #define DDR_tRTW (DDR_tRL + DDR_tCCD + 2 - DDR_tWL)	/* Read to Write delay */
-#define DDR_tFAW 45		/* Four bank activate period, ns, MDDR no */
-#define DDR_tCKE 3		/* CKE minimum pulse width, tCK */
+#define DDR_tFAW 50		/* Four bank activate period, ns, MDDR no */
+#define DDR_tCKE MAX(2,0)		/* CKE minimum pulse width, tCK */
 #define DDR_tXS 200		/* Exit self-refresh to next valid command delay, ns */
 #define DDR_tXSRD  DDR_GET_VALUE(DDR_tXS,tck_g.ps)		/* DDR2 only: Exit self refresh to a read command, tck */
-#define DDR_tCKSRE 0 /* Valid Clock Requirement after Self Refresh Entry or Power-Down Entry */
+#define DDR_tCKSRE MAX(1,0) /* Valid Clock Requirement after Self Refresh Entry or Power-Down Entry */
 
 /*
  * MDDR controller refcnt register
