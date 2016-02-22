@@ -243,6 +243,28 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		},
 	},
 	{
+		.id_manufactory = 0x1940ef,
+		.name = "win25Q256fvq",
+		.page_size = 256,
+		.sector_size = 4 * 1024,
+		.addr_size = 4,
+		.size = 32 * 1024 * 1024,
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//his bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+
+	{
 		.id_manufactory = 0x1940c8,
 		.name = "GD25Q256C",
 		.page_size = 256,
@@ -263,6 +285,8 @@ static struct jz_spi_support jz_spi_support_table[] = {
 #endif
 		},
 	},
+	
+		
 
 };
 
