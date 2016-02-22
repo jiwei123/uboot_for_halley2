@@ -296,6 +296,8 @@ static int Battery_Type(void)
 	|| defined(CONFIG_BATTERY_OBAND_310MAH_4350MV)\
 	|| defined(CONFIG_BATTERY_INWATCH_310MAH_4350MV)
 	BatteryTypeDef = 5;
+#elif defined(CONFIG_BATTERY_W561A_1300MAH_4200MV)
+	BatteryTypeDef = 7;
 #endif
 	return BatteryTypeDef;
 }

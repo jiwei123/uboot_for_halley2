@@ -43,6 +43,7 @@ COBJS-$(CONFIG_VIDEO_H160_TFT320320) += lcd-h160-tft320320.o
 COBJS-$(CONFIG_VIDEO_EDO_E1392AM1) += lcd-edo-e1392am1.o
 COBJS-$(CONFIG_VIDEO_AUO_H139BLN01) += lcd-auo-h139bln01.o
 COBJS-$(CONFIG_VIDEO_ARS_NT35350) += lcd-ars-nt35350.o
+COBJS-$(CONFIG_VIDEO_STD_TFT240320) += lcd-std-tft240320.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))

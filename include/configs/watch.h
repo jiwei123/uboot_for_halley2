@@ -80,6 +80,7 @@
 #define CONFIG_DDR_CS0				1			/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1				CONFIG_MEM_RANKS	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32				1			/* 1-32bit-width, 0-16bit-width */
+#define CONFIG_CMD_PMU
 
 #ifdef  CONFIG_SOLAR
 #define CONFIG_PMU_SM5007
@@ -250,6 +251,10 @@
 #endif
 
 #ifdef  CONFIG_VIDEO_TRULY_TFT320320
+#define CONFIG_LCD_GPIO_FUNC2_SLCD
+#endif
+
+#ifdef  CONFIG_VIDEO_STD_TFT240320
 #define CONFIG_LCD_GPIO_FUNC2_SLCD
 #endif
 
