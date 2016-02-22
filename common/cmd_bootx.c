@@ -288,8 +288,6 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if((update_flag & 0x3) != 0x3)	{
 		strcpy(argv[0],"sfc");
 		strcpy(argv[1],argv[3]);
-		if(get_show_cpt_flag() == 0x69)
-			clear_show_cpt_flag();
 	}
 
 #endif

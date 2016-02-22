@@ -53,7 +53,7 @@ static inline void wait_write_ready(void)
 		printf("RTC __wait_write_ready timeout!\n");
 }
 
-static void jzrtc_writel(int offset, unsigned int value)
+void jzrtc_writel(int offset, unsigned int value)
 {
 	int timeout = 0x100000;
 

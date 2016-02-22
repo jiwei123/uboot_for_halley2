@@ -608,12 +608,13 @@ void lcd_clear(void)
 	/* Paint the logo and retrieve LCD base address */
 	debug("[LCD] Drawing the logo...\n");
 	
-	if((get_update_flag() & 0x3) != 0x3){
+	if ((get_update_flag() & 0x3) != 0x3) {
+		if (gpio_get_value(40))
+			jz_hibernate();
 		lcd_console_address = lcd_logo();
-	}else{
+	} else {
 		gpio_set_value(88,1);
 		lcd_puts_xy(80,0,"updating");	
-	
 	}
 	console_col = 0;
 	console_row = 0;

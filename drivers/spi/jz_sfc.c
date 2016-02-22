@@ -1067,19 +1067,6 @@ unsigned int get_update_flag()
 
         return update_flag;
 }
-#ifdef CONFIG_ASLMOM_BOARD
-unsigned char get_show_cpt_flag(void)
-{
-        unsigned char buf [64];
-        unsigned char show_cpt_flag;
-        unsigned int src_addr;
-
-        nv_map_area_addr((unsigned int)&src_addr);
-        sfc_nor_read(src_addr, 64, buf);
-        show_cpt_flag = buf[32];
-        return show_cpt_flag;
-}
-#endif
 
 int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_addr,unsigned int erase_en)
 {
@@ -1173,19 +1160,7 @@ int sfc_nor_erase(unsigned int src_addr, unsigned int count)
 
 	return 0;
 }
-#ifdef CONFIG_ASLMOM_BOARD
-void clear_show_cpt_flag(void)
-{
-        int ret ;
-        unsigned char buf[4 * 1024];
-        unsigned int src_addr;
 
-        nv_map_area_addr((unsigned int)&src_addr);
-        sfc_nor_read(src_addr, 4 * 1024, buf);
-        buf[32] = 0;
-        sfc_nor_write(src_addr, 4 * 1024, buf, 1);
-}
-#endif
 void sfc_for_nand_init(int sfc_quad_mode)
 {
 	unsigned int i;

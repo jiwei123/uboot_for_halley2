@@ -28,6 +28,7 @@
 #include <asm/arch/cpm.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/rtc.h>
 
 struct cgu_clk_src cgu_clk_src[] = {
 	{OTG, EXCLK},
@@ -75,6 +76,8 @@ int board_early_init_r(void)
 #ifdef CONFIG_REGULATOR
 	regulator_init();
 #endif
+	jzrtc_writel(RTC_HSPR, 0);
+
 	return 0;
 }
 

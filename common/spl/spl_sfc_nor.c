@@ -8,6 +8,7 @@
 #include <asm/arch/spi.h>
 #include <asm/arch/clk.h>
 #ifdef CONFIG_ASLMOM_BOARD
+#include <asm/arch/rtc.h>
 #include <asm/arch/gpio.h>
 #endif
 static uint32_t jz_sfc_readl(unsigned int offset)
@@ -233,11 +234,6 @@ void spl_load_uboot(struct image_header *header)
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
-#ifdef CONFIG_ASLMOM_BOARD
-	int usb_insert;
-	unsigned char charge_buf[64];
-	unsigned char charge_flag;
-#endif
 #ifdef CONFIG_SPL_OS_BOOT
 	unsigned nv_buf[4];
 	int count = 16;
@@ -263,37 +259,38 @@ void spl_sfc_nor_load_image(void)
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
 		return ;
 #endif //CONFIG_NOR_SPL_BOOT_OS
-
 	nv_map_area((unsigned int)&src_addr);
 	sfc_nor_load(src_addr, count, nv_buf);
 	updata_flag = nv_buf[3];
-#ifdef CONFIG_ASLMOM_BOARD
-	sfc_nor_load(src_addr,64,charge_buf);
-	charge_flag = charge_buf[32];
-	printf("charge_flag is 0x%x\n",charge_flag);
-#endif
 
-	if((updata_flag & 0x3) != 0x3) {
+	if ((updata_flag & 0x3) != 0x3) {
 #ifdef CONFIG_ASLMOM_BOARD
-		//if USB not insert spl load image
-		usb_insert = gpio_get_value(40);
-		if(usb_insert == 1){
-			spl_load_kernel(header);
-		} else{
-			if(((cpm_test_bit(1,CPM_RSR)) == CPM_RSR_WR)
-				&& (charge_flag == 0x69) || (cpm_inl(CPM_RSR)== 0x1))
+		int usb_insert;
+		int rsr = cpm_inl(CPM_RSR);
+		int hspr = readl(RTC_BASE + RTC_HSPR);
+
+		usb_insert = !gpio_get_value(40);
+
+		if (rsr & CPM_RSR_WR) {
+			/* reboot */
+			if (hspr == 0x5a5a)
 				spl_load_uboot(header);
 			else
 				spl_load_kernel(header);
+		} else if (usb_insert) {
+			/* usb insert */
+			spl_load_uboot(header);
+		} else {
+			spl_load_kernel(header);
 		}
 #else
 		spl_load_kernel(header);
 #endif
-	}else
+	} else
 #endif
 	{
 		spl_load_uboot(header);
 	}
-	return ;
 
+	return ;
 }
