@@ -373,6 +373,11 @@
 #define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
 #define CONFIG_USB_GADGET_VBUS_DRAW 500
 
+#ifdef  CONFIG_CMD_FASTBOOT
+#define PARTITION_NUM               16
+#define CONFIG_FASTBOOT_VARIANT		"watch"
+#define CONFIG_FASTBOOT_PRODUCT		"watch"
+#endif
 /**
  * Serial download configuration
  */

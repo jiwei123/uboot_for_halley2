@@ -27,6 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	:= $(BOARD).o
+COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
 COBJS-$(CONFIG_VIDEO_BM347WV_F_8991FTGF) += lcd-8991.o
 COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += lcd-truly-tft240240.o
 COBJS-$(CONFIG_VIDEO_BOE_HSX0154B24B) += lcd-boe-hsx0154b24b.o

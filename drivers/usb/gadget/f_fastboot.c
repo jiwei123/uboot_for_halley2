@@ -42,7 +42,7 @@
 #define BOOT_START_ADDRESS 0x80f00000
 #define RET_LENGTH	64
 
-#define CMD_COUNT	22
+#define CMD_COUNT	23
 #define MMC_BYTE_PER_BLOCK 512
 #ifndef PARTITION_NUM
 #define PARTITION_NUM 16
@@ -421,8 +421,13 @@ static void handle_download_complete(struct usb_ep *ep,
 #define CONFIG_FASTBOOT_BASEBAND_VER	"N/A"
 #define	CONFIG_FASTBOOT_HARDWARE_VER	"V1.1 20130322"
 #define	CONFIG_FASTBOOT_CDMA_VER	"N/A"
-#define	CONFIG_FASTBOOT_VARIANT		"MENSA"
-#define	CONFIG_FASTBOOT_PRODUCT		"MENSA"
+
+#ifndef CONFIG_FASTBOOT_VARIANT
+	#define	CONFIG_FASTBOOT_VARIANT		"INGENIC"
+#endif
+#ifndef CONFIG_FASTBOOT_PRODUCT
+	#define	CONFIG_FASTBOOT_PRODUCT		"INGENIC"
+#endif
 
 #define	CONFIG_FASTBOOT_SERIALNO	"0123456789abcdef"
 #define	CONFIG_FASTBOOT_SECURE		"no"
@@ -440,6 +445,10 @@ static void handle_download_complete(struct usb_ep *ep,
 #define CONFIG_FASTBOOT_PART_TYPE_CACHE		"ext4"
 #define	CONFIG_FASTBOOT_PART_SIZE_USERDATA	"0x5000"
 #define CONFIG_FASTBOOT_PART_TYPE_USERDATA	"ext4"
+#define CONFIG_FASTBOOT_PART_SIZE_MAXRAM	"0x4000000" /*64M*/
+
+static unsigned char last_name[128];
+static u32 last_cnt = 0;
 
 static int get_all_var(struct fastboot_dev *fastboot)
 {
@@ -555,9 +564,16 @@ static int get_all_var(struct fastboot_dev *fastboot)
 			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_USERDATA);
 			break;
 		case 22:
-			strcpy(fastboot->ret_buf, "OKAY");
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "max-download-size: ");
+			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_MAXRAM);
+			last_cnt = 0;
+			memset(last_name, 0,sizeof(last_name));
 			break;
 		case 23:
+			strcpy(fastboot->ret_buf, "OKAY");
+			break;
+		case 24:
 			strcpy(fastboot->ret_buf, "INFO");
 			break;
 		default:
@@ -732,6 +748,14 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 		return 0;
 	}
 
+	if (strstr(fastboot->cmd_req->buf, "max-download-size")) {
+		strcpy(fastboot->ret_buf, "OKAY");
+		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_MAXRAM);
+		last_cnt = 0;
+		memset(last_name, 0,sizeof(last_name));
+		return 0;
+	}
+
 	printf("%s:Error, The variant is not recongized\n", __func__);
 	return -1;
 }
@@ -752,7 +776,7 @@ static int handle_cmd_download(struct fastboot_dev *fastboot)
 				" now free it\n",
 				__func__);
 	}
-	if (fastboot->data_length < CONFIG_SYS_MALLOC_LEN) {
+	if (fastboot->data_length < CONFIG_FASTBOOT_PART_SIZE_MAXRAM) {
 		fastboot->data_buf = malloc(fastboot->data_length);
 		if (!fastboot->data_buf) {
 			printf("%s: malloc for data buffer failed\n",__func__);
@@ -832,6 +856,7 @@ int nand_flash(unsigned char *pt_name,struct fastboot_dev *fastboot)
 	return 0;
 }
 
+
 static int handle_cmd_flash(struct fastboot_dev *fastboot)
 {
 	int i;
@@ -866,9 +891,61 @@ do_flash:
 	return -1;
 }
 
+static int handle_cmd_flash_division(struct fastboot_dev *fastboot)
+{
+	int i;
+	printf("please add the flash cmd explain roution\n");
+	u32 blk,cnt;
+	unsigned char *pname;
+	memset(pname, 0 , 128);
+	for(i = 0; i < PARTITION_NUM ; i ++){
+		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 15,(strlen(partition_info[i].pname)-2))){
+			strcpy(pname,partition_info[i].pname);
+			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
+			cnt = (fastboot->data_length + MMC_BYTE_PER_BLOCK - 1) / MMC_BYTE_PER_BLOCK;
+
+			if (!strcmp(pname,last_name)) {
+				blk      += last_cnt;
+				last_cnt += cnt;
+			} else {
+				strcpy(last_name, pname);
+				last_cnt = cnt;
+			}
+			goto do_flash;
+			break;
+		}
+	}
+	if(i == PARTITION_NUM){
+		printf("There is not a partition named : %s\n",boot_buf + 15);
+		return -1;
+	}
+
+do_flash:
+#ifdef CONFIG_SPL_MMC_SUPPORT
+	if(!mmc_flash(blk,cnt,fastboot))
+		return 0;
+#else
+#ifdef CONFIG_JZ_NAND_MGR
+	if(!nand_flash(pname,fastboot))
+		return 0;
+#endif
+#endif
+	return -1;
+}
+
 static void explain_cmd_flash(struct fastboot_dev *fastboot)
 {
 	if (handle_cmd_flash(fastboot))
+		strcpy(fastboot->ret_buf, "FAILED");
+	else
+		strcpy(fastboot->ret_buf, "OKAY");
+
+	return_buf(fastboot, return_complete);
+}
+
+static void explain_cmd_flash_division(struct fastboot_dev *fastboot)
+{
+	if (handle_cmd_flash_division(fastboot))
 		strcpy(fastboot->ret_buf, "FAILED");
 	else
 		strcpy(fastboot->ret_buf, "OKAY");
@@ -1084,6 +1161,13 @@ static void handle_fastboot_cmd_complete(struct usb_ep *ep,
 		explain_cmd_flash(fastboot);
 		goto cmd_finish;
 	}
+
+	if (!strncmp(req->buf, "flash_division:", 15)) {
+		boot_buf = req->buf;
+		explain_cmd_flash_division(fastboot);
+		goto cmd_finish;
+	}
+
 
 	if (!strncmp(req->buf, "erase:", 6)) {
 		boot_buf = req->buf;
