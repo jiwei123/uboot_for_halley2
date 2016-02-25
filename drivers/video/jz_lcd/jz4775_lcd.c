@@ -28,6 +28,7 @@
 #include <asm/arch-jz4775/lcdc.h>
 #include <asm/arch-jz4775/gpio.h>
 #include <jz_lcd/jz4775_lcd.h>
+#include <asm/arch-jz4775/clk.h>
 
 /*#define DEBUG*/
 
@@ -713,13 +714,30 @@ static int jzfb_prepare_dma_desc(struct jzfb_config_info *info)
 	jzfb_config_fg1_dma(info);
 	return 0;
 }
+#ifdef CONFIG_VIDEO_KFM701A_21_1A
+unsigned long slcd_send_mcu_16bit_command_via_18bit_bus(unsigned long cmd)
+{
+	cmd = ((cmd & 0xff) << 1) | ((cmd & 0xff00) << 2);
+	return cmd;
+}
+unsigned long slcd_send_mcu_16bit_data_via_18bit_bus(unsigned long data)
+{
+	data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
+	data = ((data << 6) & 0xfc0000) | ((data << 4) & 0xfc00)| ((data << 2) & 0xfc);
+	return data;
+}
+#endif
 
 /* Sent a command without data (18-bit bus, 16-bit index) */
 static void slcd_send_mcu_command(struct jzfb_config_info *info,
 				  unsigned long cmd)
 {
 	int count = 10000;
-    cmd &= 0x3fffffff;
+	#ifdef CONFIG_VIDEO_KFM701A_21_1A
+	cmd = slcd_send_mcu_16bit_command_via_18bit_bus(cmd);
+	#else
+	cmd &= 0x3fffffff;
+	#endif
 	while ((reg_read(SLCDC_STATE) & SLCDC_STATE_BUSY) && count--) {
 		udelay(10);
 	}
@@ -727,13 +745,18 @@ static void slcd_send_mcu_command(struct jzfb_config_info *info,
 		serial_puts("SLCDC wait busy state wrong\n");
 	}
 	reg_write(SLCDC_DATA, SLCDC_DATA_RS_COMMAND | cmd);
+
 }
 
 static void slcd_send_mcu_data(struct jzfb_config_info *info,
 			       unsigned long data)
 {
 	int count = 10000;
-    data &= 0x3fffffff;
+	#ifdef CONFIG_VIDEO_KFM701A_21_1A
+	data =  slcd_send_mcu_16bit_data_via_18bit_bus(data);
+	#else
+	data &= 0x3fffffff;
+	#endif
 	while ((reg_read(SLCDC_STATE) & SLCDC_STATE_BUSY) && count--) {
 		udelay(10);
 	}
@@ -741,6 +764,7 @@ static void slcd_send_mcu_data(struct jzfb_config_info *info,
 		serial_puts("SLCDC wait busy state wrong\n");
 	}
 	reg_write(SLCDC_DATA, SLCDC_DATA_RS_DATA | data);
+
 }
 
 /* Sent a command with data (18-bit bus, 16-bit index, 16-bit register value) */
@@ -1009,13 +1033,66 @@ static int jz_lcd_init_mem(void *lcdbase, struct jzfb_config_info *info)
     }
     return 0;
 }
+static void refresh_pixclock_auto_adapt(struct jzfb_config_info *info)
+{
+	struct fb_videomode *mode;
+	uint16_t hds, vds;
+	uint16_t hde, vde;
+	uint16_t ht, vt;
+	unsigned long rate;
+
+	if (info == NULL) {
+		printf("invalid argument: struct jzfb_config_info *info == NULL.\n");
+		return ;
+	}
+	mode = info->modes;
+	if (mode == NULL) {
+		printf("%s error: get video mode failed.\n", __func__);
+		return ;
+	}
+
+	hds = mode->hsync_len + mode->left_margin;
+	hde = hds + mode->xres;
+	ht = hde + mode->right_margin;
+
+	vds = mode->vsync_len + mode->upper_margin;
+	vde = vds + mode->yres;
+	vt = vde + mode->lower_margin;
+
+	if (mode->refresh) {
+		if (info->lcd_type == LCD_TYPE_8BIT_SERIAL) {
+			rate = mode->refresh * (vt + 2 * mode->xres) * ht;
+		} else {
+			rate = mode->refresh * ht * vt;
+		}
+		mode->pixclock = KHZ2PICOS(rate / 1000);
+	} else if (mode->pixclock) {
+		rate = PICOS2KHZ(mode->pixclock) * 1000;
+		mode->refresh = rate / vt / ht;
+	} else {
+		printf("%s error:lcd important config info is absenced.\n", __func__);
+	}
+
+}
 
 void lcd_ctrl_init(void *lcd_base)
 {
+	unsigned long pixel_clock_rate;
+	int count=1000;
+
 	/* init registers base address */
 	lcd_config_info = jzfb1_init_data;
 	lcd_config_info.lcdbaseoff = 0;
 	lcd_set_flush_dcache(1);
+	refresh_pixclock_auto_adapt(&lcd_config_info);
+	pixel_clock_rate = PICOS2KHZ(lcd_config_info.modes->pixclock);
+
+	/* smart lcd WR freq = (lcd pixel clock)/2 */
+	if (lcd_config_info.lcd_type == LCD_TYPE_LCM) {
+		pixel_clock_rate *= 2;
+	}
+	printf("pixel_clock = %d\n",pixel_clock_rate);
+	clk_set_rate(LCD, pixel_clock_rate);
 
 	lcd_close_backlight();
 	panel_pin_init();

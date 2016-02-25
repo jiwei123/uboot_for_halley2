@@ -130,7 +130,7 @@
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
 #define CONFIG_LCD_LOGO
-/*#define CONFIG_RLE_LCD_LOGO*/
+#define CONFIG_RLE_LCD_LOGO
 #define CONFIG_LCD_INFO_BELOW_LOGOONFIG_BMP_LOGO
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE (1 << 20)
 #define CONFIG_VIDEO_BMP_GZIP
@@ -145,7 +145,8 @@
 #define CONFIG_VIDEO_JZ4775
 #define CONFIG_JZ_PWM
 /*#define CONFIG_VIDEO_BYD_BM8766U*/
-#define CONFIG_VIDEO_BM347WV_F_8991FTGF
+#define CONFIG_VIDEO_KFM701A_21_1A
+/*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET  	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/

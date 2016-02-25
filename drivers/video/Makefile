@@ -71,7 +71,7 @@ COBJS-$(CONFIG_VIDEO_ET017QG1) += jz_epd/epd_panel/ET017QG1/lcd-ET017QG1.o \
 COBJS-$(CONFIG_VIDEO_ED060XD1) += jz4775_epd/epd_panel/ED060XD1/lcd-ED060XD1.o  \
 								  jz4775_epd/epd_panel/ED060XD1/PVI_ED060XD1.o  \
 								  jz4775_epd/epd_panel/ED060XD1/PVI110_B114_ED060SC4.o
-
+COBJS-$(CONFIG_VIDEO_KFM701A_21_1A) += jz_lcd/lcd_panel/kfm701a_21_1a.o
 COBJS-$(CONFIG_VIDEO_BYD_9177AA) += jz_lcd/lcd_panel/byd_9177aa.o
 COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += jz_lcd/lcd_panel/truly_tft240240_2_e.o
 COBJS-$(CONFIG_VIDEO_BOE_TFT320320) += jz_lcd/lcd_panel/boe_tft320320.o
