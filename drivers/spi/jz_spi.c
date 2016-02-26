@@ -279,7 +279,7 @@ void jz_spi_norflash_address_mode(struct spi_flash *flash, int on)
 		}else{
 			cmd[1] = CMD_EX4B;
 		}
-		cmd[2] = CMD_WRDI;
+		cmd[2] = CMD_RDSR;
 
 		jz_cs_reversal();
 		spi_send_cmd(&cmd[0], 1);
