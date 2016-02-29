@@ -273,7 +273,7 @@ void spl_sfc_nor_load_image(void)
 
 		if (rsr & CPM_RSR_WR) {
 			/* reboot */
-			if (hspr == 0x5a5a)
+			if (hspr == 0x50574f46)
 				spl_load_uboot(header);
 			else
 				spl_load_kernel(header);

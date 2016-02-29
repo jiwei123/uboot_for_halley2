@@ -76,7 +76,6 @@ int board_early_init_r(void)
 #ifdef CONFIG_REGULATOR
 	regulator_init();
 #endif
-	jzrtc_writel(RTC_HSPR, 0);
 
 	return 0;
 }
