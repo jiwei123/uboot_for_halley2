@@ -35,6 +35,7 @@ enum {
 	DDR = 1,
 	CPU,
 	BCH,
+	LCD,
 	H2CLK,
 	MSC0,
 	MSC1,

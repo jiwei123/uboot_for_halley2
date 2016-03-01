@@ -286,10 +286,36 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 	return 0;
 }
 
+static unsigned int set_lcd_rate(int clk, unsigned long rate)
+{
+	unsigned int lcdcdr = cpm_inl(CPM_LPCDR);
+	unsigned int pll_rate;
+	unsigned int cdr;
+
+	switch (lcdcdr >> 31) {
+	case 0:
+		pll_rate = pll_get_rate(APLL);
+		break;
+	case 1:
+		pll_rate = pll_get_rate(MPLL);
+		break;
+	}
+	cdr = ((pll_rate + rate - 1)/rate - 1 )& 0xff;
+	lcdcdr &= ~(0xff | (0x3 << 26));
+	lcdcdr |= (cdr | (1 << 28));
+	cpm_outl(lcdcdr , CPM_LPCDR);
+	while (cpm_inl(CPM_LPCDR) & (1 << 27));
+	debug("CPM_LPCDR(%x) = %x\n",CPM_LPCDR, cpm_inl(CPM_LPCDR));
+	return 0;
+}
+
 void clk_set_rate(int clk, unsigned long rate)
 {
 #if !defined(CONFIG_SPL_BUILD) || (defined(CONFIG_MTD_NAND_JZ) && !defined(CONFIG_BURNER))
 	switch (clk) {
+	case LCD:
+		set_lcd_rate(clk, rate);
+		return;
 	case BCH:
 		set_bch_rate(clk, rate);
 		return;
