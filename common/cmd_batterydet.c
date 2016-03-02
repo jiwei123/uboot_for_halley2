@@ -96,7 +96,7 @@ static unsigned int battery_voltage_max;
 static unsigned int battery_voltage_scale;
 static unsigned int read_battery_voltage(void);
 
-#ifdef CONFIG_RTC_POWER_DETECT
+#ifdef CONFIG_CHECK_POWER_STATUS
 void check_power_status(int cur_rle_num, int full_rle_num);
 #endif
 
@@ -365,7 +365,7 @@ static void jz_pm_do_idle(void)
 	gpio_ack_irq(CONFIG_GPIO_USB_DETECT);
 #endif
 
-#ifdef CONFIG_RTC_POWER_DETECT
+#ifdef CONFIG_RTC_WAKEUP
 	/* Only for cruise now */
 #define WRITE_CP0_REG(value,cn,slt)				\
 	__asm__ __volatile__(					\
@@ -377,7 +377,7 @@ static void jz_pm_do_idle(void)
 		unsigned int rtccr = rtc_read_reg(RTC_RTCCR) & 0x6F;
 		unsigned int rtcsr = rtc_read_reg(RTC_RTCSR);
 		unsigned int rtcsar = rtc_read_reg(RTC_RTCSAR);
-		rtc_write_reg(RTC_RTCSAR, (rtcsr + 60 * 10)); // 10min
+		rtc_write_reg(RTC_RTCSAR, (rtcsr + CONFIG_RTC_WAKEUP_TIME)); // 10min
 		rtccr |= (0x3 << 2); // Open RTC Alarm interrupt generate
 		rtc_write_reg(RTC_RTCCR, rtccr);
 		// open rtc interrupt
@@ -398,7 +398,7 @@ static void jz_pm_do_idle(void)
 			  "nop\n\t" "nop\n\t" "nop\n\t" ".set mips32");
 	printf("out  sleep mode\n");
 
-#ifdef CONFIG_RTC_POWER_DETECT
+#ifdef CONFIG_RTC_WAKEUP
 	/* Only for cruise now */
 	{
 		// close INT
@@ -696,7 +696,7 @@ static int get_rle_num(void)
 			rle_num_base = 1 + (capacity - 10) * (logo_charge_num - 2) / 81;
 		}
 	}
-#ifdef CONFIG_RTC_POWER_DETECT
+#ifdef CONFIG_CHECK_POWER_STATUS
 	/* Do something while battery capacity changes */
 	check_power_status(rle_num_base, logo_charge_num);
 #endif

@@ -167,7 +167,7 @@ void spl_board_init(void)
 
 #endif /* CONFIG_SPL_BUILD */
 
-#ifdef CONFIG_RTC_POWER_DETECT
+#ifdef CONFIG_CHECK_POWER_STATUS
 
 void check_power_status(int cur_rle_num, int full_rle_num)
 {
