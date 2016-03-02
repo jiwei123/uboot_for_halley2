@@ -79,7 +79,7 @@
   #ifdef CONFIG_SPL_MMC_SUPPORT
 /*    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.4.250:192.168.4.1:192.168.4.1:255.255.255.0 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/bliu/root_ok rw"*/
 /*	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc" */
-  #define CONFIG_BOOTARGS BOOTARGS_COMMON " rootdelay=2 init=/linuxrc root=/dev/mmcblk0p1 rw"
+  #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.4.90:192.168.4.1:192.168.4.1:255.255.255.0 rootdelay=2 init=/linuxrc root=/dev/mmcblk0p1 rw"
   #elif defined(CONFIG_JZ_NAND_MGR)
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"
   #else
@@ -93,7 +93,7 @@
 /**
  * Boot command definitions.
  */
-#define CONFIG_BOOTDELAY  3
+#define CONFIG_BOOTDELAY  1
 #ifdef CONFIG_BOOT_ANDROID
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND	\
@@ -109,6 +109,7 @@
 #else  /* CONFIG_BOOT_ANDROID */
   #ifdef CONFIG_SPL_MMC_SUPPORT
     #define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80f00000 0x1800 0x3000; bootm 0x80f00000"
+    /* #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/bliu/mensa/uImage ;bootm 0x80600000" */
   #else
 	#ifdef CONFIG_JZ_NAND_MGR
 		#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm"
@@ -179,19 +180,22 @@
 #define CONFIG_PMU_ACT8600
 
 /* Ethernet: gmac and 9161 */
+#define GMAC_PHY_MII	1
+#define GMAC_PHY_RMII	2
+#define GMAC_PHY_GMII	3
+#define GMAC_PHY_RGMII	4
+#define CONFIG_NET_GMAC_PHY_MODE GMAC_PHY_MII
 
 #define CONFIG_NET_JZ4775
 #define CONFIG_GPIO_DM9161_RESET	GPIO_PB(7)
 #define CONFIG_GPIO_DM9161_RESET_ENLEVEL	0
 
-/* DEBUG ETHERNET*/
-/*
-#define CONFIG_SERVERIP		192.168.4.250
-#define CONFIG_IPADDR		192.168.4.106
+/* DEBUG ETHERNET */
+#define CONFIG_SERVERIP		192.168.4.13
+#define CONFIG_IPADDR		192.168.4.90
 #define CONFIG_GATEWAYIP        192.168.4.1
 #define CONFIG_NETMASK          255.255.255.0
 #define CONFIG_ETHADDR          00:11:22:33:44:55
-*/
 
 /* GPIO */
 #define CONFIG_JZ_GPIO
