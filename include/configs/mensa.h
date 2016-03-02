@@ -83,7 +83,8 @@
   #elif defined(CONFIG_JZ_NAND_MGR)
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/ndsystem rw"
   #else
-    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 ubi.mtd=2 root=ubi1:ndsystem rootfstype=ubifs rw"
+    /*#define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=1 ubi.mtd=2 root=ubi1:ndsystem rootfstype=ubifs rw"*/
+    #define CONFIG_BOOTARGS BOOTARGS_COMMON " ubi.mtd=2 root=ubi0:ndsystem rootfstype=ubifs rw"
   #endif
 #endif
 
@@ -115,9 +116,9 @@
 		/*#define CONFIG_BOOTCOMMAND        "nand_zm read ndboot;bootm"*/
 	#else
     #define CONFIG_BOOTCOMMAND						\
-	/*"mtdparts default; nand read.skip 0x80f00000 0x800000 0x400000; bootm 0x80f00000"*/	\
-	"mtdparts default; ubi part kernel; ubifsmount ubi:ndboot;" \
-	"ubifsload 0x80f00000 uImage; bootm 0x80f00000"
+	"mtdparts default; ubi part kernel; ubi read 0x80f00000 ndboot 0x400000; bootm 0x80f00000"
+	/*"mtdparts default; ubi part kernel; ubifsmount ubi:ndboot;" \
+	"ubifsload 0x80f00000 uImage; bootm 0x80f00000"*/
 	#endif /* endif config_jz_nand_MGR*/
   #endif
 #endif /* CONFIG_BOOT_ANDROID */
@@ -145,8 +146,8 @@
 #define CONFIG_VIDEO_JZ4775
 #define CONFIG_JZ_PWM
 /*#define CONFIG_VIDEO_BYD_BM8766U*/
-#define CONFIG_VIDEO_KFM701A_21_1A
-/*#define CONFIG_VIDEO_BM347WV_F_8991FTGF*/
+/*#define CONFIG_VIDEO_KFM701A_21_1A*/
+#define CONFIG_VIDEO_BM347WV_F_8991FTGF
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET  	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
