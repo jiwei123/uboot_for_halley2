@@ -73,6 +73,16 @@
 #define CONFIG_AUDIO_APLL CONFIG_SYS_APLL_FREQ
 #define CONFIG_AUDIO_MPLL CONFIG_SYS_MPLL_FREQ
 
+/* CONFIG_CMD_FASTBOOT */
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_JZ_DWC2_UDC
+#define CONFIG_FASTBOOT_GADGET
+#define CONFIG_FASTBOOT_FUNCTION
+#define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
+#define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
+#define CONFIG_USB_GADGET_VBUS_DRAW 500
 
 /*pmu slp pin*/
 #define CONFIG_REGULATOR
@@ -111,6 +121,7 @@
 			/* #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 fpga/user/bliu/x1000/uImage ;bootm 0x80600000" */
 			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"
 			#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x300000 0x80800000 ;bootm 0x80800000"
+			/*#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x300000 0x80004000 ;go 0x80004008"*/
 		#else  /* CONFIG_SPL_SFC_NAND */
 /*			#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"*/
 		#define	 CONFIG_BOOTARGS BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw"

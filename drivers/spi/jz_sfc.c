@@ -1226,11 +1226,6 @@ int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_add
 	}
 #endif
 
-	if(erase_en == 1){
-		jz_sfc_erase(&flash,src_addr,count);
-		printf("sfc erase ok\n");
-	}
-
 #ifdef CONFIG_SPI_QUAD
 	sfc_quad_mode = 1;
 #endif
@@ -1261,6 +1256,12 @@ int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_add
 #endif
 
 	jz_sfc_writel(1 << 2,SFC_TRIG);
+
+	if(erase_en == 1){
+		jz_sfc_erase(&flash,src_addr,count);
+		printf("sfc erase ok\n");
+	}
+
 	ret = jz_sfc_write(&flash,src_addr,count,dst_addr);
 	if (ret) {
 		printf("sfc write error\n");
