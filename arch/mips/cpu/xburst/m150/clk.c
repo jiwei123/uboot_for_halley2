@@ -204,9 +204,9 @@ unsigned int clk_get_rate(int clk)
 	return 0;
 }
 
-#ifndef CONFIG_SPL_BUILD
 static unsigned int set_bch_rate(int clk, unsigned long rate)
 {
+#ifndef CONFIG_SPL_BUILD
 	unsigned int pll_rate = pll_get_rate(APLL);
 
 	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
@@ -217,13 +217,13 @@ static unsigned int set_bch_rate(int clk, unsigned long rate)
 
 	while (cpm_inl(CPM_BCHCDR) & (1 << 28));
 
+#endif
 	return 0;
 }
-#endif
 
-#ifndef CONFIG_SPL_BUILD
 static unsigned int set_ssi_rate(int clk, unsigned long rate)
 {
+//#ifndef CONFIG_SPL_BUILD
 	unsigned int pll_rate = pll_get_rate(APLL);
 
 	unsigned int cdr = ((((pll_rate / rate) % 2) == 0)
@@ -234,9 +234,9 @@ static unsigned int set_ssi_rate(int clk, unsigned long rate)
 
 	while (cpm_inl(CPM_SSICDR) & (1 << 28));
 
+//#endif
 	return 0;
 }
-#endif
 
 static unsigned int set_msc_rate(int clk, unsigned long rate)
 {
@@ -285,7 +285,7 @@ static unsigned int set_msc_rate(int clk, unsigned long rate)
 
 void clk_set_rate(int clk, unsigned long rate)
 {
-#ifndef CONFIG_SPL_BUILD
+//#ifndef CONFIG_SPL_BUILD
 	switch (clk) {
 	case MSC0:
 	case MSC1:
@@ -304,7 +304,7 @@ void clk_set_rate(int clk, unsigned long rate)
 	}
 
 	printf("%s: clk%d is not supported\n", __func__, clk);
-#endif
+//#endif
 }
 
 void clk_init(void)

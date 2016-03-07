@@ -93,6 +93,11 @@
 	#define CONFIG_BOOTCOMMAND  "nand_zm read ndboot 0 0x400000 0x80600000;bootm"
 #endif
 
+#ifdef CONFIG_SPL_OS_BOOT
+#define CONFIG_SPL_OS_OFFSET        (0x40000) /* spi offset of xImage being loaded */
+#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+#endif
+
 #define PARTITION_NUM 10
 
 /**
@@ -260,8 +265,9 @@
 #define CONFIG_SPL_TEXT_BASE		0xba000000
 #define CONFIG_SYS_UBOOT_BASE		(CONFIG_SPL_TEXT_BASE + CONFIG_SPL_PAD_TO - 0x40)
 					/* 0x40 = sizeof (image_header)*/
+
 #define CONFIG_SYS_OS_BASE		0
-#define CONFIG_SYS_SPL_ARGS_ADDR	0
+#define CONFIG_SYS_SPL_ARGS_ADDR       0
 #define CONFIG_SYS_FDT_BASE		0
 #define CONFIG_SPL_PAD_TO		32768
 #define CONFIG_SPL_MAX_SIZE		(32 * 1024)
@@ -281,6 +287,7 @@
 #define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
 #define CONFIG_SPL_PAD_TO		16384
 #define CONFIG_CMD_SPI
+#define CONFIG_SYS_SPL_ARGS_ADDR	CONFIG_SPL_BOOTARGS
 #endif
 
 #ifdef CONFIG_CMD_SPI
