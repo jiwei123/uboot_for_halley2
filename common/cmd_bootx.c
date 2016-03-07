@@ -104,10 +104,9 @@ static void spi_boot(unsigned int mem_address,unsigned int spi_addr)
 
 #ifdef CONFIG_JZ_SFC
 #ifdef CONFIG_ASLMOM_BOARD
-int bat_cap = 0;
-int first = 0;
-int another_first = 0;
-int line = 0;
+int bat_cap = -1;
+int first = 1;
+int line;
 
 int get_line_count()
 {
@@ -145,33 +144,28 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 	gpio_port_direction_input(1,8);
 	update_flag = get_update_flag();
 	if((update_flag & 0x03) != 0x03){
-		while(gpio_get_value(63) && (!(gpio_get_value(40)))){
-			if(!first){
-				first = 1;
+		while (gpio_get_value(63) && (!(gpio_get_value(40)))) {
+			if (bat_cap != get_battery_current_cpt()) {
 				bat_cap = get_battery_current_cpt();
 				line = get_line_count();
-			}else{
-				if(bat_cap != get_battery_current_cpt()){
-					bat_cap = get_battery_current_cpt();
-					line = get_line_count();
-				}
 			}
-			if(bat_cap != 100 || (bat_cap == 100 && another_first)){
-				if(bat_cap == 100) {
-					line = 117;
-					another_first = 2;
-				}
+
+			if (first && bat_cap == 100) {
+				lcd_enable();
+				lcd_display_bat_cap_first(100);
+				mdelay(100);
+				lcd_disable();
+			} else {
 				lcd_enable();
 				lcd_display_zero_cap();
 				mdelay(100);
 				display_battery_capacity(line);
+				mdelay(100);
 				lcd_disable();
-				if(another_first == 2)
-					another_first = 0;
+				if (bat_cap == 100)
+					first = 1;
 				else
-					another_first = 1;
-			}else{
-				lcd_display_bat_cap_first(100);
+					first = 0;
 			}
 		}
 		if(gpio_get_value(40)){
