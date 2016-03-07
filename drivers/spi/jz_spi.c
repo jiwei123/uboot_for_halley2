@@ -23,6 +23,7 @@
 #include <config.h>
 #include <common.h>
 #include <spi.h>
+#include <spl.h>
 #include <spi_flash.h>
 #include <malloc.h>
 #include <asm/gpio.h>
@@ -33,6 +34,8 @@
 #include <asm/arch/base.h>
 #include <malloc.h>
 #include "jz_spi.h"
+
+#include <asm/arch/spi.h>
 
 static struct jz_spi_support *gparams;
 unsigned int ssi_rate = 0;
@@ -146,7 +149,7 @@ void spi_init(void )
 #endif
 
 #ifndef CONFIG_BURNER
-	ssi_rate = 48000000;
+	ssi_rate = 72000000;
     clk_set_rate(SSI, ssi_rate);
 #else
 	if(ssi_rate !=0 )
@@ -1054,8 +1057,16 @@ void spl_spi_load_image(void)
 
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
-	spl_parse_image_header(header);
 
+#ifdef CONFIG_SPL_OS_BOOT
+	spi_load(CONFIG_SPL_OS_OFFSET, sizeof(struct image_header), CONFIG_SYS_TEXT_BASE);
+	spl_parse_image_header(header);
+	spi_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
+	return ;
+#else
+	spl_parse_image_header(header);
 	spi_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN, CONFIG_SYS_TEXT_BASE);
+#endif
 }
 #endif
+
