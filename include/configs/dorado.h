@@ -291,6 +291,11 @@
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
 /*#define CONFIG_CMD_I2C*/
 
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_USE_ARCH_MEMSET
+#define CONFIG_USE_ARCH_MEMCPY
+#endif
+
 /*eeprom*/
 #ifdef CONFIG_CMD_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_ADDR  0x50
