@@ -241,7 +241,7 @@ retry:
 	voltage = get_pmu_voltage();
 	if(voltage == 0)
 		goto retry;
-	else if(voltage < 3400)
+	else if(voltage < 3500)
 		axp173_power_off();
 }
 
