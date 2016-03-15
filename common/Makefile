@@ -33,7 +33,7 @@ COBJS-y += exports.o
 COBJS-y += hash.o
 COBJS-$(CONFIG_SYS_HUSH_PARSER) += hush.o
 COBJS-y += s_record.o
-COBJS-y += xyzModem.o
+COBJS-$(CONFIG_SPL_YMODEM_SUPPORT) += xyzModem.o
 COBJS-y += cmd_disk.o
 
 # boards
@@ -49,7 +49,7 @@ COBJS-$(CONFIG_CMD_FASTBOOT) += cmd_fastboot.o
 COBJS-$(CONFIG_CMD_BOOTM) += cmd_bootm.o
 COBJS-y += cmd_help.o
 COBJS-y += cmd_version.o
-COBJS-y += cmd_ddr_test.o
+COBJS-$(CONFIG_DDR_TEST) += cmd_ddr_test.o
 
 # environment
 COBJS-y += env_attr.o
@@ -217,7 +217,7 @@ COBJS-$(CONFIG_DDR_PARAM_DEBUG) += cmd_ddr.o
 # others
 COBJS-$(CONFIG_BOOTSTAGE) += bootstage.o
 COBJS-$(CONFIG_CONSOLE_MUX) += iomux.o
-COBJS-y += flash.o
+COBJS-$(CONFIG_FLASH) += flash.o
 COBJS-$(CONFIG_CMD_KGDB) += kgdb.o kgdb_stubs.o
 COBJS-$(CONFIG_I2C_EDID) += edid.o
 COBJS-$(CONFIG_KALLSYMS) += kallsyms.o
@@ -267,7 +267,7 @@ endif
 COBJS-$(SPD) += ddr_spd.o
 COBJS-$(CONFIG_HWCONFIG) += hwconfig.o
 COBJS-$(CONFIG_BOUNCE_BUFFER) += bouncebuf.o
-COBJS-y += console.o
+COBJS-$(CONFIG_CMD_CONSOLE) += console.o
 COBJS-y += dlmalloc.o
 COBJS-y += image.o
 COBJS-$(CONFIG_OF_LIBFDT) += image-fdt.o
