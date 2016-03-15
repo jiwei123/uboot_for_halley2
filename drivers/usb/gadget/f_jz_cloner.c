@@ -345,6 +345,8 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 		case VR_CHECK:
 			cloner->ack = handle_check(cloner);
 			break;
+	       case VR_GET_CHIP_ID:
+		case VR_GET_USER_ID:
 		case VR_GET_ACK:
 		case VR_GET_CPU_INFO:
 		case VR_SET_DATA_ADDR:
@@ -403,6 +405,13 @@ int f_cloner_setup_handle(struct usb_function *f,
 		case VR_WRITE:
 			cloner->ack = -EBUSY;
 			break;
+#ifdef CONFIG_CMD_EFUSE
+	       	case VR_GET_CHIP_ID:
+		case VR_GET_USER_ID:
+			cloner->ep0req->length = ctlreq->wLength;
+			cloner->ack = efuse_program(cloner);
+			break;
+#endif
 		case VR_SET_DATA_ADDR:
 		case VR_SET_DATA_LEN:
 			cloner->full_size = ctlreq->wIndex | ctlreq->wValue << 16;

@@ -5,19 +5,51 @@
 int efuse_program(struct cloner *cloner)
 {
 	static int enabled = 0;
+	u32 partation, length;
+	void *addr;
+	int r = 0;
+	int id = 0, flag = 0;
+	int i = 0;
 	if(!enabled) {
-		efuse_init(cloner->args->efuse_gpio);
+		r = efuse_init(cloner->args->efuse_gpio);
+		if(r < 0) {
+			printf("efuse init error\n");
+			return r;
+		}
 		enabled = 1;
 	}
-	u32 partation = cloner->cmd->write.partation;
-	u32 length = cloner->cmd->write.length;
-	void *addr = (void *)cloner->write_req->buf;
-	u32 r = 0;
 
-	if (!!(r = efuse_write(addr, length, partation))) {
-		printf("efuse write error\n");
-		return r;
+	switch(cloner->cmd_type) {
+	case VR_GET_CHIP_ID:
+		id = EFUSE_R_CHIP_ID;
+		flag = 1;
+		break;
+	case VR_GET_USER_ID:
+		id = EFUSE_R_USER_ID;
+		flag = 1;
+		break;
+
+	default:	/* write request */
+		partation = cloner->cmd->write.partation;
+		length = cloner->cmd->write.length;
+		addr = (void *)cloner->write_req->buf;
+
+		if (!!(r = efuse_write(addr, length, partation))) {
+			printf("efuse write error\n");
+			return r;
+		}
+		break;
 	}
+
+	if(flag) {
+		addr = (void *)cloner->ep0req->buf;
+		length = cloner->ep0req->length;
+		if ((r = efuse_read_id(addr, length, id)) < 0) {
+			printf("efuse read chip id error\n");
+			return r;
+		}
+	}
+
 	return r;
 }
 #endif

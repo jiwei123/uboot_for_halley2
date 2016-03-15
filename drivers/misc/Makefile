@@ -42,6 +42,7 @@ COBJS-$(CONFIG_STATUS_LED) += status_led.o
 COBJS-$(CONFIG_TWL4030_LED) += twl4030_led.o
 COBJS-$(CONFIG_JZ4780_EFUSE) += jz4780_efuse.o
 COBJS-$(CONFIG_M200_EFUSE) += m200_efuse.o
+COBJS-$(CONFIG_X1000_EFUSE) += x1000_efuse.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
