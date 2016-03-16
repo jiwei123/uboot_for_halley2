@@ -152,10 +152,17 @@
 #define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of zImage being loaded */
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
+#ifndef CONFIG_UPDATE_LEGACY
 #define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND          "bootx fat mmc 0:auto 0x80f00000 zImage-ramfs"
-#endif
+#else
+#define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock4 rw"
+#undef CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND          "bootx sfc 0x80f00000 0xd00000"
+#endif /* CONFIG_UPDATE_LEGACY */
+#endif /* CONFIG_SPL_OS_BOOT */
+
 
 #define PARTITION_NUM 10
 

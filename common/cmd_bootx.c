@@ -46,7 +46,7 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	static u32 *param_addr = NULL;
 	typedef void (*image_entry_arg_t)(int, char **, void *)
 		__attribute__ ((noreturn));
-	
+
 #ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
 	update_flag = get_update_flag();
@@ -307,7 +307,10 @@ static int do_bootx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	} else if (!strcmp("sfc",argv[0])) {
 		mem_address = simple_strtoul(argv[1], NULL, 16);
 #ifdef CONFIG_ASLMOM_BOARD
-		sfc_addr = 0x100000;
+		if((update_flag & 0x3) != 0x3)
+			sfc_addr = 0x100000;
+		else
+			sfc_addr = simple_strtoul(argv[2], NULL, 16);
 #else
 		sfc_addr = simple_strtoul(argv[2], NULL, 16);
 #endif
