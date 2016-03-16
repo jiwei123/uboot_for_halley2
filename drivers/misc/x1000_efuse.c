@@ -254,6 +254,7 @@ static int efuse_write_data(void *buf, uint32_t start_addr, int length)
 	}
 
 
+
 	/*
 	 * set write Programming address and data length
 	 */
@@ -407,6 +408,8 @@ static int hex2bin(const char *hex, char *bin, int count)
 int efuse_write(void *buf, int length, off_t offset)
 {
 	unsigned int start = (offset + EFU_ROM_BASE);
+	unsigned int start_read = start;
+
 	int ret = -EPERM;
 	unsigned int data_length;
 	unsigned int *data_buf = NULL;
@@ -456,6 +459,12 @@ int efuse_write(void *buf, int length, off_t offset)
 
 			pdata += write_cnt;
 			data_left -= write_cnt;
+			start += write_cnt;
+		}
+
+		if(start % 4) {
+			printf("start addr should be 4 byte align\n");
+			return -EINVAL;
 		}
 
 		/* 2. write data from 0x230 to 0x23d in word */
@@ -465,10 +474,11 @@ int efuse_write(void *buf, int length, off_t offset)
 		for(i = 0; i < data_word_num; i++) {
 			write_cnt = data_left < 4 ? data_left : 4;
 
-			ret = efuse_write_data(pdata, 0x230 + i * 4, write_cnt);
+			ret = efuse_write_data(pdata, start, write_cnt);
 
 			data_left -= write_cnt;
 			pdata += write_cnt;
+			start += write_cnt;
 		}
 	}
 
@@ -481,7 +491,7 @@ int efuse_write(void *buf, int length, off_t offset)
 		return ret;
 	}
 	memset(read_data, 0, word_num * 4);
-	ret = efuse_read_data(read_data, start, data_length);
+	ret = efuse_read_data(read_data, start_read, data_length);
 	if (ret < 0)
 		return ret;
 	else
