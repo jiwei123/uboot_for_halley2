@@ -33,7 +33,7 @@ COBJS-y += exports.o
 COBJS-y += hash.o
 COBJS-$(CONFIG_SYS_HUSH_PARSER) += hush.o
 COBJS-y += s_record.o
-COBJS-$(CONFIG_SPL_YMODEM_SUPPORT) += xyzModem.o
+COBJS-$(CONFIG_USE_XYZMODEM) += xyzModem.o
 COBJS-y += cmd_disk.o
 
 # boards
@@ -137,7 +137,7 @@ COBJS-$(CONFIG_CMD_CRAMFS) += cmd_cramfs.o
 COBJS-$(CONFIG_CMD_LDRINFO) += cmd_ldrinfo.o
 COBJS-$(CONFIG_CMD_LED) += cmd_led.o
 COBJS-$(CONFIG_CMD_LICENSE) += cmd_license.o
-COBJS-y += cmd_load.o
+COBJS-$(CONFIG_CMD_LOAD) += cmd_load.o
 COBJS-$(CONFIG_LOGBUFFER) += cmd_log.o
 COBJS-$(CONFIG_ID_EEPROM) += cmd_mac.o
 COBJS-$(CONFIG_CMD_MD5SUM) += cmd_md5sum.o
