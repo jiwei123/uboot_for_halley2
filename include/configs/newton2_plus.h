@@ -160,6 +160,10 @@
 #define CONFIG_JZ_MIPI_DSI
 #endif
 
+#ifdef CONFIG_VIDEO_EDO_E1392AM1
+#define CONFIG_JZ_MIPI_DSI
+#endif
+
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
@@ -242,8 +246,8 @@
 #define CONFIG_CMD_ECHO		/* echo arguments		*/
 #define CONFIG_CMD_EXT4 	/* ext4 support			*/
 #define CONFIG_CMD_FAT		/* FAT support			*/
-#define CONFIG_CMD_LOADB	/* loadb			*/
-#define CONFIG_CMD_LOADS	/* loads			*/
+/*#define CONFIG_CMD_LOADB	*//* loadb			*/
+/*#define CONFIG_CMD_LOADS	*//* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/

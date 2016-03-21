@@ -200,7 +200,8 @@ static int SM5007_reg_is_enabled(struct regulator *rdev)
 		case SM5007_ID_LDO6 ... SM5007_ID_LDO7:
 		case SM5007_ID_LDO9:
 			tem_enable = ((control >> ri->en_bit) & 0x1);
-			is_enable = ((tem_enable && 0x0) ? 0 : 1);
+			//is_enable = ((tem_enable && 0x0) ? 0 : 1);
+			is_enable = tem_enable;
 			break;
 		default:
 			break;
