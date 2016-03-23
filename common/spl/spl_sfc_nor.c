@@ -240,8 +240,8 @@ void spl_sfc_nor_load_image(void)
 	unsigned int src_addr, updata_flag;
 #endif
 #ifdef CONFIG_ASLMOM_BOARD
-	//set PB(8),USB_DETE PIN as input	
-	gpio_port_direction_input(1, 8); 
+	//set PB(8),USB_DETE PIN as input
+	gpio_port_direction_input(1, 8);
 #endif
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
