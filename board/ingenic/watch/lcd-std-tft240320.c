@@ -209,7 +209,7 @@ struct std_tft240320_data std_tft240320_pdata = {
 	.gpio_lcd_rd  = GPIO_PC(24),
 	.gpio_lcd_rst = GPIO_PC(23),
 	.gpio_lcd_cs  = GPIO_PC(27),
-	.gpio_lcd_bl  = GPIO_PC(22),
+	.gpio_lcd_bl  = GPIO_PE(0),
 };
 #else
 struct std_tft240320_data std_tft240320_pdata = {
