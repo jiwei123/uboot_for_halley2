@@ -30,7 +30,7 @@
 #include "../spi/spi_flash_internal.h"
 #include "../../spi/jz_spi.h"
 #include "jz_spinand.h"
-#include "../../usb/gadget/cloner.h"
+#include <cloner/cloner.h>
 #define IDCODE_CONT_LEN 0
 #define IDCODE_PART_LEN 5
 

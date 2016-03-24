@@ -32,7 +32,7 @@
 #include "../../spi/jz_spi.h"
 #include "jz_spinand.h"
 
-#include "../../usb/gadget/cloner.h"
+#include <cloner/cloner.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/clk.h>
 #define IDCODE_CONT_LEN 0

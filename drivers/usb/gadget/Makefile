@@ -38,12 +38,12 @@ COBJS-$(CONFIG_USB_GADGET_S3C_UDC_OTG) += s3c_udc_otg.o
 COBJS-$(CONFIG_USB_GADGET_FOTG210) += fotg210.o
 COBJS-$(CONFIG_USBDOWNLOAD_GADGET) += g_dnl.o
 COBJS-$(CONFIG_DFU_FUNCTION) += f_dfu.o
-COBJS-$(CONFIG_USB_JZ_BURNER_GADGET) += g_burntool.o
-COBJS-$(CONFIG_USB_JZ_DWC2_UDC)	+= jz_dwc2_udc.o
 COBJS-$(CONFIG_USB_JZ_DWC2_UDC_V1_1)	+= jz47xx_dwc2_udc.o
 COBJS-$(CONFIG_FASTBOOT_GADGET) += g_fastboot.o
 COBJS-$(CONFIG_FASTBOOT_FUNCTION) += f_fastboot.o
+COBJS-$(CONFIG_USB_JZ_BURNER_GADGET) += g_burntool.o
 COBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += f_jz_cloner.o
+SUBOBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += cloner/libcloner_module_mg.o
 endif
 ifdef CONFIG_USB_ETHER
 COBJS-y += ether.o
@@ -66,11 +66,17 @@ endif
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
+SUBOBJS :=  $(addprefix $(obj),$(SUBOBJS-y))
+OBJS += $(SUBOBJS)
 
 all:	$(LIB)
 
+.PHONY : $(SUBOBJS)
 $(LIB):	$(obj).depend $(OBJS)
 	$(call cmd_link_o_target, $(OBJS))
+
+$(SUBOBJS):
+	$(MAKE) -C $(dir $@)
 
 #########################################################################
 

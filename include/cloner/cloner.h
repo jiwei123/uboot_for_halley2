@@ -44,6 +44,7 @@ struct spi spi;
 #define VR_REBOOT		0x16
 #define VR_POWEROFF		0x17	/*reboot and poweroff*/
 #define VR_CHECK		0x18
+#define VR_GET_CRC		0x19
 
 #define MMC_ERASE_ALL	1
 #define MMC_ERASE_PART	2
@@ -78,6 +79,7 @@ enum medium_type {
 	SFC_NOR,
 	SPI_NAND,
 	SFC_NAND,
+	EXT_POL,
 };
 
 enum data_type {
@@ -174,6 +176,9 @@ union cmd {
 	struct rtc_time rtc;
 };
 
+#define MOUDLE_TYPE(ops) ((ops) >> 16)
+#define MOUDLE_SUB_TYPE(ops) ((ops) & 0xffff)
+
 struct cloner {
 	struct usb_function usb_function;
 	struct usb_composite_dev *cdev;		/*Copy of config->cdev*/
@@ -192,6 +197,7 @@ struct cloner {
 	void *buf;
 	uint32_t buf_size;
 	int ack;
+	int crc;
 	struct arguments *args;
 	int inited;
 
@@ -217,7 +223,7 @@ static struct usb_gadget_strings  burn_intf_string = {
 	.strings = burner_intf_string_defs,
 };
 
-static struct usb_gadget_strings  *burn_intf_string_tab[] = {
+static struct usb_gadget_strings  *burn_intf_string_tab[] __attribute__((unused))= {
 	&burn_intf_string,
 	NULL,
 };
@@ -258,14 +264,14 @@ static struct usb_endpoint_descriptor hs_bulk_out_desc = {
 	.wMaxPacketSize         = __constant_cpu_to_le16(512),
 };
 
-static struct usb_descriptor_header *fs_intf_descs[] = {
+static struct usb_descriptor_header *fs_intf_descs[] __attribute__((unused)) = {
 	(struct usb_descriptor_header *) &intf_desc,
 	(struct usb_descriptor_header *) &fs_bulk_out_desc,
 	(struct usb_descriptor_header *) &fs_bulk_in_desc,
 	NULL,
 };
 
-static struct usb_descriptor_header *hs_intf_descs[] = {
+static struct usb_descriptor_header *hs_intf_descs[] __attribute__((unused)) = {
 	(struct usb_descriptor_header *) &intf_desc,
 	(struct usb_descriptor_header *) &hs_bulk_out_desc,
 	(struct usb_descriptor_header *) &hs_bulk_in_desc,
@@ -331,5 +337,54 @@ static inline uint32_t local_crc32(uint32_t crc,unsigned char *buffer, uint32_t 
 		crc = crc_table[(crc ^ buffer[i]) & 0xff] ^ (crc >> 8);
 	}
 	return crc ;
+}
+
+struct cloner_moudle {
+	uint32_t medium;
+	int ops;
+	struct list_head node;
+	int (*init)(void *args, void* mdata);
+	int (*write)(struct cloner *cloner, int sub_ops, void* mdata);
+	int (*read)(struct cloner *cloner, int sub_ops, void* mdata);
+	int (*check)(struct cloner *cloner, int sub_ops, void* mdata);
+	void *data;
+};
+
+int register_cloner_moudle(struct cloner_moudle *clmd);
+
+typedef int (*cloner_regcall_t)(void);
+
+
+#define CLONER_MOUDLE_INIT(fn)		\
+	ll_entry_declare(cloner_regcall_t, _1##fn, cloner) = fn
+
+#define CLONER_SUB_MOUDLE_INIT(fn)	\
+	ll_entry_declare(cloner_regcall_t, _2##fn, cloner) = fn
+
+/*----------------------------------------------------------------*/
+
+int clmg_init(void *args);
+
+int clmg_check(struct cloner *cloner);
+
+int clmg_read(struct cloner *cloner);
+
+int clmg_write(struct cloner *cloner);
+
+static inline int cloner_moudle_init(void)
+{
+	cloner_regcall_t *call = ll_entry_start(cloner_regcall_t, cloner);
+	int ret = 0 , i, count;
+
+	for (i = 0, count = ll_entry_count(cloner_regcall_t, cloner);
+			i < count;
+			call++, i++) {
+		ret = (*call)();
+		if (ret) {
+			printf("cloner ops init func error\n");
+			break;
+		}
+	}
+	return ret;
 }
 #endif

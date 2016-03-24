@@ -1,5 +1,4 @@
 #include <mmc.h>
-#include "cloner.h"
 
 #ifdef CONFIG_JZ_MMC
 

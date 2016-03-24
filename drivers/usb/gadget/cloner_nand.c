@@ -2,7 +2,6 @@
 #include <linux/mtd/mtd.h>
 #include <nand.h>
 #include <ingenic_nand_mgr/nand_param.h>
-#include "cloner.h"
 
 #ifdef CONFIG_JZ_NAND_MGR
 int nand_program(struct cloner *cloner)

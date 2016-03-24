@@ -35,7 +35,7 @@
 #include <linux/usb/gadget.h>
 #include <linux/compiler.h>
 #include <linux/usb/composite.h>
-#include "cloner.h"
+#include <cloner/cloner.h>
 #include "cloner_nand.c"
 #include "cloner_mmc.c"
 #include "cloner_efuse.c"
@@ -44,6 +44,112 @@
 #if CONFIG_MTD_SPINAND || CONFIG_MTD_SFCNAND
 #include "cloner_spinand.c"
 #endif
+
+/**
+ * cloner module manage
+ **/
+static LIST_HEAD(clmg_list);
+
+int register_cloner_moudle(struct cloner_moudle *clmd)
+{
+	if (!clmd)
+		return -EINVAL;
+	list_add_tail(&clmd->node, &clmg_list);
+	return 0;
+}
+
+static inline struct cloner_moudle *find_cloner_moudle1(int ops) {
+
+	struct cloner_moudle *pos = NULL;
+	list_for_each_entry(pos, &clmg_list, node)
+		if (pos->ops == ops)
+			return pos;
+	return NULL;
+}
+
+
+static inline struct cloner_moudle *find_cloner_moudle2(uint32_t medium) {
+
+	struct cloner_moudle *pos = NULL;
+	list_for_each_entry(pos, &clmg_list, node)
+		if (pos->medium == medium)
+			return pos;
+	return NULL;
+}
+
+int clmg_init(void *args)
+{
+	struct cloner_moudle *clmd;
+	uint32_t medium;
+
+	if (!args)
+		return -EINVAL;
+
+	medium = *(uint32_t *)args;
+
+	clmd = find_cloner_moudle2(medium);
+	if (!clmd)
+		return -ENOSYS;
+
+	if (!clmd->init) {
+		printf("moudle(%d) not support init function", clmd->medium);
+		return 0;
+	}
+
+	return clmd->init(args, clmd->data);
+}
+
+int clmg_write(struct cloner *cloner)
+{
+	struct cloner_moudle *clmd;
+	int ops;
+
+	if (!cloner)
+		return -EINVAL;
+
+	ops = MOUDLE_TYPE(cloner->cmd->write.ops);
+
+	clmd = find_cloner_moudle1(ops);
+	if (!clmd || !clmd->write)
+		return -ENOSYS;
+
+	return clmd->write(cloner, MOUDLE_SUB_TYPE(cloner->cmd->write.ops), clmd->data);
+}
+
+int clmg_read(struct cloner *cloner)
+{
+	struct cloner_moudle *clmd;
+	int ops;
+
+	if (!cloner)
+		return -EINVAL;
+
+	ops = MOUDLE_TYPE(cloner->cmd->read.ops);
+
+	clmd = find_cloner_moudle1(ops);
+	if (!clmd || !clmd->read)
+		return -ENOSYS;
+
+	return clmd->read(cloner, MOUDLE_SUB_TYPE(cloner->cmd->read.ops), clmd->data);
+}
+
+int clmg_check(struct cloner *cloner)
+{
+	struct cloner_moudle *clmd;
+	int ops;
+
+	if (!cloner)
+		return -EINVAL;
+
+	ops = MOUDLE_TYPE(cloner->cmd->check.ops);
+
+	clmd = find_cloner_moudle1(ops);
+	if (!clmd || !clmd->check)
+		return -ENOSYS;
+
+	return clmd->check(cloner, MOUDLE_SUB_TYPE(cloner->cmd->check.ops), clmd->data);
+}
+
 int i2c_program(struct cloner *cloner)
 {
 	int i = 0;
@@ -124,7 +230,6 @@ int cloner_init(struct cloner *cloner)
 		printf("cloner->args->spi_args.rate:%d\n",cloner->args->spi_args.rate);
 	}
 #endif
-
 	return 0;
 }
 
@@ -154,16 +259,22 @@ void handle_read(struct cloner *cloner)
 				cloner->cmd->read.length);
 		break;
 #endif
+	default:
+		ret = clmg_read(cloner);
+		break;
 	}
 
-	if (!ret) /*err return*/
+	if (ret < 0)
 		cloner->ack = ret;
-	else	/*ok crc retrun*/
-		cloner->ack = local_crc32(0xffffffff, cloner->read_req->buf, cloner->cmd->read.length);
+	else
+		cloner->ack = 0;
+	if (cloner->args->transfer_data_chk)
+		cloner->crc = local_crc32(0xffffffff, cloner->read_req->buf, cloner->cmd->read.length);
+	//printf("handle read cloner->crc %x\n", cloner->crc);
 
 	/*always transfer data*/
 	cloner->read_req->length = cloner->cmd->read.length;
-	usb_ep_queue(cloner->ep_in, cloner->read_req, 0);
+	//usb_ep_queue(cloner->ep_in, cloner->read_req, 0);
 #undef OPS
 }
 
@@ -187,6 +298,9 @@ int handle_check(struct cloner *cloner)
 		check_buf = buf[0];
 		break;
 #endif
+	default:
+		ret = clmg_check(cloner);
+		break;
 	}
 
 	if (!ret && check_buf == cloner->cmd->check.check)
@@ -206,16 +320,13 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 	}
 
 	if (req->actual != req->length) {
-		printf("write transfer length is errr,actual=%08x,length=%08x\n",req->actual,req->length);
+		printf("write transfer length is err,actual=%08x,length=%08x\n",req->actual,req->length);
 		cloner->ack = -EIO;
 		return;
 	}
 
 	if(cloner->cmd_type == VR_UPDATE_CFG) {
 		cloner->ack = 0;
-		printf("nand_erase:%d\n",cloner->args->nand_erase);
-		printf("mmc_erase:%d\n",cloner->args->mmc_erase);
-		printf("mmc_open_card:%d\n",cloner->args->mmc_open_card);
 		return;
 	}
 
@@ -291,7 +402,7 @@ void handle_write(struct usb_ep *ep,struct usb_request *req)
 			}
 			break;
 		default:
-			printf("ops %08x not support yet.\n",cloner->cmd->write.ops);
+			cloner->ack = clmg_write(cloner);
 	}
 #undef OPS
 }
@@ -339,13 +450,17 @@ void handle_cmd(struct usb_ep *ep,struct usb_request *req)
 		case VR_READ:
 			handle_read(cloner);
 			break;
+		case VR_GET_CRC:
+			if (!cloner->ack)
+				usb_ep_queue(cloner->ep_in, cloner->read_req, 0);
+			break;
 		case VR_SYNC_TIME:
 			cloner->ack = rtc_set(&cloner->cmd->rtc);
 			break;
 		case VR_CHECK:
 			cloner->ack = handle_check(cloner);
 			break;
-	       case VR_GET_CHIP_ID:
+	    case VR_GET_CHIP_ID:
 		case VR_GET_USER_ID:
 		case VR_GET_ACK:
 		case VR_GET_CPU_INFO:
@@ -397,7 +512,13 @@ int f_cloner_setup_handle(struct usb_function *f,
 			strcpy(cloner->ep0req->buf,"BOOT47XX");
 			break;
 		case VR_GET_ACK:
+			if (cloner->ack) printf("cloner->ack = %d\n",cloner->ack);
 			memcpy(cloner->ep0req->buf,&cloner->ack,sizeof(int));
+			break;
+		case VR_GET_CRC:
+			if (cloner->ack) printf("cloner->ack = %d, cloner->crc = %x\n",cloner->ack, cloner->crc);
+			memcpy(cloner->ep0req->buf,&cloner->ack,sizeof(int));
+			memcpy(cloner->ep0req->buf + sizeof(int),&cloner->crc,sizeof(int));
 			break;
 		case VR_INIT:
 			break;
@@ -543,6 +664,9 @@ int cloner_function_bind_config(struct usb_configuration *c)
 	cloner->skip_spl_size = 0;
 
 	cloner->inited = 0;
+
+	if (cloner_moudle_init())
+		return -EINVAL;
 
 	INIT_LIST_HEAD(&cloner->usb_function.list);
 	bitmap_zero(cloner->usb_function.endpoints,32);

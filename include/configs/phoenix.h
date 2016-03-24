@@ -437,7 +437,7 @@
 #define CONFIG_SPL_PAD_TO		32768
 #define CONFIG_SPL_MAX_SIZE		(32 * 1024)
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT)
-#define CONFIG_SPL_PAD_TO		12288  /* spl size */
+#define CONFIG_SPL_PAD_TO		12288			/* spl size */
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
 #define CONFIG_SPL_MAX_SIZE		(12 * 1024)
 #elif defined(CONFIG_SPL_SFC_SUPPORT)
@@ -448,7 +448,7 @@
 #define CONFIG_SPI_NAND_BPP			(2048 +64)		/*Bytes Per Page*/
 #define CONFIG_SPI_NAND_PPB			(64)		/*Page Per Block*/
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_SPL_MAX_SIZE		(12 * 1024)
 #define CONFIG_SPL_PAD_TO		16384
 #define CONFIG_SPL_SFC_NAND
 #define CONFIG_MTD_SFCNAND
@@ -474,7 +474,7 @@
 #else
 #define CONFIG_SPI_SPL_CHECK
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_SPL_MAX_SIZE		(12 * 1024)
 #define CONFIG_SPL_PAD_TO		16384
 #define CONFIG_CMD_SFC_NOR
 #endif
@@ -484,7 +484,7 @@
 #define CONFIG_SPIFLASH_PART_OFFSET     0x3c00
 #define CONFIG_UBOOT_OFFSET             (4<<12)
 #define CONFIG_SPL_TEXT_BASE		0xf4001000
-#define CONFIG_SPL_MAX_SIZE		((16 * 1024) - 0x800)
+#define CONFIG_SPL_MAX_SIZE		(12 * 1024)
 #define CONFIG_SPL_PAD_TO		16384
 #define CONFIG_SPI_NAND_BPP			(2048 +128)		/*Bytes Per Page*/
 #define CONFIG_SPI_NAND_PPB			(64)		/*Page Per Block*/

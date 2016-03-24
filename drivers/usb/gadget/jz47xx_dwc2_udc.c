@@ -823,6 +823,9 @@ static void parse_setup(struct dwc2_ep *dep)
 		//usb_stall_ep0(dep);
 		return;
 	}
+
+	if (dev->ep0state & STATUS_STAGE)
+		udc_start_new_setup();
 }
 
 static void udc_fetch_data_packet(struct dwc2_ep *dep, int flush_fifo)
@@ -1104,9 +1107,9 @@ void outep0_transfer_complete(struct dwc2_ep *dep)
 		if (request->req.actual >= request->req.length)
 			is_last = 1;
 		if (is_last) {
-			dwc2_giveback_urb(dep, request, 0);
 			udc_start_new_setup();
 			udc_setup_status(1);
+			dwc2_giveback_urb(dep, request, 0);
 		} else {
 			dwc2_start_transfer(dep);
 		}
@@ -1114,7 +1117,7 @@ void outep0_transfer_complete(struct dwc2_ep *dep)
 		pr_ep0("==out== status stage complete\n");
 		udc_start_new_setup();
 	} else {
-		pr_ep0("==out== setup stage complete");
+		pr_ep0("==out== setup stage complete\n");
 	}
 	return;
 }
