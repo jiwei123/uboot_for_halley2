@@ -1,7 +1,12 @@
 
 #include <efuse.h>
-#include "cloner.h"
 #ifdef CONFIG_CMD_EFUSE
+__attribute__((weak))
+int efuse_read_id(void *buf, int length, int id)
+{
+	return 0;
+}
+
 int efuse_program(struct cloner *cloner)
 {
 	static int enabled = 0;
