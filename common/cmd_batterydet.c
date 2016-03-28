@@ -47,6 +47,7 @@ extern void board_powerdown_device(void);
 extern void lcd_sync(void);
 extern int calc_battery_capacity(void);
 extern int ricoh619_power_off(void);
+extern int ricoh619_clear_pswr(void);
 extern int ricoh61x_reg_charge_status(u8 reg, uint8_t bit_status);
 extern int ricoh619_set_pswr(uint8_t value);
 
@@ -94,7 +95,8 @@ static	unsigned char  logo_id;
 static unsigned int battery_voltage_min;
 static unsigned int battery_voltage_max;
 static unsigned int battery_voltage_scale;
-static unsigned int read_battery_voltage(void);
+static unsigned int rtc_wakeup_flag;
+unsigned int read_battery_voltage(void);
 
 #ifdef CONFIG_CHECK_POWER_STATUS
 void check_power_status(int cur_rle_num, int full_rle_num);
@@ -377,7 +379,7 @@ static void jz_pm_do_idle(void)
 		unsigned int rtccr = rtc_read_reg(RTC_RTCCR) & 0x6F;
 		unsigned int rtcsr = rtc_read_reg(RTC_RTCSR);
 		unsigned int rtcsar = rtc_read_reg(RTC_RTCSAR);
-		rtc_write_reg(RTC_RTCSAR, (rtcsr + CONFIG_RTC_WAKEUP_TIME)); // 10min
+		rtc_write_reg(RTC_RTCSAR, (rtcsr + CONFIG_RTC_WAKEUP_TIME));
 		rtccr |= (0x3 << 2); // Open RTC Alarm interrupt generate
 		rtc_write_reg(RTC_RTCCR, rtccr);
 		// open rtc interrupt
@@ -396,6 +398,14 @@ static void jz_pm_do_idle(void)
 			  "wait\n\t"
 			  "nop\n\t"
 			  "nop\n\t" "nop\n\t" "nop\n\t" ".set mips32");
+
+	regval = readl(INTC_BASE + 0x20);
+	printf("INTC regval is :%x\n",regval);
+	if(regval == 1){
+		rtc_wakeup_flag = 1;
+	}else{
+		rtc_wakeup_flag = 0;
+	}
 	printf("out  sleep mode\n");
 
 #ifdef CONFIG_RTC_WAKEUP
@@ -679,6 +689,8 @@ static int get_rle_num(void)
 	capacity = calc_battery_capacity();
 
 	if(capacity < 0){
+		ricoh619_clear_pswr();
+
 		voltage = read_battery_voltage();
 		if (voltage < battery_voltage_min) {
 			rle_num_base = 0;
@@ -773,8 +785,9 @@ static void show_charging_logo(void)
 				lcd_close_backlight();
 				jz_pm_do_idle();
 				mdelay(10);
-				lcd_open_backlight();
-
+				if(rtc_wakeup_flag == 0){
+					lcd_open_backlight();
+				}
 				rle_num_base = get_rle_num();
 				rle_num = rle_num_base;
 				debug("rle_num_base = %d\n", rle_num_base);
