@@ -175,6 +175,9 @@
 
 #endif /* CONFIG_LCD */
 
+#define CONFIG_RTC_WAKEUP
+#define CONFIG_RTC_WAKEUP_TIME          60 * 10
+
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
