@@ -133,12 +133,29 @@ void edo_e1392am1_display_inversion_off(struct dsi_device *dsi)
 	write_command(dsi, data_to_send);
 }
 
+/*
+ * display set pulse
+ */
+void edo_e1392am1_set_pulse(unsigned int level)
+{
+	int i = 0;
+	gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 1);
+	udelay(2000);
+	for(i = 0; i < level ; i++) {
+		gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 0);
+		udelay(10);
+		gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 1);
+		udelay(10);
+	}
+}
+
 /**
  * lcd_open_backlight() - Overwrite the weak function defined at common/lcd.c
  */
 void lcd_open_backlight(void)
 {
-	gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 1);
+	//gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 1);
+	edo_e1392am1_set_pulse(31);
 
 	return;
 }
