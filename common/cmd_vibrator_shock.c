@@ -124,9 +124,9 @@ static int do_gpio_vibrate(long time)
 #endif
 
 #if defined(CONFIG_VIBRATE_REGULATOR)
-#if defined(CONFIG_F1) || defined(CONFIG_AW808)
+#if defined(CONFIG_PMU_RICOH6x)
 	#define REGULATOR_NAME  "RICOH619_LDO9"
-#elif defined(CONFIG_SOLAR)
+#elif defined(CONFIG_PMU_SM5007)
 	#define REGULATOR_NAME "SM5007_PS4"
 #else
 #	define REGULATOR_NAME  "NULL"
