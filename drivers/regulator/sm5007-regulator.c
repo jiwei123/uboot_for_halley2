@@ -185,22 +185,22 @@ static int SM5007_reg_is_enabled(struct regulator *rdev)
 	//If PWRSTM pin is high, condition is disable in case of en_bit 1 or 2.
 	switch (ri->id) {
 		case SM5007_ID_BUCK1 ... SM5007_ID_BUCK1_DVS:
-			tem_enable = ((control >> ri->en_bit) & 0x3);
-			is_enable = ((tem_enable && 0x0) ? 0 : (tem_enable && 0x03) ? 1 : 0);
+			tem_enable = ((control  >> ri->en_bit) & 0x3);
+			is_enable = (tem_enable == 0x03);
 			break;
 		case SM5007_ID_BUCK2 ... SM5007_ID_LDO1:
 		case SM5007_ID_LDO3 ... SM5007_ID_LDO5:
 		case SM5007_ID_LDO8:
 		case SM5007_ID_PS1 ... SM5007_ID_PS5:
-			tem_enable = ((control >> ri->en_bit) & 0x3);
-			is_enable = ((tem_enable && 0x0) ? 0 : (tem_enable && 0x02) ? 1
-					: (tem_enable && 0x03) ? 1 : 0);
+			tem_enable = ((control  >> ri->en_bit) & 0x3);
+			is_enable = ((tem_enable == 0x00) ? 0 :
+					(tem_enable == 0x02) ? 1 :
+					(tem_enable == 0x03) ? 1 : 0);
 			break;
 		case SM5007_ID_LDO2:
 		case SM5007_ID_LDO6 ... SM5007_ID_LDO7:
 		case SM5007_ID_LDO9:
 			tem_enable = ((control >> ri->en_bit) & 0x1);
-			//is_enable = ((tem_enable && 0x0) ? 0 : 1);
 			is_enable = tem_enable;
 			break;
 		default:
@@ -428,11 +428,11 @@ static struct SM5007_regulator SM5007_regulator[] = {
 	SM5007_REG_BUCK(BUCK1, 0x30, 0, 0x30, 0x31, 0x3F, 0x00,
 			700, 1300, 12500, 0x30, SM5007_ops, 500, 0x46, 0x01, 0x00),
 	SM5007_REG_BUCK(BUCK1_DVS, 0x30, 0, 0x30, 0x32, 0x3F, 0x00,
-			600, 3500, 12500, 0x30, SM5007_ops, 500, 0x46, 0x01, 0x00),
+			700, 1300, 12500, 0x30, SM5007_ops, 500, 0x46, 0x01, 0x00),
 	SM5007_REG_BUCK(BUCK2, 0x33, 0, 0x33, 0xFF, 0xFF, 0x00,
 			1200, 1200, 0, 0x0, SM5007_ops, 500, 0x46, 0x02, 0x01),
 	SM5007_REG_BUCK(BUCK3, 0x42, 0, 0x42, 0xFF, 0xFF, 0x00,
-			3300, 3300, 0, 0x0, SM5007_ops, 500, 0x46, 0x04, 0x02),
+			1800, 1800, 0, 0x0, SM5007_ops, 500, 0x46, 0x04, 0x02),
 	SM5007_REG_BUCK(BUCK4, 0x42, 1, 0x42, 0x34, 0x3F, 0x00,
 			1800, 3300, 50000, 0x1E, SM5007_ops, 500, 0x46, 0x08, 0x03),
 	SM5007_REG_LDO(LDO1, 0x35, 0, 0x35, 0x3A, 0x0F, 0x00,
@@ -440,11 +440,11 @@ static struct SM5007_regulator SM5007_regulator[] = {
 	SM5007_REG_LDO(LDO2, 0x42, 2, 0x42, 0x3A, 0xF0, 0x04,
 			800, 3300, 0, 0x0F, SM5007_ops, 500, 0x43, 0x0C, 0x02),
 	SM5007_REG_LDO(LDO3, 0x36, 0, 0x36, 0xFF, 0xFF, 0x00,
-			1800, 1800, 0, 0, SM5007_ops, 500, 0x43, 0x30, 0x04),
+			3000, 3000, 0, 0, SM5007_ops, 500, 0x43, 0x30, 0x04),
 	SM5007_REG_LDO(LDO4, 0x37, 0, 0x37, 0xFF, 0xFF, 0x00,
 			2800, 2800, 0, 0, SM5007_ops, 500, 0x43, 0xC0, 0x06),
 	SM5007_REG_LDO(LDO5, 0x38, 0, 0x38, 0xFF, 0xFF, 0x00,
-			1800, 1800, 0, 0, SM5007_ops, 500, 0x44, 0x03, 0x00),
+			2500, 2500, 0, 0, SM5007_ops, 500, 0x44, 0x03, 0x00),
 	SM5007_REG_LDO(LDO6, 0x42, 3, 0x42, 0xFF, 0xFF, 0x00,
 			1800, 1800, 0, 0, SM5007_ops, 500, 0x44, 0x0C, 0x02),
 	SM5007_REG_LDO(LDO7, 0x42, 4, 0x42, 0x3B, 0x0F, 0x00,
@@ -454,15 +454,15 @@ static struct SM5007_regulator SM5007_regulator[] = {
 	SM5007_REG_LDO(LDO9, 0x42, 5, 0x42, 0x3C, 0x0F, 0x00,
 			800, 3300, 0, 0, SM5007_ops, 500, 0x45, 0x03, 0x00),
 	SM5007_REG_PS(PS1, 0x3D, 0, 0x3D, 0x31, 0x3F, 0x00,
-			700, 1300, 12500, 0x30, SM5007_ops, 500, 0x00, 0x00, 0x00),
+			1100, 1100, 12500, 0x30, SM5007_ops, 500, 0x00, 0x00, 0x00),
 	SM5007_REG_PS(PS2, 0x3E, 0, 0x3E, 0xFF, 0xFF, 0x00,
 			1200, 1200, 0, 0x0, SM5007_ops, 500, 0x00, 0x00, 0x00),
 	SM5007_REG_PS(PS3, 0x3F, 0, 0x3F, 0xFF, 0xFF, 0x00,
-			3300, 3300, 0, 0x0, SM5007_ops, 500, 0x00, 0x00, 0x00),
+			1800, 1800, 0, 0x0, SM5007_ops, 500, 0x00, 0x00, 0x00),
 	SM5007_REG_PS(PS4, 0x40, 0, 0x40, 0xFF, 0xFF, 0x00,
-			1800, 1800, 0, 0, SM5007_ops, 500, 0x00, 0x00, 0x00),
+			3000, 3000, 0, 0, SM5007_ops, 500, 0x00, 0x00, 0x00),
 	SM5007_REG_PS(PS5, 0x41, 0, 0x41, 0xFF, 0xFF, 0x00,
-			1800, 1800, 0, 0, SM5007_ops, 500, 0x00, 0x00, 0x00),
+			2800, 2800, 0, 0, SM5007_ops, 500, 0x00, 0x00, 0x00),
 };
 
 int sm5007_regulator_init(void)
