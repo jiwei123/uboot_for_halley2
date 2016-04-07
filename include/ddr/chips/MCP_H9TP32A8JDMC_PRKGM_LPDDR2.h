@@ -55,7 +55,7 @@
 			(DDR_tDQSCKMAX * 1000 / tck_g.ps + 1) : \
 			(DDR_tDQSCKMAX * 1000 / tck_g.ps)) + DDR_BL / 2 + 1 - DDR_tWL) 
 #define DDR_tFAW 	MAX(8, 50 * 1000)	/* Four bank activate period, ns */
-#define DDR_tCKE	3		/* CKE minimum pulse width, tCK */
+#define DDR_tCKE	MAX(3,  tck_g.ps / 1000 * 3)		/* CKE minimum pulse width, tCK */
 #define DDR_tRDLAT	(DDR_tRL - 1)
 #define DDR_tWDLAT	(DDR_tWL - 0)
 
