@@ -102,7 +102,7 @@ int main (int argc, char *argv[])
 	int	mode = -1, i, j, x;
 	FILE	*fp;
 	uint16_t data_offset, n_colors = 0;
-	int nbit;
+	int nbit = 0;
 
 	if (argc < 3) {
 		usage(argv[0]);
