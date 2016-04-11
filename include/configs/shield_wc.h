@@ -49,7 +49,7 @@
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
-
+#define CONFIG_CHECK_POWER_STATUS
 
 #define CONFIG_SYS_DCACHE_SIZE		32768
 #define CONFIG_SYS_ICACHE_SIZE		32768

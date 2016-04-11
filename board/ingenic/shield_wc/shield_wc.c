@@ -167,12 +167,13 @@ void spl_board_init(void)
 
 #endif /* CONFIG_SPL_BUILD */
 
-#ifdef CONFIG_RTC_POWER_DETECT
+#ifdef CONFIG_CHECK_POWER_STATUS
 
 void check_power_status(int cur_rle_num, int full_rle_num)
 {
+  printf("check_power_status %d %d\n", cur_rle_num, full_rle_num);
         if ((cur_rle_num + 1) >= full_rle_num) { // full
-	        gpio_direction_output(GPIO_PC(18), 1); // green
+	        gpio_direction_output(GPIO_PC(18), 0); // green
 		gpio_direction_output(GPIO_PC(19), 0); // red
 	} else {
 	        gpio_direction_output(GPIO_PC(18), 0); // green
