@@ -149,8 +149,6 @@ extern void low_power_detect(void);
 void spl_board_init(void)
 {
 	axp173_regulator_init();
-	/* power on detection */
-	low_power_detect();
 	/* close boost */
 	gpio_request(32 * 1 + 5, NULL);
 	gpio_direction_output(32 * 1 + 5, 0);

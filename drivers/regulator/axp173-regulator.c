@@ -38,6 +38,7 @@
 static struct i2c axp173_i2c;
 static struct i2c *i2c;
 
+#ifndef CONFIG_SPL_BUILD
 int axp173_write_reg(u8 reg, u8 *val)
 {
 	unsigned int  ret;
@@ -48,6 +49,7 @@ int axp173_write_reg(u8 reg, u8 *val)
 	}
 	return 0;
 }
+#endif
 
 int axp173_read_reg(u8 reg, u8 *val, u32 len)
 {
@@ -88,5 +90,6 @@ int axp173_regulator_init(void)
 		printf("probe axp173 error, i2c addr 0x%x\n", AXP173_I2C_ADDR);
 		return -EIO;
 	}
+
 	return 0;
 }

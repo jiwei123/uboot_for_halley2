@@ -266,23 +266,30 @@ void spl_sfc_nor_load_image(void)
 	if ((updata_flag & 0x3) != 0x3) {
 #ifdef CONFIG_ASLMOM_BOARD
 		int usb_insert;
+		int low_power;
 		int rsr = cpm_inl(CPM_RSR);
 		int hspr = readl(RTC_BASE + RTC_HSPR);
 
 		usb_insert = !gpio_get_value(40);
+		low_power = low_power_detect();
 
 		if (rsr & CPM_RSR_WR) {
 			/* reboot */
 			if (hspr == 0x50574f46)
+				spl_load_uboot(header);
+			/* low power */
+			else if (low_power)
 				spl_load_uboot(header);
 			else
 				spl_load_kernel(header);
 		} else if (usb_insert) {
 			/* usb insert */
 			spl_load_uboot(header);
-		} else {
+		} else if (low_power) {
+			/* low power */
+			spl_load_uboot(header);
+		} else
 			spl_load_kernel(header);
-		}
 #else
 		spl_load_kernel(header);
 #endif

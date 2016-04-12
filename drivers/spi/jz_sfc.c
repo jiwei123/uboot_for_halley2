@@ -1068,6 +1068,25 @@ unsigned int get_update_flag()
         return update_flag;
 }
 
+int get_battery_flag(void)
+{
+	unsigned char buf [64];
+	unsigned char battery_flag[3];
+	unsigned int src_addr;
+
+	nv_map_area_addr((unsigned int)&src_addr);
+	sfc_nor_read(src_addr, 64, buf);
+	battery_flag[0] = buf[32];
+	battery_flag[1] = buf[33];
+	battery_flag[2] = buf[34];
+
+	if ((battery_flag[0] == 0x69) && (battery_flag[1] == 0xaa)
+			&& (battery_flag[2] == 0x55))
+		return 1;
+	else
+		return 0;
+}
+
 int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_addr,unsigned int erase_en)
 {
 

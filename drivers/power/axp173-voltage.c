@@ -3,17 +3,16 @@
 #include <common.h>
 
 #define CHARGING_ON 	1
-#ifdef CONFIG_ASLMOM_BATTERY
 #define INTER_RESIST    300
-#else
-#define INTER_RESIST 	132
-#endif
+#define INTER_RESIST1   200
 #define SAMPLE_COUNT	10
 
 extern int axp173_read_reg(u8 reg, u8 *val, u32 len);
 extern int axp173_write_reg(u8 reg, u8 *val);
+extern int get_battery_flag(void);
 
-#ifdef CONFIG_ASLMOM_BATTERY
+static int which_battery = -1;
+
 struct ocv2soc ocv2soc[] = {
         {4321, 100},
         {4152,  94},
@@ -29,22 +28,24 @@ struct ocv2soc ocv2soc[] = {
         {3653,   9},
         {3628,   0}
 };
-#else
-struct ocv2soc ocv2soc[] = {
-	{4245, 100},
-	{4125,  90},
-	{4025,  80},
-	{3965,  70},
-	{3895,  60},
-	{3865,  50},
-	{3825,  40},
-	{3795,  30},
-	{3765,  20},
-	{3685,  10},
-	{3635,   5},
-	{3445,   0},
+
+struct ocv2soc ocv2soc1[] = {
+        {4227, 100},
+        {4154,  95},
+        {4042,  88},
+        {3954,  82},
+        {3901,  75},
+        {3844,  67},
+        {3782,  60},
+        {3714,  52},
+        {3671,  45},
+        {3635,  37},
+        {3608,  30},
+        {3565,  20},
+        {3496,  10},
+        {3430,   0}
 };
-#endif
+
 enum adc_type {
         ACIN_VOL = 0,
         ACIN_CUR,
@@ -169,11 +170,15 @@ static unsigned int jz_current_battery_voltage()
 		pmu_charging = 0;
 
 	voltage = get_pmu_voltage();
-	low_power_detect(pmu_charging, voltage);
 	pmu_current = get_pmu_current();
-	voltage = pmu_charging == CHARGING_ON ? voltage - (pmu_current * INTER_RESIST
-			/ 1000) : voltage + (pmu_current * INTER_RESIST / 1000);
-//	printf("========++>pmu_charging = %d, pmu_current = %d, voltage = %d\n", 
+	if (!which_battery) {
+		voltage = pmu_charging == CHARGING_ON ? voltage - (pmu_current * INTER_RESIST
+				/ 1000) : voltage + (pmu_current * INTER_RESIST / 1000);
+	}
+	else
+		voltage = pmu_charging == CHARGING_ON ? voltage - (pmu_current * INTER_RESIST1
+				/ 1000) : voltage + (pmu_current * INTER_RESIST1 / 1000);
+//	printf("========++>pmu_charging = %d, pmu_current = %d, voltage = %d\n",
 //		pmu_charging, pmu_current, voltage);
 
 	return voltage;
@@ -184,22 +189,45 @@ static int jz_current_battery_current_cpt(unsigned int voltage)
 	int i = 0;
 	int cpt = 0;
 
-	for (; i < ARRAY_SIZE(ocv2soc); ++i)
-		if (voltage >= ocv2soc[i].vol)
-			break;
-	if (i == 0)
-		cpt = ocv2soc[i].cpt;
-	else if (i == ARRAY_SIZE(ocv2soc))
-		cpt = ocv2soc[i-1].cpt;
-	else {
-		int cpt_step = (ocv2soc[i-1].vol - ocv2soc[i].vol) /
-				(ocv2soc[i-1].cpt - ocv2soc[i].cpt);
-		int vol = ocv2soc[i-1].vol - voltage;
+	if (!which_battery) {
+		for (; i < ARRAY_SIZE(ocv2soc); ++i)
+			if (voltage >= ocv2soc[i].vol)
+				break;
+		if (i == 0)
+			cpt = ocv2soc[i].cpt;
+		else if (i == ARRAY_SIZE(ocv2soc))
+			cpt = ocv2soc[i-1].cpt;
+		else {
+			int cpt_step = (ocv2soc[i-1].vol - ocv2soc[i].vol) /
+					(ocv2soc[i-1].cpt - ocv2soc[i].cpt);
+			int vol = ocv2soc[i-1].vol - voltage;
 
-		cpt = ocv2soc[i-1].cpt - vol / cpt_step;
+			cpt = ocv2soc[i-1].cpt - vol / cpt_step;
+		}
 	}
+	else {
+		for (; i < ARRAY_SIZE(ocv2soc1); ++i)
+			if (voltage >= ocv2soc1[i].vol)
+				break;
+		if (i == 0)
+			cpt = ocv2soc1[i].cpt;
+		else if (i == ARRAY_SIZE(ocv2soc1))
+			cpt = ocv2soc1[i-1].cpt;
+		else {
+			int cpt_step = (ocv2soc1[i-1].vol - ocv2soc1[i].vol) /
+					(ocv2soc1[i-1].cpt - ocv2soc1[i].cpt);
+			int vol = ocv2soc1[i-1].vol - voltage;
 
+			cpt = ocv2soc1[i-1].cpt - vol / cpt_step;
+		}
+	}
 	return cpt;
+}
+
+static void get_battery_nv_flag(void)
+{
+	if (which_battery == -1)
+		which_battery = get_battery_flag();
 }
 
 int get_battery_status(void)
@@ -222,6 +250,7 @@ int get_battery_current_cpt(void)
 	int cpt = 0;
 	unsigned int voltage = 0;
 
+	get_battery_nv_flag();
 	mdelay(250);
 	cpt = get_battery_status();
 	if(cpt == 100)
@@ -231,15 +260,19 @@ int get_battery_current_cpt(void)
 	return cpt;
 }
 
-void low_power_detect(void)
+int low_power_detect(void)
 {
 	unsigned int voltage = 0;
-retry:
-	voltage = get_pmu_voltage();
-	if(voltage == 0)
-		goto retry;
-	else if(voltage < 3500)
-		axp173_power_off();
+	int i = 100;
+
+	for(;i > 0;i--) {
+		voltage = get_pmu_voltage();
+		if (voltage == 0)
+			continue;
+		else if (voltage < 3500)
+			return 1;
+	}
+	return 0;
 }
 
 void disable_ldo4(void)
@@ -255,3 +288,4 @@ void disable_ldo4(void)
 	if (ret < 0)
 		printf("Error in writing the POWER_ON_OFF_REG_Reg\n");
 }
+

@@ -98,7 +98,6 @@
 #define CONFIG_AXP173_I2C_SCL GPIO_PB(23)
 #define CONFIG_AXP173_I2C_SDA GPIO_PB(24)
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
-#define CONFIG_ASLMOM_BATTERY
 #define CONFIG_BATTERY_CAPACITY
 #ifdef  CONFIG_BATTERY_CAPACITY
 #define USB_DETE GPIO_PB(8)
@@ -109,6 +108,12 @@
 
 #if defined(CONFIG_SPL_SFC_NOR) || defined(CONFIG_SPL_SFC_NAND)
 #define CONFIG_SPL_SFC_SUPPORT
+#endif
+
+/*get bat_param from SFC flash*/
+#ifdef CONFIG_GET_BAT_PARAM
+#define BAT_PARAM_READ_ADDR      0x48420
+#define BAT_PARAM_READ_COUNT     3
 #endif
 
 /**
@@ -150,7 +155,11 @@
 
 #ifdef CONFIG_SPL_OS_BOOT
 #define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of zImage being loaded */
+#ifdef CONFIG_GET_BAT_PARAM
+#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 bat_param=bat-2200 rw"
+#else
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
+#endif
 #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
 #ifndef CONFIG_UPDATE_LEGACY
 #define CONFIG_BOOTX_BOOTARGS       BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"

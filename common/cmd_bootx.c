@@ -37,6 +37,8 @@
 #ifdef CONFIG_ASLMOM_BOARD
 #include <asm/gpio.h>
 #include <asm/arch/lcdc.h>
+#include <asm/arch/rtc.h>
+#include <asm/io.h>
 #endif
 extern void flush_cache_all(void);
 
@@ -50,6 +52,11 @@ static void bootx_jump_kernel(unsigned long mem_address)
 #ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
 	update_flag = get_update_flag();
+#ifdef CONFIG_GET_BAT_PARAM
+        char *bat_param_str = NULL;
+        unsigned char *bat_str = "bat-4400";
+        unsigned char buf[3];
+#endif
 #endif
 	image_entry_arg_t image_entry =
 		(image_entry_arg_t) mem_address;
@@ -58,8 +65,17 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
 #ifdef CONFIG_ASLMOM_BOARD
-	if((update_flag & 0x3) != 0x3)
+	if((update_flag & 0x3) != 0x3) {
+#ifdef CONFIG_GET_BAT_PARAM
+		sfc_nor_read(BAT_PARAM_READ_ADDR, BAT_PARAM_READ_COUNT, buf);
+		bat_param_str = strstr(CONFIG_SPL_BOOTARGS, "bat_param");
+		/* [0x69, 0xaa, 0x55] new battery's flag in nv */
+		if((bat_param_str != NULL) && (buf[0] == 0x69) && (buf[1] == 0xaa)
+				&& (buf[2] ==0x55))
+			memcpy(bat_param_str + 10, bat_str, 8);
+#endif
 		param_addr[1] = CONFIG_SPL_BOOTARGS;
+	}
 	else
 		param_addr[1] = CONFIG_BOOTX_BOOTARGS;
 #else
@@ -139,7 +155,17 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 
 #ifdef CONFIG_ASLMOM_BOARD
 	unsigned int update_flag;
+	int hspr = readl(RTC_BASE + RTC_HSPR);
+
 	disable_ldo4();
+	/* Low power does not boot */
+	if ((gpio_get_value(40)) && (hspr != 0x50574f46) && (low_power_detect())) {
+		lcd_enable();
+		lcd_display_bat_cap_first(0);
+		mdelay(2000);
+		lcd_disable();
+		jz_hibernate();
+	}
 	gpio_port_direction_input(1,31);
 	gpio_port_direction_input(1,8);
 	update_flag = get_update_flag();
@@ -159,6 +185,8 @@ static void sfc_boot(unsigned int mem_address,unsigned int sfc_addr)
 				lcd_enable();
 				lcd_display_zero_cap();
 				mdelay(100);
+				if (line < 5)
+					line = 5;
 				display_battery_capacity(line);
 				mdelay(100);
 				lcd_disable();

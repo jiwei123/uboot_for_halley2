@@ -42,7 +42,10 @@
 #endif
 #include <lcd.h>
 #include <watchdog.h>
-
+#ifdef CONFIG_ASLMOM_BOARD
+#include <asm/arch/rtc.h>
+#include <asm/io.h>
+#endif
 #include <splash.h>
 
 #if defined(CONFIG_CPU_PXA25X) || defined(CONFIG_CPU_PXA27X) || \
@@ -442,7 +445,6 @@ int drv_lcd_init(void)
 	lcd_base = (void *) gd->fb_base;
 
 	lcd_init(lcd_base);		/* LCD initialization */
-
 #ifdef CONFIG_LCD_INFO
 	/* Device initialization */
 	memset(&lcddev, 0, sizeof(lcddev));
@@ -608,8 +610,10 @@ void lcd_clear(void)
 	/* Paint the logo and retrieve LCD base address */
 	debug("[LCD] Drawing the logo...\n");
 	
+	int hspr = readl(RTC_BASE + RTC_HSPR);
+
 	if ((get_update_flag() & 0x3) != 0x3) {
-		if (gpio_get_value(40))
+		if (gpio_get_value(40) && (hspr == 0x50574f46))
 			jz_hibernate();
 		lcd_console_address = lcd_logo();
 	} else {

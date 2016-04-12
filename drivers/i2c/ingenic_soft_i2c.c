@@ -263,6 +263,7 @@ int  i2c_read(struct i2c *i2c,unsigned char chip,
 	return(0);
 }
 
+#ifndef CONFIG_SPL_BUILD
 /*-----------------------------------------------------------------------
  * Write bytes
  */
@@ -297,6 +298,7 @@ int  i2c_write(struct i2c *i2c,unsigned char chip, unsigned int addr, int alen, 
 	send_stop(i2c);
 	return(failures);
 }
+#endif
 
 int i2c_probe(struct i2c *i2c, unsigned char addr)
 {
