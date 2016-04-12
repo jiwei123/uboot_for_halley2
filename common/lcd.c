@@ -642,6 +642,10 @@ void lcd_clear(void)
 	lcd_sync();
 }
 
+#ifndef CONFIG_DELAY_FOR_OPEN_BACKLIGHT
+#define CONFIG_DELAY_FOR_OPEN_BACKLIGHT 100
+#endif
+
 /*
  * clear the screen, as the first frame, and turn on backlight's power switch,
  * in order to avoid lcd flicker, make sure "cls" as the first command of
@@ -652,7 +656,9 @@ static int do_lcd_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 {
 	/* first lcd frame, black screen */
 	lcd_clear_black();
+	mdelay(CONFIG_DELAY_FOR_OPEN_BACKLIGHT);
 	lcd_open_backlight();
+	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 	return 0;
 }
 
@@ -1635,7 +1641,7 @@ do_lcd_logo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 	return CMD_RET_SUCCESS;
-	}
+}
 
 U_BOOT_CMD(lcd_logo, 2, 0, do_lcd_logo,
 	"on/off lcd logo",

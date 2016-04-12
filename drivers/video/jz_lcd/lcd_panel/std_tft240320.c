@@ -76,7 +76,7 @@ void panel_power_on(void)
  */
 void lcd_open_backlight(void)
 {
-	gpio_direction_output(std_tft240320_pdata.gpio_lcd_bl, 1);
+//	gpio_direction_output(std_tft240320_pdata.gpio_lcd_bl, 1);
 	return;
 }
 

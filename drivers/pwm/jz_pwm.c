@@ -37,27 +37,18 @@ int pwm_request(int num){
 
 void pwm_enable(int num)
 {
-	if (!pwm_request(num)){
-		if (num >= 0 && num <= 3){
-			writew(readw(TCU_TCSR(num)) | (TCU_TCSR_PWM_EN), TCU_TCSR(num));
-			writew(readw(TCU_TESR) | (1 << num), TCU_TESR);
-			pwm_flag |= 1 << num;
-		} else {
-			printf("the channel is not support pwm!\n");
-		}
+	if (num >= 0 && num <= 3){
+		writew(readw(TCU_TCSR(num)) | (TCU_TCSR_PWM_EN), TCU_TCSR(num));
+		writew(readw(TCU_TESR) | (1 << num), TCU_TESR);
 	} else {
-		printf("the channel is using!\n");
-		return ;
+		printf("the channel is not support pwm!\n");
 	}
 }
 
 void pwm_disable(int num)
 {
-	if (pwm_flag & (1 << num)){
-		writew(readw(TCU_TCSR(num)) & (~TCU_TCSR_PWM_EN), TCU_TCSR(num));
-		writew(readw(TCU_TECR) | (1 << num), TCU_TECR);
-	}
-	pwm_flag &= (~(1 << num));
+	writew(readw(TCU_TCSR(num)) & (~TCU_TCSR_PWM_EN), TCU_TCSR(num));
+	writew(readw(TCU_TECR) | (1 << num), TCU_TECR);
 }
 
 void pwm_output_value(int num, int value)
@@ -152,16 +143,12 @@ void pwm_config(int num, int div, enum pwm_clk pwm_clock, int full_data, int hal
 
 void pwm_init(struct pwm *pwm_data)
 {
-	if (!pwm_request(pwm_data->channels)){
-		pwm_disable(pwm_data->channels);
-		pwm_output_value(pwm_data->channels, 1);
-		pwm_config(pwm_data->channels,
-			pwm_data->div,
-			pwm_data->pwm_clock,
-			pwm_data->full_data,
-			pwm_data->half_data);
-		pwm_enable(pwm_data->channels);
-	} else {
-		printf("the channel is using!\n");
-	}
+	pwm_disable(pwm_data->channels);
+	pwm_output_value(pwm_data->channels, 1);
+	pwm_config(pwm_data->channels,
+			   pwm_data->div,
+			   pwm_data->pwm_clock,
+			   pwm_data->full_data,
+			   pwm_data->half_data);
+	pwm_enable(pwm_data->channels);
 }
