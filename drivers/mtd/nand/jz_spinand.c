@@ -817,10 +817,10 @@ static int get_spinand_pagesize(int page,int column)
 }
 static int32_t get_nand_magic(int page,int column)
 {
-        char buffer[100];
+        char buffer[column+sizeof(int)];
         int32_t nand_magic=0;
-        spi_nand_read_page(buffer,page,column,100);
-        nand_magic=*(int32_t *)(buffer);
+        spi_nand_read_page(buffer,page,0,column+sizeof(int));
+        nand_magic=*(int32_t *)(buffer+column);
         return nand_magic;
 }
 static int get_spinand_param(char *buffer,int ptcount,struct nand_param_from_burner *param,int pagesize)
@@ -848,6 +848,7 @@ static char *get_chip_param_from_nand(struct nand_param_from_burner **param,int 
                 get_spinand_param(buffer,CONFIG_SPIFLASH_PART_OFFSET,*param,pagesize);
                 *using_way=0;
         }else{
+		printf("warning: can't get right magic\n");
                 *using_way=1;
         }
         return buffer;
