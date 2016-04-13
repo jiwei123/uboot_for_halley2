@@ -1,5 +1,5 @@
 /*
- * Ingenic grus configuration
+ * Ingenic ci20 configuration
  *
  * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Justin <ptkang@ingenic.cn>
@@ -22,8 +22,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __CONFIG_GRUS_H__
-#define __CONFIG_GRUS_H__
+#ifndef __CONFIG_CI20_H__
+#define __CONFIG_CI20_H__
 
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
@@ -469,4 +469,4 @@
 #define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
 #define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
 
-#endif /* __CONFIG_GRUS_H__ */
+#endif /* __CONFIG_CI20_H__ */
