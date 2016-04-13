@@ -252,9 +252,7 @@ struct cgu __attribute__((weak)) spl_cgu_clksel[] = {
 	 * {offset, sel, sel_bit, en_bit, busy_bit, div}
 	 */
 	[0] = {CPM_DDRCDR, 2, 30, 29, 28, 0},
-#ifdef CONFIG_JZ_MMC_MSC0
 	{CPM_MSC0CDR, 2, 30, 29, 28, CGU_MSC_DIV},
-#endif
 #ifdef CONFIG_JZ_MMC_MSC1
 	{CPM_MSC1CDR, 2, 30, 29, 28, CGU_MSC_DIV},
 #endif
