@@ -21,6 +21,21 @@ static inline unsigned int color16_to_32(unsigned short color) {
 	return r << 16 | g << 8 | b;
 }
 
+static inline unsigned short color32_to_16(unsigned int color) {
+	unsigned short r, g, b;
+
+	r = (color >> 16) & 0xff;
+	r = r >> 3;
+
+	g = (color >> 8) & 0xff;
+	g = g >> 2;
+
+	b = color & 0xff;
+	b = b >> 3;
+
+	return r << 11 | g << 5 | b;
+}
+
 static inline void fb_set_bpp16(unsigned short *dst, unsigned short color, unsigned int count) {
 	while (count--) {
 		*dst++ = color;
@@ -104,6 +119,52 @@ void write_mem(void *base0, void *base1, int width, int height,
 		base0 += pixels_line0 * size;
 		base1 += pixels_line1 * size;
 	}
+}
+
+/**
+ * clear_mem: 设置fb的全部像素为同一个颜色值
+ * @base: fb 内存起始地址
+ * @width: fb的宽度
+ * @height: fb的高度
+ * @pixels_line: fb每行的像素个数，pixels_line >= width
+ * @bpp: 每像素所需的位数
+ * @color32: 需要清零的颜色，以32位颜色表示，如果目标fb是16位，那么会自动转换为16的颜色
+ */
+void clear_mem(void *base, int width, int height, int pixels_line, int bpp, unsigned int color32) {
+	int i;
+	unsigned short color16;
+	unsigned short *p16;
+	unsigned int *p32;
+
+	if (bpp == 32 || bpp == 24 || bpp == 18) {
+		p32 = base;
+		for (i = 0; i < height; ++i) {
+			fb_set_bpp32(p32, color32, width);
+			p32 += pixels_line;
+		}
+	} else {
+		p16 = base;
+		color16 = color32_to_16(color32);
+		for (i = 0; i < height; ++i) {
+			fb_set_bpp16(p16, color16, width);
+			p16 += pixels_line;
+		}
+	}
+}
+
+/**
+ * clear_fb: 把当前fb的全部像素设置为同一个颜色值
+ * @color32: 需要清零的颜色，以32位颜色表示，如果目标fb是16位，那么会自动转换为16的颜色
+ */
+void clear_fb(unsigned int color32)
+{
+	int bpp = lcd_get_pixel_bpp();
+	void *fb_base = lcd_get_fb_base();
+	int fb_width = lcd_get_pixel_width();
+	int fb_height = lcd_get_pixel_height();
+	int fb_pixels_line_length = lcd_get_pixels_line_length();
+
+	clear_mem(fb_base, fb_width, fb_height, fb_pixels_line_length, bpp, color32);
 }
 
 /**
@@ -228,11 +289,15 @@ int show_rle_picture_in_middle(unsigned short *src_picture_addr, unsigned int *d
 int show_rle_picture_in_fb_middle(unsigned short *src_picture_addr)
 {
 	int ret;
-	int pixels_line_length = lcd_get_pixels_line_length();
-	int bpp = NBITS(panel_info.vl_bpix);
-	ret = show_rle_picture_in_middle(src_picture_addr, gd->fb_base,
-                                     panel_info.vl_col, panel_info.vl_row,
-                                     pixels_line_length, bpp);
+	int bpp = lcd_get_pixel_bpp();
+	void *fb_base = lcd_get_fb_base();
+	int fb_width = lcd_get_pixel_width();
+	int fb_height = lcd_get_pixel_height();
+	int fb_pixels_line_length = lcd_get_pixels_line_length();
+
+	ret = show_rle_picture_in_middle(src_picture_addr, fb_base,
+                                     fb_width, fb_height,
+                                     fb_pixels_line_length, bpp);
 	return ret;
 }
 

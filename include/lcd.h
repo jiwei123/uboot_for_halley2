@@ -336,8 +336,11 @@ void lcd_show_board_info(void);
 /* Return the size of the LCD frame buffer, and the line length */
 int lcd_get_size(int *line_length);
 
-/*Return the pixels_line_length by ignore byte alignment*/
-int lcd_get_pixels_line_length();
+/* Return the pixels_line_length by ignore byte alignment*/
+int lcd_get_pixels_line_length(void);
+
+/* Return the pixel bpp */
+int lcd_get_pixel_bpp(void);
 
 int lcd_dt_simplefb_add_node(void *blob);
 int lcd_dt_simplefb_enable_existing_node(void *blob);
@@ -441,4 +444,19 @@ int lcd_dt_simplefb_enable_existing_node(void *blob);
 
 /************************************************************************/
 
+/* fb and rle utils */
+extern void *create_fb_from_rle(unsigned short *rle, unsigned int *rle_width, unsigned int *rle_height, int bpp);
+void write_mem(void *base0, void *base1, int width, int height,
+			   int pixels_line0, int pixels_line1, int size);
+extern void clear_mem(void *base, int width, int height, int pixels_line, int bpp, unsigned int color32);
+extern void clear_fb(unsigned int color32);
+extern void write_fb(void *dst, int dst_xres, int dst_yres, int dst_pixels_line_length,
+			  void *src, int src_xres, int src_yres, int src_pixels_line_length,
+			  int x, int y, int bpp);
+int show_rle_picture(unsigned short *src_picture_addr, unsigned int *dst,
+					 int dst_xres, int dst_yres, int dst_pixels_line_length,
+					 int x, int y, int bpp);
+int show_rle_picture_in_middle(unsigned short *src_picture_addr, unsigned int *dst,
+							   int dst_xres, int dst_yres,
+							   int dst_pixels_line_length, int bpp);
 #endif	/* _LCD_H_ */

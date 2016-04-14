@@ -166,7 +166,10 @@
  */
 #define CONFIG_LCD
 #ifdef CONFIG_LCD
-#define LCD_BPP				5
+#ifndef CONFIG_LCD_BPP
+#define CONFIG_LCD_BPP 5
+#endif
+#define LCD_BPP	CONFIG_LCD_BPP
 #define CONFIG_LCD_LOGO
 #define CONFIG_RLE_LCD_LOGO
 /*#define CONFIG_LCD_INFO_BELOW_LOGO*/     /*display the console info on lcd panel for debugg */
