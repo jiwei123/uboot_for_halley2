@@ -50,6 +50,7 @@ static int jz_serial_init(void)
 	uart = (struct jz_uart *)(UART0_BASE + CONFIG_SYS_UART_INDEX * 0x1000);
 #endif
 
+#ifdef CONFIG_SPL_BUILD
 	/* Disable port interrupts while changing hardware */
 	writeb(0, &uart->dlhr_ier);
 
@@ -71,6 +72,7 @@ static int jz_serial_init(void)
 	/* Enable UART unit, enable and clear FIFO */
 	writeb(UART_FCR_UUE | UART_FCR_FE | UART_FCR_TFLS | UART_FCR_RFLS,
 	       &uart->iir_fcr);
+#endif
 
 	return 0;
 }
