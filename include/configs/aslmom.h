@@ -156,7 +156,7 @@
 #ifdef CONFIG_SPL_OS_BOOT
 #define CONFIG_SPL_OS_OFFSET        (0x100000) /* spi offset of zImage being loaded */
 #ifdef CONFIG_GET_BAT_PARAM
-#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 bat_param=bat-2200 rw"
+#define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 bat=2200 rw"
 #else
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock3 rw"
 #endif

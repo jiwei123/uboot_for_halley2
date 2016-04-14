@@ -54,7 +54,7 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	update_flag = get_update_flag();
 #ifdef CONFIG_GET_BAT_PARAM
         char *bat_param_str = NULL;
-        unsigned char *bat_str = "bat-4400";
+        unsigned char *bat_str = "4400";
         unsigned char buf[3];
 #endif
 #endif
@@ -68,11 +68,11 @@ static void bootx_jump_kernel(unsigned long mem_address)
 	if((update_flag & 0x3) != 0x3) {
 #ifdef CONFIG_GET_BAT_PARAM
 		sfc_nor_read(BAT_PARAM_READ_ADDR, BAT_PARAM_READ_COUNT, buf);
-		bat_param_str = strstr(CONFIG_SPL_BOOTARGS, "bat_param");
+		bat_param_str = strstr(CONFIG_SPL_BOOTARGS, "bat");
 		/* [0x69, 0xaa, 0x55] new battery's flag in nv */
 		if((bat_param_str != NULL) && (buf[0] == 0x69) && (buf[1] == 0xaa)
 				&& (buf[2] ==0x55))
-			memcpy(bat_param_str + 10, bat_str, 8);
+			memcpy(bat_param_str + 4, bat_str, 4);
 #endif
 		param_addr[1] = CONFIG_SPL_BOOTARGS;
 	}

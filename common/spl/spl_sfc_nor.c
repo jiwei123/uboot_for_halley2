@@ -168,7 +168,6 @@ void sfc_init()
 
 void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_addr)
 {
-
 	int i,j;
 	unsigned char *data;
 	unsigned int temp;
@@ -192,31 +191,6 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 
 	return ;
 }
-#define NV_AREA_START (288 * 1024)
-static void nv_map_area(unsigned int *base_addr)
-{
-	unsigned int buf[3][2];
-	unsigned int tmp_buf[4];
-	unsigned int nv_num = 0, nv_count = 0;
-	unsigned int addr, i;
-
-	for(i = 0; i < 3; i++) {
-		addr = NV_AREA_START + i * 32 * 1024;
-		sfc_nor_load(addr, 4, buf[i]);
-		if(buf[i][0] == 0x5a5a5a5a) {
-			sfc_nor_load(addr + 1 *1024,  16, tmp_buf);
-			addr += 32 * 1024 - 8;
-			sfc_nor_load(addr, 8, buf[i]);
-			if(buf[i][1] == 0xa5a5a5a5) {
-				if(nv_count < buf[i][0]) {
-					nv_count = buf[i][0];
-					nv_num = i;
-				}
-			}
-		}
-	}
-	*base_addr = NV_AREA_START + nv_num * 32 * 1024 + 1024;
-}
 
 void spl_load_kernel(struct image_header *header)
 {
@@ -230,6 +204,8 @@ void spl_load_uboot(struct image_header *header)
 	spl_parse_image_header(header);
 	sfc_nor_load(CONFIG_UBOOT_OFFSET, CONFIG_SYS_MONITOR_LEN,CONFIG_SYS_TEXT_BASE);
 }
+
+#define NV_AREA_BASE_ADDR 0x48400
 
 void spl_sfc_nor_load_image(void)
 {
@@ -259,8 +235,7 @@ void spl_sfc_nor_load_image(void)
 		sfc_nor_load(CONFIG_SPL_OS_OFFSET, spl_image.size, spl_image.load_addr);
 		return ;
 #endif //CONFIG_NOR_SPL_BOOT_OS
-	nv_map_area((unsigned int)&src_addr);
-	sfc_nor_load(src_addr, count, nv_buf);
+	sfc_nor_load(NV_AREA_BASE_ADDR, count, nv_buf);
 	updata_flag = nv_buf[3];
 
 	if ((updata_flag & 0x3) != 0x3) {

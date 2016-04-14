@@ -67,7 +67,7 @@ void simple_serial_init(void)
         writeb(UART_FCR_UUE | UART_FCR_FE | UART_FCR_TFLS | UART_FCR_RFLS,
                 spl_uart + 0x8);
 
-	simple_puts("U-Boot SPL\n");
+	simple_puts("SPL\n");
 }
 
 void simple_putc(const char c)

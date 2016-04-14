@@ -70,7 +70,7 @@ void __noreturn jump_to_image_linux(void *arg)
 #endif
 #ifdef CONFIG_GET_BAT_PARAM
 	char *bat_param_str = NULL;
-	unsigned char *bat_str = "bat-4400";
+	unsigned char *bat_str = "4400";
 	unsigned char buf[3];
 #endif
 	static u32 *param_addr = NULL;
@@ -90,11 +90,11 @@ void __noreturn jump_to_image_linux(void *arg)
 #endif
 #ifdef CONFIG_GET_BAT_PARAM
 	sfc_nor_load(BAT_PARAM_READ_ADDR, BAT_PARAM_READ_COUNT, buf);
-	bat_param_str = strstr(arg, "bat_param");
+	bat_param_str = strstr(arg, "bat");
 	/* [0x69, 0xaa, 0x55] new battery's flag in nv */
 	if((bat_param_str != NULL) && (buf[0] == 0x69) && (buf[1] == 0xaa)
 			&& (buf[2] ==0x55))
-		memcpy(bat_param_str + 10, bat_str, 8);
+		memcpy(bat_param_str + 4, bat_str, 4);
 #endif
 	cleanup_before_linux();
 	param_addr = (u32 *)CONFIG_PARAM_BASE;

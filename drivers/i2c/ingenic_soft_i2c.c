@@ -198,8 +198,8 @@ static unsigned char read_byte(struct i2c *i2c,int ack)
  */
 void i2c_init(struct i2c *i2c)
 {
-	gpio_request(i2c->scl, "soft_i2c");
-	gpio_request(i2c->sda, "soft_i2c");
+	gpio_request(i2c->scl, NULL);
+	gpio_request(i2c->sda, NULL);
 	gpio_direction_output(i2c->sda,1);
 	gpio_direction_output(i2c->scl,1);
 	send_reset(i2c);
@@ -263,7 +263,6 @@ int  i2c_read(struct i2c *i2c,unsigned char chip,
 	return(0);
 }
 
-#ifndef CONFIG_SPL_BUILD
 /*-----------------------------------------------------------------------
  * Write bytes
  */
@@ -298,7 +297,6 @@ int  i2c_write(struct i2c *i2c,unsigned char chip, unsigned int addr, int alen, 
 	send_stop(i2c);
 	return(failures);
 }
-#endif
 
 int i2c_probe(struct i2c *i2c, unsigned char addr)
 {

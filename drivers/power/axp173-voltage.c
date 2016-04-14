@@ -4,7 +4,7 @@
 
 #define CHARGING_ON 	1
 #define INTER_RESIST    300
-#define INTER_RESIST1   200
+#define INTER_RESIST1   280
 #define SAMPLE_COUNT	10
 
 extern int axp173_read_reg(u8 reg, u8 *val, u32 len);
@@ -30,20 +30,20 @@ struct ocv2soc ocv2soc[] = {
 };
 
 struct ocv2soc ocv2soc1[] = {
-        {4227, 100},
-        {4154,  95},
-        {4042,  88},
-        {3954,  82},
-        {3901,  75},
-        {3844,  67},
-        {3782,  60},
-        {3714,  52},
-        {3671,  45},
-        {3635,  37},
-        {3608,  30},
-        {3565,  20},
-        {3496,  10},
-        {3430,   0}
+	{4227, 100},
+	{4154,  95},
+	{4117,  88},
+	{4042,  82},
+	{3986,  76},
+	{3954,  69},
+	{3901,  61},
+	{3844,  52},
+	{3782,  43},
+	{3714,  34},
+	{3671,  25},
+	{3652,  18},
+	{3635,  10},
+	{3608,   0},
 };
 
 enum adc_type {
@@ -221,6 +221,10 @@ static int jz_current_battery_current_cpt(unsigned int voltage)
 			cpt = ocv2soc1[i-1].cpt - vol / cpt_step;
 		}
 	}
+
+        if(cpt < 0)
+                cpt = 0;
+
 	return cpt;
 }
 
@@ -272,6 +276,11 @@ int low_power_detect(void)
 		else if (voltage < 3500)
 			return 1;
 	}
+
+	unsigned char tmp;
+	tmp = 0;
+	axp173_write_reg(0x81, &tmp);
+
 	return 0;
 }
 
