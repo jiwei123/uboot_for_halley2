@@ -35,7 +35,7 @@ void board_set_lcd_power_on(void)
     struct regulator *lcd_led = regulator_get(id_led);
     regulator_set_voltage(lcd_vio, 1800000, 1800000);
     regulator_set_voltage(lcd_vdd, 2800000, 2800000);
-    regulator_set_voltage(lcd_led, 3300000, 3300000);
+    regulator_set_voltage(lcd_led, 3000000, 3000000);
     regulator_enable(lcd_vdd);
     mdelay(5);
     regulator_enable(lcd_vio);
