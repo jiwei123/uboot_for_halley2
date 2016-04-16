@@ -38,6 +38,7 @@
 #include <asm/arch/cpm.h>
 #include <asm/io.h>
 #include <fastboot.h>
+#include <fb_mmc.h>
 #define DATA_BUFFER	0x30000000
 #define BOOT_START_ADDRESS 0x80f00000
 #define RET_LENGTH	64
@@ -51,6 +52,7 @@
 struct boot_img_hdr bootimginfo;
 char *boot_buf;
 extern struct partition_info partition_info[PARTITION_NUM];
+static unsigned int fastboot_flash_session_id;
 
 struct fastboot_common {
 	struct usb_gadget	*gadget;	/*Copy of cdev->gadget*/
@@ -440,6 +442,7 @@ static void handle_download_complete(struct usb_ep *ep,
 #define CONFIG_FASTBOOT_PART_TYPE_CACHE		"ext4"
 #define	CONFIG_FASTBOOT_PART_SIZE_USERDATA	"0x5000"
 #define CONFIG_FASTBOOT_PART_TYPE_USERDATA	"ext4"
+#define CONFIG_FASTBOOT_BUF_SIZE	 "0x02000000"
 
 static int get_all_var(struct fastboot_dev *fastboot)
 {
@@ -732,6 +735,13 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 		return 0;
 	}
 
+	if (strstr(fastboot->cmd_req->buf, "max-download-size")) {
+		strcpy(fastboot->ret_buf, "OKAY");
+		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_BUF_SIZE);
+		fastboot_flash_session_id = 0;
+		return 0;
+	}
+
 	printf("%s:Error, The variant is not recongized\n", __func__);
 	return -1;
 }
@@ -806,17 +816,6 @@ static int explain_cmd_download(struct fastboot_dev *fastboot)
 	return 0;
 }
 
-static int mmc_flash(u32 blk,u32 cnt,struct fastboot_dev *fastboot)
-{
-	char command[128];
-	memset(command , 0, 128);
-	void *addr = (void *)fastboot->data_buf;
-	sprintf(command,"mmc write %p %x %x",addr,blk,cnt);
-	run_command(command,"0");
-	printf("mmc flash OK!\n");
-	return 0;
-}
-
 int nand_flash(unsigned char *pt_name,struct fastboot_dev *fastboot)
 {
 	int curr_device = 0;
@@ -827,7 +826,7 @@ int nand_flash(unsigned char *pt_name,struct fastboot_dev *fastboot)
 	memset(command,0,128);
 	sprintf(command,"nand_zm write %s 0 %x %p",pt_name,length,databuf);
 	printf("command:%s\n",command);
-	run_command(command,"0");
+	run_command(command,0);
 
 	return 0;
 }
@@ -842,7 +841,7 @@ int spi_flash(u32 offset, struct fastboot_dev *fastboot)
 	/* sfcnor write  [src:nor flash addr] [bytes:0x..] [dst:der address] [force erase:1, nor erase:0] */
 	sprintf(command,"sfcnor write 0x%x 0x%x 0x%x 1",offset,length,databuf);
 	printf("command:%s\n",command);
-	run_command(command,"0");
+	run_command(command,0);
 
 	return 0;
 }
@@ -850,29 +849,41 @@ int spi_flash(u32 offset, struct fastboot_dev *fastboot)
 static int handle_cmd_flash(struct fastboot_dev *fastboot)
 {
 	int i;
-	printf("please add the flash cmd explain roution\n");
-	u32 blk,cnt,offset;
-	unsigned char *pname;
-	memset(pname, 0 , 128);
+	char *cmd = boot_buf;
+	struct disk_storge_msg storge_msg;
+	u32 blk,offset,size_blk;
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		printf("FAILmissing partition namei\n");
+		return;
+	}
+
 	for(i = 0; i < PARTITION_NUM ; i ++){
-		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 6,(strlen(partition_info[i].pname)-2))){
-			strcpy(pname,partition_info[i].pname);
+		if(!strncmp(partition_info[i].pname + 2, cmd, (strlen(partition_info[i].pname)-2))){
+			size_blk = partition_info[i].size / MMC_BYTE_PER_BLOCK;
 			offset = partition_info[i].offset;
 			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
-			cnt = (fastboot->data_length + MMC_BYTE_PER_BLOCK - 1) / MMC_BYTE_PER_BLOCK;
-			goto do_flash;
 			break;
 		}
 	}
+
 	if(i == PARTITION_NUM){
 		printf("There is not a partition named : %s\n",boot_buf + 6);
 		return -1;
 	}
 
-do_flash:
+	storge_msg.start = blk;
+	storge_msg.size = size_blk;
+	storge_msg.blksz = MMC_BYTE_PER_BLOCK;
+	storge_msg.name = cmd;
+
 #ifdef CONFIG_SPL_MMC_SUPPORT
-	if(!mmc_flash(blk,cnt,fastboot))
+	if(!fb_mmc_flash_write(&storge_msg, fastboot_flash_session_id,
+			        (void *)fastboot->data_buf,fastboot->data_length)){
+		fastboot_flash_session_id++;
 		return 0;
+	}
 #else
 #ifdef CONFIG_JZ_NAND_MGR
 	if(!nand_flash(pname,fastboot))
@@ -888,6 +899,7 @@ do_flash:
 
 static void explain_cmd_flash(struct fastboot_dev *fastboot)
 {
+
 	if (handle_cmd_flash(fastboot))
 		strcpy(fastboot->ret_buf, "FAILED");
 	else
@@ -915,7 +927,7 @@ static int fastboot_nand_erase(unsigned char *pname,struct fastboot_dev *fastboo
 	memset(command,0,128);
 	sprintf(command,"nand_zm erase %s",pname);
 	printf("command:%s\n",command);
-	run_command(command,"0");
+	run_command(command,0);
 }
 
 static int fastboot_spi_erase(u32 offset, u32 size, struct fastboot_dev *fastboot)
@@ -925,7 +937,7 @@ static int fastboot_spi_erase(u32 offset, u32 size, struct fastboot_dev *fastboo
 	/* sfcnor erase  [src:nor flash addr] [bytes:0x..] */
 	sprintf(command,"sfcnor erase 0x%x 0x%x",offset,size);
 	printf("command:%s\n",command);
-	run_command(command,"0");
+	run_command(command,0);
 }
 
 static int handle_cmd_erase(struct fastboot_dev *fastboot)
@@ -983,7 +995,7 @@ static int handle_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 {
 	printf("please add the reboot_bootloader cmd explain roution\n");
 	cpm_set_scrpad(FASTBOOT_SIGNATURE);
-	if(!run_command("reset","0"))
+	if(!run_command("reset",0))
 		return 0;
 
 	return -1;
@@ -1002,7 +1014,7 @@ static void explain_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 static int handle_cmd_reboot(struct fastboot_dev *fastboot)
 {
 	printf("please add the reboot cmd explain roution\n");
-	if(!run_command("reset","0"))
+	if(!run_command("reset",0))
 		return 0;
 	return -1;
 }
@@ -1022,7 +1034,7 @@ static void return_continue_complete(struct usb_ep *ep,
 {
 	struct fastboot_dev *fastboot = req->context;
 	fastboot->leave = 1;
-	run_command(CONFIG_BOOTCOMMAND, "0");
+	run_command(CONFIG_BOOTCOMMAND, 0);
 }
 
 static int handle_cmd_continue(struct fastboot_dev *fastboot)
@@ -1059,7 +1071,7 @@ static int handle_cmd_boot(struct fastboot_dev *fastboot)
 	memset(command,0,128);
 	sprintf(command,"boota mem %x",BOOT_START_ADDRESS);
 	printf("command:%s\n",command);
-	if(!run_command(command,"0"))
+	if(!run_command(command,0))
 		return 0;
 	return -1;
 }
