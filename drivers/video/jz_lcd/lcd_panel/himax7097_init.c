@@ -278,8 +278,12 @@ int himax7097_write_reg(int reg, unsigned char data )
 void lcd_panel_init(void)
 {
 	himax7097_write_reg( 0x00, 0x04 );
-#ifdef CONFIG_VIDEO_HIMAX7097_HORIZONTAL 
+#if (defined(CONFIG_VIDEO_HIMAX7097_UPSIDE_DOWN) && defined(CONFIG_VIDEO_HIMAX7097_HORIZONTAL_EXCHANGE))
+	himax7097_write_reg( 0x01, 0x02 );
+#elif defined(CONFIG_VIDEO_HIMAX7097_HORIZONTAL_EXCHANGE)
 	himax7097_write_reg( 0x01, 0x10 );
+#elif defined(CONFIG_VIDEO_HIMAX7097_UPSIDE_DOWN)
+	himax7097_write_reg( 0x01, 0x13 );
 #else
 	himax7097_write_reg( 0x01, 0x11 );
 #endif

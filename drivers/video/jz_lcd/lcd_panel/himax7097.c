@@ -34,6 +34,9 @@
 #include <regulator.h>
 
 extern void lcd_panel_init(void);
+#ifdef CONFIG_VIDEO_HIMAX7097_SECOND
+extern void lcd_second_panel_init(void);
+#endif
 
 vidinfo_t panel_info = { 800, 480, LCD_BPP, };
 
@@ -45,6 +48,9 @@ void panel_power_on(void)
 {
 	mdelay(80);
 	lcd_panel_init();
+#ifdef CONFIG_VIDEO_HIMAX7097_SECOND
+	lcd_second_panel_init();
+#endif
 }
 
 void panel_power_off(void)
