@@ -56,7 +56,7 @@ void uint2str(unsigned int pword, unsigned char* str)
 	str[i] = 0;
 }
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
 /*find a mmc device and init */
 void mmc_ready(unsigned int mmc_select)
 {
@@ -74,13 +74,13 @@ void mmc_ready(unsigned int mmc_select)
 	}
 	printf("mmc ready done!\n");
 }
-#else/* CONFIG_SPL_MMC_SUPPORT */
+#else/* CONFIG_SPL_MMC_SUPPORT || CONFIG_SPL_JZMMC_SUPPORT*/
 /*find a nand device and init */
 void nand_ready(void)
 {
 	return;
 }
-#endif/* !CONFIG_SPL_MMC_SUPPORT */
+#endif/* !CONFIG_SPL_MMC_SUPPORT || CONFIG_SPL_JZMMC_SUPPORT*/
 
 /* convert a boot_image at kernel_addr into a kernel + ramdisk + tags */
 int ready_for_jump(unsigned char* data_buf, unsigned int data_size)
@@ -207,7 +207,7 @@ int mem_boot (unsigned int mem_address)
 }
 
 /* load .img file form mmc,analyze the header of boot.img and then jump to the kernel*/
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
 void msc_boot(unsigned int mmc_select,unsigned int mem_address,unsigned int sectors)
 {
 	struct boot_img_hdr *bootimginfo;
@@ -252,13 +252,13 @@ void msc_boot(unsigned int mmc_select,unsigned int mem_address,unsigned int sect
 	printf("Prepare kernel parameters ...\n");
 	jump_kernel(mem_address,size);
 }
-#else/* CONFIG_SPL_MMC_SUPPORT */
+#else/* CONFIG_SPL_MMC_SUPPORT ||CONFIG_SPL_JZMMC_SUPPORT*/
 /* load .img flie form nand,analyze the header of boot.img and then jump to the kernel*/
 void nand_boot(unsigned int mem_address,unsigned int sectors)
 {
 
 }
-#endif/* !CONFIG_SPL_MMC_SUPPORT */
+#endif/* !CONFIG_SPL_MMC_SUPPORT || CONFIG_SPL_JZMMC_SUPPORT*/
 
 static int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -278,13 +278,13 @@ static int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		mem_address=simple_strtoul(argv[2], NULL, 16);
 		sectors=simple_strtoul(argv[3], NULL, 10);
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
 		printf("MSC boot start\n");
 		mmc_ready(mmc_select);
 		msc_boot(mmc_select,mem_address,sectors);
 		printf("MSC boot error\n");
 		return 0;
-#else /*!CONFIG_SPL_MMC_SUPPORT */
+#else /*!CONFIG_SPL_MMC_SUPPORT || CONFIG_SPL_JZMMC_SUPPORT */
 	} else if (!strcmp("nand",argv[0])) {
 		mem_address=simple_strtoul(argv[1], NULL, 16);
 		sectors=simple_strtoul(argv[2], NULL, 10);
@@ -293,7 +293,7 @@ static int do_boota(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		nand_boot(mem_address,sectors);
 		printf("Nand boot error\n");
 		return 0;
-#endif/*!CONFIG_SPL_MMC_SUPPORT*/
+#endif/*!CONFIG_SPL_MMC_SUPPORT || CONFIG_SPL_JZMMC_SUPPORT*/
 	} else {
 		printf("%s boot unsupport\n", argv[0]);
                 return CMD_RET_USAGE;
