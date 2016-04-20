@@ -43,15 +43,18 @@
 #define BOOT_START_ADDRESS 0x80f00000
 #define RET_LENGTH	64
 
-#define CMD_COUNT	22
+#define CMD_COUNT	23
 #define MMC_BYTE_PER_BLOCK 512
 #ifndef PARTITION_NUM
 #define PARTITION_NUM 16
 #endif
 
+#define _DEBUG	0
+
 struct boot_img_hdr bootimginfo;
 char *boot_buf;
 extern struct partition_info partition_info[PARTITION_NUM];
+extern struct board_info board_info;
 static unsigned int fastboot_flash_session_id;
 
 struct fastboot_common {
@@ -375,7 +378,7 @@ static void return_complete(struct usb_ep *ep, struct usb_request *req)
 {
 	struct fastboot_dev *fastboot = req->context;
 	memset(fastboot->ret_buf, 0, 64);
-	printf("return status is over\n");
+	debug("return status is over\n");
 	fastboot->explain_cmd_status = 1;
 }
 
@@ -401,7 +404,7 @@ static void handle_download_complete(struct usb_ep *ep,
 {
 	struct fastboot_dev *fastboot = req->context;
 
-	printf("%s %d\n",__func__, __LINE__);
+	debug("%s %d\n",__func__, __LINE__);
 	fastboot->data_req = usb_ep_alloc_request(fastboot_common->bulk_out, 0);
 	if (!fastboot->data_req) {
 		printf("%s: Error, usb alloc request\n", __func__);
@@ -411,7 +414,7 @@ static void handle_download_complete(struct usb_ep *ep,
 	fastboot->cmd_req = NULL;
 	fastboot->data_req->buf = fastboot->data_buf;
 	fastboot->data_req->length = fastboot->data_length;
-	printf("length is 0x%x = %u\n", fastboot->data_req->length, fastboot->data_req->length);
+	debug("length is 0x%x = %u\n", fastboot->data_req->length, fastboot->data_req->length);
 	fastboot->data_req->complete = download_data_over;
 	fastboot->data_req->status = 0;
 	fastboot->data_req->actual = 0;
@@ -421,31 +424,42 @@ static void handle_download_complete(struct usb_ep *ep,
 
 #define CONFIG_FASTBOOT_BOOTLOADER_VER	U_BOOT_VERSION
 #define CONFIG_FASTBOOT_BASEBAND_VER	"N/A"
-#define	CONFIG_FASTBOOT_HARDWARE_VER	"V1.1 20130322"
 #define	CONFIG_FASTBOOT_CDMA_VER	"N/A"
-#define	CONFIG_FASTBOOT_VARIANT		"MENSA"
-#define	CONFIG_FASTBOOT_PRODUCT		"MENSA"
 
 #define	CONFIG_FASTBOOT_SERIALNO	"0123456789abcdef"
 #define	CONFIG_FASTBOOT_SECURE		"no"
 #define	CONFIG_FASTBOOT_UNLOCKED	"yes"
 #define	CONFIG_FASTBOOT_UART_ON		"NO"
-#define CONFIG_FASTBOOT_PART_SIZE_BOOTLOADER	"0x0000"
 #define CONFIG_FASTBOOT_PART_TYPE_BOOTLOADER	"emmc"
-#define CONFIG_FASTBOOT_PART_SIZE_RECOVERY	"0x1000"
 #define CONFIG_FASTBOOT_PART_TYPE_RECOVERY	"emmc"
-#define	CONFIG_FASTBOOT_PART_SIZE_BOOT		"0x2000"
 #define CONFIG_FASTBOOT_PART_TYPE_BOOT		"emmc"
-#define	CONFIG_FASTBOOT_PART_SIZE_SYSTEM	"0x3000"
 #define CONFIG_FASTBOOT_PART_TYPE_SYSTEM	"ext4"
-#define	CONFIG_FASTBOOT_PART_SIZE_CACHE		"0x4000"
 #define CONFIG_FASTBOOT_PART_TYPE_CACHE		"ext4"
-#define	CONFIG_FASTBOOT_PART_SIZE_USERDATA	"0x5000"
 #define CONFIG_FASTBOOT_PART_TYPE_USERDATA	"ext4"
-#define CONFIG_FASTBOOT_BUF_SIZE	 "0x02000000"
+
+static unsigned long get_partition_size(char *partition_name)
+{
+	int i;
+	for(i = 0; i < PARTITION_NUM ; i ++) {
+		if(!strncmp(partition_info[i].pname,
+			    partition_name,
+			    (strlen(partition_info[i].pname)))) {
+			break;
+		}
+	}
+	if(i == PARTITION_NUM) {
+		printf("There is not a partition named : %s\n", partition_name);
+		return 0;
+	}
+
+	return partition_info[i].size;
+}
 
 static int get_all_var(struct fastboot_dev *fastboot)
 {
+	char partition_name[RET_LENGTH];
+	unsigned long size;
+
 	switch (fastboot->cmd_count) {
 		case 0:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -460,7 +474,7 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 2:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "version-hardware: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_HARDWARE_VER);
+			strcat(fastboot->ret_buf, board_info.hardware_ver);
 			break;
 		case 3:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -470,7 +484,7 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 4:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "variant: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_VARIANT);
+			strcat(fastboot->ret_buf, board_info.variant);
 			break;
 		case 5:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -480,7 +494,7 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 6:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "product: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PRODUCT);
+			strcat(fastboot->ret_buf, board_info.product);
 			break;
 		case 7:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -500,7 +514,9 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 10:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "partition-size:bootloader: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOTLOADER);
+			strcpy(partition_name, "bootloader\0");
+		        size = get_partition_size(partition_name);
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, size);
 			break;
 		case 11:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -510,7 +526,9 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 12:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "partition-size:recovery: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_RECOVERY);
+			strcpy(partition_name, "recovery\0");
+		        size = get_partition_size(partition_name);
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, size);
 			break;
 		case 13:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -520,7 +538,9 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 14:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "partition-size:boot: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOT);
+			strcpy(partition_name, "boot\0");
+		        size = get_partition_size(partition_name);
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, size);
 			break;
 		case 15:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -530,7 +550,9 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 16:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "partition-size:system: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_SYSTEM);
+			strcpy(partition_name, "system\0");
+		        size = get_partition_size(partition_name);
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, size);
 			break;
 		case 17:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -540,7 +562,9 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 18:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "partition-size:cache: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_CACHE);
+			strcpy(partition_name, "cache\0");
+		        size = get_partition_size(partition_name);
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, size);
 			break;
 		case 19:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -550,7 +574,9 @@ static int get_all_var(struct fastboot_dev *fastboot)
 		case 20:
 			strcpy(fastboot->ret_buf, "INFO");
 			strcat(fastboot->ret_buf, "partition-size:userdata: ");
-			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_USERDATA);
+			strcpy(partition_name, "data\0");
+		        size = get_partition_size(partition_name);
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, size);
 			break;
 		case 21:
 			strcpy(fastboot->ret_buf, "INFO");
@@ -558,9 +584,14 @@ static int get_all_var(struct fastboot_dev *fastboot)
 			strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_USERDATA);
 			break;
 		case 22:
-			strcpy(fastboot->ret_buf, "OKAY");
+			strcpy(fastboot->ret_buf, "INFO");
+			strcat(fastboot->ret_buf, "max-download-size: ");
+			sprintf(fastboot->ret_buf, "%s0x%08lx", fastboot->ret_buf, board_info.max_download_size);
 			break;
 		case 23:
+			strcpy(fastboot->ret_buf, "OKAY");
+			break;
+		case 24:
 			strcpy(fastboot->ret_buf, "INFO");
 			break;
 		default:
@@ -575,19 +606,19 @@ static void return_getvar_all_complete(struct usb_ep *ep,
 {
 	struct fastboot_dev *fastboot = req->context;
 
-	printf("%s %d\n",__func__, __LINE__);
+	debug("%s %d\n",__func__, __LINE__);
 	memset(fastboot->ret_buf, 0, 64);
 	if(fastboot->cmd_count < CMD_COUNT) {
 		fastboot->cmd_count++;
 		if (get_all_var(fastboot))
 			strcpy(fastboot->ret_buf, "FAIL");
 
-		printf("%s %d\n",__func__, __LINE__);
+		debug("%s %d\n",__func__, __LINE__);
 		return_buf(fastboot, return_getvar_all_complete);
 	} else {
 		fastboot->cmd_count = 0;
 		strcpy(fastboot->ret_buf, "OKAY");
-		printf("return status is over\n");
+		debug("return status is over\n");
 		fastboot->explain_cmd_status = 1;
 	}
 }
@@ -617,7 +648,7 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 
 	if (strstr(fastboot->cmd_req->buf, "version-hardware")) {
 		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_HARDWARE_VER);
+		strcat(fastboot->ret_buf, board_info.hardware_ver);
 		return 0;
 	}
 
@@ -629,7 +660,7 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 
 	if (strstr(fastboot->cmd_req->buf, "variant")) {
 		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_VARIANT);
+		strcat(fastboot->ret_buf, board_info.variant);
 		return 0;
 	}
 
@@ -641,7 +672,7 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 
 	if (strstr(fastboot->cmd_req->buf, "product")) {
 		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PRODUCT);
+		strcat(fastboot->ret_buf, board_info.product);
 		return 0;
 	}
 
@@ -663,21 +694,21 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 		return 0;
 	}
 
-	if (strstr(fastboot->cmd_req->buf, "partition-size:xboot")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOTLOADER);
+	if (strstr(fastboot->cmd_req->buf, "partition-size:bootloader")) {
+		char partition_name[RET_LENGTH] = "bootloader\0";
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", get_partition_size(partition_name));
 		return 0;
 	}
 
-	if (strstr(fastboot->cmd_req->buf, "partition-type:xboot")) {
+	if (strstr(fastboot->cmd_req->buf, "partition-type:bootloader")) {
 		strcpy(fastboot->ret_buf, "OKAY");
 		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_TYPE_BOOTLOADER);
 		return 0;
 	}
 
 	if (strstr(fastboot->cmd_req->buf, "partition-size:recovery")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_RECOVERY);
+		char partition_name[RET_LENGTH] = "recovery\0";
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", get_partition_size(partition_name));
 		return 0;
 	}
 
@@ -688,8 +719,8 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 	}
 
 	if (strstr(fastboot->cmd_req->buf, "partition-size:boot")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_BOOT);
+		char partition_name[RET_LENGTH] = "boot\0";
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", get_partition_size(partition_name));
 		return 0;
 	}
 
@@ -700,8 +731,8 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 	}
 
 	if (strstr(fastboot->cmd_req->buf, "partition-size:system")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_SYSTEM);
+		char partition_name[RET_LENGTH] = "system\0";
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", get_partition_size(partition_name));
 		return 0;
 	}
 
@@ -712,8 +743,8 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 	}
 
 	if (strstr(fastboot->cmd_req->buf, "partition-size:cache")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_CACHE);
+		char partition_name[RET_LENGTH] = "cache\0";
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", get_partition_size(partition_name));
 		return 0;
 	}
 
@@ -724,8 +755,8 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 	}
 
 	if (strstr(fastboot->cmd_req->buf, "partition-size:userdata")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_PART_SIZE_USERDATA);
+		char partition_name[RET_LENGTH] = "data\0";
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", get_partition_size(partition_name));
 		return 0;
 	}
 
@@ -736,8 +767,7 @@ static int handle_cmd_getvar(struct fastboot_dev *fastboot)
 	}
 
 	if (strstr(fastboot->cmd_req->buf, "max-download-size")) {
-		strcpy(fastboot->ret_buf, "OKAY");
-		strcat(fastboot->ret_buf, CONFIG_FASTBOOT_BUF_SIZE);
+		sprintf(fastboot->ret_buf, "OKAY0x%08lx", board_info.max_download_size);
 		fastboot_flash_session_id = 0;
 		return 0;
 	}
@@ -756,9 +786,9 @@ static void explain_cmd_getvar(struct fastboot_dev *fastboot)
 
 static int handle_cmd_download(struct fastboot_dev *fastboot)
 {
-	if (fastboot->data_buf) {
+	if (fastboot->data_buf && (fastboot->data_buf != DATA_BUFFER)) {
 		free(fastboot->data_buf);
-		printf("%s:Warning, fastboot->data_buf is not empty,"
+		debug("%s:Warning, fastboot->data_buf is not empty,"
 				" now free it\n",
 				__func__);
 	}
@@ -769,7 +799,7 @@ static int handle_cmd_download(struct fastboot_dev *fastboot)
 			return -ENOMEM;
 		}
 	} else {
-		printf("Please add the TLB function\n");
+		debug("Please add the TLB function\n");
 		fastboot->data_buf = (unsigned char*)DATA_BUFFER;
 		return 0;
 	}
@@ -860,7 +890,7 @@ static int handle_cmd_flash(struct fastboot_dev *fastboot)
 	}
 
 	for(i = 0; i < PARTITION_NUM ; i ++){
-		if(!strncmp(partition_info[i].pname + 2, cmd, (strlen(partition_info[i].pname)-2))){
+		if(!strncmp(partition_info[i].pname, cmd, (strlen(partition_info[i].pname)))){
 			size_blk = partition_info[i].size / MMC_BYTE_PER_BLOCK;
 			offset = partition_info[i].offset;
 			blk = partition_info[i].offset / MMC_BYTE_PER_BLOCK;
@@ -886,7 +916,7 @@ static int handle_cmd_flash(struct fastboot_dev *fastboot)
 	}
 #else
 #ifdef CONFIG_JZ_NAND_MGR
-	if(!nand_flash(pname,fastboot))
+	if(!nand_flash(cmd,fastboot))
 		return 0;
 #endif
 #ifdef CONFIG_JZ_SFC
@@ -917,7 +947,7 @@ static int fastboot_mmc_erase(u32 blk,u32 blk_cnt,struct fastboot_dev *fastboot)
 	sprintf(commond,"mmc erase %x %x",blk,blk_cnt);
 	run_command(commond,"0");
 
-	printf("mmc erase ok\n");
+	debug("mmc erase ok\n");
 	return 0;
 }
 
@@ -942,13 +972,13 @@ static int fastboot_spi_erase(u32 offset, u32 size, struct fastboot_dev *fastboo
 
 static int handle_cmd_erase(struct fastboot_dev *fastboot)
 {
-	printf("please add the erase cmd explain roution\n");
+	debug("please add the erase cmd explain roution\n");
 	u32 blk,cnt,offset,size;
 	int i;
 	unsigned char *pname;
 	memset(pname, 0 , 128);
 	for(i = 0; i < PARTITION_NUM ; i ++){
-		if(!strncmp(partition_info[i].pname + 2 , boot_buf + 6,(strlen(partition_info[i].pname)-2))){
+		if(!strncmp(partition_info[i].pname, boot_buf + 6,(strlen(partition_info[i].pname)))){
 			strcpy(pname,partition_info[i].pname);
 			offset = partition_info[i].offset;
 			size = partition_info[i].size;
@@ -1113,7 +1143,7 @@ static void handle_fastboot_cmd_complete(struct usb_ep *ep,
 {
 	struct fastboot_dev *fastboot = req->context;
 
-	printf("The received command is:<%s>\n",(char *)req->buf);
+	debug("The received command is:<%s>\n",(char *)req->buf);
 
 	if (!strncmp(req->buf, "getvar:all", 10)) {
 		explain_cmd_getvar_all(fastboot);
@@ -1185,7 +1215,7 @@ static int handle_fastboot_init(struct fastboot_dev *fastboot)
 {
 	fastboot->ret_req = usb_ep_alloc_request(fastboot_common->bulk_in, 0);
 	if (!fastboot->ret_req) {
-		printf("%s: Error, usb alloc request for return\n", __func__);
+		debug("%s: Error, usb alloc request for return\n", __func__);
 		return -ENOMEM;
 	}
 

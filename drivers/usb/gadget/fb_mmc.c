@@ -32,6 +32,7 @@
 #include <mmc.h>
 #include <div64.h>
 
+#define _DEBUG	0
 
 static int fb_mmc_sparse_write(struct sparse_storage *storage,
 			       unsigned int offset,
@@ -42,7 +43,7 @@ static int fb_mmc_sparse_write(struct sparse_storage *storage,
 	memset(command , 0, 128);
 	sprintf(command,"mmc write %p %x %x",data,offset,size);
 	run_command(command,"0");
-	printf("mmc flash OK!\n");
+	debug("mmc flash OK!\n");
 	return size;
 }
 
@@ -61,12 +62,12 @@ static int  write_raw_image(struct disk_storge_msg *storge_msg, void *buffer,
 		return -1;
 	}
 
-	puts("Flashing Raw Image\n");
+	debug("Flashing Raw Image\n");
 
 	memset(command , 0, 128);
 	sprintf(command,"mmc write %p %x %x",buffer, storge_msg->start, blkcnt);
 	run_command(command,"0");
-	printf("mmc flash OK!\n");
+	debug("mmc flash OK!\n");
 	return 0;
 }
 
@@ -86,8 +87,10 @@ int fb_mmc_flash_write(const struct disk_storge_msg *storge_msg, unsigned int se
 			return -1;
 	} else {
 		if(write_raw_image(storge_msg, download_buffer,
-				download_bytes));
+				download_bytes)) {
+			printf("Flashing Raw %s Image failed!\n", storge_msg->name);
 			return -1;
+		}
 	}
 
 	return 0;

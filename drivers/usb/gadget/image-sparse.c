@@ -29,6 +29,8 @@
 
 #include <linux/math64.h>
 
+#define _DEBUG	0
+
 typedef struct sparse_buffer {
 	void	*data;
 	u32	length;
@@ -290,12 +292,13 @@ int store_sparse_image(sparse_storage_t *storage,
 	 * If it's a new flashing session, start at the beginning of
 	 * the partition. If not, then simply resume where we were.
 	 */
-	if (session_id > 0)
+	chunk_header_t *chunk_first = (chunk_header_t *) data;
+	if (session_id > 0 && chunk_first->chunk_type == CHUNK_TYPE_DONT_CARE)
 		start = last_offset;
 	else
 		start = storage->start;
 
-	printf("Flashing sparse image on partition %s at offset 0x%x (ID: %d)\n",
+	debug("Flashing sparse image on partition %s at offset 0x%x (ID: %d)\n",
 	       storage->name, start * storage->block_sz, session_id);
 
 	/* Start processing chunks */
@@ -319,7 +322,7 @@ int store_sparse_image(sparse_storage_t *storage,
 			if(chunk == 0){
 				write_start = blkcnt;
 				if((start - storage->start) != write_start) {
-					printf("First chunk is NotCare \n");
+					debug("First chunk is NotCare \n");
 					start = write_start + storage->start;
 				}
 			}
@@ -367,11 +370,11 @@ int store_sparse_image(sparse_storage_t *storage,
 
 	all_size = sparse_block_size_to_storage(sparse_header->total_blks,
                                                 storage, sparse_header);
-	printf("Wrote %d blocks to '%s', expected to write %d blocks\n", \
+	debug("Wrote %d blocks to '%s', expected to write %d blocks\n", \
 			total_blocks, storage->name, all_size);
 
 	if (total_blocks != (all_size - write_start - write_over)) {
-	 // Solve the error(Download system.img is over).
+	 /* Solve the error(Download system.img is over)*/
 	    if((all_size - write_start - write_over) != 0) {
 		printf("sparse image write failure\n");
 		return -EIO;
