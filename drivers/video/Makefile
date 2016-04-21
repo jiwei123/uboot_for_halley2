@@ -63,6 +63,7 @@ COBJS-$(CONFIG_VIDEO_HIMAX7033) += jz_lcd/lcd_panel/himax7033.o \
 	jz_lcd/lcd_panel/himax7033_init.o
 COBJS-$(CONFIG_VIDEO_HIMAX7097) += jz_lcd/lcd_panel/himax7097.o \
 	jz_lcd/lcd_panel/himax7097_init.o
+COBJS-$(CONFIG_VIDEO_HIMAX7097_SECOND) += jz_lcd/lcd_panel/himax7097_init2.o
 COBJS-$(CONFIG_VIDEO_ECX336AF) += jz_lcd/lcd_panel/ecx336af.o \
 	jz_lcd/lcd_panel/ecx336af_init.o
 COBJS-$(CONFIG_VIDEO_BM347WV_F_8991FTGF) += jz_lcd/lcd_panel/byd_8991.o \

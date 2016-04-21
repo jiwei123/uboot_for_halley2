@@ -29,8 +29,11 @@ void board_set_lcd_power_on(void)
 	char *id = "RICOH619_DC5";
 	struct regulator *lcd_regulator = regulator_get(id);
 	if (lcd_regulator) {
-		gpio_direction_output(GPIO_PC(18), 0);
-		gpio_direction_output(GPIO_PC(19), 1);
+	        printf("disable all led\n");
+		gpio_request(GPIO_PA(10), "led_blue");
+		gpio_request(GPIO_PC(19), "led_green");
+		gpio_direction_output(GPIO_PA(10), 0);
+		gpio_direction_output(GPIO_PC(19), 0);
 
 		regulator_set_voltage(lcd_regulator, 1800000, 1800000);
 		regulator_enable(lcd_regulator);
