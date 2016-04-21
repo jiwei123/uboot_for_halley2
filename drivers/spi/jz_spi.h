@@ -32,6 +32,32 @@
 #define FIFI_THRESHOLD			64
 #define SPI_WRITE_CHECK_TIMES		50
 
+#define NOR_MAGIC       0x726f6e        //ascii "nor"
+#define NOR_PART_NUM    10
+#define NORFLASH_PART_RW        0
+#define NORFLASH_PART_WO        1
+#define NORFLASH_PART_RO        2
+struct nor_partition {
+	char name[32];
+	uint32_t size;
+	uint32_t offset;
+	uint32_t mask_flags;//bit 0-1 mask the partiton RW mode, 0:RW  1:W  2:R
+	uint32_t manager_mode;
+};
+
+struct norflash_partitions {
+	struct nor_partition nor_partition[NOR_PART_NUM];
+	uint32_t num_partition_info;
+};
+
+
+struct spi_nor_block_info {
+	u32 blocksize;
+	u8 cmd_blockerase;
+	/* MAX Busytime for block erase, unit: ms */
+	u32 be_maxbusy;
+};
+
 struct spi_quad_mode {
 	u8 dummy_byte;
 	u8 RDSR_CMD;
@@ -43,6 +69,41 @@ struct spi_quad_mode {
 	u8 cmd_read;
 	u8 sfc_mode;
 };
+
+#ifdef CONFIG_JZ_SFC
+struct norflash_params {
+	char name[SIZEOF_NAME];
+	u32 pagesize;
+	u32 sectorsize;
+	u32 chipsize;
+	u32 erasesize;
+	int id;
+	/* Flash Address size, unit: Bytes */
+	int addrsize;
+
+	/* MAX Busytime for page program, unit: ms */
+	u32 pp_maxbusy;
+	/* MAX Busytime for sector erase, unit: ms */
+	u32 se_maxbusy;
+	/* MAX Busytime for chip erase, unit: ms */
+	u32 ce_maxbusy;
+
+	/* Flash status register num, Max support 3 register */
+	int st_regnum;
+	/* Some NOR flash has different blocksize and block erase command,
+	*          * One command with One blocksize. */
+	struct spi_nor_block_info block_info;
+	struct spi_quad_mode quad_mode;
+};
+
+struct nor_sharing_params {
+	uint32_t magic;
+	uint32_t version;
+	struct norflash_params norflash_params;
+	struct norflash_partitions norflash_partitions;
+};
+#endif
+
 
 struct jz_spi_support {
 	unsigned int id_manufactory;
