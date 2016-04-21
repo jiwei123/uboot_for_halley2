@@ -60,6 +60,10 @@ void panel_pin_init(void)
 	if(!ret){
 		printf("canot request gpio lcd_bl\n");
 	}
+
+#ifdef CONFIG_LCD_GPIO_FUNC2_SLCD
+	gpio_set_func(GPIO_PORT_C, GPIO_FUNC_2, 0x0e0ff3fc);
+#endif
 	serial_puts("boe_hsx0154b24b panel display pin init\n");
 }
 
