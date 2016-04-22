@@ -31,6 +31,7 @@
 #define   POWER_MODE_CHGSTATUS		(0x01)
 #define   POWER_ON_OFF_REG		(0x12)
 #define	  AXP173_POWER_OFF		(0x32)
+#define   POWER_CHARGE1			(0x33)
 /* adc data register */
 #define   POWER_ACIN_VOL_H8		(0x56)
 #define   POWER_ACIN_VOL_L4		(0x57)

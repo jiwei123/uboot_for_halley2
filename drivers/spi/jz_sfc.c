@@ -62,7 +62,6 @@ struct jz_sfc {
 	unsigned char dummy_byte;
 };
 
-
 static uint32_t jz_sfc_readl(unsigned int offset)
 {
 	return readl(SFC_BASE + offset);
@@ -995,6 +994,63 @@ int sfc_nor_read(unsigned int src_addr, unsigned int count,unsigned int dst_addr
 	}
 
 	return 0;
+}
+
+#define NV_AREA_START_ADDR (288 * 1024)
+static void nv_map_area_addr(unsigned int *base_addr)
+{
+	unsigned int buf[3][2];
+	unsigned int tmp_buf[4];
+	unsigned int nv_num = 0, nv_count = 0;
+	unsigned int addr, i;
+
+	for(i = 0; i < 3; i++) {
+		addr = NV_AREA_START_ADDR + i * 32 * 1024;
+		sfc_nor_read(addr, 4, buf[i]);
+		if(buf[i][0] == 0x5a5a5a5a) {
+			sfc_nor_read(addr + 1 *1024,  16, tmp_buf);
+			addr += 32 * 1024 - 8;
+			sfc_nor_read(addr, 8, buf[i]);
+			if(buf[i][1] == 0xa5a5a5a5) {
+				if(nv_count < buf[i][0]) {
+					nv_count = buf[i][0];
+					nv_num = i;
+				}
+			}
+		}
+	}
+	*base_addr = NV_AREA_START_ADDR + nv_num * 32 * 1024 + 1024;
+}
+
+unsigned int get_update_flag()
+{
+	unsigned nv_buf[4];
+	int count = 16;
+	unsigned int src_addr, update_flag;
+	nv_map_area_addr((unsigned int)&src_addr);
+	sfc_nor_read(src_addr, count, nv_buf);
+	update_flag = nv_buf[3];
+
+	return update_flag;
+}
+
+int get_battery_flag(void)
+{
+	unsigned char buf [64];
+	unsigned char battery_flag[3];
+	unsigned int src_addr;
+
+	nv_map_area_addr((unsigned int)&src_addr);
+	sfc_nor_read(src_addr, 64, buf);
+	battery_flag[0] = buf[32];
+	battery_flag[1] = buf[33];
+	battery_flag[2] = buf[34];
+
+	if ((battery_flag[0] == 0x69) && (battery_flag[1] == 0xaa)
+			&& (battery_flag[2] == 0x55))
+		return 1;
+	else
+		return 0;
 }
 
 int sfc_nor_write(unsigned int src_addr, unsigned int count,unsigned int dst_addr,unsigned int erase_en)

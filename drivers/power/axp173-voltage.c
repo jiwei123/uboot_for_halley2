@@ -298,3 +298,19 @@ void disable_ldo4(void)
 		printf("Error in writing the POWER_ON_OFF_REG_Reg\n");
 }
 
+int axp173_disable_charge(void)
+{
+	int ret;
+	unsigned char temp;
+	unsigned char reg = POWER_CHARGE1;
+
+	axp173_read_reg(reg, &temp, 1);
+	temp &= 0x7f;
+	ret = axp173_write_reg(reg, &temp);
+	if (ret < 0) {
+		printf("Error in writing the POWER_ON_OFF_REG_Reg\n");
+		return -1;
+	}
+
+	return 0;
+}
