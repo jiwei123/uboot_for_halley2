@@ -1,0 +1,21 @@
+1.怎么创建板级？
+=============
+    在boards/下面创建一个头文件就可以了，参考boards/test_board.h
+
+2.怎么编译？
+==========
+    make CONFIG_BOARD=boards/test_board.h CONFIG_PART_TAB=boards/partitions.tab
+
+3.怎么修改分区表？
+==============
+    可以用boards/partition.tab，也可以自己参考这个文件创建新的，make的时候用
+    CONFIG_PART_TAB 传入就可以了
+
+4.烧录镜像是？
+============
+    floader_m200_with_mbr_gpt_and_sleeplib.bin
+
+5.问题反馈
+===========
+    wenzhong.sun@ingenic.com
+
