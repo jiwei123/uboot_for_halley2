@@ -1,0 +1,29 @@
+如何正确到编译U-boot
+==================
+
+1.编译Floader-m200
+    a) cd floader-m200
+    b) 修改Makefile 第12行
+    c) 在floader-m200/boards/下创建自己的板级
+        * 例如你创建了板级文件为 floader-m200/boards/your-boards.h
+        * m200芯片请参考 floader-m200/boards/aw808_board.h
+        * m200芯片请参考 floader-m200/boards/solar_board.h
+    d) 编译floader-m200
+        * 参考 floader-m200/README
+    c) 复制编译结果到上级目录
+        * cp -rf floader_m200_with_mbr_gpt_and_sleeplib.bin ../
+
+2. 编译Uboot
+    * 按照常规流程编译U-boot
+
+3. 制作最终的U-boot
+    * cd ..
+    * ./mk_floader_m200_with_mbr_gpt_sleeplib_and_uboot.sh
+
+4. 最终烧录镜像
+    floader_m200_with_mbr_gpt_sleeplib_and_uboot.bin
+
+5. 问题反馈
+    孙文中 <wenzhong.sun@ingenic.com>
+
+谢谢
