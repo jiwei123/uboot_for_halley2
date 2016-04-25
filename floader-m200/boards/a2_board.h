@@ -27,15 +27,6 @@
 //#define DEBUG
 
 /*
- * Config function of floader
- *
- * 0 --- For bootloader of Android system
- * 1 --- For bootloader of U-boot
- * 2 --- For bootloader of Burner
- */
-#define CONFIG_FLOADER_FUNCTION                             0
-
-/*
  * EMCP selection here
  */
 #include "../emcp-lpddr2/emcp-4-4.h"

@@ -23,16 +23,7 @@
 /*
  *  Debug build configuration
  */
-#define DEBUG
-
-/*
- * Config function of floader
- *
- * 0 --- For bootloader of Android system
- * 1 --- For bootloader of U-boot
- * 2 --- For bootloader of Burner
- */
-#define CONFIG_FLOADER_FUNCTION                             0
+//#define DEBUG
 
 /*
  * EMCP selection here

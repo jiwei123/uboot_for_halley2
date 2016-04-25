@@ -80,8 +80,11 @@ static void dump_register(void)
     }
 
     for(int i = 0; i < 4;i++) {
+#ifdef DEBUG
         union ZQnSR0 sr0;
         sr0.reg = ddr_readl(DDRP_ZQXSR0(i));
+#endif
+
         debug("ZQ%dSR0          0x%x\n", i, sr0.reg);
         debug("pullup_oz      0x%02x\n", sr0.ZQnSR0.pullup_oz);
         debug("pulldown_oz    0x%02x\n", sr0.ZQnSR0.pulldown_oz);
