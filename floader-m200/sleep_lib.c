@@ -95,6 +95,13 @@ static void resume(void)
      */
     init_clk();
 
+    /*
+     * Enable all clock
+     */
+    cpm_writel(0, CPM_CLKGR);
+    cpm_writel(0, CPM_CLKGR1);
+    udelay(1);
+    
     debug("Wakeup Step 2 done.\n");
 
     /*
@@ -107,13 +114,6 @@ static void resume(void)
     /*
      * Restore CPM
      */
-
-    /*
-     * Enable all clock
-     */
-    cpm_writel(0, CPM_CLKGR);
-    cpm_writel(0, CPM_CLKGR1);
-    udelay(1);
 
     cpm_writel(context->cpm_lcr, CPM_LCR);
     cpm_writel(context->cpm_opcr, CPM_OPCR);
