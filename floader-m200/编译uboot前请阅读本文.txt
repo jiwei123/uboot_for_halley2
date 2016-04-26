@@ -1,4 +1,4 @@
-如何正确到编译U-boot
+如何正确编译U-boot
 ==================
 
 1.编译Floader-m200
@@ -10,14 +10,14 @@
         * m200芯片请参考 floader-m200/boards/solar_board.h
     d) 编译floader-m200
         * 参考 floader-m200/README
-    c) 复制编译结果到上级目录
+    e) 复制编译结果到上级目录
         * cp -rf floader_m200_with_mbr_gpt_and_sleeplib.bin ../
 
 2. 编译Uboot
     * 按照常规流程编译U-boot
 
 3. 制作最终的U-boot
-    * cd ..
+    * 返回U-boot根目录
     * ./mk_floader_m200_with_mbr_gpt_sleeplib_and_uboot.sh
 
 4. 最终烧录镜像

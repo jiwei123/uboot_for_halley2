@@ -10,10 +10,11 @@ HOW-TO Build U-boot
         * See demo file floader-m200/boards/solar_board.h for m200s based board
     d) Build floader-m200
         * See floader-m200/README
-    c) Copy build out to up-level directory
+    e) Copy build out to up-level directory
         * cp -rf floader_m200_with_mbr_gpt_and_sleeplib.bin ../
 
 2. Build Uboot
+    * Return U-boot root directory
     * Build U-boot as common ways 
 
 3. Make final U-boot
