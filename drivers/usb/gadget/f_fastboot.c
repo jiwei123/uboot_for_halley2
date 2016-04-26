@@ -48,6 +48,7 @@
 #ifndef PARTITION_NUM
 #define PARTITION_NUM 16
 #endif
+#define	CMD_BUFF_SIZE 128
 
 #define _DEBUG	0
 
@@ -56,6 +57,9 @@ char *boot_buf;
 extern struct partition_info partition_info[PARTITION_NUM];
 extern struct board_info board_info;
 static unsigned int fastboot_flash_session_id;
+static int need_boot_kernel;
+static int need_reboot_bootloader;
+static char boot_kernel_cmd[CMD_BUFF_SIZE];
 
 struct fastboot_common {
 	struct usb_gadget	*gadget;	/*Copy of cdev->gadget*/
@@ -1025,18 +1029,17 @@ static int handle_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 {
 	printf("please add the reboot_bootloader cmd explain roution\n");
 	cpm_set_scrpad(FASTBOOT_SIGNATURE);
-	if(!run_command("reset",0))
-		return 0;
-
-	return -1;
+	return 0;
 }
 
 static void explain_cmd_reboot_bootloader(struct fastboot_dev *fastboot)
 {
 	if (handle_cmd_reboot_bootloader(fastboot))
 		strcpy(fastboot->ret_buf, "FAILED");
-	else
+	else {
 		strcpy(fastboot->ret_buf, "OKAY");
+		need_reboot_bootloader = 1;
+	}
 
 	return_buf(fastboot, return_complete);
 }
@@ -1097,21 +1100,21 @@ static int handle_cmd_boot(struct fastboot_dev *fastboot)
 	printf("please add the boot cmd explain roution\n");
 	memcpy((char *)(BOOT_START_ADDRESS),fastboot->data_buf,fastboot->data_length);
 
-	char command[128];
-	memset(command,0,128);
-	sprintf(command,"boota mem %x",BOOT_START_ADDRESS);
-	printf("command:%s\n",command);
-	if(!run_command(command,0))
-		return 0;
-	return -1;
+	memset(boot_kernel_cmd,0,CMD_BUFF_SIZE);
+	sprintf(boot_kernel_cmd,"boota mem %x",BOOT_START_ADDRESS);
+	printf("boot_kernel_cmd:%s\n",boot_kernel_cmd);
+
+	return 0;
 }
 
 static void explain_cmd_boot(struct fastboot_dev *fastboot)
 {
 	if (handle_cmd_boot(fastboot))
 		strcpy(fastboot->ret_buf, "FAILED");
-	else
+	else {
 		strcpy(fastboot->ret_buf, "OKAY");
+		need_boot_kernel = 1;
+	}
 
 	return_buf(fastboot, return_complete);
 }
@@ -1273,6 +1276,18 @@ void handle_fastboot_cmd(void)
 			int ret_value;
 			fastboot_common->enum_done = 0;
 			fastboot->explain_cmd_status = 0;
+
+			if(need_reboot_bootloader) {
+				need_reboot_bootloader = 0;
+				if(run_command("reset", 0))
+					printf("rboot-bootloader failed\n");
+			}
+
+			if(need_boot_kernel) {
+				need_boot_kernel = 0;
+				if(run_command(boot_kernel_cmd, 0))
+					printf("boot kernel failed\n");
+			}
 
 			fastboot->cmd_req = usb_ep_alloc_request(fastboot_common->bulk_out, 0);
 			if (!fastboot->cmd_req) {
