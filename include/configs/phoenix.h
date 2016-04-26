@@ -148,8 +148,15 @@
 		#define CONFIG_BOOTCOMMAND "spinand read 0x100000 0x400000 0x80600000 ;bootm 0x80600000"
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT)
 	#ifdef CONFIG_JZ_MMC_MSC0
-		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p7 rootfstype=ext4 rootdelay=1 rw"
-		#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+		#ifdef CONFIG_BOOT_ANDROID
+			#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init androidboot.hardware=phoenix"
+			#define CONFIG_BOOTCOMMAND "cls; boota mmc 0 0x80f00000 6144"
+			#define CONFIG_NORMAL_BOOT CONFIG_BOOTCOMMAND
+			#define CONFIG_RECOVERY_BOOT "boota nand 0 0x80f00000 24576"
+		#else
+			#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk0p7 rootfstype=ext4 rootdelay=1 rw"
+			#define CONFIG_BOOTCOMMAND "mmc dev 0;mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
+		#endif
 	#else
 		#define CONFIG_BOOTARGS BOOTARGS_COMMON " root=/dev/mmcblk1p7 rootfstype=ext4 rootdelay=1 rw"
 		#define CONFIG_BOOTCOMMAND "mmc dev 1;mmc read 0x80600000 0x1800 0x3000; bootm 0x80600000"
@@ -571,6 +578,9 @@
 #define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
 #endif
 
+/* Wrong keys. */
+#define CONFIG_GPIO_RECOVERY		GPIO_PB(31)	/* SW7 */
+#define CONFIG_GPIO_RECOVERY_ENLEVEL	0
 
 /*
 * MTD support
