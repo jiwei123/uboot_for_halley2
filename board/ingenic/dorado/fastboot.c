@@ -39,5 +39,5 @@ struct board_info board_info = {
 	.product = "dorado",
 	.variant = "dorado",
 	.hardware_ver = "V2.2 20141117",
-	.max_download_size = CONFIG_SYS_MALLOC_LEN,
+	.max_download_size = CONFIG_FASTBOOT_MAX_DOWNLOAD_SIZE,
 };

@@ -1174,7 +1174,7 @@ static void handle_fastboot_cmd_complete(struct usb_ep *ep,
 		goto cmd_finish;
 	}
 
-	if (!strcmp(req->buf, "reboot-bootloader")) {
+	if (!strncmp(req->buf, "reboot-bootloader", 17)) {
 		explain_cmd_reboot_bootloader(fastboot);
 		goto cmd_finish;
 	}

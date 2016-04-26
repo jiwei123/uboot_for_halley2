@@ -75,13 +75,13 @@ static int get_key_status(int pin, int en_level)
 }
 
 /*
- * Get recovery signature and reset it.
+ * Get signature and reset it.
  */
-static int get_recovery_signature(void)
+static int get_signature(const int signature)
 {
 	unsigned int flag = cpm_get_scrpad();
 
-	if ((flag & 0xffff) == RECOVERY_SIGNATURE) {
+	if ((flag & 0xffff) == signature) {
 		/*
 	 	* Clear the signature,
 	 	* reset the signature to force into normal boot after factory reset
@@ -105,12 +105,13 @@ static int get_boot_sel(void)
 #ifdef CONFIG_GPIO_USB_DETECT
 	    && get_key_status(CONFIG_GPIO_USB_DETECT, CONFIG_GPIO_USB_DETECT_ENLEVEL)
 #endif
+	    || get_signature(FASTBOOT_SIGNATURE)
 	) {
 		return FASTBOOT_RECOVERY_BOOT;
 	}
 #endif
 	/* Recovery signature */
-	if (get_recovery_signature()) {
+	if (get_signature(RECOVERY_SIGNATURE)) {
 		return RECOVERY_BOOT;
 	}
 
