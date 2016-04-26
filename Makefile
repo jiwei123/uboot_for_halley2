@@ -433,13 +433,13 @@ endif
 ifeq ($(CONFIG_MBR_CREATOR),y)
 ALL-y += $(obj)u-boot-with-spl-mbr.bin
 else
-ALL-y += $(obj)u-boot-with-spl.bin
+ALL-y += $(obj)u-boot.bin
 endif
 
 ifeq ($(CONFIG_GPT_CREATOR),y)
 ALL-y += $(obj)u-boot-with-spl-mbr-gpt.bin
 else
-ALL-y += $(obj)u-boot-with-spl.bin
+ALL-y += $(obj)u-boot.bin
 endif
 
 all:		$(ALL-y) $(SUBDIR_EXAMPLES)

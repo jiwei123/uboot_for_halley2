@@ -21,7 +21,7 @@
     * ./mk_floader_m200_with_mbr_gpt_sleeplib_and_uboot.sh
 
 4. 最终烧录镜像
-    floader_m200_with_mbr_gpt_sleeplib_and_uboot.bin
+    u-boot-with-spl-mbr-gpt.bin
 
 5. 问题反馈
     孙文中 <wenzhong.sun@ingenic.com>
