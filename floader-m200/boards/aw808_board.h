@@ -23,7 +23,7 @@
 /*
  *  Debug build configuration
  */
-//#define DEBUG
+#define DEBUG
 
 /*
  * EMCP selection here
@@ -35,20 +35,10 @@
  */
 #define CONFIG_EMMC_MSC0_PORT_PA_ENABLE_PULL_UP             0
 
-
 /*
- * Console UART port
- */
-#define CONFIG_CONSOLE_UART_NO                              3
-
-/*
- * Boot arguments
+ * Config UART console band rate
  */
 #define CONFIG_KERNEL_ARG_CONSOLE_BAUD_RATE                 2000000
-#define CONFIG_KERNEL_ARG_CONSOLE   "console=ttyS3"
-#define CONFIG_KERNEL_ARG_MEM       "mem=250M@0x0 mem=256M@0x30000000"
-#define CONFIG_KERNEL_ARG_ROOTFS    "root=/dev/ram0 rw rdinit=/init"
-#define CONFIG_KERNEL_MISC          "androidboot.hardware=watch ip=off"
 
 /*
  * PMU I2C GPIO location

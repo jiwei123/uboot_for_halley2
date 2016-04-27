@@ -210,6 +210,11 @@ void wakeup_lpddr2(
     debug("Wakeup LPDDR2 step 3 done.\n");
 }
 
+int has_two_lpddr2_chips()
+{
+    return (((DDRP_PGCR_VALUE >> DDRP_PGCR_RANKEN_BIT) & 0x3) == 0x3);
+}
+
 static void init_dwc_ddr_publ(int is_from_powerup)
 {
     debug("Init PUBL start...\n");

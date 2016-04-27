@@ -50,23 +50,17 @@ int main(void)
      */
     flush_cache_all();
 
-    if (is_from_powerup) {
-        init_mmc_host();
+    if (!is_from_powerup) {
+        boot_from_ddr();
 
-#if (CONFIG_FLOADER_FUNCTION == 2)
-        return 0;
-#endif
+    } else {
+        init_mmc_host();
+        if (CONFIG_FLOADER_FUNCTION == 2)
+            return 0;
 
         init_sleep_lib(pmu);
 
-#if 0
-        while (1)
-            enter_sleep_with_powerkey_wake();
-#endif
-
         boot_from_emmc();
-    } else {
-        boot_from_ddr();
     }
 
     /*

@@ -141,4 +141,18 @@
 #define CONFIG_CORE_SLEEP_VOLTAGE_MV                        850
 #define CONFIG_DDR_VDD2_SLEEP_VOLTAGE_MV                    1000
 
+/*
+ * Console UART port
+ */
+#define CONFIG_CONSOLE_UART_NO                              3
+
+/*
+ * Boot arguments
+ */
+#define CONFIG_KERNEL_ARG_CONSOLE   "console=ttyS3"
+#define CONFIG_KERNEL_ARG_MEM       "mem=250M@0x0 mem=256M@0x30000000"
+#define CONFIG_KERNEL_ARG_MEM_FOR_1024M "mem=250M@0x0 mem=768M@0x30000000"
+#define CONFIG_KERNEL_ARG_ROOTFS    "root=/dev/ram0 rw rdinit=/init"
+#define CONFIG_KERNEL_MISC          "androidboot.hardware=watch ip=off"
+
 #endif

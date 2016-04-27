@@ -145,7 +145,8 @@
         sprintf((char *)&the_hdr.cmdline, "%s,%dn8 %s %s %s %s%x %s%x",
                 CONFIG_KERNEL_ARG_CONSOLE,
                 CONFIG_KERNEL_ARG_CONSOLE_BAUD_RATE,
-                CONFIG_KERNEL_ARG_MEM,
+                has_two_lpddr2_chips() ?
+                        CONFIG_KERNEL_ARG_MEM_FOR_1024M : CONFIG_KERNEL_ARG_MEM,
                 CONFIG_KERNEL_ARG_ROOTFS,
                 CONFIG_KERNEL_MISC,
                 "rd_start=0x", (u32)dst,

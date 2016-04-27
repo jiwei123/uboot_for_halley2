@@ -323,6 +323,7 @@ void lpddr2_exit_self_refresh(
                         unsigned int training_timeout);
 void prepare_lpddr2_for_sleep();
 void restore_lpddr2();
+int has_two_lpddr2_chips();
 
 void enable_clock_uart3();
 

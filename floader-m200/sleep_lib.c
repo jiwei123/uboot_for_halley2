@@ -214,7 +214,7 @@ static void sleep(void)
      * L2 power down
      * RTC clock enable
      */
-    temp |= (0x1f << 8) | (1 << 30) | (1 << 2) | (1 << 27) | (1 << 23);
+    temp |= (0xf << 8) | (1 << 30) | (1 << 2) | (1 << 27) | (1 << 23);
     /*
      * Core power down
      */

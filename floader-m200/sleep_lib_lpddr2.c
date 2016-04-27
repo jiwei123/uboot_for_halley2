@@ -99,6 +99,11 @@ static void dump_register(void)
     debug("=====================\n");
 }
 
+int has_two_lpddr2_chips()
+{
+    return (((DDRP_PGCR_VALUE >> DDRP_PGCR_RANKEN_BIT) & 0x3) == 0x3);
+}
+
 static void reset_all()
 {
     /*
@@ -164,6 +169,15 @@ static void training_lpddr2_publ()
                                 | DDRP_PGSR_DLDONE
                                 | DDRP_PGSR_ZCDONE
                                 | DDRP_PGSR_DTDONE;
+
+    if (has_two_lpddr2_chips()) {
+        /*
+         * TODO restore training operation
+         */
+        pir_val &= ~DDRP_PIR_QSTRN;
+        done_mask &= ~DDRP_PGSR_DTDONE;
+    }
+
     /*
      * DLL bypassed mode
      */
