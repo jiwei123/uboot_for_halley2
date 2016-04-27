@@ -22,7 +22,7 @@ HOW-TO Build U-boot
     * ./mk_floader_m200_with_mbr_gpt_sleeplib_and_uboot.sh
 
 4. Final burning image is
-    floader_m200_with_mbr_gpt_sleeplib_and_uboot.bin
+    u-boot-with-spl-mbr-gpt.bin
 
 5. Question
     孙文中 <wenzhong.sun@ingenic.com>
