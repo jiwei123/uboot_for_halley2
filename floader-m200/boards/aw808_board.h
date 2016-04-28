@@ -23,7 +23,7 @@
 /*
  *  Debug build configuration
  */
-#define DEBUG
+//#define DEBUG
 
 /*
  * EMCP selection here
