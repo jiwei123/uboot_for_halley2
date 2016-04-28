@@ -62,7 +62,7 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		3
-#define CONFIG_BAUDRATE			57600
+#define CONFIG_BAUDRATE			    2000000
 
 /*#define CONFIG_DDR_TEST_CPU
 #define CONFIG_DDR_TEST*/
@@ -109,7 +109,7 @@
 #ifdef CONFIG_KERNEL_CONSOLE
 	#define BOOTARGS_CONSOLE " console="CONFIG_KERNEL_CONSOLE
 #else
-	#define BOOTARGS_CONSOLE " console=ttyS3,57600n8 "
+	#define BOOTARGS_CONSOLE " console=ttyS3,2000000n8 "
 #endif
 
 /* DDR Capacity */
