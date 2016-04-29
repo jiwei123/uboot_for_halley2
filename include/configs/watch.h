@@ -580,6 +580,9 @@
 #if  defined(CONFIG_X3) || defined(CONFIG_AW808) || defined(CONFIG_SWIMBOT)
 #define CONFIG_GPIO_RECOVERY		GPIO_PE(10)      	/* pretest key */
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	1
+#elif defined(CONFIG_W561A)
+#define CONFIG_GPIO_RECOVERY            GPIO_PA(8)         /* pretest key */
+#define CONFIG_GPIO_RECOVERY_ENLEVEL    0
 #else
 #define CONFIG_GPIO_RECOVERY		GPIO_PC(22)
 #define CONFIG_GPIO_RECOVERY_ENLEVEL	 0

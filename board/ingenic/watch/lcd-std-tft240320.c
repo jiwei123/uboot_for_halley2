@@ -24,11 +24,22 @@
 #include <jz_lcd/jz_lcd_v1_2.h>
 #include <jz_lcd/std_tft240320.h>
 
+#if defined(CONFIG_W561A)
+#define LCD_VDD_1V8   "RICOH619_LDO4"
+#define LCD_VCI_2V8   "RICOH619_LDO6"
+#define LCD_LED_3V0   "RICOH619_LDO7"
+#else
+#define LCD_VDD_1V8   NULL
+#define LCD_VCI_2V8   NULL
+#define LCD_LED_3V0   NULL
+#error "not support your configure, please fix it!"
+#endif
+
 void board_set_lcd_power_on(void)
 {
-	const char *id_vio  = "RICOH619_LDO4";
-	const char *id_vdd  = "RICOH619_LDO6";
-	const char *id_led  = "RICOH619_LDO7";
+   const char *id_vio = LCD_VDD_1V8;
+   const char *id_vdd = LCD_VCI_2V8;
+   const char *id_led = LCD_LED_3V0;
 
 	struct regulator *lcd_vio = regulator_get(id_vio);
 	struct regulator *lcd_vdd = regulator_get(id_vdd);
@@ -201,7 +212,7 @@ struct jzfb_config_info jzfb1_init_data = {
 	.dither_enable = 0,
 };
 
-#if defined(CONFIG_AW808)
+#if defined(CONFIG_W561A)
 struct std_tft240320_data std_tft240320_pdata = {
 	.gpio_lcd_rd  = GPIO_PC(24),
 	.gpio_lcd_rst = GPIO_PC(23),
