@@ -65,7 +65,7 @@
 #define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32			0	/* 1-32bit-width, 0-16bit-width */
-/* #define CONFIG_MDDR_ECM220ACBCN_50 */
+/*#define CONFIG_MDDR_ECM220ACBCN_50*/
 #define CONFIG_MDDR_H5MS5122DFR_J3M
 /*#define CONFIG_DDR3_TSD34096M1333C9_E*/
 
@@ -74,7 +74,7 @@
 #define CONFIG_AUDIO_MPLL CONFIG_SYS_MPLL_FREQ
 
 /* CONFIG_CMD_FASTBOOT */
-#ifdef CONFIG_ARDUINO
+/*#ifdef CONFIG_ARDUINO*/
 #define CONFIG_CMD_FASTBOOT
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_GADGET_DUALSPEED
@@ -84,7 +84,7 @@
 #define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
 #define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
 #define CONFIG_USB_GADGET_VBUS_DRAW 500
-#endif
+/*#endif*/
 
 /*pmu slp pin*/
 #define CONFIG_REGULATOR
@@ -579,8 +579,12 @@
 #endif
 
 /* Wrong keys. */
-#define CONFIG_GPIO_RECOVERY		GPIO_PB(31)	/* SW7 */
-#define CONFIG_GPIO_RECOVERY_ENLEVEL	0
+#define CONFIG_GPIO_RECOVERY           GPIO_PB(31)     /* SW4 */
+#define CONFIG_GPIO_RECOVERY_ENLEVEL   0
+
+/* Wrong keys. */
+#define CONFIG_GPIO_FASTBOOT            GPIO_PB(31)     /* SW4 */
+#define CONFIG_GPIO_FASTBOOT_ENLEVEL    0
 
 /*
 * MTD support

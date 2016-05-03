@@ -912,7 +912,8 @@ static int handle_cmd_flash(struct fastboot_dev *fastboot)
 	storge_msg.blksz = MMC_BYTE_PER_BLOCK;
 	storge_msg.name = cmd;
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
+//#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
 	if(!fb_mmc_flash_write(&storge_msg, fastboot_flash_session_id,
 			        (void *)fastboot->data_buf,fastboot->data_length)){
 		fastboot_flash_session_id++;
@@ -998,7 +999,8 @@ static int handle_cmd_erase(struct fastboot_dev *fastboot)
 	}
 
 do_erase:
-#ifdef CONFIG_SPL_MMC_SUPPORT
+//#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
 	if(!fastboot_mmc_erase(blk , cnt ,fastboot))
 		return 0;
 #else
