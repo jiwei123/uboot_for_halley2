@@ -644,7 +644,7 @@ void sdram_init(void)
 #else
 	rate = gd->arch.gi->ddrfreq;
 #endif
-	if((rate <= 200000000) && (type != DDR3))
+	if((rate <= 300000000) && (type != DDR3))
 		bypass = 1;
 
 	reset_controller();
