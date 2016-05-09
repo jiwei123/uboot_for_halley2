@@ -80,8 +80,13 @@ _start:
 #if 1
 	mfc0	v0, $12, 2
 	nop
+
 	li	v1, 0x7fffffff
 	and	v0, v0, v1
+
+	li	v1, 0x20000000
+	or	v0, v0, v1
+
 	mtc0	v0, $12, 2
 	nop
 #endif
