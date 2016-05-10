@@ -138,15 +138,32 @@ void edo_e1392am1_display_inversion_off(struct dsi_device *dsi)
  */
 void edo_e1392am1_set_pulse(unsigned int level)
 {
-	int i = 0;
+	unsigned long flags;
+	unsigned int i;
+
+	/* shut down it first */
+	gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 0);
+	udelay(70);
+
+	/* t_init and t_ss */
 	gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 1);
-	udelay(2000);
-	for(i = 0; i < level ; i++) {
+	udelay(350);
+	udelay(1000);
+
+	/* send the pulses */
+	for (i = 0; i < level; ++i) {
 		gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 0);
-		udelay(10);
+		udelay(15);
 		gpio_direction_output(edo_e1392am1_pdata.gpio_lcd_bl, 1);
-		udelay(10);
+		udelay(15);
 	}
+
+	/* store */
+	udelay(55);
+
+	/* wait it work */
+	udelay(20000);
+
 }
 
 /**
