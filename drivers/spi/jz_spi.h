@@ -292,10 +292,10 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.quad_mode = {
 			.dummy_byte = 6,
 			.RDSR_CMD = CMD_RDSR_1,
-			.WRSR_CMD = CMD_WRSR,
+			.WRSR_CMD = CMD_WRSR_1,
 			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
 			.RD_DATE_SIZE = 1,
-			.WRSR_DATE = 0x0200,//his bit should be the flash QUAD mode enable
+			.WRSR_DATE = 0x02,//his bit should be the flash QUAD mode enable
 			.WD_DATE_SIZE = 1,
 			.cmd_read = CMD_QUAD_IO_FAST_READ,
 #ifdef CONFIG_JZ_SFC
