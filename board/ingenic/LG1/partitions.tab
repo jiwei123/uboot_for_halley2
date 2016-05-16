@@ -1,5 +1,5 @@
 property:
-    disk_size = 4096m
+    disk_size = 8192m
     gpt_header_lba = 512
     custom_signature = 0
 
@@ -13,6 +13,6 @@ partition:
 	misc      =    96m,     4m, EMPTY
 	cache     =   100m,   100m, LINUX_FS
 	system    =   200m,   700m, LINUX_FS
-	data      =   900m,  2828m, LINUX_FS
+	data      =   900m,  6144m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY

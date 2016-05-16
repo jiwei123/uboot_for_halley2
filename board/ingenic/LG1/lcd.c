@@ -24,32 +24,63 @@
 #include <asm/gpio.h>
 #include <jz_lcd/jz_lcd_v1_2.h>
 
+#ifdef CONFIG_VIDEO_ECX336AF
+#include <jz_lcd/ecx336af.h>
+struct ecx336af_data ecx336af_pdata = {
+	.gpio_reset = GPIO_PC(9),
+	.gpio_spi_cs = GPIO_PE(2),
+	.gpio_spi_clk = GPIO_PE(1),
+	.gpio_spi_sdi = GPIO_PE(3),
+	.gpio_spi_sdo = GPIO_PA(13),
+	.power_1v8 = NULL,
+};
+#endif
+
 void board_set_lcd_power_on(void)
 {
 	char *id = "RICOH619_DC5";
 	struct regulator *lcd_regulator = regulator_get(id);
 	if (lcd_regulator) {
-	        gpio_request(GPIO_PC(18), "led_green");
-	        gpio_request(GPIO_PC(19), "led_red");
-		gpio_direction_output(GPIO_PC(18), 0);
-		gpio_direction_output(GPIO_PC(19), 0);
-
 		regulator_set_voltage(lcd_regulator, 1800000, 1800000);
 		regulator_enable(lcd_regulator);
+
+		gpio_request(GPIO_PD(27), "lcd_pwm_en");
+		gpio_direction_output(GPIO_PD(27), 1);
 	} else
 		printf("Enable RICOH619_DC5 FAIL!\n");
+#ifdef CONFIG_VIDEO_ECX336AF
+	ecx336af_pdata.power_1v8 = lcd_regulator;
+#endif
 }
 
 void board_set_lcd_power_off(void)
 {
+	char *id = "RICOH619_DC5";
+	struct regulator *lcd_regulator = regulator_get(id);
+	if (lcd_regulator) {
+		regulator_disable(lcd_regulator);
+
+		gpio_request(GPIO_PD(27), "lcd_pwm_en");
+		gpio_direction_output(GPIO_PD(27), 0);
+	} else
+		printf("GET RICOH619_DC5 FAIL!\n");
+#ifdef CONFIG_VIDEO_ECX336AF
+	ecx336af_pdata.power_1v8 = lcd_regulator;
+#endif
 }
 
 void board_set_backlight_init(int num)
 {
+    int i = 0;
+    lcd_init_backlight(0);
+    for(; i <= num; i += 10){
+	mdelay(20);
+	lcd_set_backlight_level(i);
+    }
 }
 
 struct jzfb_config_info jzfb1_init_data = {
-#if defined(CONFIG_VIDEO_VIRTUAL_800480)
+#if defined(CONFIG_VIDEO_HIMAX7097)
 	.modes = &jzfb1_videomode,
 	.lcd_type = LCD_TYPE_GENERIC_24_BIT,
 	.bpp = 16,

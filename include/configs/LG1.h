@@ -39,6 +39,7 @@
 #define CONFIG_M200		/* M200 SoC */
 #define CONFIG_DDR_AUTO_SELF_REFRESH
 #define CONFIG_SPL_DDR_SOFT_TRAINING
+#define CONFIG_KEYSECLECT_RECOVERY
 
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		600000000	/*If MPLL not use mast be set 0*/
@@ -62,16 +63,12 @@
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_FORCE_SELECT_CS1
 
-#define CONFIG_CHECK_POWER_STATUS
-#define CONFIG_RTC_WAKEUP
-#define CONFIG_RTC_WAKEUP_TIME          60 * 10
-
 #define CONFIG_DDR_TYPE_LPDDR2
 #define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2
 /*#define CONFIG_MCP_SAMSUNG_KMN5X000ZM_LPDDR2*/
-#define CONFIG_GPIO_PMU_SLEEP           GPIO_PB(1)
+
 #define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
+#define CONFIG_DDR_CS1          1   /* 1-connected, 0-disconnected */
 #define CONFIG_DDR_DW32         1   /* 1-32bit-width, 0-16bit-width */
 
 /* #define CONFIG_DDR_DLL_OFF */
@@ -87,7 +84,7 @@
 /**
  * Boot arguments definitions.
  */
-#define BOOTARGS_COMMON "console=ttyS3,115200n8 mem=255M@0x0 mem=256M@0x30000000"
+#define BOOTARGS_COMMON "console=ttyS3,115200n8 mem=255M@0x0 mem=768M@0x30000000"
 
 #ifdef CONFIG_BOOT_ANDROID
     #define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/init"
@@ -144,6 +141,7 @@
 /*#define CONFIG_JZ_MIPI_DSI*/
 #define LCD_BPP				4
 #define CONFIG_GPIO_LCD_PWM	 	GPIO_PE(1)
+#define CONTROLL_BACKLIGHT_WITH_LCD_POWER
 
 #define CONFIG_LCD_LOGO
 #define CONFIG_RLE_LCD_LOGO
@@ -152,28 +150,36 @@
 #define CONFIG_SYS_PWM_PERIOD		10000 /* Pwm period in ns */
 #define CONFIG_SYS_PWM_CHN		1  /* Pwm channel ok*/
 #define CONFIG_SYS_PWM_FULL		256
-#define CONFIG_SYS_BACKLIGHT_LEVEL	80 /* Backlight brightness is (80 / 256) */
+#define CONFIG_SYS_BACKLIGHT_LEVEL	120 /* Backlight brightness is (120 / 256) */
 #define CONFIG_JZ_LCD_V12
 #define CONFIG_JZ_PWM
 
 #ifdef CONFIG_JZ_MIPI_DSI
 #define CONFIG_VIDEO_BYD_9177AA
+/* #define CONFIG_VIDEO_LH155 */
 #define CONFIG_DEFAULT_BYTE_CLOCK	450
 #else
 #define CONFIG_LCD_GPIO_FUNC0_24BIT
 /* #define CONFIG_LCD_GPIO_FUNC2_SLCD */
-#define CONFIG_VIDEO_VIRTUAL_800480
+#define CONFIG_VIDEO_HIMAX7097
+#define CONFIG_VIDEO_HIMAX7097_UPSIDE_DOWN
+#define CONFIG_VIDEO_HIMAX7097_HORIZONTAL_EXCHANGE
+/* #define CONFIG_VIDEO_BM347WV_F_8991FTGF */
+/* #define CONFIG_VIDEO_TRULY_TFT240240_2_E */
 #endif
 
-#define CONFIG_500MAH_CAPACITY_BATTERY
+#define CONFIG_LG1_500MAH_CAPACITY_BATTERY
 #define CONFIG_BATTERY_VOLTAGE_MAX       4200
 #define CONFIG_BATTERY_VOLTAGE_MIN       3400
 #define CONFIG_BATTERY_VOLTAGE_SCALE     150
 #ifdef CONFIG_RLE_LCD_LOGO
 #define CONFIG_CMD_BATTERYDET   	/* detect battery and show charge logo */
 #define CONFIG_CMD_LOGO_RLE	/*display the logo using rle command*/
-#define CONFIG_RTC_POWER_DETECT
 #endif
+
+#define CONFIG_RTC_WAKEUP
+#define CONFIG_RTC_WAKEUP_TIME          60 * 10
+#define CONFIG_CHECK_POWER_STATUS
 
 #endif /* CONFIG_LCD */
 
@@ -425,6 +431,7 @@
 #define CONFIG_MBR_P3_OFF	1609mb
 #define CONFIG_MBR_P3_END	7800mb
 #define CONFIG_MBR_P3_TYPE 	fat
+
 #endif
 
 /**
@@ -455,10 +462,11 @@
 #define CONFIG_GPIO_BACK		GPIO_PD(19)	*//* SW7 */
 /*#define CONFIG_GPIO_BACK_ENLEVEL	0*/
 
-#define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
-#define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
+#define CONFIG_GPIO_PWR_WAKE		  GPIO_PA(30)
+#define CONFIG_GPIO_PWR_WAKE_ENLEVEL	  0
 
-#define CONFIG_GPIO_PMU_SLEEP           GPIO_PB(1)
+#define CONFIG_GPIO_RECOVERY_KEY          GPIO_PA(11)
+#define CONFIG_GPIO_BOOT_SELECT_ENLEVEL  0
 /*#define CONFIG_GPIO_DC_DETECT           GPIO_PB(1)
 #define CONFIG_GPIO_DC_DETECT_ENLEVEL   0
 */
