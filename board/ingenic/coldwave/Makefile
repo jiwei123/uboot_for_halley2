@@ -27,6 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	:= $(BOARD).o
+COBJS-$(CONFIG_CMD_FASTBOOT) += fastboot.o
 COBJS-$(CONFIG_JZ_LCD_V12) += lcd.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)

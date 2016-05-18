@@ -37,4 +37,11 @@ struct partition_info {
 	unsigned long offset;
 	unsigned long size;
 };
+
+struct board_info {
+	char product[16];
+	char variant[16];
+	char hardware_ver[16];
+	unsigned long max_download_size;
+};
 #endif
