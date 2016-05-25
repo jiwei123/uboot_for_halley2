@@ -1,3 +1,4 @@
+#include "burn_printf.h"
 
 #ifdef CONFIG_JZ_SPI
 extern unsigned int ssi_rate;
@@ -70,27 +71,27 @@ int spi_program(struct cloner *cloner)
 		}
 	}
 
-	debug("the offset = %x\n",offset);
-	debug("the length = %x\n",length);
+	BURNNER_PRI("the offset = %x\n",offset);
+	BURNNER_PRI("the length = %x\n",length);
 
 
 	if (length%blk_size == 0){
 		len = length;
-		printf("the length = %x,blk_size = %x\n",length,blk_size);
+		BURNNER_PRI("the length = %x,blk_size = %x\n",length,blk_size);
 	}
 	else{
-		printf("the length = %x, is no enough %x\n",length,blk_size);
+		BURNNER_PRI("the length = %x, is no enough %x\n",length,blk_size);
 		len = (length/blk_size)*blk_size + blk_size;
 	}
 
 	if (cloner->args->spi_erase == SPI_NO_ERASE) {
 		ret = spi_flash_erase(flash, offset, len);
-		printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
+		BURNNER_PRI("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
 				ret ? "ERROR" : "OK");
 	}
 
 	ret = spi_flash_write(flash, offset, len, addr);
-	printf("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
+	BURNNER_PRI("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
 			ret ? "ERROR" : "OK");
 
 

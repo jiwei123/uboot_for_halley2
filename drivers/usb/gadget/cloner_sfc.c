@@ -1,4 +1,4 @@
-
+#include "burn_printf.h"
 
 #ifdef CONFIG_JZ_SFC
 extern unsigned int sfc_rate;
@@ -58,7 +58,7 @@ int sfc_program(struct cloner *cloner)
 	sfc_rate = spi_arg->sfc_rate;
 
 	if(sfc_is_init == 0){
-		printf("in sfc init\n");
+		BURNNER_PRI("in sfc init\n");
 		err = sfc_init();
 		if(err < 0){
 			printf("%d,%s,!!!!!!!!!!!!!!!!!!!!!the sfc init failed\n",__LINE__,__func__);
@@ -68,15 +68,15 @@ int sfc_program(struct cloner *cloner)
 
 	pt_index = get_partition_index(offset, &pt_offset, &pt_size);
 
-	printf("the offset = %x\n",offset);
-	printf("the length = %x\n",length);
+	BURNNER_PRI("the offset = %x\n",offset);
+	BURNNER_PRI("the length = %x\n",length);
 
 	if (length%blk_size == 0){
 		len = length;
-		printf("the length = %x\n",len);
+		BURNNER_PRI("the length = %x\n",len);
 	}
 	else{
-		printf("the length = %x, is no enough %x\n",length,blk_size);
+		BURNNER_PRI("the length = %x, is no enough %x\n",length,blk_size);
 		len = (length/blk_size)*blk_size + blk_size;
 	}
 
@@ -84,13 +84,13 @@ int sfc_program(struct cloner *cloner)
 		if(pt_index != pt_index_bak){
 			pt_index_bak = pt_index;
 			ret = sfc_nor_erase(pt_offset, pt_size);
-			printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
+			BURNNER_PRI("SF: %zu bytes @ %#x Erased: %s\n", (size_t)len, (u32)offset,
 				ret ? "ERROR" : "OK");
 		}
 	}
 
 	ret = sfc_nor_write(offset, len, addr,0);
-	printf("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
+	BURNNER_PRI("SF: %zu bytes @ %#x write: %s\n", (size_t)len, (u32)offset,
 			ret ? "ERROR" : "OK");
 
 	return 0;

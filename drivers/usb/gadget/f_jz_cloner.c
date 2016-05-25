@@ -44,6 +44,7 @@
 #if CONFIG_MTD_SPINAND || CONFIG_MTD_SFCNAND
 #include "cloner_spinand.c"
 #endif
+#include "burn_printf.h"
 
 /**
  * cloner module manage
@@ -503,6 +504,9 @@ int f_cloner_setup_handle(struct usb_function *f,
 	usb_ep_dequeue(cloner->ep_in, cloner->read_req);
 	usb_ep_dequeue(cloner->ep_out, cloner->write_req);
 
+	L.enable = cloner->args->enable_log;
+	//L.printf = printf;
+
 	cloner->cmd_type = ctlreq->bRequest;
 	req->length = ctlreq->wLength;
 	req->complete = handle_cmd;
@@ -527,7 +531,7 @@ int f_cloner_setup_handle(struct usb_function *f,
 			cloner->ack = -EBUSY;
 			break;
 #ifdef CONFIG_CMD_EFUSE
-	       	case VR_GET_CHIP_ID:
+		case VR_GET_CHIP_ID:
 		case VR_GET_USER_ID:
 			cloner->ep0req->length = ctlreq->wLength;
 			cloner->ack = efuse_program(cloner);

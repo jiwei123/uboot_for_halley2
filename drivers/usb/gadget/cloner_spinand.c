@@ -3,6 +3,8 @@
 #include <linux/mtd/mtd.h>
 #include <ingenic_nand_mgr/nand_param.h>
 #include "../../mtd/nand/jz_spinand.h"
+#include "burn_printf.h"
+
 extern struct jz_spinand_partition *get_partion_index(u32 startaddr,int *pt_index);
 extern struct nand_param_from_burner nand_param_from_burner;
 /*******************************************************************************
@@ -61,22 +63,22 @@ int spinand_program(struct cloner *cloner)
 
 	if(partation->manager_mode == MTD_MODE){
 		sprintf(command, "nand write.jffs2 0x%x 0x%x 0x%x", (unsigned)databuf, startaddr, length);
-		printf("%s\n", command);
+		BURNNER_PRI("%s\n", command);
 		ret = run_command(command, 0);
 		if (ret) goto out;
-		printf("...ok\n");
+		BURNNER_PRI("...ok\n");
 	}else if(partation->manager_mode == UBI_MANAGER){
 		if(!(part_name == partation->name) && cloner->args->spi_erase){/* need change part */
 			memset(command, 0, 128);
 			sprintf(command, "ubi part %s", partation->name);
-			printf("%s\n", command);
+			BURNNER_PRI("%s\n", command);
 			ret = run_command(command, 0);
 			memset(command, 0, X_COMMAND_LENGTH);
 			sprintf(command, "ubi create %s",partation->name,partation->size);
 			ret = run_command(command, 0);
 
 			if (ret) {
-				printf("error...\n");
+				BURNNER_PRI("error...\n");
 				return ret;
 			}
 			part_name = partation->name;
@@ -85,7 +87,7 @@ int spinand_program(struct cloner *cloner)
 		if(cloner->full_size && !(cloner->args->spi_erase)){
 			memset(command, 0, 128);
 			sprintf(command, "ubi part %s", partation->name);
-			printf("%s\n", command);
+			BURNNER_PRI("%s\n", command);
 			ret = run_command(command, 0);
 		}
 
@@ -104,7 +106,7 @@ int spinand_program(struct cloner *cloner)
 
 		ret = run_command(command, 0);
 		if (ret) {
-			printf("...error\n");
+			BURNNER_PRI("...error\n");
 			return ret;
 		}
 	}
@@ -112,7 +114,7 @@ int spinand_program(struct cloner *cloner)
 		cloner->full_size = 0;
 	return 0;
 out:
-	printf("...error\n");
+	BURNNER_PRI("...error\n");
 	return ret;
 
 }

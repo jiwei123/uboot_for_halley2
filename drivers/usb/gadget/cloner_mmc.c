@@ -1,4 +1,5 @@
 #include <mmc.h>
+#include "burn_printf.h"
 
 #ifdef CONFIG_JZ_MMC
 
@@ -35,16 +36,16 @@ static int mmc_erase(struct cloner *cloner)
 		blk = 0;
 		blk_cnt = mmc->capacity / MMC_BYTE_PER_BLOCK;
 
-		printf("MMC erase: dev # %d, start block # %d, count %u ... \n",
+		BURNNER_PRI("MMC erase: dev # %d, start block # %d, count %u ... \n",
 				curr_device, blk, blk_cnt);
 
 		ret = mmc->block_dev.block_erase(curr_device, blk, blk_cnt);
 		if (!ret) {
-			printf("Error: mmc erase error\n");
+			BURNNER_PRI("Error: mmc erase error\n");
 			return -EIO;
 		}
 
-		printf("mmc all erase ok, blocks %d\n", blk_cnt);
+		BURNNER_PRI("mmc all erase ok, blocks %d\n", blk_cnt);
 		return 0;
 	} else if (cloner->args->mmc_erase != MMC_ERASE_PART) {
 		return -EINVAL;
@@ -63,7 +64,7 @@ static int mmc_erase(struct cloner *cloner)
 			blk_cnt = blk_end - blk ;
 		}
 
-		printf("MMC erase: dev # %d, start block # 0x%x, count 0x%x ... \n",
+		BURNNER_PRI("MMC erase: dev # %d, start block # 0x%x, count 0x%x ... \n",
 				curr_device, blk, blk_cnt);
 
 		ret = mmc->block_dev.block_erase(curr_device, blk, blk_cnt);
@@ -72,10 +73,10 @@ static int mmc_erase(struct cloner *cloner)
 			return -EIO;
 		}
 
-		printf("mmc part erase, part %d ok\n", i);
+		BURNNER_PRI("mmc part erase, part %d ok\n", i);
 
 	}
-	printf("mmc erase ok\n");
+	BURNNER_PRI("mmc erase ok\n");
 	return 0;
 }
 
@@ -95,7 +96,7 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 	}
 
 	//debug_cond(BURNNER_DEBUG,"\nMMC write: dev # %d, block # %d, count %d ... ",
-	printf("MMC write: dev # %d, block # %d, count %d ... ",
+	BURNNER_PRI("MMC write: dev # %d, block # %d, count %d ... ",
 			curr_device, blk, cnt);
 
 	mmc_init(mmc);
@@ -108,7 +109,7 @@ int mmc_program(struct cloner *cloner,int mmc_index)
 	n = mmc->block_dev.block_write(curr_device, blk,
 			cnt, addr);
 	//debug_cond(BURNNER_DEBUG,"%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
-	printf("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
+	BURNNER_PRI("%d blocks write: %s\n",n, (n == cnt) ? "OK" : "ERROR");
 
 	if (n != cnt)
 		return -EIO;
