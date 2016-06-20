@@ -122,7 +122,7 @@ init_caches:
 	mtc0    t0, CP0_ECC
 
 	li	t1, KSEG0		/* Start address */
-#define CACHE_ALLOC_END (CONFIG_SYS_DCACHE_SIZE - CONFIG_SYS_CACHELINE_SIZE)
+#define CACHE_ALLOC_END (CONFIG_SYS_DCACHE_SIZE)
 
 	ori     t2, t1, CACHE_ALLOC_END	/* End address */
 	mtc0	zero, CP0_TAGLO, 0
