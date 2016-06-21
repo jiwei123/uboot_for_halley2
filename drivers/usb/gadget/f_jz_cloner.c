@@ -169,6 +169,7 @@ int i2c_program(struct cloner *cloner)
 }
 
 extern unsigned int ssi_rate;
+extern unsigned int sfc_rate;
 int cloner_init(struct cloner *cloner)
 {
 #ifdef CONFIG_JZ_NAND_MGR
@@ -224,6 +225,7 @@ int cloner_init(struct cloner *cloner)
 #endif
 #ifdef CONFIG_JZ_SFC
 	if(cloner->args->use_sfc_nor){
+		sfc_rate = cloner->args->spi_args.rate;
 		get_norflash_params_from_burner((unsigned char *)cloner->args + sizeof(struct arguments));
 		if (cloner->args->spi_erase == SPI_ERASE_PART) {
 			sfc_erase(cloner);

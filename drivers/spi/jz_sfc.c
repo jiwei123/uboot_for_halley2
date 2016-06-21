@@ -48,6 +48,7 @@ int sfc_is_init = 0;
 unsigned int sfc_rate = 0;
 unsigned int sfc_quad_mode = 0;
 unsigned int quad_mode_is_set = 0;
+unsigned int burner_read_id = 0;
 
 struct jz_sfc {
 	unsigned int  addr;
@@ -476,7 +477,9 @@ int sfc_init(void )
 #endif
 
 #ifdef CONFIG_SPI_QUAD
-	sfc_quad_mode = 1;
+	if(burner_read_id != 1){
+		sfc_quad_mode = 1;
+	}
 #endif
 
 	tmp = jz_sfc_readl(SFC_GLB);
@@ -504,12 +507,15 @@ int sfc_init(void )
 	jz_sfc_writel(tmp,SFC_GLB);
 
 #ifdef CONFIG_JZ_SFC_NOR
-	err = sfc_nor_init();
-	if(err < 0){
-		printf("the sfc quad mode err,check your soft code\n");
-		return -1;
+	if(burner_read_id != 1){
+		err = sfc_nor_init();
+		if(err < 0){
+			printf("the sfc quad mode err,check your soft code\n");
+			return -1;
+		}
+
+		sfc_is_init = 1;
 	}
-	sfc_is_init = 1;
 #endif
 	return 0;
 }
@@ -971,6 +977,7 @@ void sfc_nor_RDID(unsigned int *idcode)
 	unsigned char cmd[1];
 //	unsigned char chip_id[4];
 	unsigned int chip_id = 0;
+
 	cmd[0] = CMD_RDID;
 	sfc_send_cmd(&cmd[0],3,0,0,0,1,0);
 	sfc_read_data(&chip_id, 1);
@@ -1018,6 +1025,12 @@ int get_norflash_params_from_burner(unsigned char *addr)
 
 	unsigned int flash_type = *(unsigned int *)(addr + 4);	//0:nor 1:nand
 	if(flash_type == 0){
+
+		burner_read_id = 1;
+		if(sfc_is_init == 0){
+			sfc_init();
+		}
+		burner_read_id = 0;
 
 		sfc_nor_RDID(&idcode);
 		printf("the norflash chip_id is %x\n",idcode);
