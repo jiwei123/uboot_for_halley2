@@ -1018,6 +1018,14 @@ static void dump_norflash_params(void)
 }
 
 #ifdef CONFIG_BURNER
+static unsigned int jz_nor_reset()
+{
+	unsigned char cmd[2]={0x66, 0x99};
+
+	sfc_send_cmd(&cmd[0],0,0,0,0,0,1);
+	sfc_send_cmd(&cmd[1],0,0,0,0,0,1);
+	udelay(60);
+}
 int get_norflash_params_from_burner(unsigned char *addr)
 {
 	unsigned int idcode,chipnum,i;
@@ -1032,6 +1040,7 @@ int get_norflash_params_from_burner(unsigned char *addr)
 		}
 		burner_read_id = 0;
 
+		jz_nor_reset();
 		sfc_nor_RDID(&idcode);
 		printf("the norflash chip_id is %x\n",idcode);
 
