@@ -155,7 +155,7 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: coldwave (Ingenic XBurst M200 SoC)\n");
+	puts("Board: raypai (Ingenic XBurst M200 SoC)\n");
 	return 0;
 }
 
@@ -166,12 +166,3 @@ void spl_board_init(void)
 }
 
 #endif /* CONFIG_SPL_BUILD */
-
-#ifdef CONFIG_CHECK_POWER_STATUS
-
-void check_power_status(int cur_rle_num, int full_rle_num)
-{
-        printf("check_power_status %d %d\n", cur_rle_num, full_rle_num);
-}
-
-#endif
