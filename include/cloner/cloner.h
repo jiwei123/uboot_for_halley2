@@ -139,7 +139,7 @@ struct arguments {
 
 	int transfer_data_chk;
 	int write_back_chk;
-	int enable_log;
+	int log_enabled;
 
 	PartitionInfo PartInfo;
 	MTDPartitionInfo MTDPartInfo;
