@@ -8,6 +8,8 @@
 #include <asm/arch/spi.h>
 #include <asm/arch/clk.h>
 
+#define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
+
 static uint32_t jz_sfc_readl(unsigned int offset)
 {
 	return readl(SFC_BASE + offset);
@@ -37,9 +39,9 @@ void sfc_dev_addr_dummy_bytes(int channel, unsigned int value)
 	jz_sfc_writel(tmp,SFC_TRAN_CONF(channel));
 }
 
-
+int reset_flag = 0;
 static void sfc_set_read_reg(unsigned int cmd, unsigned int addr,
-		unsigned int addr_plus, unsigned int addr_len, unsigned int data_en)
+		unsigned int addr_plus, unsigned int addr_len, unsigned int data_en, unsigned int len, unsigned int dir)
 {
 	volatile unsigned int tmp;
 	unsigned int timeout = 0xffff;
@@ -71,6 +73,20 @@ static void sfc_set_read_reg(unsigned int cmd, unsigned int addr,
 	sfc_set_mode(0,0);
 #endif
 
+	if(reset_flag) {
+		sfc_dev_addr_dummy_bytes(0,0);
+		sfc_set_mode(0,0);
+	}
+
+	jz_sfc_writel(len, SFC_TRAN_LEN);
+	tmp = jz_sfc_readl(SFC_GLB);
+	if(dir == 1)
+		tmp |= TRAN_DIR;
+	else
+		tmp &= ~TRAN_DIR;
+	jz_sfc_writel(tmp, SFC_GLB);
+
+
 	jz_sfc_writel(START,SFC_TRIG);
 }
 
@@ -85,16 +101,16 @@ static int sfc_read_data(unsigned int *data, unsigned int len)
 		reg_tmp = jz_sfc_readl(SFC_SR);
 		if (reg_tmp & RECE_REQ) {
 			jz_sfc_writel(CLR_RREQ,SFC_SCR);
-			if ((len - tmp_len) > THRESHOLD)
+			if ((len - tmp_len) / 4 > THRESHOLD)
 				fifo_num = THRESHOLD;
 			else {
-				fifo_num = len - tmp_len;
+				fifo_num = (len - tmp_len) / 4;
 			}
 
 			for (i = 0; i < fifo_num; i++) {
 				*data = jz_sfc_readl(SFC_DR);
 				data++;
-				tmp_len++;
+				tmp_len += 4;
 			}
 		}
 		if (tmp_len == len)
@@ -119,9 +135,7 @@ static int sfc_read(unsigned int addr, unsigned int addr_plus,
 	cmd  = CMD_READ;
 #endif
 
-	jz_sfc_writel((len * 4), SFC_TRAN_LEN);
-
-	sfc_set_read_reg(cmd, addr, addr_plus, addr_len, 1);
+	sfc_set_read_reg(cmd, addr, addr_plus, addr_len, 1, len, 0);
 
 	ret = sfc_read_data(data, len);
 	if (ret)
@@ -129,6 +143,7 @@ static int sfc_read(unsigned int addr, unsigned int addr_plus,
 	else
 		return 0;
 }
+
 
 void sfc_init()
 {
@@ -182,7 +197,7 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count,unsigned int dst_add
 
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 
-	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), words_of_spl);
+	ret = sfc_read(src_addr, 0x0, addr_len, (unsigned int *)(dst_addr), ALIGN(count, 4));
 	if (ret) {
 		printf("sfc read error\n");
 	}
@@ -220,6 +235,17 @@ static void nv_map_area(unsigned int *base_addr, unsigned int nv_addr, unsigned 
 #endif
 }
 #endif
+
+static void sfc_nor_reset()
+{
+	reset_flag = 1;
+	sfc_set_read_reg(0x66, 0, 0, 0, 0, 0, 1);
+	sfc_set_read_reg(0x99, 0, 0, 0, 0, 0, 1);
+	reset_flag = 0;
+	udelay(60);
+
+}
+
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
@@ -250,6 +276,7 @@ void spl_sfc_nor_load_image(void)
 	jz_sfc_writel(1 << 2,SFC_TRIG);
 
 	sfc_init();
+	sfc_nor_reset();
 
 #ifdef CONFIG_SPL_OS_BOOT
 #ifdef CONFIG_NOR_SPL_BOOT_OS /* norflash spl boot kernel */
