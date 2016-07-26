@@ -1087,7 +1087,17 @@ unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 			*pt_offset = pdata.norflash_partitions.nor_partition[i].offset;
 			*pt_size = pdata.norflash_partitions.nor_partition[i].size;
 			break;
+		}else if(offset >= pdata.norflash_partitions.nor_partition[i].offset && \
+				offset < (pdata.norflash_params.chipsize)){
+			*pt_offset = pdata.norflash_partitions.nor_partition[i].offset;
+			*pt_size = pdata.norflash_params.chipsize -  pdata.norflash_partitions.nor_partition[i].offset;
+			break;
 		}
+	}
+	if(i == pdata.norflash_partitions.num_partition_info){
+		*pt_offset = -1;
+		*pt_size = -1;
+		return -1;
 	}
 	return i;
 }

@@ -68,6 +68,11 @@ int sfc_program(struct cloner *cloner)
 
 	pt_index = get_partition_index(offset, &pt_offset, &pt_size);
 
+	if(pt_index < 0){
+		BURNNER_PRI("the offset is not in partition table,please config again %x\n",offset);
+		return -1;
+	}
+
 	BURNNER_PRI("the offset = %x\n",offset);
 	BURNNER_PRI("the length = %x\n",length);
 
