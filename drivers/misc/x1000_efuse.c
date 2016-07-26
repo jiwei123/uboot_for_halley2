@@ -497,7 +497,7 @@ int efuse_write(void *buf, int length, off_t offset)
 	else
 		ret = 0;
 
-	if (memcmp(read_data, data_buf, length)) {
+	if (memcmp(read_data, data_buf, data_length)) {
 		error(" compare error . write efuse failed");
 		ret = -EFAULT;
 	}
