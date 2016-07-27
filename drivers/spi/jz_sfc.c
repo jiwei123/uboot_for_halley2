@@ -1080,6 +1080,7 @@ static void write_norflash_params_to_spl(unsigned int addr)
 unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 {
 	int i;
+
 	for(i = 0; i < pdata.norflash_partitions.num_partition_info; i++){
 		if(offset >= pdata.norflash_partitions.nor_partition[i].offset && \
 				offset < (pdata.norflash_partitions.nor_partition[i].offset + \
@@ -1088,7 +1089,8 @@ unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 			*pt_size = pdata.norflash_partitions.nor_partition[i].size;
 			break;
 		}else if(offset >= pdata.norflash_partitions.nor_partition[i].offset && \
-				offset < (pdata.norflash_params.chipsize)){
+				offset < (pdata.norflash_params.chipsize) && \
+				(pdata.norflash_partitions.nor_partition[i].size == 0xffffffff)){ /*size == -1*/
 			*pt_offset = pdata.norflash_partitions.nor_partition[i].offset;
 			*pt_size = pdata.norflash_params.chipsize -  pdata.norflash_partitions.nor_partition[i].offset;
 			break;
