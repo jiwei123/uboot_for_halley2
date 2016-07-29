@@ -33,8 +33,10 @@
 #include <asm/arch/clk.h>
 #include <asm/arch/base.h>
 #include <malloc.h>
+#include <errno.h>
 
 #include "jz_spi.h"
+#include "jz_sf_internal.h"
 
 static struct jz_spi_support gparams;
 static struct nor_sharing_params pdata;
@@ -1026,10 +1028,12 @@ static unsigned int jz_nor_reset()
 	sfc_send_cmd(&cmd[1],0,0,0,0,0,1);
 	udelay(60);
 }
+
 int get_norflash_params_from_burner(unsigned char *addr)
 {
 	unsigned int idcode,chipnum,i;
 	struct norflash_params *tmp;
+	struct spi_flash flash;
 
 	unsigned int flash_type = *(unsigned int *)(addr + 4);	//0:nor 1:nand
 	if(flash_type == 0){
@@ -1057,9 +1061,13 @@ int get_norflash_params_from_burner(unsigned char *addr)
 			}
 		}
 
-		if(i == chipnum){
+		if(i >= chipnum){
 			printf("none norflash support for the table ,please check the burner norflash supprot table\n");
-			return -1;
+			tmp = (struct norflash_params *)malloc(sizeof(struct norflash_params));
+
+			sfc_flash_scan(&flash,idcode,tmp);
+			memcpy(&pdata.norflash_params,tmp,sizeof(struct norflash_params));
+			free(tmp);
 		}
 
 		pdata.norflash_partitions.num_partition_info = *(unsigned int *)(addr + 12 + sizeof(struct norflash_params) * chipnum);
@@ -1102,6 +1110,163 @@ unsigned int get_partition_index(u32 offset, int *pt_offset, int *pt_size)
 		return -1;
 	}
 	return i;
+}
+
+int sfc_flash_scan(struct spi_flash *flash,unsigned int id,struct norflash_params *norflash)
+{
+	struct spi_slave *spi = flash->spi;
+	const struct spi_flash_params *params;
+	u16 jedec, ext_jedec;
+	u8 dual_flash,shift;
+	u8 idcode[5],code[4];
+	int ret;
+	int i;
+
+	for(i = 0; i < 5 ; i ++){
+		idcode[i] = id >> (i*8);
+	}
+
+	char *p_id = (char *)&id;
+	for(i = 2; i <= 4 ; i ++){
+		*p_id = idcode[4-i];
+		p_id ++;
+	}
+
+	jedec = idcode[1] << 8 | idcode[2];
+	ext_jedec = idcode[3] << 8 | idcode[4];
+
+	/* Validate params from spi_flash_params table */
+	params = spi_flash_params_table;
+	for (; params->name != NULL; params++) {
+		if ((params->jedec ) == id) {
+			if (params->ext_jedec == 0)
+				break;
+		}
+	}
+
+	if (!params->name) {
+		printf("SF: Unsupported flash IDs: ");
+		printf("manuf %02x, jedec %04x, ext_jedec %04x\n",
+		       idcode[0], jedec, ext_jedec);
+		return -EPROTONOSUPPORT;
+	}
+
+	/* Flash powers up read-only, so clear BP# bits */
+	if (idcode[0] == SPI_FLASH_CFI_MFR_ATMEL ||
+	    idcode[0] == SPI_FLASH_CFI_MFR_MACRONIX ||
+	    idcode[0] == SPI_FLASH_CFI_MFR_SST){
+		norflash->quad_mode.WRSR_CMD = CMD_WRITE_STATUS;
+		norflash->quad_mode.WRSR_DATE = 0x40;
+		norflash->quad_mode.WD_DATE_SIZE = 1;
+		norflash->quad_mode.RD_DATE_SIZE = 1;
+	}
+
+
+	u8 option = 0;
+	/* Assign spi data */
+	flash->name = params->name;
+	strcpy(norflash->name , params->name);
+	dual_flash = option;
+
+	/* Compute the flash size */
+	shift = (dual_flash & SF_DUAL_PARALLEL_FLASH) ? 1 : 0;
+	if (ext_jedec == 0x4d00) {
+		if ((jedec == 0x0215) || (jedec == 0x216) || (jedec == 0x220)){
+			flash->page_size = 256;
+			norflash->pagesize = 256;
+		}else{
+			flash->page_size = 512;
+			norflash->pagesize = 512;
+		}
+	} else {
+		flash->page_size = 256;
+		norflash->pagesize = 256;
+	}
+	norflash->pagesize <<= shift;
+	norflash->sectorsize = params->sector_size << shift;
+	flash->size = norflash->sectorsize * params->nr_sectors << shift;
+	norflash->chipsize = norflash->sectorsize * params->nr_sectors << shift;
+	norflash->erasesize = SPI_FLASH_ERASE_SIZE;  /*default erase size is 32K*/
+
+	u8 erase_cmd,write_cmd;
+	if (params->flags & SECT_4K) {
+		erase_cmd = CMD_ERASE_4K;
+		norflash->block_info.cmd_blockerase = CMD_ERASE_4K;
+		norflash->block_info.blocksize = norflash->erasesize;
+	} else if (params->flags & SECT_32K) {
+		erase_cmd = CMD_ERASE_32K;
+		norflash->block_info.cmd_blockerase = CMD_ERASE_32K;
+		norflash->block_info.blocksize = norflash->erasesize;
+	} else {
+		erase_cmd = CMD_ERASE_64K;
+		norflash->block_info.cmd_blockerase = CMD_ERASE_64K;
+		norflash->block_info.blocksize = norflash->erasesize;
+	}
+
+	/*when chipsize > 16MB,addrsize is 4*/
+	if(norflash->chipsize > 0x1000000)
+		norflash->addrsize = 4;
+	else
+		norflash->addrsize = 3;
+
+	norflash->id = id;
+
+	if (params->flags & WR_QPP )
+		write_cmd = CMD_QUAD_PAGE_PROGRAM;
+	else
+		write_cmd = CMD_PAGE_PROGRAM;
+
+	switch (idcode[0])
+	{
+	case SPI_FLASH_CFI_MFR_MACRONIX:
+		 norflash->quad_mode.RDSR_CMD = CMD_RDSR;
+		 norflash->quad_mode.WRSR_CMD = CMD_WRSR;
+		 norflash->quad_mode.WD_DATE_SIZE = 1;
+		 norflash->quad_mode.RD_DATE_SIZE = 1;
+		 norflash->quad_mode.RDSR_DATE =(1<<6);
+		 norflash->quad_mode.WRSR_DATE = (1<<6);
+		 norflash->quad_mode.dummy_byte = 0;
+		 norflash->quad_mode.sfc_mode = 0x05;
+		 norflash->quad_mode.cmd_read = CMD_QUAD_READ;
+		 break;
+        case SPI_FLASH_CFI_MFR_SPANSION:
+        case SPI_FLASH_CFI_MFR_WINBOND:
+		 norflash->quad_mode.RDSR_CMD = CMD_RDSR_1;
+		 norflash->quad_mode.WRSR_CMD = CMD_WRSR;
+		 norflash->quad_mode.WD_DATE_SIZE = 2;
+		 norflash->quad_mode.RD_DATE_SIZE = 1;
+		 norflash->quad_mode.RDSR_DATE = (1<<1);
+		 norflash->quad_mode.WRSR_DATE = (1<<9);
+		 norflash->quad_mode.sfc_mode = 0x06;
+		 norflash->quad_mode.dummy_byte = 6;
+		 norflash->quad_mode.cmd_read = CMD_READ_QUAD_IO_FAST;
+		 break;
+        case SPI_FLASH_CFI_MFR_STMICRO:
+		 norflash->quad_mode.RDSR_CMD = 0x65;
+		 norflash->quad_mode.WRSR_CMD = 0x61;
+		 norflash->quad_mode.WD_DATE_SIZE = 1;
+		 norflash->quad_mode.RD_DATE_SIZE = 1;
+		 norflash->quad_mode.RDSR_DATE = (1<<7);
+		 norflash->quad_mode.WRSR_DATE = (1<<7);
+		 norflash->quad_mode.dummy_byte = 0;
+		 break;
+	case 0xc8:
+		 norflash->quad_mode.RDSR_CMD = CMD_RDSR_1;
+		 norflash->quad_mode.WRSR_CMD = CMD_WRSR_1;
+		 norflash->quad_mode.WD_DATE_SIZE = 1;
+		 norflash->quad_mode.RD_DATE_SIZE = 1;
+		 norflash->quad_mode.RDSR_DATE =(1<<1);
+		 norflash->quad_mode.WRSR_DATE = (1<<1);
+		 norflash->quad_mode.sfc_mode = 0x05;
+		 norflash->quad_mode.dummy_byte = 8;
+		 norflash->quad_mode.cmd_read = CMD_QUAD_READ;
+		 break;
+	default:
+           printf("SF: Need set QEB func for %02x flash\n", idcode);
+           return -1;
+	}
+
+	return ret;
 }
 #endif
 
@@ -1420,4 +1585,3 @@ int read_sfcnand_id(u8 *response,size_t len)
 	printf("SFC_DEV_STA_RT=0x%08x,\n",jz_sfc_readl(SFC_DEV_STA_RT));
 	//  *idcode = chip_id[0];
 }
-
