@@ -176,7 +176,7 @@
 #else
 #define CONFIG_PAR_NV_NAME        "NV_RW"
 #define CONFIG_PAR_NV_NUM        (3)
-#define CONFIG_PAT_USERFS_NAME   "rootfs"
+#define CONFIG_PAT_USERFS_NAME   "userfs"
 #define CONFIG_PAT_UPDATEFS_NAME   "updatefs"
 #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock5 rw"
 #endif	/* CONFIG_OTA_VERSION20 */
